@@ -17,7 +17,8 @@ repositories {
 val runeLiteVersion = "latest.release"
 
 dependencies {
-    compileOnly(group = "com.example", name = "example", version = "5.4")
+    compileOnly(files("release/EthanVannPlugins-5.4.jar"))
+    compileOnly(files("release/LucidPlugins-6.5.7-all.jar"))
     compileOnly("org.projectlombok:lombok:1.18.20")
     compileOnly("net.runelite:client:$runeLiteVersion")
     compileOnly("org.pf4j:pf4j:3.6.0")
@@ -25,8 +26,8 @@ dependencies {
     testImplementation("junit:junit:4.13.1")
 }
 
-group = "com.lucidplugins"
-version = "6.5.7"
+group = "com.fredplugins"
+version = "0.1"
 
 val javaMajorVersion = JavaVersion.VERSION_11.majorVersion
 
@@ -42,7 +43,7 @@ tasks {
         }
     }
     withType<ShadowJar> {
-        baseName = "LucidPlugins"
-        exclude("com/lucidplugins/lucidfletching/")
+        baseName = "FredPlugins"
+//        exclude("com/lucidplugins/lucidfletching/")
     }
 }
