@@ -36,14 +36,11 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import org.pf4j.Extension;
-import org.pf4j.Extension;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -56,7 +53,6 @@ import java.util.stream.Collectors;
 	description = "Count demonic gorilla attacks and display their next possible attack styles",
 	tags = {"combat", "overlay", "pve", "pvm"}
 )
-@Extension
 @PluginDependency(EthanApiPlugin.class)
 @Singleton
 public class DemonicGorillaPlugin extends Plugin
@@ -69,8 +65,8 @@ public class DemonicGorillaPlugin extends Plugin
 	@Inject
 	private OverlayManager overlayManager;
 
-	@Inject
-	private DemonicGorillaOverlay overlay;
+//	@Inject
+//	private DemonicGorillaOverlay overlay;
 
 	@Inject
 	private ClientThread clientThread;
@@ -87,7 +83,7 @@ public class DemonicGorillaPlugin extends Plugin
 	@Override
 	public void startUp()
 	{
-		overlayManager.add(overlay);
+//		overlayManager.add(overlay);
 		gorillas = new HashMap<>();
 		recentBoulders = new ArrayList<>();
 		pendingAttacks = new ArrayList<>();
@@ -98,7 +94,7 @@ public class DemonicGorillaPlugin extends Plugin
 	@Override
 	public void shutDown()
 	{
-		overlayManager.remove(overlay);
+//		overlayManager.remove(overlay);
 		gorillas = null;
 		recentBoulders = null;
 		pendingAttacks = null;
@@ -522,7 +518,7 @@ public class DemonicGorillaPlugin extends Plugin
 	}
 
 	@Subscribe
-	private void onProjectileSpawned(ProjectileMoved event)
+	private void onProjectileMoved(ProjectileMoved event)
 	{
 		final Projectile projectile = event.getProjectile();
 		final int projectileId = projectile.getId();

@@ -54,7 +54,6 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
@@ -69,7 +68,7 @@ import javax.inject.Singleton;
     name = "<html><font color=\"#32C8CD\">Freds</font> Demonic Gorillas</html>",
     enabledByDefault = false,
     description = "Count demonic gorilla attacks and display their next possible attack styles",
-    tags = {"combat", "overlay", "pve", "pvm"}
+    tags = {"combat", "overlay", "pve", "pvm", "chaos"}
 )
 @PluginDependency(EthanApiPlugin.class)
 @Singleton
@@ -91,9 +90,6 @@ public class ChaosDemonicGorilla extends Plugin {
   @Inject
   private ClientThread clientThread;
 
-  @Inject
-  private DemonicGorillaConfig config;
-
   @Getter(AccessLevel.PACKAGE)
   private Map<NPC, DemonicGorilla> gorillas;
 
@@ -102,11 +98,6 @@ public class ChaosDemonicGorilla extends Plugin {
   private List<PendingGorillaAttack> pendingAttacks;
 
   private Map<Player, MemorizedPlayer> memorizedPlayers;
-
-  @Provides
-  public DemonicGorillaConfig getConfig(ConfigManager configManager) {
-    return configManager.getConfig(DemonicGorillaConfig.class);
-  }
 
 
   @Override
@@ -472,7 +463,7 @@ public class ChaosDemonicGorilla extends Plugin {
   }
 
   @Subscribe
-  private void onProjectileSpawned(ProjectileMoved event) {
+  private void onProjectileMoved(ProjectileMoved event) {
     final Projectile projectile = event.getProjectile();
     final int projectileId = projectile.getId();
 
