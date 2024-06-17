@@ -29,11 +29,11 @@ import org.pf4j.Extension;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Extension
 @PluginDescriptor(
@@ -786,9 +786,19 @@ public class FredGauntletPlugin extends Plugin
         }
         if (event.getContainerId() == InventoryID.EQUIPMENT.getId())
         {
+            String x = Arrays.stream(Prayer.values()).flatMap(p -> Optional.of(p.name()).filter(o -> client.isPrayerActive(p)).stream()).collect(Collectors.joining(", ", "[", "]"));
+            MessageUtils.addMessage("Equipment changed: [" + getPrayerBasedOnWeapon().name() + "] " + x, Color.BLUE);
             if (config.autoOffense())
             {
-                CombatUtils.togglePrayer(getPrayerBasedOnWeapon());
+                Prayer wepPrayer = getPrayerBasedOnWeapon();
+                if(wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY) {
+                    MessageUtils.addMessage("Activating " + wepPrayer.name() + " and " + Prayer.STEEL_SKIN.name(), Color.ORANGE);
+                    CombatUtils.activatePrayer(wepPrayer);
+                    CombatUtils.activatePrayer(Prayer.STEEL_SKIN);
+                } else {
+                    MessageUtils.addMessage("Activating " + wepPrayer.name(), Color.ORANGE);
+                    CombatUtils.activatePrayer(wepPrayer);
+                }
             }
         }
     }
@@ -864,13 +874,23 @@ public class FredGauntletPlugin extends Plugin
 
         if (event.getMessage().contains("prayers have been disabled"))
         {
+            String x = Arrays.stream(Prayer.values()).flatMap(p -> Optional.of(p.name()).filter(o -> client.isPrayerActive(p)).stream()).collect(Collectors.joining(", ", "[", "]"));
+            MessageUtils.addMessage("Chat message: " + "[" + hunllef.getAttackPhase().getPrayer().name() + "] [" + getPrayerBasedOnWeapon().name() + "] " + x, Color.BLUE);
             if (config.autoPrayer())
             {
                 CombatUtils.togglePrayer(hunllef.getAttackPhase().getPrayer());
             }
             if (config.autoOffense())
             {
-                CombatUtils.togglePrayer(getPrayerBasedOnWeapon());
+                Prayer wepPrayer = getPrayerBasedOnWeapon();
+                if(wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY) {
+                    MessageUtils.addMessage("Activating " + wepPrayer.name() + " and " + Prayer.STEEL_SKIN.name(), Color.GREEN);
+                    CombatUtils.togglePrayer(wepPrayer);
+                    CombatUtils.togglePrayer(Prayer.STEEL_SKIN);
+                } else {
+                    MessageUtils.addMessage("Activating " + wepPrayer.name(), Color.GREEN);
+                    CombatUtils.togglePrayer(wepPrayer);
+                }
             }
         }
     }
@@ -944,8 +964,9 @@ public class FredGauntletPlugin extends Plugin
 
                 if (config.autoPrayer())
                 {
+                    String x = Arrays.stream(Prayer.values()).flatMap(p -> Optional.of(p.name()).filter(o -> client.isPrayerActive(p)).stream()).collect(Collectors.joining(", ", "[", "]"));
+                    MessageUtils.addMessage("Animation changed: " + "[" + hunllef.getAttackPhase().getPrayer().name() + "] " + x, Color.BLUE);
                     CombatUtils.togglePrayer(hunllef.getAttackPhase().getPrayer());
-                    CombatUtils.togglePrayer(Prayer.STEEL_SKIN);
                 }
             }
         }

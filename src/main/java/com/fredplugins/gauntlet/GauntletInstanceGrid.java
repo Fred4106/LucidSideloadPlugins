@@ -5,6 +5,10 @@ import com.lucidplugins.api.utils.MessageUtils;
 import lombok.Getter;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.RuneLite;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -18,6 +22,8 @@ public class GauntletInstanceGrid
     public static final int ROOM_SIZE = 16; // gauntlet rooms are 16x16 tiles in size
     public static final int GRID_SIZE = 7;
     private com.fredplugins.gauntlet.GauntletRoom[][] rooms = new com.fredplugins.gauntlet.GauntletRoom[GRID_SIZE][GRID_SIZE];
+
+    static final ChatMessageManager chatMessageManager = (ChatMessageManager) RuneLite.getInjector().getInstance(ChatMessageManager.class);
 
     @Getter
     private WorldPoint startLocation;
@@ -117,7 +123,8 @@ public class GauntletInstanceGrid
         {
             if (client.getGameState() == GameState.LOGGED_IN)
             {
-                MessageUtils.addMessage(client, "Can't initialize, unable to find barriers. Found: " + barriers.size());
+                String msg = (new ChatMessageBuilder()).append("Can't initialize, unable to find barriers. Found: " + barriers.size()).build();
+                chatMessageManager.queue(QueuedMessage.builder().type(ChatMessageType.ENGINE).runeLiteFormattedMessage(msg).build());
             }
             return;
         }
