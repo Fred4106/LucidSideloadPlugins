@@ -36,7 +36,7 @@ public class Demiboss
         @Getter
         private final Color outlineColor;
 
-        static Type fromId(final int id)
+        public static Type fromId(final int id)
         {
             for (final Type type : Type.values())
             {

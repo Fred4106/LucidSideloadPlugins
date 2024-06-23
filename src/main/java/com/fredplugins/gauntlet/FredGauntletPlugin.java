@@ -3,6 +3,7 @@ package com.fredplugins.gauntlet;
 import com.example.EthanApiPlugin.EthanApiPlugin;
 import com.fredplugins.common.ProjectileID;
 import com.fredplugins.common.Utils;
+import com.fredplugins.gauntlet.entity.Demiboss;
 import com.fredplugins.gauntlet.entity.Missile;
 import com.fredplugins.gauntlet.overlay.OverlayGauntlet;
 import com.google.inject.Provides;
@@ -688,6 +689,31 @@ public class FredGauntletPlugin extends Plugin
         return fromSwToNe(arenaSouthWest, arenaNorthEast).contains(point);
     }
 
+//    @Subscribe
+//    private void onInteractingChanged(final InteractingChanged event)
+//    {
+//        if (event.getTarget() instanceof Player && event.getSource() instanceof NPC)
+//        {
+//            NPC source = (NPC)event.getSource();
+//            Player target = (Player) event.getTarget();
+//            Demiboss.Type tpe = Demiboss.Type.fromId(source.getId());
+//            if (target == client.getLocalPlayer() && tpe != null)
+//            {
+//                if(tpe == Demiboss.Type.BEAR)
+//                {
+//                    CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE);
+//                }
+//                else if(tpe == Demiboss.Type.DARK_BEAST)
+//                {
+//                    CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MISSILES);
+//                }
+//                else if(tpe == Demiboss.Type.DRAGON)
+//                {
+//                    CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+//                }
+//            }
+//        }
+//    }
     @Subscribe
     private void onGameStateChanged(final GameStateChanged event)
     {
@@ -1089,7 +1115,15 @@ public class FredGauntletPlugin extends Plugin
 
     private void swapWeaponNormal()
     {
-        if (InventoryUtils.contains(RANGE_WEAPONS))
+        if (InventoryUtils.contains(MAGE_WEAPONS))
+        {
+            SlottedItem wep = InventoryUtils.getFirstItemSlotted(MAGE_WEAPONS);
+            if (wep != null)
+            {
+                InventoryUtils.wieldItem(wep.getItem().getId());
+            }
+        }
+        else if (InventoryUtils.contains(RANGE_WEAPONS))
         {
             SlottedItem wep = InventoryUtils.getFirstItemSlotted(RANGE_WEAPONS);
 
@@ -1097,18 +1131,6 @@ public class FredGauntletPlugin extends Plugin
             {
                 InventoryUtils.wieldItem(wep.getItem().getId());
             }
-
-            lastSwitchTick = client.getTickCount();
-        }
-        else if (InventoryUtils.contains(MAGE_WEAPONS))
-        {
-            SlottedItem wep = InventoryUtils.getFirstItemSlotted(MAGE_WEAPONS);
-            if (wep != null)
-            {
-                InventoryUtils.wieldItem(wep.getItem().getId());
-            }
-
-            lastSwitchTick = client.getTickCount();
         }
         else if (InventoryUtils.contains(MELEE_WEAPONS))
         {
@@ -1117,15 +1139,13 @@ public class FredGauntletPlugin extends Plugin
             {
                 InventoryUtils.wieldItem(wep.getItem().getId());
             }
-
-            lastSwitchTick = client.getTickCount();
         }
         else
         {
             EquipmentUtils.removeWepSlotItem();
-
-            lastSwitchTick = client.getTickCount();
         }
+
+        lastSwitchTick = client.getTickCount();
     }
 
     private void swapWeapon51(int attackCount, HeadIcon current)
