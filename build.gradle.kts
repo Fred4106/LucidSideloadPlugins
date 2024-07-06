@@ -20,7 +20,7 @@ repositories {
 }
 
 val runeLiteVersion = "latest.release"
-val lucidVersion = "6.6.3-all"
+val lucidVersion = "6.6.6-all"
 val ethanVersion = "5.4"
 
 /**
@@ -98,12 +98,19 @@ java {
 }
 tasks {
     withType<ScalaCompile> {
-
+        println("scalaCompile")
+        outputs.files.forEach { f ->
+            println("\t" + f)
+        }
     }
     withType<JavaCompile> {
         options.encoding = "UTF-8"
 //        sourceCompatibility = javaMajorVersion
 //        targetCompatibility = javaMajorVersion
+        println("javaCompile")
+        outputs.files.forEach { f ->
+            println("\t" + f)
+        }
     }
     withType<Jar> {
         manifest {
