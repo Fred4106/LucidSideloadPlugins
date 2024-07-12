@@ -6,12 +6,15 @@ import com.lucidplugins.api.utils.MessageUtils
 import net.runelite.api.ChatMessageType
 import net.runelite.client.chat.{ChatColorType, ChatMessageBuilder, ChatMessageManager, QueuedMessage}
 import net.runelite.client.ui.overlay.{Overlay, OverlayManager, OverlayPosition, WidgetOverlay}
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.awt.{Color, Dimension, Point}
 import java.lang.reflect.{Field, Method}
 import scala.util.chaining.*
 import scala.jdk.CollectionConverters.*
 object OverlayWidgetHelper {
+  private val log: org.slf4j.Logger = LoggerFactory.getLogger(classOf[OverlayWidgetHelper])
+
   val componentIdField: Field = classOf[WidgetOverlay].getDeclaredField("componentId").tap(_.setAccessible(true))
   val snappableField: Field = classOf[Overlay].getDeclaredField("snappable").tap(_.setAccessible(true))
   val resizableField: Field = classOf[Overlay].getDeclaredField("resizable").tap(_.setAccessible(true))
@@ -36,10 +39,10 @@ object OverlayWidgetHelper {
     }).build().stripTrailing().stripSuffix(",").stripSuffix("<br>")
   }
 
-  private def sendMessage(chatMessageManager:ChatMessageManager, tpe: ChatMessageType, message: String, color: Color = null): Unit = {
-    chatMessageManager.queue(QueuedMessage.builder.`type`(tpe).runeLiteFormattedMessage(message).build)
-  }
-  def update(chatMessageManager: ChatMessageManager)(reference: OverlayWidgetHelper, toMove: OverlayWidgetHelper *): Unit = {
+//  private def sendMessage(chatMessageManager:ChatMessageManager, tpe: ChatMessageType, message: String, color: Color = null): Unit = {
+//    chatMessageManager.queue(QueuedMessage.builder.`type`(tpe).runeLiteFormattedMessage(message).build)
+//  }
+  def update(reference: OverlayWidgetHelper, toMove: OverlayWidgetHelper *): Unit = {
     toMove.foreach(tm => {
       val offset: (Int, Int) = (reference.name(), tm.name()) match {
         case ("PARENT", "TABS1") => (-14, 273 + 36)
@@ -64,16 +67,17 @@ object OverlayWidgetHelper {
     })
   }
 
-  def tick(chatMessageManager: ChatMessageManager, overlays: OverlayWidgetHelper*): Unit = {
+  def tick(overlays: OverlayWidgetHelper*): Unit = {
     overlays.find(o => o.moved) match {
       case Some(m) => {
-        sendMessage(chatMessageManager, ChatMessageType.PRIVATECHAT, s"${m.name(true)} moved")
+
+        log.info("{} moved", m.name(false))
         val toMove = overlays.filterNot(_ == m)
-        update(chatMessageManager)(m, toMove*)
+        update(m, toMove*)
         overlays.foreach(o => o.cache())
         overlays.foreach(_.wo.revalidate())
         overlays.foreach(o => {
-          sendMessage(chatMessageManager, ChatMessageType.PRIVATECHAT, o.pretty(false))
+          log.info("{}", o)
         })
       }
       case None => {}
@@ -84,24 +88,24 @@ class OverlayWidgetHelper(private val wo: WidgetOverlay) {
   var cachedLocation : Point = wo.getPreferredLocation
   var cachedPosition : OverlayPosition = wo.getPreferredPosition
   def size: Dimension = wo.getBounds.getSize
-  def pretty(full: Boolean): String =  {
-    if(full) {
-      buildMessage(name(false),
-        ("widgetInfo", (groupId, childId)),
-        ("pos", preferredPosition),
-        ("loc", preferredLocation),
-        ("snap", snappable),
-        ("movable", movable),
-        ("resizeable", resizable)
-      )
-    } else {
-      buildMessage(name(),
-        ("widgetInfo", (groupId, childId)),
-        ("pos", preferredPosition),
-        ("loc", preferredLocation),
-      )
-    }
-  }
+//  def pretty(full: Boolean): String =  {
+//    if(full) {
+//      buildMessage(name(false),
+//        ("widgetInfo", (groupId, childId)),
+//        ("pos", preferredPosition),
+//        ("loc", preferredLocation),
+//        ("snap", snappable),
+//        ("movable", movable),
+//        ("resizeable", resizable)
+//      )
+//    } else {
+//      buildMessage(name(),
+//        ("widgetInfo", (groupId, childId)),
+//        ("pos", preferredPosition),
+//        ("loc", preferredLocation),
+//      )
+//    }
+//  }
 
   def moved: Boolean = {
     (preferredLocation != cachedLocation || preferredPosition != cachedPosition)
@@ -147,5 +151,16 @@ class OverlayWidgetHelper(private val wo: WidgetOverlay) {
 
   def preferredPosition_=(other: OverlayPosition): Unit = {
     wo.setPreferredPosition(other)
+  }
+
+  override def toString: String = {
+      List.apply(
+        s"widgetInfo=$groupId:$childId",
+        s"pos=$preferredPosition",
+        s"loc=$preferredLocation",
+        s"snap=$snappable",
+        s"movable=$movable",
+        s"resizeable=$resizable"
+      ).mkString("(", ", ", ")").prependedAll(s"${name(false)}")
   }
 }

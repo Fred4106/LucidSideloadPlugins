@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Extension
 @PluginDescriptor(
         name = "<html><font color=\"#32C8CD\">Freds</font> Layout Helper</html>",
@@ -50,6 +49,7 @@ import java.util.stream.Collectors;
 )
 @PluginDependency(EthanApiPlugin.class)
 @Singleton
+@Slf4j
 public class LayoutHelper extends Plugin {
 
     @Inject
@@ -79,14 +79,14 @@ public class LayoutHelper extends Plugin {
         );
         overlays.foreach(o -> {
             o.snappable_$eq(false);
-            sendMessage(ChatMessageType.PRIVATECHAT, o.pretty(true));
+            log.info("{}", o);
             return -1;
         });
     }
 
     @Subscribe
     private void onClientTick(ClientTick gt) {
-        OverlayWidgetHelper.tick(chatMessageManager, overlays);
+        OverlayWidgetHelper.tick(overlays);
     }
     @Override
     protected void shutDown() throws Exception {

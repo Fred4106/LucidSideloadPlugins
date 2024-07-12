@@ -2,10 +2,13 @@ package com.fredplugins.gauntlet.overlay;
 
 import com.fredplugins.gauntlet.FredGauntletConfig;
 import com.fredplugins.gauntlet.FredGauntletPlugin;
+import com.fredplugins.gauntlet.GauntletRoom;
 import com.fredplugins.gauntlet.entity.Demiboss;
 import com.fredplugins.gauntlet.entity.Resource;
 import net.runelite.api.*;
+import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
@@ -59,6 +62,7 @@ public class OverlayGauntlet extends Overlay
         }
 
         renderResources(graphics2D);
+        renderNextRoom(graphics2D);
         renderUtilities();
         renderDemibosses();
         renderStrongNpcs();
@@ -116,7 +120,59 @@ public class OverlayGauntlet extends Overlay
             }
         }
     }
+    private void renderGraphicsObjects(Graphics2D graphics, LocalPoint localPointPlayer, Color color, GameObject object, String text)
+    {
+        if(object == null) {
+            return;
+        }
+        LocalPoint lp = object.getLocalLocation();
+//        color new Color(color.getRed(), color.getGreen(), color.getBlue(), 80)
+        if (!isOutsideRenderDistance(lp, localPointPlayer)) {
+            final Shape shape = object.getConvexHull();
+            if (shape != null) {
+                modelOutlineRenderer.drawOutline(object, 2,
+                        new Color(color.getRed(), color.getGreen(), color.getBlue(), 80)
+                        , 0);
+            }
 
+            Polygon poly = Perspective.getCanvasTilePoly(client, lp);
+            if (poly != null)
+            {
+                OverlayUtil.renderPolygon(graphics, poly, Color.MAGENTA);
+            }
+            ObjectComposition comp = client.getObjectDefinition(object.getId());
+            final ObjectComposition impostor = (comp != null && comp.getImpostorIds() != null) ? comp.getImpostor() : null;
+            String infoString1 = (comp != null) ? "("  + comp.getId() + "|" + comp.getName() + ")" : "null";
+            String infoString2 =  (impostor != null) ? "["  + impostor.getId() + "|" + impostor.getName() + "]" : "null";
+            String infoString = text + ": " + "comp: " + infoString1 + ", imposter: " + infoString2;
+            Point textLocation = Perspective.getCanvasTextLocation(
+                    client, graphics, lp,
+                    infoString, 0);
+            if (textLocation != null)
+            {
+                OverlayUtil.renderTextLocation(graphics, textLocation, infoString, color);
+            }
+        }
+    }
+
+    private static final Font FONT = FontManager.getRunescapeFont().deriveFont(Font.BOLD, 14);
+
+    private void renderNextRoom(final Graphics2D graphics2D)
+    {
+        Font lastFont = graphics2D.getFont();
+        graphics2D.setFont(FONT);
+        final LocalPoint localPointPlayer = player.getLocalLocation();
+//        GameObject x1 = plugin.findNodeForUnopenedRoom(plugin.getInstanceGrid().getNextUnlitRoomFirstPass());
+//        GameObject x2 = plugin.findNodeForUnopenedRoom(plugin.getInstanceGrid().getNextUnlitRoomSecondPass());
+//        GameObject x3 = ;
+        GauntletRoom r1 = plugin.getInstanceGrid().getNextUnlitRoomFirstPass();
+        GauntletRoom r2 = plugin.getInstanceGrid().getNextUnlitRoomSecondPass();
+        GauntletRoom r3 = plugin.getInstanceGrid().getNextUnlitRoomLastPass();
+        if(r1 != null) renderGraphicsObjects(graphics2D, localPointPlayer, Color.WHITE, plugin.findNodeForUnopenedRoom(r1), "first");
+        if(r2 != null && r2 != r1) renderGraphicsObjects(graphics2D, localPointPlayer, Color.GREEN, plugin.findNodeForUnopenedRoom(r2), "second");
+        if(r3 != null && r3 != r1 && r3 != r2) renderGraphicsObjects(graphics2D, localPointPlayer, Color.BLUE, plugin.findNodeForUnopenedRoom(r3), "last");
+        graphics2D.setFont(lastFont);
+    }
     private void renderUtilities()
     {
         if (!config.utilitiesOutline() || plugin.getUtilities().isEmpty())

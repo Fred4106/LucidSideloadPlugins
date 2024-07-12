@@ -850,7 +850,7 @@ public interface FredGauntletConfig extends Config
         return PrayerHighlightMode.NONE;
     }
     @ConfigItem(
-            name = "Auto defense pray",
+            name = "Auto protect pray",
             description = "Automatically selects the correct protection prayer on disable and on attack style change.",
             position = 1,
             keyName = "autoPrayer",
@@ -872,13 +872,24 @@ public interface FredGauntletConfig extends Config
         return WeaponSwitchStyle.OFF;
     }
     @ConfigItem(
-            name = "Auto offense pray",
-            description = "Auto selects offensive prayer when weapon swapping.",
-            position = 3,
-            keyName = "autoOffensive",
-            section = playerSection
+        name = "Auto offense pray",
+        description = "Auto selects offensive prayer when weapon swapping.",
+        position = 3,
+        keyName = "autoOffensive",
+        section = playerSection
     )
     default boolean autoOffense()
+    {
+        return false;
+    }
+    @ConfigItem(
+        name = "Auto defense pray",
+        description = "Auto selects defence prayer.",
+        position = 4,
+        keyName = "autoDefense",
+        section = playerSection
+    )
+    default boolean autoDefense()
     {
         return false;
     }
@@ -886,7 +897,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Auto re-attack (mage/range)",
             description = "Automatically re-attacks after swapping to mage/range.",
-            position = 4,
+            position = 5,
             keyName = "autoAttack",
             section = playerSection
     )
@@ -899,7 +910,7 @@ public interface FredGauntletConfig extends Config
             name = "Auto re-attack (melee)",
             description = "Automatically re-attacks after swapping to melee" +
                     "<br>Warning: Can cause you to run into an unsafe tile!",
-            position = 5,
+            position = 6,
             keyName = "autoAttackMelee",
             section = playerSection
     )
@@ -911,7 +922,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Auto dodge",
             description = "Automatically dodges unsafe tiles and tornados",
-            position = 6,
+            position = 7,
             keyName = "autoDodge",
             section = playerSection
     )
@@ -923,7 +934,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Flash on wrong attack style",
             description = "Flash the screen if you use the wrong attack style.",
-            position = 7,
+            position = 8,
             keyName = "flashOnWrongAttack",
             section = playerSection
     )
@@ -939,7 +950,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Flash duration",
             description = "Change the duration of the flash.",
-            position = 8,
+            position = 9,
             keyName = "flashOnWrongAttackDuration",
             section = playerSection
     )
@@ -952,7 +963,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Flash color",
             description = "Color of the flash notification.",
-            position = 9,
+            position = 10,
             keyName = "flashOnWrongAttackColor",
             section = playerSection
     )
@@ -964,7 +975,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Flash on 5:1 method",
             description = "Flash the screen to weapon switch when using 5:1 method.",
-            position = 10,
+            position = 11,
             keyName = "flashOn51Method",
             section = playerSection
     )
@@ -980,7 +991,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Flash duration",
             description = "Change the duration of the flash.",
-            position = 11,
+            position = 12,
             keyName = "flashOn51MethodDuration",
             section = playerSection
     )
@@ -993,7 +1004,7 @@ public interface FredGauntletConfig extends Config
     @ConfigItem(
             name = "Flash color",
             description = "Color of the flash notification.",
-            position = 12,
+            position = 13,
             keyName = "flashOn51MethodColor",
             section = playerSection
     )
@@ -1079,15 +1090,27 @@ public interface FredGauntletConfig extends Config
         return MagicPrayer.MYSTIC_MIGHT;
     }
     @ConfigItem(
-            name = "Melee Prayer",
-            description = "Which melee prayer to use for auto-offense",
-            position = 2,
-            keyName = "offenseMeleePrayer",
-            section = prayerSection
+        name = "Melee Prayer",
+        description = "Which melee prayer to use for auto-offense",
+        position = 2,
+        keyName = "offenseMeleePrayer",
+        section = prayerSection
     )
     default MeleePrayer offenseMeleePrayer()
     {
         return MeleePrayer.PIETY;
+    }
+
+    @ConfigItem(
+        name = "Defense Prayer",
+        description = "Which defense prayer to use when attacked",
+        position = 3,
+        keyName = "defensePrayer",
+        section = prayerSection
+    )
+    default DefensePrayer defensePrayer()
+    {
+        return DefensePrayer.STEEL_SKIN;
     }
 
     // Constants
@@ -1187,6 +1210,18 @@ public interface FredGauntletConfig extends Config
         @Getter
         Prayer prayer;
         MeleePrayer(Prayer prayer)
+        {
+            this.prayer = prayer;
+        }
+    }
+
+    enum DefensePrayer
+    {
+        THICK_SKIN(Prayer.THICK_SKIN), ROCK_SKIN(Prayer.ROCK_SKIN), STEEL_SKIN(Prayer.STEEL_SKIN), NONE(null);
+
+        @Getter
+        Prayer prayer;
+        DefensePrayer(Prayer prayer)
         {
             this.prayer = prayer;
         }

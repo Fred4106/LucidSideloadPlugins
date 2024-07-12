@@ -12,7 +12,9 @@ import com.lucidplugins.api.utils.*;
 import com.fredplugins.gauntlet.resource.ResourceManager;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
+import net.runelite.api.Point;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
@@ -28,6 +30,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.pf4j.Extension;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.*;
@@ -46,6 +49,7 @@ import java.util.stream.Collectors;
 )
 @PluginDependency(EthanApiPlugin.class)
 @Singleton
+@Slf4j
 public class FredGauntletPlugin extends Plugin
 {
     public static final int ONEHAND_SLASH_AXE_ANIMATION = 395;
@@ -147,6 +151,8 @@ public class FredGauntletPlugin extends Plugin
             ObjectID.WATER_PUMP_35981, ObjectID.WATER_PUMP_36078
     );
 
+    private static final Set<Integer> NODES = Set.of(NullObjectID.NULL_36000, NullObjectID.NULL_36001, NullObjectID.NULL_36103, NullObjectID.NULL_36104);
+
     @Inject
     private Client client;
 
@@ -232,6 +238,7 @@ public class FredGauntletPlugin extends Plugin
     private WorldPoint secondLastSafeTile;
 
     @Inject
+    @Getter
     private GauntletInstanceGrid instanceGrid;
 
     @Provides
@@ -485,20 +492,20 @@ public class FredGauntletPlugin extends Plugin
 
         boolean tooCloseToTornados = tooCloseToTornado(client.getLocalPlayer().getWorldLocation(), 3);
 
-        /*if (!isTileSafe)
+        if (!isTileSafe)
         {
-            MessageUtils.addMessage(client, "Need to move from unsafe tile!");
+            log.info("Need to move from unsafe tile!");
         }
 
         if (underHunllef)
         {
-            MessageUtils.addMessage(client, "Need to get out from under the beast!");
+            log.info("Need to get out from under the beast!");
         }
 
         if (tooCloseToTornados)
         {
-            MessageUtils.addMessage(client,"There's a tornado about to fuck us up");
-        }*/
+            log.info("There's a tornado about to fuck us up");
+        }
 
         return !isTileSafe || underHunllef || (checkTornados && tooCloseToTornados);
     }
@@ -524,6 +531,35 @@ public class FredGauntletPlugin extends Plugin
             }
         }
         return false;
+    }
+    @Nullable
+    private ObjectComposition getObjectComposition(int id)
+    {
+        ObjectComposition objectComposition = client.getObjectDefinition(id);
+        return objectComposition.getImpostorIds() == null ? objectComposition : objectComposition.getImpostor();
+    }
+    public GameObject findNodeForUnopenedRoom(GauntletRoom room)
+    {
+        if(room == null) {
+            return null;
+        }
+        return  new GameObjectQuery().getGameObjectQuery(client).stream()
+                .filter(gameObject ->
+                {
+                    final boolean isAboveBy1 = gameObject.getWorldLocation().getY() == room.getBaseY() + 1;
+                    final boolean isBelowBy1 = gameObject.getWorldLocation().getY() == room.getBaseY() - GauntletInstanceGrid.ROOM_SIZE - 1;
+                    final boolean isRight = gameObject.getWorldLocation().getX() == room.getBaseX() + GauntletInstanceGrid.ROOM_SIZE;
+                    final boolean isLeftBy2 = gameObject.getWorldLocation().getX() == room.getBaseX() - 2;
+                    final boolean isInsideRoomX = gameObject.getWorldLocation().getX() >= room.getBaseX() && gameObject.getWorldLocation().getX() <= room.getBaseX() + GauntletInstanceGrid.ROOM_SIZE;
+                    final boolean isInsideRoomY = gameObject.getWorldLocation().getY() <= room.getBaseY() && gameObject.getWorldLocation().getY() >= room.getBaseY() - GauntletInstanceGrid.ROOM_SIZE;
+                    return ((isAboveBy1 && isInsideRoomX) ||
+                            (isBelowBy1 && isInsideRoomX) ||
+                            (isLeftBy2 && isInsideRoomY) ||
+                            (isRight && isInsideRoomY)) &&
+                            getObjectComposition(gameObject.getId()).getName().equals("Node");
+                }).sorted((x, y) -> {
+                    return client.getLocalPlayer().getWorldLocation().distanceTo(x.getWorldLocation()) + client.getLocalPlayer().getWorldLocation().distanceTo(y.getWorldLocation());
+                }).findFirst().orElse(null);
     }
 
     private WorldPoint getClosestSafeTile()
@@ -755,6 +791,16 @@ public class FredGauntletPlugin extends Plugin
         {
             utilities.add(gameObject);
         }
+
+        if (NODES.contains(id))
+        {
+            Point nodeGridLocation = instanceGrid.getGridLocationByWorldPoint(event.getTile().getWorldLocation());
+            GauntletRoom litRoom = instanceGrid.getRoom(nodeGridLocation.getX(), nodeGridLocation.getY());
+            if (!litRoom.isLit())
+            {
+                litRoom.setLit(true);
+            }
+        }
     }
 
     @Subscribe
@@ -813,16 +859,17 @@ public class FredGauntletPlugin extends Plugin
         if (event.getContainerId() == InventoryID.EQUIPMENT.getId())
         {
             String x = Arrays.stream(Prayer.values()).flatMap(p -> Optional.of(p.name()).filter(o -> client.isPrayerActive(p)).stream()).collect(Collectors.joining(", ", "[", "]"));
-            MessageUtils.addMessage("Equipment changed: [" + getPrayerBasedOnWeapon().name() + "] " + x, Color.BLUE);
-            if (config.autoOffense())
+            MessageUtils.addMessage("Equipment changed: [" + Optional.ofNullable(getPrayerBasedOnWeapon()).map(Prayer::name).orElse("null") + "] " + x, Color.BLUE);
+            if (config.autoOffense() || config.autoDefense())
             {
                 Prayer wepPrayer = getPrayerBasedOnWeapon();
-                if(wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY) {
-                    MessageUtils.addMessage("Activating " + wepPrayer.name() + " and " + Prayer.STEEL_SKIN.name(), Color.ORANGE);
+                Prayer defPrayer = getDefensePrayer();
+                if(wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY && defPrayer != null) {
+                    log.info("Activating {} and {}", wepPrayer.name(), defPrayer.name());
+                    CombatUtils.activatePrayer(defPrayer);
                     CombatUtils.activatePrayer(wepPrayer);
-                    CombatUtils.activatePrayer(Prayer.STEEL_SKIN);
                 } else {
-                    MessageUtils.addMessage("Activating " + wepPrayer.name(), Color.ORANGE);
+                    log.info("Activating {}", wepPrayer.name());
                     CombatUtils.activatePrayer(wepPrayer);
                 }
             }
@@ -901,20 +948,21 @@ public class FredGauntletPlugin extends Plugin
         if (event.getMessage().contains("prayers have been disabled"))
         {
             String x = Arrays.stream(Prayer.values()).flatMap(p -> Optional.of(p.name()).filter(o -> client.isPrayerActive(p)).stream()).collect(Collectors.joining(", ", "[", "]"));
-            MessageUtils.addMessage("Chat message: " + "[" + hunllef.getAttackPhase().getPrayer().name() + "] [" + getPrayerBasedOnWeapon().name() + "] " + x, Color.BLUE);
+            MessageUtils.addMessage("Chat message: " + "[" + hunllef.getAttackPhase().getPrayer().name() + "] [" + Optional.ofNullable(getPrayerBasedOnWeapon()).map(Prayer::name).orElse("null") + "] " + x, Color.BLUE);
             if (config.autoPrayer())
             {
                 CombatUtils.togglePrayer(hunllef.getAttackPhase().getPrayer());
             }
-            if (config.autoOffense())
+            if (config.autoOffense() || config.autoDefense())
             {
                 Prayer wepPrayer = getPrayerBasedOnWeapon();
-                if(wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY) {
-                    MessageUtils.addMessage("Activating " + wepPrayer.name() + " and " + Prayer.STEEL_SKIN.name(), Color.GREEN);
+                Prayer defPrayer = getDefensePrayer();
+                if(wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY && defPrayer != null) {
+                    log.info("Reactivating {} and {}", wepPrayer.name(), defPrayer.name());
+                    CombatUtils.togglePrayer(defPrayer);
                     CombatUtils.togglePrayer(wepPrayer);
-                    CombatUtils.togglePrayer(Prayer.STEEL_SKIN);
                 } else {
-                    MessageUtils.addMessage("Activating " + wepPrayer.name(), Color.GREEN);
+                    log.info("Reactivating {}", wepPrayer.name());
                     CombatUtils.togglePrayer(wepPrayer);
                 }
             }
@@ -1096,6 +1144,10 @@ public class FredGauntletPlugin extends Plugin
 
     private Prayer getPrayerBasedOnWeapon()
     {
+        if(!config.autoOffense()) {
+            return null;
+        }
+
         if (EquipmentUtils.contains(RANGE_WEAPONS))
         {
             return config.offenseRangePrayer().getPrayer();
@@ -1109,10 +1161,16 @@ public class FredGauntletPlugin extends Plugin
         {
             return config.offenseMeleePrayer().getPrayer();
         }
-        return config.offenseMeleePrayer().getPrayer();
+        return null;
     }
 
-
+    private Prayer getDefensePrayer()
+    {
+        if (config.autoDefense()) {
+            return config.defensePrayer().getPrayer();
+        }
+        return null;
+    }
     private void swapWeaponNormal()
     {
         if (InventoryUtils.contains(MAGE_WEAPONS))
