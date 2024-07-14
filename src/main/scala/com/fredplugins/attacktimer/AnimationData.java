@@ -8,7 +8,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.security.InvalidParameterException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public enum AnimationData {
@@ -204,20 +208,20 @@ public enum AnimationData {
 		ImmutableMap.Builder<Integer, AnimationData> notAttacksBuilder = new ImmutableMap.Builder<>();
 		Map<Spellbook, Set<AnimationData>> spellBookBuilder = new HashMap<>();
 
-		for (Spellbook s : Spellbook.values()) {
+		for(Spellbook s : Spellbook.values()) {
 			spellBookBuilder.put(s, new HashSet<AnimationData>());
 		}
 
-		for (AnimationData data : values()) {
+		for(AnimationData data : values()) {
 			builder.put(data.animationId, data);
 
-			if (data.spellbook != null) {
-				if (data.attackStyle != AttackStyle.MAGIC) {
+			if(data.spellbook != null) {
+				if(data.attackStyle != AttackStyle.MAGIC) {
 					throw new InvalidParameterException("Spell book should only be magic animations");
 				}
 				spellBookBuilder.get(data.spellbook).add(data);
 			}
-			if (data.attackStyle == AttackStyle.NON_ATTACK) {
+			if(data.attackStyle == AttackStyle.NON_ATTACK) {
 				notAttacksBuilder.put(data.animationId, data);
 			}
 		}
@@ -234,7 +238,7 @@ public enum AnimationData {
 
 	// Simple animation data constructor for all melee and range attacks
 	AnimationData(int animationId, AttackStyle attackStyle) {
-		if (attackStyle == null) {
+		if(attackStyle == null) {
 			throw new InvalidParameterException("Attack Style must be valid for AnimationData");
 		}
 		this.animationId = animationId;
@@ -245,7 +249,7 @@ public enum AnimationData {
 
 	// Simple animation data constructor for all melee and range attacks w/ special
 	AnimationData(int animationId, AttackStyle attackStyle, boolean isSpecial) {
-		if (attackStyle == null) {
+		if(attackStyle == null) {
 			throw new InvalidParameterException("Attack Style must be valid for AnimationData");
 		}
 		this.animationId = animationId;
@@ -256,7 +260,7 @@ public enum AnimationData {
 
 	// Simple animation data constructor for all magic attacks
 	AnimationData(int animationId, AttackStyle attackStyle, Spellbook book) {
-		if (attackStyle == null) {
+		if(attackStyle == null) {
 			throw new InvalidParameterException("Attack Style must be valid for AnimationData");
 		}
 		this.animationId = animationId;
@@ -275,7 +279,7 @@ public enum AnimationData {
 
 	public static boolean isManualCasting(AnimationData animationData) {
 		// This check ensures we don't treat staff animations which are magic attacks as a "manual cast".
-		if (animationData.spellbook != null && animationData != null) {
+		if(animationData.spellbook != null && animationData != null) {
 			// We tell a manual cast by the animation data:
 			return animationData.attackStyle == AttackStyle.MAGIC &&
 					spellBookAnimations.get(animationData.spellbook).contains(animationData);
@@ -297,12 +301,11 @@ public enum AnimationData {
 	}
 
 	public boolean matchesSpellbook(Spellbook s) {
-		if (this.spellbook != null) {
+		if(this.spellbook != null) {
 			return this.spellbook == s;
 		}
 		return false;
 	}
-
 
 	// An enum of combat styles (including stab, slash, crush).
 	public enum AttackStyle {
@@ -343,7 +346,6 @@ public enum AnimationData {
 											pray == SpriteID.PRAYER_MYSTIC_MIGHT)))
 			);
 		}
-
 
 		@Override
 		public String toString() {

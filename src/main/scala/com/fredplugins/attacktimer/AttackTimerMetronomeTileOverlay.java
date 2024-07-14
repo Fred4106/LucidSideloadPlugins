@@ -5,11 +5,14 @@ import net.runelite.api.Perspective;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.ui.FontManager;
-import net.runelite.client.ui.overlay.*;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayPriority;
+import net.runelite.client.ui.overlay.OverlayUtil;
 
 import javax.inject.Inject;
 import java.awt.*;
-
 
 public class AttackTimerMetronomeTileOverlay extends Overlay {
 
@@ -31,12 +34,12 @@ public class AttackTimerMetronomeTileOverlay extends Overlay {
 	@Override
 	public Dimension render(Graphics2D graphics) {
 		plugin.renderedState = plugin.attackState;
-		if (plugin.attackState == AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING) {
+		if(plugin.attackState == AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING) {
 			return null;
 		}
 
-		if (config.showTick()) {
-			if (config.fontType() == FontTypes.REGULAR) {
+		if(config.showTick()) {
+			if(config.fontType() == FontTypes.REGULAR) {
 				graphics.setFont(new Font(FontManager.getRunescapeFont().getName(), Font.PLAIN, config.fontSize()));
 			} else {
 				graphics.setFont(new Font(config.fontType().toString(), Font.PLAIN, config.fontSize()));
@@ -56,13 +59,13 @@ public class AttackTimerMetronomeTileOverlay extends Overlay {
 	}
 
 	private void renderTile(final Graphics2D graphics, final LocalPoint dest, final Color color, final Color fillColor, final double borderWidth) {
-		if (dest == null) {
+		if(dest == null) {
 			return;
 		}
 
 		final Polygon poly = Perspective.getCanvasTilePoly(client, dest);
 
-		if (poly == null) {
+		if(poly == null) {
 			return;
 		}
 

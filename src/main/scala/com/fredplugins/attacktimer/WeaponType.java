@@ -5,7 +5,15 @@ import lombok.Getter;
 
 import java.util.Map;
 
-import static com.fredplugins.attacktimer.AttackStyle.*;
+import static com.fredplugins.attacktimer.AttackStyle.ACCURATE;
+import static com.fredplugins.attacktimer.AttackStyle.AGGRESSIVE;
+import static com.fredplugins.attacktimer.AttackStyle.CASTING;
+import static com.fredplugins.attacktimer.AttackStyle.CONTROLLED;
+import static com.fredplugins.attacktimer.AttackStyle.DEFENSIVE;
+import static com.fredplugins.attacktimer.AttackStyle.DEFENSIVE_CASTING;
+import static com.fredplugins.attacktimer.AttackStyle.LONGRANGE;
+import static com.fredplugins.attacktimer.AttackStyle.OTHER;
+import static com.fredplugins.attacktimer.AttackStyle.RANGING;
 
 enum WeaponType {
 	TYPE_0(ACCURATE, AGGRESSIVE, null, DEFENSIVE),
@@ -45,7 +53,7 @@ enum WeaponType {
 	static {
 		ImmutableMap.Builder<Integer, WeaponType> builder = new ImmutableMap.Builder<>();
 
-		for (WeaponType weaponType : values()) {
+		for(WeaponType weaponType : values()) {
 			builder.put(weaponType.ordinal(), weaponType);
 		}
 

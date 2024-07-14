@@ -44,30 +44,30 @@ enum PoweredStaves {
 	WEAPON_TRIDENT_E(AnimationData.MAGIC_STANDARD_WAVE_STAFF, Projectiles(1252), 22288), // https://oldschool.runescape.wiki/w/Trident_of_the_seas_(e)#Charged
 	WEAPON_WARPED_SCEPTRE(AnimationData.MAGIC_WARPED_SCEPTRE, 28585, 28586); // https://oldschool.runescape.wiki/w/Warped_sceptre
 
-	protected static final boolean LOCAL_DEBUGGING = false;
-	protected static final int UNKNOWN_SPELL = 0xDEADBEEF;
-	protected static final ImmutableMap<Integer, ImmutableMap<Integer, PoweredStaves>> poweredStaves;
+	private static final boolean LOCAL_DEBUGGING = false;
+	private static final int UNKNOWN_SPELL = 0xDEADBEEF;
+	private static final ImmutableMap<Integer, ImmutableMap<Integer, PoweredStaves>> poweredStaves;
 
 	static {
 		ImmutableMap.Builder<Integer, ImmutableMap<Integer, PoweredStaves>> builder = new ImmutableMap.Builder<>();
 
-		for (PoweredStaves p : values()) {
-			for (int id : p.ids) {
+		for(PoweredStaves p : values()) {
+			for(int id : p.ids) {
 				ImmutableMap.Builder<Integer, PoweredStaves> spellMap = new ImmutableMap.Builder<>();
-				if (p.animations == null) {
+				if(p.animations == null) {
 					spellMap.put(UNKNOWN_SPELL, p);
 				} else {
-					for (AnimationData spell : p.animations) {
+					for(AnimationData spell : p.animations) {
 						spellMap.put(spell.animationId, p);
 					}
 				}
 				builder.put(id, spellMap.build());
 			}
 		}
-		if (LOCAL_DEBUGGING) {
+		if(LOCAL_DEBUGGING) {
 			// Fake the kodai to be a harm for testing, because I don't own a harm.
 			ImmutableMap.Builder<Integer, PoweredStaves> spellMap = new ImmutableMap.Builder<>();
-			for (AnimationData harmAnim : WEAPON_HARM.animations) {
+			for(AnimationData harmAnim : WEAPON_HARM.animations) {
 				spellMap.put(harmAnim.animationId, WEAPON_HARM);
 			}
 			builder.put(21006, spellMap.build());
@@ -96,12 +96,14 @@ enum PoweredStaves {
 		this.projectiles = new HashSet<Integer>();
 		this.animations = Set.of(spell);
 	}
+
 	// Single animation 4t powered staff
 	PoweredStaves(AnimationData spell, Set<Integer> projectiles, int... id) {
 		this.ids = Projectiles(id);
 		this.projectiles = projectiles;
 		this.animations = Set.of(spell);
 	}
+
 	// Multiple animations 4t powered staff
 	PoweredStaves(Set<AnimationData> spell, Set<Integer> projectiles, int... id) {
 		this.ids = Projectiles(id);
@@ -111,10 +113,7 @@ enum PoweredStaves {
 
 	private static Set<Integer> Projectiles(int... id) {
 		ImmutableSet.Builder<Integer> builder = new ImmutableSet.Builder<>();
-		if (id.length == 0) {
-			return builder.build();
-		}
-		for (int i : id) {
+		for(int i : id) {
 			builder.add(i);
 		}
 		return builder.build();
@@ -122,12 +121,12 @@ enum PoweredStaves {
 
 	public static PoweredStaves getPoweredStaves(int weaponId, AnimationData animation) {
 		ImmutableMap<Integer, PoweredStaves> weaponMap = poweredStaves.get(weaponId);
-		if (weaponMap == null || animation == null) {
+		if(weaponMap == null || animation == null) {
 			return null;
 		}
 		// If the data in the enum doesn't have a spell then we can simply return the stave based on the
 		// weapon ID only.
-		if (weaponMap.containsKey(UNKNOWN_SPELL)) {
+		if(weaponMap.containsKey(UNKNOWN_SPELL)) {
 			return weaponMap.get(UNKNOWN_SPELL);
 		}
 		return weaponMap.get(animation.animationId);
@@ -143,7 +142,7 @@ enum PoweredStaves {
 	}
 
 	public boolean MatchesProjectile(int projectile) {
-		if (this.projectiles == null) {
+		if(this.projectiles == null) {
 			return false;
 		}
 		return this.projectiles.contains(projectile);

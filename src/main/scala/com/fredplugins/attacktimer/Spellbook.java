@@ -13,7 +13,7 @@ enum Spellbook {
 	static {
 		ImmutableMap.Builder<Integer, Spellbook> builder = new ImmutableMap.Builder<>();
 
-		for (Spellbook data : values()) {
+		for(Spellbook data : values()) {
 			builder.put(data.id, data);
 		}
 

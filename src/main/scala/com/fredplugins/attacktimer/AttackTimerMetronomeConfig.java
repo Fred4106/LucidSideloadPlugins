@@ -1,6 +1,10 @@
 package com.fredplugins.attacktimer;
 
-import net.runelite.client.config.*;
+import net.runelite.client.config.Config;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Range;
 
 import java.awt.*;
 
@@ -18,17 +22,7 @@ public interface AttackTimerMetronomeConfig extends Config {
 			position = 7
 	)
 	String AttackBarSettings = "Attack Cooldown Bar Settings";
-
-	@ConfigItem(
-			position = 1,
-			keyName = "enableMetronome",
-			name = "Attack Timer Metronome",
-			description = "Enable visual metronome"
-	)
-	default boolean enableMetronome() {
-		return true;
-	}
-
+	
 	@ConfigItem(
 			position = 1,
 			keyName = "showTick",

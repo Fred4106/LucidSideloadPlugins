@@ -55,7 +55,7 @@ enum CastingSoundData {
 	static {
 		ImmutableMap.Builder<Integer, CastingSoundData> builder = new ImmutableMap.Builder<>();
 
-		for (CastingSoundData data : values()) {
+		for(CastingSoundData data : values()) {
 			builder.put(data.id, data);
 		}
 
@@ -75,7 +75,7 @@ enum CastingSoundData {
 	}
 
 	public static Spellbook getSpellBookFromId(int id) {
-		if (!sounds.containsKey(id)) {
+		if(!sounds.containsKey(id)) {
 			return null;
 		}
 		return sounds.get(id).spellbook;

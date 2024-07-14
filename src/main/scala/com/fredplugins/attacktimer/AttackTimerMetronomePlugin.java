@@ -2,7 +2,12 @@ package com.fredplugins.attacktimer;
 
 import com.google.inject.Provides;
 import net.runelite.api.*;
-import net.runelite.api.events.*;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.InteractingChanged;
+import net.runelite.api.events.SoundEffectPlayed;
+import net.runelite.api.events.VarClientIntChanged;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -56,18 +61,17 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	@Inject
 	private NPCManager npcManager;
 	private int uiUnshowDebounceTickCount = 0;
-	private int uiUnshowDebounceTicksMax = 1;
+	private final int uiUnshowDebounceTicksMax = 1;
 	private Spellbook currentSpellBook = Spellbook.STANDARD;
 	private int lastEquippingMonotonicValue = -1;
 	private int soundEffectTick = -1;
-
 
 	// region subscribers
 	private int soundEffectId = -1;
 
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged) {
-		if (varbitChanged.getVarbitId() == Varbits.SPELLBOOK) {
+		if(varbitChanged.getVarbitId() == Varbits.SPELLBOOK) {
 			currentSpellBook = Spellbook.fromVarbit(varbitChanged.getValue());
 		}
 	}
@@ -77,7 +81,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	@Subscribe
 	public void onVarClientIntChanged(VarClientIntChanged varClientIntChanged) {
 		final int currentMagicVarBit = client.getVarcIntValue(EQUIPPING_MONOTONIC);
-		if (currentMagicVarBit <= lastEquippingMonotonicValue) {
+		if(currentMagicVarBit <= lastEquippingMonotonicValue) {
 			return;
 		}
 		lastEquippingMonotonicValue = currentMagicVarBit;
@@ -85,7 +89,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 		// This windowing safe guards of from late swaps inside a tick, if we have already rendered the tick
 		// then we shouldn't perform another attack.
 		boolean preAttackWindow = attackState == AttackState.DELAYED_FIRST_TICK && renderedState != attackState;
-		if (preAttackWindow) {
+		if(preAttackWindow) {
 			// "Perform an attack" this is overwrites the last attack since we now know the user swapped
 			// "Something" this tick, the equipped weapon detection will pick up specific weapon swaps. Even
 			// swapping more than 1 weapon inside a single tick.
@@ -111,7 +115,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	}
 
 	private int getItemIdFromContainer(ItemContainer container, int slotID) {
-		if (container == null) {
+		if(container == null) {
 			return -1;
 		}
 		final Item item = container.getItem(slotID);
@@ -132,7 +136,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 		final int currentEquippedWeaponTypeVarbit = client.getVarbitValue(Varbits.EQUIPPED_WEAPON_TYPE);
 		AttackStyle[] attackStyles = WeaponType.getWeaponType(currentEquippedWeaponTypeVarbit).getAttackStyles();
 
-		if (currentAttackStyleVarbit < attackStyles.length) {
+		if(currentAttackStyleVarbit < attackStyles.length) {
 			return attackStyles[currentAttackStyleVarbit];
 		}
 
@@ -140,7 +144,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	}
 
 	private int applyRangedAndMeleeRelicSpeed(int baseSpeed) {
-		if (baseSpeed >= 4) {
+		if(baseSpeed >= 4) {
 			return baseSpeed / 2;
 		} else {
 			return (baseSpeed + 1) / 2;
@@ -161,26 +165,26 @@ public class AttackTimerMetronomePlugin extends Plugin {
 
 	private int adjustSpeedForLeaguesIfApplicable(int baseSpeed) {
 		int leagueRelicVarbit = 0;
-		if (client.getWorldType().contains(WorldType.SEASONAL)) {
+		if(client.getWorldType().contains(WorldType.SEASONAL)) {
 			leagueRelicVarbit = client.getVarbitValue(Varbits.LEAGUE_RELIC_4);
 		}
 
 		AttackStyle attackStyle = getAttackStyle();
 
-		switch (leagueRelicVarbit) {
+		switch(leagueRelicVarbit) {
 			case 0:
 				// No league relic active - player does not have t4 relic or is not in leagues.
 				return baseSpeed;
 			case 1:
 				// Archer's Embrace (ranged).
-				if (attackStyle == AttackStyle.RANGING ||
+				if(attackStyle == AttackStyle.RANGING ||
 						attackStyle == AttackStyle.LONGRANGE) {
 					return applyRangedAndMeleeRelicSpeed(baseSpeed);
 				}
 				break;
 			case 2:
 				// Brawler's Resolve (melee)
-				if (attackStyle == AttackStyle.ACCURATE ||
+				if(attackStyle == AttackStyle.ACCURATE ||
 						attackStyle == AttackStyle.AGGRESSIVE ||
 						attackStyle == AttackStyle.CONTROLLED ||
 						attackStyle == AttackStyle.DEFENSIVE) {
@@ -189,7 +193,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 				break;
 			case 3:
 				// Superior Sorcerer (magic)
-				if (attackStyle == AttackStyle.CASTING ||
+				if(attackStyle == AttackStyle.CASTING ||
 						attackStyle == AttackStyle.DEFENSIVE_CASTING) {
 					return 2;
 				}
@@ -211,43 +215,43 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	// pre-coded matches, and then the second set of matches against the known sound id of the spell (which
 	// unfortunately doesn't work if the player has them disabled).
 	private boolean matchesSpellbook(AnimationData curAnimation) {
-		if (curAnimation != null && curAnimation.matchesSpellbook(currentSpellBook)) {
+		if(curAnimation != null && curAnimation.matchesSpellbook(currentSpellBook)) {
 			return true;
 		}
-		if (client.getTickCount() == soundEffectTick) {
+		if(client.getTickCount() == soundEffectTick) {
 			return CastingSoundData.getSpellBookFromId(soundEffectId) == currentSpellBook;
 		}
 		return false;
 	}
 
 	private int getWeaponSpeed(int weaponId, PoweredStaves stave, AnimationData curAnimation, boolean matchesSpellbook) {
-		if (stave != null && stave.getAnimations().contains(curAnimation)) {
+		if(stave != null && stave.getAnimations().contains(curAnimation)) {
 			// We are currently dealing with a staves in which case we can make decisions based on the
 			// spellbook flag. We can only improve this by using a deprecated API to check the projectile
 			// matches the stave rather than a manual spell, but this is good enough for now.
 			return adjustSpeedForLeaguesIfApplicable(4);
 		}
 
-		if (matchesSpellbook && isManualCasting(curAnimation)) {
+		if(matchesSpellbook && isManualCasting(curAnimation)) {
 			// You can cast with anything equipped in which case we shouldn't look to invent for speed, it will instead always be 5.
 			return adjustSpeedForLeaguesIfApplicable(5);
 		}
 
 		ItemStats weaponStats = getWeaponStats(weaponId);
-		if (weaponStats == null) {
+		if(weaponStats == null) {
 			return adjustSpeedForLeaguesIfApplicable(4); // Assume barehanded == 4t
 		}
 		ItemEquipmentStats e = weaponStats.getEquipment();
 		int speed = e.getAspeed();
 
-		if (getAttackStyle() == AttackStyle.RANGING && client.getVarpValue(VarPlayer.ATTACK_STYLE) == 1) { // Hack for index 1 => rapid
+		if(getAttackStyle() == AttackStyle.RANGING && client.getVarpValue(VarPlayer.ATTACK_STYLE) == 1) { // Hack for index 1 => rapid
 			speed -= 1; // Assume ranging == rapid. Also works for salamanders which attack 1 tick faster when using the ranged style
 		}
-		if (getBloodMoonProc()) { // Similar hack as rapid, blood moon saves a tick when it proc's
+		if(getBloodMoonProc()) { // Similar hack as rapid, blood moon saves a tick when it proc's
 			speed -= 1;
 		}
 
-		if (isRedKerisSpecAnimation(curAnimation)) {
+		if(isRedKerisSpecAnimation(curAnimation)) {
 			speed += 4; // If the spec missed we are just wrong by 4-ticks IDC, requires spec tracking code similar to the spec plugin if we want this to be correct when we miss.
 		}
 
@@ -256,7 +260,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 
 	private boolean isPlayerAttacking() {
 		int animationId = client.getLocalPlayer().getAnimation();
-		if (AnimationData.isBlockListAnimation(animationId)) {
+		if(AnimationData.isBlockListAnimation(animationId)) {
 			return false;
 		}
 
@@ -267,7 +271,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 		// proof to new weapons which don't need custom code and the weapon
 		// stats are enough.
 		Actor target = client.getLocalPlayer().getInteracting();
-		if (target != null && (target instanceof NPC)) {
+		if(target != null && (target instanceof NPC)) {
 			final NPC npc = (NPC) target;
 			boolean containsAttackOption = Arrays.stream(npc.getComposition().getActions()).anyMatch("Attack"::equals);
 			Integer health = npcManager.getHealth(npc.getId());
@@ -277,12 +281,12 @@ public class AttackTimerMetronomePlugin extends Plugin {
 			// animation which isn't running/walking/etc
 			return attackingNPC && notWalking;
 		}
-		if (target != null && (target instanceof Player)) {
+		if(target != null && (target instanceof Player)) {
 			return notWalking;
 		}
 
 		AnimationData fromId = AnimationData.fromId(animationId);
-		if (fromId == AnimationData.RANGED_BLOWPIPE || fromId == AnimationData.RANGED_BLAZING_BLOWPIPE) {
+		if(fromId == AnimationData.RANGED_BLOWPIPE || fromId == AnimationData.RANGED_BLAZING_BLOWPIPE) {
 			// These two animations are the only ones which exceed the duration of their attack cooldown (when
 			// on rapid), so in this case DO NOT fall back the animation as it is un-reliable.
 			return false;
@@ -298,7 +302,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 		// to detect this type of attack as a cast, only sound is an indication that the player is on
 		// cooldown, melee attacks, etc will trigger an animation overwriting the last frame of the blowpipe's
 		// idle animation.
-		boolean castingFromSound = client.getTickCount() == soundEffectTick ? CastingSoundData.isCastingSound(soundEffectId) : false;
+		boolean castingFromSound = client.getTickCount() == soundEffectTick && CastingSoundData.isCastingSound(soundEffectId);
 		boolean castingFromAnimation = AnimationData.isManualCasting(curId);
 		return castingFromSound || castingFromAnimation;
 	}
@@ -326,13 +330,13 @@ public class AttackTimerMetronomePlugin extends Plugin {
 
 	@Subscribe
 	public void onChatMessage(ChatMessage event) {
-		if (event.getType() != ChatMessageType.SPAM) {
+		if(event.getType() != ChatMessageType.SPAM) {
 			return;
 		}
 
 		final String message = event.getMessage();
 
-		if (message.startsWith("You eat") ||
+		if(message.startsWith("You eat") ||
 				message.startsWith("You drink the wine")) {
 			int KARAMBWAN_ATTACK_DELAY_TICKS = 2;
 			int DEFAULT_FOOD_ATTACK_DELAY_TICKS = 3;
@@ -340,7 +344,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 					KARAMBWAN_ATTACK_DELAY_TICKS :
 					DEFAULT_FOOD_ATTACK_DELAY_TICKS;
 
-			if (attackState == AttackState.DELAYED) {
+			if(attackState == AttackState.DELAYED) {
 				attackDelayHoldoffTicks += attackDelay;
 			}
 		}
@@ -355,12 +359,12 @@ public class AttackTimerMetronomePlugin extends Plugin {
 
 		Player p = client.getLocalPlayer();
 
-		if (source.equals(p) && (target instanceof NPC)) {
-			switch (attackState) {
+		if(source.equals(p) && (target instanceof NPC)) {
+			switch(attackState) {
 				case NOT_ATTACKING:
 					// If not previously attacking, this action can result in a queued attack or
 					// an instant attack. If its queued, don't trigger the cooldown yet.
-					if (isPlayerAttacking()) {
+					if(isPlayerAttacking()) {
 						performAttack();
 					}
 					break;
@@ -376,9 +380,9 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	@Subscribe
 	public void onGameTick(GameTick tick) {
 		boolean isAttacking = isPlayerAttacking();
-		switch (attackState) {
+		switch(attackState) {
 			case NOT_ATTACKING:
-				if (isAttacking) {
+				if(isAttacking) {
 					performAttack(); // Sets state to DELAYED_FIRST_TICK.
 				} else {
 					uiUnshowDebounceTickCount--;
@@ -389,8 +393,8 @@ public class AttackTimerMetronomePlugin extends Plugin {
 				attackState = AttackState.DELAYED;
 				// fallthrough
 			case DELAYED:
-				if (attackDelayHoldoffTicks <= 0) { // Eligible for a new attack
-					if (isAttacking) {
+				if(attackDelayHoldoffTicks <= 0) { // Eligible for a new attack
+					if(isAttacking) {
 						performAttack();
 					} else {
 						attackState = AttackState.NOT_ATTACKING;
@@ -403,7 +407,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
-		if (event.getGroup().equals("attacktimermetronome")) {
+		if(event.getGroup().equals("attacktimermetronome")) {
 			attackDelayHoldoffTicks = 0;
 		}
 	}
