@@ -1,16 +1,27 @@
 package com.lucidplugins.api.utils;
 
+//import ethanApiPlugin.collections.ETileItem;
+//import ethanApiPlugin.collections.Inventory;
+//import ethanApiPlugin.collections.TileItems;
+//import ethanApiPlugin.EthanApiPlugin;
+//import packets.*;
+import ethanApiPlugin.EthanApiPlugin;
 import ethanApiPlugin.collections.ETileItem;
 import ethanApiPlugin.collections.Inventory;
 import ethanApiPlugin.collections.TileItems;
-import ethanApiPlugin.EthanApiPlugin;
-import packets.*;
 import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.RuneLite;
+import packets.MousePackets;
+import packets.MovementPackets;
+import packets.NPCPackets;
+import packets.ObjectPackets;
+import packets.PlayerPackets;
+import packets.TileItemPackets;
+import packets.WidgetPackets;
 
 import javax.swing.*;
 import java.util.*;
@@ -156,10 +167,10 @@ public class InteractionUtils
         widgetInteract(parentId, childId, -1, action);
     }
 
-    public static void queueResumePause(int parentId, int childId, int subchildId)
-    {
-        WidgetPackets.queueResumePause(parentId << 16 | childId, subchildId);
-    }
+//    public static void queueResumePause(int parentId, int childId, int subchildId)
+//    {
+//        WidgetPackets.queueResumePause(parentId << 16 | childId, subchildId);
+//    }
 
     public static void useItemOnWallObject(Item item, TileObject object)
     {

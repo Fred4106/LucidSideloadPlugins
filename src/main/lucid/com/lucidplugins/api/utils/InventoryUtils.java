@@ -1,19 +1,18 @@
 package com.lucidplugins.api.utils;
 
 
-//import collections.Inventory;
-//import com.example.InteractionApi.InventoryInteraction;
+
+import com.lucidplugins.api.item.SlottedItem;
 import ethanApiPlugin.collections.Inventory;
 import interactionApi.InventoryInteraction;
-import packets.MousePackets;
-import packets.WidgetPackets;
-import com.lucidplugins.api.item.SlottedItem;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
+import packets.MousePackets;
+import packets.WidgetPackets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -455,14 +454,14 @@ public class InventoryUtils
         return count;
     }
 
-    public static void interactSlot(int slot, String action)
-    {
-        SlottedItem item = getItemInSlot(slot);
-        if (item == null)
-        {
-            return;
-        }
-
-        InventoryInteraction.useItemIndex(slot, action);
-    }
+//    public static void interactSlot(int slot, String action)
+//    {
+//        SlottedItem item = getItemInSlot(slot);
+//        if (item == null)
+//        {
+//            return;
+//        }
+//
+//        InventoryInteraction.useItemIndex(slot, action);
+//    }
 }

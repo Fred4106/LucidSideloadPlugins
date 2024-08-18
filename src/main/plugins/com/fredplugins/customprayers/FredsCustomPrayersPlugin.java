@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.lucidplugins.api.item.SlottedItem;
 import com.lucidplugins.api.utils.CombatUtils;
 import com.lucidplugins.api.utils.EquipmentUtils;
@@ -53,7 +54,7 @@ import java.util.stream.Collectors;
 
 import static net.runelite.client.RuneLite.RUNELITE_DIR;
 
-@Extension
+//@Extension
 @PluginDescriptor(
 		name = "<html><font color=\"#32C8CD\">Freds</font> Custom Prayers</html>",
 		description = "Set up auto prayers based on various event IDs",
@@ -61,6 +62,7 @@ import static net.runelite.client.RuneLite.RUNELITE_DIR;
 		tags = {"prayer", "swap"},
 		conflicts = {"<html><font color=\"#32CD32\">Lucid </font>Custom Prayers</html>"}
 )
+@Singleton
 public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 
 	@Inject

@@ -1,7 +1,7 @@
 package com.lucidplugins.api.utils;
 
-import packets.MousePackets;
-import packets.WidgetPackets;
+//import packets.MousePackets;
+//import packets.WidgetPackets;
 import net.runelite.api.Client;
 import net.runelite.api.FontTypeFace;
 import net.runelite.api.Point;
@@ -33,11 +33,11 @@ public class EquipmentItemWidget implements Widget
         this.index = index;
     }
 
-
-    public void interact(String... actions) {
-        MousePackets.queueClickPacket();
-        WidgetPackets.queueWidgetAction(client.getWidget(packedId), actions);
-    }
+//
+//    public void interact(String... actions) {
+//        MousePackets.queueClickPacket();
+//        WidgetPackets.queueWidgetAction(client.getWidget(packedId), actions);
+//    }
 
     public int getEquipmentItemId() {
         return equipmentItemId;

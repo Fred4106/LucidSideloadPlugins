@@ -62,7 +62,6 @@ import org.pf4j.Extension;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Extension
 @PluginDescriptor(
     name = "<html><font color=\"#32C8CD\">Freds</font> Demonic Gorillas</html>",
     enabledByDefault = false,

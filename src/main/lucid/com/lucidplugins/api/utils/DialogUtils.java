@@ -1,6 +1,6 @@
 package com.lucidplugins.api.utils;
 
-import packets.WidgetPackets;
+//import packets.WidgetPackets;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.RuneLite;
@@ -14,10 +14,10 @@ public class DialogUtils
     private static List<Integer> continueParentIds = List.of(193, 229, 229, 231, 217, 11);
     private static List<Integer> continueChildIds = List.of(   0,   0,   2,   5,   5,  4);
 
-    public static void queueResumePauseDialog(int widgetId, int childId)
-    {
-        WidgetPackets.queueResumePause(widgetId, childId);
-    }
+//    public static void queueResumePauseDialog(int widgetId, int childId)
+//    {
+//        WidgetPackets.queueResumePause(widgetId, childId);
+//    }
 
     public static List<DialogOption> getOptions()
     {
@@ -58,28 +58,28 @@ public class DialogUtils
         return false;
     }
 
-    public static void sendContinueDialog()
-    {
-        for (int i = 0; i < continueParentIds.size(); i++)
-        {
-            if (!InteractionUtils.isWidgetHidden(continueParentIds.get(i), continueChildIds.get(i)))
-            {
-                queueResumePauseDialog(continueParentIds.get(i) << 16 | continueChildIds.get(i), -1);
-            }
-        }
-    }
-
-    public static void selectOptionIndex(int index)
-    {
-        Widget widget = client.getWidget(219, 1);
-        if (widget == null || widget.isSelfHidden())
-        {
-            return;
-        }
-
-        queueResumePauseDialog(219 << 16 | 1, index);
-
-    }
+//    public static void sendContinueDialog()
+//    {
+//        for (int i = 0; i < continueParentIds.size(); i++)
+//        {
+//            if (!InteractionUtils.isWidgetHidden(continueParentIds.get(i), continueChildIds.get(i)))
+//            {
+//                queueResumePauseDialog(continueParentIds.get(i) << 16 | continueChildIds.get(i), -1);
+//            }
+//        }
+//    }
+//
+//    public static void selectOptionIndex(int index)
+//    {
+//        Widget widget = client.getWidget(219, 1);
+//        if (widget == null || widget.isSelfHidden())
+//        {
+//            return;
+//        }
+//
+//        queueResumePauseDialog(219 << 16 | 1, index);
+//
+//    }
 
     public static int getOptionIndex(String option)
     {

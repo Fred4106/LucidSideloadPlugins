@@ -1,6 +1,9 @@
 package com.fredplugins.attacktimer;
 
 import com.google.inject.Provides;
+import com.lucidplugins.api.utils.CombatUtils;
+import interactionApi.PrayerInteraction;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
@@ -20,22 +23,25 @@ import net.runelite.http.api.item.ItemEquipmentStats;
 import net.runelite.http.api.item.ItemStats;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Optional;
 
 @PluginDescriptor(
-		name = "Attack Timer Metronome",
+		name = "<html><font color=\"#32C8CD\">Freds</font> Attack Timer</html>",
 		description = "Shows a visual cue on an overlay every game tick to help timing based activities",
-		tags = {"timers", "overlays", "tick", "skilling"}
+		tags = {"timers", "overlays", "tick", "skilling", "fred4106"}
 )
+@Singleton
+@Slf4j
 public class AttackTimerMetronomePlugin extends Plugin {
 	public static final int SALAMANDER_SET_ANIM_ID = 952; // Used by all 4 types of salamander https://oldschool.runescape.wiki/w/Salamander
 	public static final int EQUIPPING_MONOTONIC = 384; // From empirical testing this clientint seems to always increase whenever the player equips an item
 	static final int BloodMoonSetAnimId = 2792;
 	private static final int TARGET_DUMMY_ID = 10507;
-	final int ATTACK_DELAY_NONE = 0;
 	public int tickPeriod = 0;
-	public int attackDelayHoldoffTicks = ATTACK_DELAY_NONE;
+	public int attackDelayHoldoffTicks = 0;
 	public AttackState attackState = AttackState.NOT_ATTACKING;
 	// The state of the renderer, will lag a few cycles behind the plugin's state. "cycles" in this comment
 	// refers to the client.getGameCycle() method, a cycle occurs every 20ms, meaning 30 of them occur per
@@ -61,7 +67,6 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	@Inject
 	private NPCManager npcManager;
 	private int uiUnshowDebounceTickCount = 0;
-	private final int uiUnshowDebounceTicksMax = 1;
 	private Spellbook currentSpellBook = Spellbook.STANDARD;
 	private int lastEquippingMonotonicValue = -1;
 	private int soundEffectTick = -1;
@@ -311,11 +316,11 @@ public class AttackTimerMetronomePlugin extends Plugin {
 		attackState = AttackState.DELAYED_FIRST_TICK;
 		setAttackDelay();
 		tickPeriod = attackDelayHoldoffTicks;
-		uiUnshowDebounceTickCount = uiUnshowDebounceTicksMax;
+		uiUnshowDebounceTickCount = 1;
 	}
 
 	public int getTicksUntilNextAttack() {
-		return 1 + attackDelayHoldoffTicks;
+		return 1 + Math.max(attackDelayHoldoffTicks, 0);
 	}
 
 	public int getWeaponPeriod() {
@@ -377,7 +382,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 		}
 	}
 
-	@Subscribe
+	@Subscribe(priority = 9000)
 	public void onGameTick(GameTick tick) {
 		boolean isAttacking = isPlayerAttacking();
 		switch(attackState) {
@@ -401,13 +406,31 @@ public class AttackTimerMetronomePlugin extends Plugin {
 					}
 				}
 		}
-
 		attackDelayHoldoffTicks--;
+
+//		if(config.enablePrayerFlicking()) {
+////			Optional<Boolean> targetState = Optional.empty();
+//			boolean isPrayerActive = client.isPrayerActive(config.attackPrayer());
+//
+//			log.info("State: attackState={}, isAttacking={}, attackDelayHoldoffTicks={}, isAttackCooldownPending()={}, getTicksUntilNextAttack()={}, uiUnshowDebounceTickCount={}", attackState, isAttacking, attackDelayHoldoffTicks, isAttackCooldownPending(), getTicksUntilNextAttack(), uiUnshowDebounceTickCount);
+//			if ((getTicksUntilNextAttack() > config.prayerOnAtTicksRemaining()/* || attackState == AttackState.NOT_ATTACKING*/) && isPrayerActive) {
+//				log.info("Disabling {} with {} ticks till next attack.", config.attackPrayer(), getTicksUntilNextAttack());
+//				PrayerInteraction.setPrayerState(config.attackPrayer(), false);
+//			} else if (getTicksUntilNextAttack() <= config.prayerOnAtTicksRemaining()  && !isPrayerActive) {
+//				log.info("Enabling {} with {} ticks till next attack.", config.attackPrayer(), getTicksUntilNextAttack());
+//				PrayerInteraction.setPrayerState(config.attackPrayer(), true);
+//			}
+//
+////			targetState.ifPresent(ts -> {
+////				log.info("Settings {} with state {} to {} with {} ticks till next attack.", config.attackPrayer(), isPrayerActive,  ts, getTicksUntilNextAttack());
+////				PrayerInteraction.setPrayerState(config.attackPrayer(), ts);
+////			});
+//		}
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
-		if(event.getGroup().equals("attacktimermetronome")) {
+		if(event.getGroup().equals("Fredsattacktimermetronome")) {
 			attackDelayHoldoffTicks = 0;
 		}
 	}

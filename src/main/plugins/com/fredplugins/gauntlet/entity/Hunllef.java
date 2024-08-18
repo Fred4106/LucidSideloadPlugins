@@ -1,7 +1,9 @@
 package com.fredplugins.gauntlet.entity;
 
+import ethanApiPlugin.EthanApiPlugin;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.runelite.api.HeadIcon;
 import net.runelite.api.NPC;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
@@ -10,6 +12,7 @@ import net.runelite.client.util.ImageUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Optional;
 
 public class Hunllef
 {
@@ -126,5 +129,23 @@ public class Hunllef
 
         private final Color color;
         private final Prayer prayer;
+    }
+
+    private static String toStringPart(String varname, Object var) {
+        return "\"" + varname + "\"=" + var.toString();
+    }
+    
+    public Optional<HeadIcon> getHeadIcon() {
+        return Optional.ofNullable(npc).map(EthanApiPlugin::getHeadIcon);
+    }
+    @Override
+    public String toString() {
+        return "Hunllef(" +
+            toStringPart("npc", getNpc()) + ", " +
+            toStringPart("headIcon", getHeadIcon()) + ", " +
+            toStringPart("attackPhase", getAttackPhase()) + ", " + 
+            toStringPart("attackCount", getAttackCount()) + ", " + 
+            toStringPart("playerAttackCount", getPlayerAttackCount()) + ", " + 
+            toStringPart("ticksUntilNextAttack", getTicksUntilNextAttack()) + ")";
     }
 }

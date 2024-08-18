@@ -1,6 +1,6 @@
 package com.fredplugins.layouthelper;
 
-import ethanApiPlugin.EthanApiPlugin;
+//import ethanApiPlugin.EthanApiPlugin;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
@@ -26,7 +26,7 @@ import javax.inject.Singleton;
         description = "Helps manage layout of widgets",
         tags = {"layout", "widget", "interface", "stretched", "helper", "fred4106"}
 )
-@PluginDependency(EthanApiPlugin.class)
+//@PluginDependency(EthanApiPlugin.class)
 @Singleton
 @Slf4j
 public class LayoutHelper extends Plugin {

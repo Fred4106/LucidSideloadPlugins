@@ -63,6 +63,7 @@ public class OverlayGauntlet extends Overlay
 
         renderResources(graphics2D);
 //        renderNextRoom(graphics2D);
+        renderDemibossRooms(graphics2D);
         renderUtilities();
         renderDemibosses();
         renderStrongNpcs();
@@ -120,6 +121,7 @@ public class OverlayGauntlet extends Overlay
             }
         }
     }
+
     private void renderGraphicsObjects(Graphics2D graphics, LocalPoint localPointPlayer, Color color, GameObject object, String text)
     {
         if(object == null) {
@@ -140,23 +142,43 @@ public class OverlayGauntlet extends Overlay
             {
                 OverlayUtil.renderPolygon(graphics, poly, Color.MAGENTA);
             }
-            ObjectComposition comp = client.getObjectDefinition(object.getId());
-            final ObjectComposition impostor = (comp != null && comp.getImpostorIds() != null) ? comp.getImpostor() : null;
-            String infoString1 = (comp != null) ? "("  + comp.getId() + "|" + comp.getName() + ")" : "null";
-            String infoString2 =  (impostor != null) ? "["  + impostor.getId() + "|" + impostor.getName() + "]" : "null";
-            String infoString = text + ": " + "comp: " + infoString1 + ", imposter: " + infoString2;
-            Point textLocation = Perspective.getCanvasTextLocation(
+            if(text != null) {
+                ObjectComposition comp = client.getObjectDefinition(object.getId());
+                final ObjectComposition impostor = (comp != null && comp.getImpostorIds() != null) ? comp.getImpostor() : null;
+                String infoString1 = (comp != null) ? "(" + comp.getId() + "|" + comp.getName() + ")" : "null";
+                String infoString2 = (impostor != null) ? "[" + impostor.getId() + "|" + impostor.getName() + "]" : "null";
+                String infoString = text + ": " + "comp: " + infoString1 + ", imposter: " + infoString2;
+                Point textLocation = Perspective.getCanvasTextLocation(
                     client, graphics, lp,
                     infoString, 0);
-            if (textLocation != null)
-            {
-                OverlayUtil.renderTextLocation(graphics, textLocation, infoString, color);
+                if(textLocation != null) {
+                    OverlayUtil.renderTextLocation(graphics, textLocation, infoString, color);
+                }
             }
         }
     }
 
     private static final Font FONT = FontManager.getRunescapeFont().deriveFont(Font.BOLD, 14);
-
+    private void renderDemibossRooms(final Graphics2D graphics2D)
+    {
+//        Font lastFont = graphics2D.getFont();
+//        graphics2D.setFont(FONT);
+        final LocalPoint localPointPlayer = player.getLocalLocation();
+//        GameObject x1 = plugin.findNodeForUnopenedRoom(plugin.getInstanceGrid().getNextUnlitRoomFirstPass());
+//        GameObject x2 = plugin.findNodeForUnopenedRoom(plugin.getInstanceGrid().getNextUnlitRoomSecondPass());
+//        GameObject x3 = ;
+        plugin.getInstanceGrid().getDemibossRooms().forEach(room -> {
+            plugin.findNodeForUnopenedRoom(room).forEach(node -> {
+                renderGraphicsObjects(graphics2D, localPointPlayer, Color.YELLOW, node, null);
+            });
+        });
+//        GauntletRoom r2 = plugin.getInstanceGrid().getNextUnlitRoomSecondPass();
+//        GauntletRoom r3 = plugin.getInstanceGrid().getNextUnlitRoomLastPass();
+//        if(r1 != null) renderGraphicsObjects(graphics2D, localPointPlayer, Color.WHITE, plugin.findNodeForUnopenedRoom(r1), "first");
+//        if(r2 != null && r2 != r1) renderGraphicsObjects(graphics2D, localPointPlayer, Color.GREEN, plugin.findNodeForUnopenedRoom(r2), "second");
+//        if(r3 != null && r3 != r1 && r3 != r2)
+//        graphics2D.setFont(lastFont);
+    }
     private void renderNextRoom(final Graphics2D graphics2D)
     {
         Font lastFont = graphics2D.getFont();
@@ -168,9 +190,9 @@ public class OverlayGauntlet extends Overlay
         GauntletRoom r1 = plugin.getInstanceGrid().getNextUnlitRoomFirstPass();
         GauntletRoom r2 = plugin.getInstanceGrid().getNextUnlitRoomSecondPass();
         GauntletRoom r3 = plugin.getInstanceGrid().getNextUnlitRoomLastPass();
-        if(r1 != null) renderGraphicsObjects(graphics2D, localPointPlayer, Color.WHITE, plugin.findNodeForUnopenedRoom(r1), "first");
-        if(r2 != null && r2 != r1) renderGraphicsObjects(graphics2D, localPointPlayer, Color.GREEN, plugin.findNodeForUnopenedRoom(r2), "second");
-        if(r3 != null && r3 != r1 && r3 != r2) renderGraphicsObjects(graphics2D, localPointPlayer, Color.BLUE, plugin.findNodeForUnopenedRoom(r3), "last");
+        if(r1 != null) renderGraphicsObjects(graphics2D, localPointPlayer, Color.WHITE, plugin.findNodeForUnopenedRoom(r1).stream().findFirst().orElse(null), "first");
+        if(r2 != null && r2 != r1) renderGraphicsObjects(graphics2D, localPointPlayer, Color.GREEN, plugin.findNodeForUnopenedRoom(r2).stream().findFirst().orElse(null), "second");
+        if(r3 != null && r3 != r1 && r3 != r2) renderGraphicsObjects(graphics2D, localPointPlayer, Color.BLUE, plugin.findNodeForUnopenedRoom(r3).stream().findFirst().orElse(null), "last");
         graphics2D.setFont(lastFont);
     }
     private void renderUtilities()

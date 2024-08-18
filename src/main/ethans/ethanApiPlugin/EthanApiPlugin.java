@@ -35,6 +35,7 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
+import packetUtils.ObfuscatedNames;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -118,7 +119,7 @@ public class EthanApiPlugin extends Plugin {
     public static SkullIcon getSkullIcon(Player player) {
         Field skullField = null;
         try {
-            skullField = player.getClass().getDeclaredField("ag");
+            skullField = player.getClass().getDeclaredField(ObfuscatedNames.skullIconField);
             skullField.setAccessible(true);
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
@@ -126,7 +127,7 @@ public class EthanApiPlugin extends Plugin {
         }
         int var1 = -1;
         try {
-            var1 = skullField.getInt(player) * -227316761;
+            var1 = skullField.getInt(player) * ObfuscatedNames.skullIconMultiplier;
             skullField.setAccessible(false);
         } catch (IllegalAccessException | NullPointerException e) {
             e.printStackTrace();
@@ -188,7 +189,7 @@ public class EthanApiPlugin extends Plugin {
                 }
                 int value = declaredField.getInt(npc);
                 declaredField.setInt(npc, 4795789);
-                if (npc.getAnimation() == -614178723 * 4795789) {
+                if (npc.getAnimation() == ObfuscatedNames.getAnimationMultiplier * 4795789) {
                     animationField = declaredField.getName();
                     declaredField.setInt(npc, value);
                     declaredField.setAccessible(false);
@@ -203,7 +204,7 @@ public class EthanApiPlugin extends Plugin {
         }
         Field animation = npc.getClass().getSuperclass().getDeclaredField(animationField);
         animation.setAccessible(true);
-        int anim = animation.getInt(npc) * -614178723;
+        int anim = animation.getInt(npc) * ObfuscatedNames.getAnimationMultiplier;
         animation.setAccessible(false);
         return anim;
     }
@@ -228,14 +229,14 @@ public class EthanApiPlugin extends Plugin {
 //    }
     @SneakyThrows
     public static HeadIcon getHeadIcon(NPC npc) {
-        Field vi = npc.getClass().getDeclaredField("ap");
+        Field vi = npc.getClass().getDeclaredField("ao");
         vi.setAccessible(true);
         Object viObj = vi.get(npc);
         if (viObj == null) {
             vi.setAccessible(false);
             return getOldHeadIcon(npc);
         }
-        Field adField = viObj.getClass().getDeclaredField("ad");
+        Field adField = viObj.getClass().getDeclaredField("ay");
         adField.setAccessible(true);
         short[] ad = (short[]) adField.get(viObj);
         adField.setAccessible(false);
@@ -1305,14 +1306,15 @@ public class EthanApiPlugin extends Plugin {
     }
     @Subscribe(priority = 10000)
     public void onGameTick(GameTick e) {
-        log.info("Ethans GameTick");
-//        TileObjects.onGameTick(e);
-//        Players.onGameTick(e);
+//        log.info("Ethans GameTick");
+        TileObjects.onGameTick(client);
+        Players.onGameTick(client);
+        NPCs.onGameTick(client);
     }
-
+    
     @Subscribe
     public void onGameStateChanged(GameStateChanged gameStateChanged) {
-        log.info("Ethans GameStateChanged");
+//        log.info("Ethans GameStateChanged");
         ShopInventory.onGameStateChanged(gameStateChanged);
         Inventory.onGameStateChanged(gameStateChanged);
         Bank.onGameStateChanged(gameStateChanged);

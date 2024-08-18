@@ -1,6 +1,7 @@
 package com.fredplugins.gauntlet;
 
-import ethanApiPlugin.EthanApiPlugin;
+//import ethanApiPlugin.EthanApiPlugin;
+import com.fredplugins.attacktimer.AttackTimerMetronomePlugin;
 import com.fredplugins.common.ProjectileID;
 import com.fredplugins.gauntlet.entity.Missile;
 import com.fredplugins.gauntlet.overlay.OverlayGauntlet;
@@ -8,6 +9,8 @@ import com.google.inject.Provides;
 import com.lucidplugins.api.item.SlottedItem;
 import com.lucidplugins.api.utils.*;
 import com.fredplugins.gauntlet.resource.ResourceManager;
+import ethanApiPlugin.EthanApiPlugin;
+import interactionApi.PrayerInteraction;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +40,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Extension
 @PluginDescriptor(
         name = "<html><font color=\"#32C8CD\">Freds</font> Gauntlet</html>",
         enabledByDefault = false,
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
         tags = {"gauntlet"}
 )
 @PluginDependency(EthanApiPlugin.class)
+@PluginDependency(AttackTimerMetronomePlugin.class)
 @Singleton
 @Slf4j
 public class FredGauntletPlugin extends Plugin
@@ -66,7 +69,8 @@ public class FredGauntletPlugin extends Plugin
     public static final int HUNLLEF_STYLE_SWITCH_TO_MAGE = 8754;
     public static final int HUNLLEF_STYLE_SWITCH_TO_RANGE = 8755;
 
-    public static final int[] MELEE_WEAPONS = {ItemID.CRYSTAL_HALBERD_PERFECTED, ItemID.CORRUPTED_HALBERD_PERFECTED, ItemID.CRYSTAL_HALBERD_ATTUNED, ItemID.CORRUPTED_HALBERD_ATTUNED, ItemID.CRYSTAL_HALBERD_BASIC, ItemID.CORRUPTED_HALBERD_BASIC};
+    public static final int[] MELEE_WEAPONS = {ItemID.CRYSTAL_HALBERD_PERFECTED, ItemID.CORRUPTED_HALBERD_PERFECTED, ItemID.CRYSTAL_HALBERD_ATTUNED, ItemID.CORRUPTED_HALBERD_ATTUNED, ItemID.CRYSTAL_HALBERD_BASIC, ItemID.CORRUPTED_HALBERD_BASIC, ItemID.CRYSTAL_SCEPTRE, ItemID.CORRUPTED_SCEPTRE};
+    public static final int[] MELEE_WEAPONS2 = {ItemID.CRYSTAL_SCEPTRE, ItemID.CORRUPTED_SCEPTRE};
     private static final int[] RANGE_WEAPONS = {ItemID.CRYSTAL_BOW_PERFECTED, ItemID.CORRUPTED_BOW_PERFECTED, ItemID.CRYSTAL_BOW_ATTUNED, ItemID.CORRUPTED_BOW_ATTUNED, ItemID.CRYSTAL_BOW_BASIC, ItemID.CORRUPTED_BOW_BASIC};
     private static final int[] MAGE_WEAPONS = {ItemID.CRYSTAL_STAFF_PERFECTED, ItemID.CORRUPTED_STAFF_PERFECTED, ItemID.CRYSTAL_STAFF_ATTUNED, ItemID.CORRUPTED_STAFF_ATTUNED, ItemID.CRYSTAL_STAFF_BASIC, ItemID.CORRUPTED_STAFF_BASIC};
 
@@ -151,6 +155,8 @@ public class FredGauntletPlugin extends Plugin
 
     private static final Set<Integer> NODES = Set.of(NullObjectID.NULL_36000, NullObjectID.NULL_36001, NullObjectID.NULL_36103, NullObjectID.NULL_36104);
 
+    @Inject
+    private AttackTimerMetronomePlugin attackTimerMetronomePlugin;
     @Inject
     private Client client;
 
@@ -364,6 +370,19 @@ public class FredGauntletPlugin extends Plugin
             instanceGrid.initialize();
         }
 
+        if (!inHunllef)
+        {
+            if ((attackTimerMetronomePlugin.getTicksUntilNextAttack() == attackTimerMetronomePlugin.getWeaponPeriod()|| attackTimerMetronomePlugin.attackState == AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING)) {
+                Optional.ofNullable(config.offenseMagicPrayer()).map(FredGauntletConfig.MagicPrayer::getPrayer).filter(x -> client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, false));
+                Optional.ofNullable(config.offenseRangePrayer()).map(FredGauntletConfig.RangedPrayer::getPrayer).filter(x -> client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, false));
+                Optional.ofNullable(config.offenseMeleePrayer()).map(FredGauntletConfig.MeleePrayer::getPrayer).filter(x -> client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, false));
+            }
+            if (attackTimerMetronomePlugin.getTicksUntilNextAttack() == 1 && attackTimerMetronomePlugin.attackState != AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING) {
+                Optional.ofNullable(getPrayerBasedOnWeapon()).filter(x -> !client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, true));
+            }
+            return;
+        }
+
         if (hunllef == null)
         {
             return;
@@ -388,15 +407,11 @@ public class FredGauntletPlugin extends Plugin
                 swapWeaponNormal();
             }
 
-            if ((hunllef.getPlayerAttackCount() == 6 || hunllef.getPlayerAttackCount() == 1) && config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.RANGED_5_1 || config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.MAGE_5_1)
+            if ((hunllef.getPlayerAttackCount() == 6 || hunllef.getPlayerAttackCount() == 1) && (config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.RANGED_5_1 || config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.MAGE_5_1))
             {
-                swapWeapon51(hunllef.getPlayerAttackCount(), EthanApiPlugin.getHeadIcon(hunllef.getNpc()));
+                log.info("Switch 5-1 {}", hunllef);
+                swapWeapon51(hunllef.getPlayerAttackCount(), hunllef.getHeadIcon().orElse(null));
             }
-        }
-
-        if (client.getTickCount() == removeWepTick)
-        {
-            EquipmentUtils.removeWepSlotItem();
         }
 
         boolean attacked = false;
@@ -433,11 +448,6 @@ public class FredGauntletPlugin extends Plugin
                     attacked = true;
                 }
             }
-        }
-
-        if (!inHunllef)
-        {
-            return;
         }
 
         if (config.autoDodge())
@@ -536,12 +546,12 @@ public class FredGauntletPlugin extends Plugin
         ObjectComposition objectComposition = client.getObjectDefinition(id);
         return objectComposition.getImpostorIds() == null ? objectComposition : objectComposition.getImpostor();
     }
-    public GameObject findNodeForUnopenedRoom(GauntletRoom room)
+    public List<GameObject> findNodeForUnopenedRoom(GauntletRoom room)
     {
         if(room == null) {
             return null;
         }
-        return  new GameObjectQuery().getGameObjectQuery(client).stream()
+        return new GameObjectQuery().getGameObjectQuery(client).stream()
                 .filter(gameObject ->
                 {
                     final boolean isAboveBy1 = gameObject.getWorldLocation().getY() == room.getBaseY() + 1;
@@ -557,7 +567,7 @@ public class FredGauntletPlugin extends Plugin
                             getObjectComposition(gameObject.getId()).getName().equals("Node");
                 }).sorted((x, y) -> {
                     return client.getLocalPlayer().getWorldLocation().distanceTo(x.getWorldLocation()) + client.getLocalPlayer().getWorldLocation().distanceTo(y.getWorldLocation());
-                }).findFirst().orElse(null);
+                }).collect(Collectors.toList());
     }
 
     private WorldPoint getClosestSafeTile()
@@ -1142,22 +1152,16 @@ public class FredGauntletPlugin extends Plugin
 
     private Prayer getPrayerBasedOnWeapon()
     {
-        if(!config.autoOffense()) {
-            return null;
-        }
-
-        if (EquipmentUtils.contains(RANGE_WEAPONS))
-        {
-            return config.offenseRangePrayer().getPrayer();
-        }
-
-        if (EquipmentUtils.contains(MAGE_WEAPONS))
-        {
-            return config.offenseMagicPrayer().getPrayer();
-        }
-        if (EquipmentUtils.contains(MELEE_WEAPONS))
-        {
-            return config.offenseMeleePrayer().getPrayer();
+        if(config.autoOffense()) {
+            if(EquipmentUtils.contains(RANGE_WEAPONS)) {
+                return config.offenseRangePrayer().getPrayer();
+            }
+            if(EquipmentUtils.contains(MAGE_WEAPONS)) {
+                return config.offenseMagicPrayer().getPrayer();
+            }
+            if(EquipmentUtils.contains(MELEE_WEAPONS) || EquipmentUtils.contains(MELEE_WEAPONS2)) {
+                return config.offenseMeleePrayer().getPrayer();
+            }
         }
         return null;
     }
@@ -1206,6 +1210,7 @@ public class FredGauntletPlugin extends Plugin
 
     private void swapWeapon51(int attackCount, HeadIcon current)
     {
+        assert(current != null);
         if (attackCount == 1)
         {
             if (current == HeadIcon.RANGED || current == HeadIcon.MAGIC)

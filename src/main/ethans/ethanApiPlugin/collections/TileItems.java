@@ -15,27 +15,9 @@ import java.util.List;
 @Singleton
 public class TileItems {
     static Client client = RuneLite.getInjector().getInstance(Client.class);
+    static List<ETileItem> tileItems = new ArrayList<>();
 
     public static TileItemQuery search() {
-        List<ETileItem> tileItems = new ArrayList<>();
-        for (Tile[] tiles : client.getTopLevelWorldView().getScene().getTiles()[client.getTopLevelWorldView().getPlane()]) {
-            if (tiles == null) {
-                continue;
-            }
-            for (Tile tile : tiles) {
-                if (tile == null) {
-                    continue;
-                }
-                if (tile.getGroundItems() != null) {
-                    for (TileItem groundItem : tile.getGroundItems()) {
-                        if (groundItem == null) {
-                            continue;
-                        }
-                        tileItems.add(new ETileItem(tile.getWorldLocation(), groundItem));
-                    }
-                }
-            }
-        }
         return new TileItemQuery(tileItems);
     }
 }

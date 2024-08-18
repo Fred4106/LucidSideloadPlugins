@@ -1,9 +1,13 @@
 package com.fredplugins.dt2;
 
-import ethanApiPlugin.collections.NPCs;
-import ethanApiPlugin.collections.TileObjects;
-import ethanApiPlugin.EthanApiPlugin;
+//import ethanApiPlugin.collections.NPCs;
+//import ethanApiPlugin.collections.TileObjects;
+//import ethanApiPlugin.EthanApiPlugin;
 import com.google.common.collect.ImmutableList;
+import com.lucidplugins.api.utils.GameObjectUtils;
+//import ethanApiPlugin.NpcUtils;
+import ethanApiPlugin.EthanApiPlugin;
+import ethanApiPlugin.collections.NPCs;
 import lombok.AccessLevel;
 import lombok.Getter;
 import net.runelite.api.*;
@@ -21,7 +25,6 @@ import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
-@Extension
 @PluginDescriptor(
         name = "<html><font color=\"#32C8CD\">Freds</font> DT2 Helper</html>",
         enabledByDefault = false,
@@ -53,7 +56,7 @@ public class Dt2HelperPlugin extends Plugin {
     private NPC forsakenAssassin;
 
     @Getter(AccessLevel.PACKAGE)
-    private List<TileObject> clouds = new ArrayList<TileObject>();;
+    private List<TileObject> clouds = new ArrayList<TileObject>();
 
 
     @Inject
@@ -72,7 +75,7 @@ public class Dt2HelperPlugin extends Plugin {
     @Override
     protected void startUp() throws Exception {
         super.startUp();
-        clouds = TileObjects.search().idInList(CLOUD_OBJECT_IDS).result();
+        clouds = GameObjectUtils.search().idInList(CLOUD_OBJECT_IDS).result();
         forsakenAssassin = NPCs.search().withId(FORSAKEN_ASSASSIN_ID).nearestToPlayer().orElse(null);
         overlayManager.add(overlay);
     }

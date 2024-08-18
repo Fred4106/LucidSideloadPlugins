@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -76,8 +77,11 @@ public class GauntletInstanceGrid
 
     private List<Point> secondRoundSearchPath;
 
+    private final List<Point> possibleDemiBossRooms = List.of(new Point(0, 2), new Point(0, 3), new Point(0, 4), new Point(2, 0),
+        new Point(3, 0), new Point(4, 0), new Point(6, 2), new Point(6, 3), new Point(6, 4), new Point(2, 6), new Point(3, 6), new Point(4, 6));
+
     private final List<Point> lastSearchFromGrid3_2 = List.of(new Point(2, 1), new Point(1, 1), new Point(1, 2), new Point(1, 3),
-            new Point(2, 3), new Point(2, 4), new Point(1, 4), new Point(3, 4), new Point(4, 4), new Point(4, 3), new Point(4, 2));
+        new Point(2, 3), new Point(2, 4), new Point(1, 4), new Point(3, 4), new Point(4, 4), new Point(4, 3), new Point(4, 2));
 
     private final List<Point> lastSearchFromGrid2_3 = List.of(new Point(1, 4), new Point(1, 5), new Point(2, 5), new Point(3, 5),
             new Point(3, 4), new Point(4, 4), new Point(4, 5), new Point(4, 3), new Point(4, 2), new Point(3, 2), new Point(2, 2));
@@ -225,6 +229,10 @@ public class GauntletInstanceGrid
             }
         }
         return null;
+    }
+    
+    public List<com.fredplugins.gauntlet.GauntletRoom> getDemibossRooms() {
+        return possibleDemiBossRooms.stream().flatMap(p -> Optional.ofNullable(getRoom(p.getX(), p.getY())).stream().filter(r -> !r.isLit())).collect(Collectors.toList());
     }
 
     public com.fredplugins.gauntlet.GauntletRoom getNextUnlitRoomLastPass()

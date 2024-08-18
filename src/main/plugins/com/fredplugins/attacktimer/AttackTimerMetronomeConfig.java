@@ -1,5 +1,7 @@
 package com.fredplugins.attacktimer;
 
+import com.fredplugins.gauntlet.FredGauntletConfig;
+import net.runelite.api.Prayer;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -8,21 +10,16 @@ import net.runelite.client.config.Range;
 
 import java.awt.*;
 
-@ConfigGroup("attacktimermetronome")
+@ConfigGroup("Fredsattacktimermetronome")
 public interface AttackTimerMetronomeConfig extends Config {
 	@ConfigSection(
 			name = "Attack Cooldown Tick Settings",
 			description = "Change attack tick cooldown settings",
-			position = 2
+			position = 1
 	)
 	String TickNumberSettings = "Attack Cooldown Tick Settings";
-	@ConfigSection(
-			name = "Attack Bar",
-			description = "Change the colors and number of colors to cycle through",
-			position = 7
-	)
-	String AttackBarSettings = "Attack Cooldown Bar Settings";
-	
+
+
 	@ConfigItem(
 			position = 1,
 			keyName = "showTick",
@@ -82,6 +79,13 @@ public interface AttackTimerMetronomeConfig extends Config {
 		return FontTypes.REGULAR;
 	}
 
+	@ConfigSection(
+			name = "Attack Bar",
+			description = "Change the colors and number of colors to cycle through",
+			position = 2
+	)
+	String AttackBarSettings = "Attack Cooldown Bar Settings";
+
 	@ConfigItem(
 			position = 1,
 			keyName = "attackBar",
@@ -136,5 +140,49 @@ public interface AttackTimerMetronomeConfig extends Config {
 	default boolean barDirection() {
 		return true;
 	}
+
+//	@ConfigSection(
+//			name = "Automation",
+//			description = "Automation settings",
+//			position = 3
+//	)
+//	String automationSettings = "auto";
+
+//	@ConfigItem(
+//			position = 1,
+//			keyName = "enablePrayerFlicking",
+//			name = "Enable Prayer Flicking",
+//			description = "Controls prayer flicking before attacks",
+//			section = automationSettings
+//	)
+//	default boolean enablePrayerFlicking() {
+//		return false;
+//	}
+//	@Range(
+//			min = 1,
+//			max = 4
+//	)
+//	@ConfigItem(
+//			position = 2,
+//			keyName = "prayerOnAtTicksRemaining",
+//			name = "Enable at Ticks Remaining",
+//			description = "Enable prayer when x ticks remaining till attack",
+//			section = automationSettings
+//	)
+//	default int prayerOnAtTicksRemaining() {
+//		return 1;
+//	}
+//
+//	@ConfigItem(
+//			name = "Attack Prayer",
+//			description = "Which prayer to use when attacking",
+//			position = 3,
+//			keyName = "attackPrayer",
+//			section = automationSettings
+//	)
+//	default Prayer attackPrayer()
+//	{
+//		return Prayer.PIETY;
+//	}
 }
 

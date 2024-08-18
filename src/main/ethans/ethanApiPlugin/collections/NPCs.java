@@ -13,10 +13,15 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class NPCs {
-    static Client client = RuneLite.getInjector().getInstance(Client.class);
+//    static Client client = RuneLite.getInjector().getInstance(Client.class);
     private static final List<NPC> npcList = new ArrayList<>();
 
     public static NPCQuery search() {
-        return new NPCQuery(client.getNpcs().stream().filter(n -> n != null && n.getId() != -1).collect(Collectors.toList()));
+        return new NPCQuery(npcList);
+    }
+    
+    public static void onGameTick(Client client) {
+        npcList.clear();
+        client.getTopLevelWorldView().npcs().forEach(npcList::add);
     }
 }

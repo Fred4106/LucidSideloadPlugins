@@ -85,7 +85,7 @@ public class TelekineticRoom extends MTARoom
 //							int y = new Random().nextInt(w.getBounds().height) + w.getBounds().y;
 //						MousePackets.queueClickPacket(x, y);
 							MessageUtils.addMessage(String.format("spellPos = %s, npcIdx = %d", w.getCanvasLocation().toString(), guardian.getIndex()), Color.GREEN);
-							InteractionUtils.useWidgetOnNPC(w, guardian);
+//							InteractionUtils.useWidgetOnNPC(w, guardian);
 							e.consume();
 						}
 					}
@@ -97,7 +97,7 @@ public class TelekineticRoom extends MTARoom
 		}
 	};
 
-	private final KeyListener[] keyListenersArr = new  KeyListener[] {castTkSpell};
+	private final KeyListener[] keyListenersArr = new  KeyListener[] {/*castTkSpell*/};
 
 
 	@Inject

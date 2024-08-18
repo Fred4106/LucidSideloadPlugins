@@ -1,9 +1,9 @@
 package com.lucidplugins.api.utils;
 
-import ethanApiPlugin.collections.Bank;
-import interactionApi.BankInteraction;
-import packets.MousePackets;
-import packets.WidgetPackets;
+//import ethanApiPlugin.collections.Bank;
+//import interactionApi.BankInteraction;
+//import packets.MousePackets;
+//import packets.WidgetPackets;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
@@ -24,41 +24,41 @@ public class BankUtils
         return false;
     }
 
-    public static void depositAll() {
-        Widget depositInventory = client.getWidget(WidgetInfo.BANK_DEPOSIT_INVENTORY);
-        if (depositInventory != null && !depositInventory.isSelfHidden()) {
-            MousePackets.queueClickPacket();
-            WidgetPackets.queueWidgetAction(depositInventory, "Deposit inventory");
-        }
-    }
-
-    public static boolean withdraw1(int id)
-    {
-        if (Bank.search().withId(id).first().isEmpty())
-        {
-            return false;
-        }
-
-        BankInteraction.useItem(id, "Withdraw-1");
-        return true;
-    }
-
-    public static boolean withdrawAll(int id)
-    {
-        if (Bank.search().withId(id).first().isEmpty())
-        {
-            return false;
-        }
-
-        BankInteraction.useItem(id, "Withdraw-All");
-        return true;
-    }
-
-    public static void close()
-    {
-        if (isOpen())
-        {
-            client.runScript(29);
-        }
-    }
+//    public static void depositAll() {
+//        Widget depositInventory = client.getWidget(WidgetInfo.BANK_DEPOSIT_INVENTORY);
+//        if (depositInventory != null && !depositInventory.isSelfHidden()) {
+//            MousePackets.queueClickPacket();
+//            WidgetPackets.queueWidgetAction(depositInventory, "Deposit inventory");
+//        }
+//    }
+//
+//    public static boolean withdraw1(int id)
+//    {
+//        if (Bank.search().withId(id).first().isEmpty())
+//        {
+//            return false;
+//        }
+//
+//        BankInteraction.useItem(id, "Withdraw-1");
+//        return true;
+//    }
+//
+//    public static boolean withdrawAll(int id)
+//    {
+//        if (Bank.search().withId(id).first().isEmpty())
+//        {
+//            return false;
+//        }
+//
+//        BankInteraction.useItem(id, "Withdraw-All");
+//        return true;
+//    }
+//
+//    public static void close()
+//    {
+//        if (isOpen())
+//        {
+//            client.runScript(29);
+//        }
+//    }
 }

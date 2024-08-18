@@ -50,7 +50,7 @@ public class PacketUtilsPlugin extends Plugin {
     static Client staticClient;
     public static Method addNodeMethod;
     public static boolean usingClientAddNode = false;
-    public static final int CLIENT_REV = 223;
+    public static final int CLIENT_REV = 224;
     private static String loadedConfigName = "";
     @Inject
     private PluginManager pluginManager;
@@ -211,6 +211,8 @@ public class PacketUtilsPlugin extends Plugin {
                 } catch (NoClassDefFoundError error) {
                     //log.inf("No class def found but continue");
                     continue;
+                } catch(VerifyError e) {
+                    throw new RuntimeException(e);
                 }
             } catch (Exception e) {
                 //log.inf("exception");
