@@ -5,14 +5,18 @@ import com.fredplugins.attacktimer.AttackTimerMetronomePlugin;
 import com.fredplugins.common.ProjectileID;
 import com.fredplugins.gauntlet.entity.Missile;
 import com.fredplugins.gauntlet.overlay.OverlayGauntlet;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
 import com.lucidplugins.api.item.SlottedItem;
 import com.lucidplugins.api.utils.*;
 import com.fredplugins.gauntlet.resource.ResourceManager;
 import ethanApiPlugin.EthanApiPlugin;
 import interactionApi.PrayerInteraction;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.Point;
@@ -20,6 +24,7 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.WidgetID;
+import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -30,6 +35,7 @@ import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.pf4j.Extension;
+import scala.Option;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -241,9 +247,35 @@ public class FredGauntletPlugin extends Plugin
 
     private WorldPoint secondLastSafeTile;
 
+
+    private Random rand = new Random();
     @Inject
     @Getter
     private GauntletInstanceGrid instanceGrid;
+
+//    @AllArgsConstructor
+    @Value
+    private static class ScheduledAction {
+        private final int ticksUntilAction;
+        private final Runnable action;
+
+        public ScheduledAction(int ticksUntilAction, Runnable action) {
+            this.ticksUntilAction = ticksUntilAction;
+            this.action = action;
+        }
+    }
+    private Optional<ScheduledAction> tick(ScheduledAction action) {
+        ScheduledAction toRet = null;
+        if(action.getTicksUntilAction() == 0) {
+            action.getAction().run();
+        } else if(action.getTicksUntilAction() > 0) {
+            toRet = new ScheduledAction(action.getTicksUntilAction()-1, action.getAction());
+        }
+        return Optional.<ScheduledAction>ofNullable(toRet);
+    }
+
+    private final List<ScheduledAction> newScheduledActions = new ArrayList<>();
+    private List<ScheduledAction> scheduledActions = ImmutableList.of();
 
     @Provides
     FredGauntletConfig getConfig(final ConfigManager configManager)
@@ -361,30 +393,33 @@ public class FredGauntletPlugin extends Plugin
         }
     }
 
-    @Subscribe
-    private void onGameTick(final GameTick event)
+    private void onGameTick1(final GameTick event)
     {
+//        log.info("GameTick1");
         NPC hun = NpcUtils.getNearestNpc(npc -> npc.getName() != null && npc.getName().contains("Hunllef"));
         if (hun != null && !instanceGrid.isInitialized())
         {
             instanceGrid.initialize();
         }
-
-        if (!inHunllef)
+        if (hunllef == null)
         {
-            if ((attackTimerMetronomePlugin.getTicksUntilNextAttack() == attackTimerMetronomePlugin.getWeaponPeriod()|| attackTimerMetronomePlugin.attackState == AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING)) {
-                Optional.ofNullable(config.offenseMagicPrayer()).map(FredGauntletConfig.MagicPrayer::getPrayer).filter(x -> client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, false));
-                Optional.ofNullable(config.offenseRangePrayer()).map(FredGauntletConfig.RangedPrayer::getPrayer).filter(x -> client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, false));
-                Optional.ofNullable(config.offenseMeleePrayer()).map(FredGauntletConfig.MeleePrayer::getPrayer).filter(x -> client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, false));
-            }
-            if (attackTimerMetronomePlugin.getTicksUntilNextAttack() == 1 && attackTimerMetronomePlugin.attackState != AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING) {
-                Optional.ofNullable(getPrayerBasedOnWeapon()).filter(x -> !client.isPrayerActive(x)).ifPresent(x -> PrayerInteraction.setPrayerState(x, true));
-            }
             return;
         }
 
-        if (hunllef == null)
+        if (!inHunllef)
         {
+//            Actor interactingTarget = client.getLocalPlayer().getInteracting();
+            if (attackTimerMetronomePlugin.getTicksUntilNextAttack() == 1 && attackTimerMetronomePlugin.attackState != AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING) {
+                Optional.ofNullable(getPrayerBasedOnWeapon()).filter(x -> !client.isPrayerActive(x)).ifPresent(x -> {
+                    int createdTickCount = client.getTickCount();
+                    log.info("Enabling prayer {} on tick {}", x, createdTickCount);
+                    PrayerInteraction.setPrayerState(x, true);
+                    newScheduledActions.add(new ScheduledAction(rand.nextInt(2) + 1, () -> {
+                        log.info("Disabling prayer {} after {} ticks on tick {}", x, client.getTickCount() - createdTickCount, client.getTickCount());
+                        PrayerInteraction.setPrayerState(x, false);
+                    }));
+                });
+            }
             return;
         }
 
@@ -409,7 +444,6 @@ public class FredGauntletPlugin extends Plugin
 
             if ((hunllef.getPlayerAttackCount() == 6 || hunllef.getPlayerAttackCount() == 1) && (config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.RANGED_5_1 || config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.MAGE_5_1))
             {
-                log.info("Switch 5-1 {}", hunllef);
                 swapWeapon51(hunllef.getPlayerAttackCount(), hunllef.getHeadIcon().orElse(null));
             }
         }
@@ -456,6 +490,18 @@ public class FredGauntletPlugin extends Plugin
         }
     }
 
+    private void onGameTick2(final GameTick event)
+    {
+//        log.info("GameTick2");
+        List<ScheduledAction> tempActions = ImmutableList.<ScheduledAction>builder().addAll(newScheduledActions).addAll(scheduledActions).build();
+        newScheduledActions.clear();
+        scheduledActions = tempActions.stream().flatMap(a -> tick(a).stream()).collect(Collectors.toUnmodifiableList());
+    }
+    @Subscribe
+    private void onGameTick(final GameTick event) {
+        onGameTick1(event);
+        onGameTick2(event);
+    }
     private WorldPoint getToSafeTile()
     {
         WorldPoint safeTile = getClosestSafeTile();

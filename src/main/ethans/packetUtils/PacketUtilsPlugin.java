@@ -1,6 +1,6 @@
 package packetUtils;
 
-import com.google.archivepatcher.applier.FileByFileV1DeltaApplier;
+//import com.google.archivepatcher.applier.FileByFileV1DeltaApplier;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import lombok.SneakyThrows;
@@ -253,13 +253,6 @@ public class PacketUtilsPlugin extends Plugin {
             try (InputStream clientStream = injectedURL.openStream()) {
                 Files.copy(clientStream, patchedOutputPath, StandardCopyOption.REPLACE_EXISTING);
             }
-        } else {
-            OutputStream patchedOutputStream = Files.newOutputStream(patchedOutputPath);
-            InputStream patch = ClientLoader.class.getResourceAsStream("/client.patch");
-            new FileByFileV1DeltaApplier().applyDelta(vanilla, patch, patchedOutputStream);
-            patch.close();
-            patchedOutputStream.flush();
-            patchedOutputStream.close();
         }
         try (JarFile patchedJar = new JarFile(patchedOutputPath.toFile())) {
             patchedJar.entries().asIterator().forEachRemaining(jarEntry -> {
