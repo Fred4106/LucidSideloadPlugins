@@ -90,6 +90,9 @@ dependencies {
 //        exclude("")
         exclude("com.google.inject", "guice")
     }
+    // https://mvnrepository.com/artifact/io.github.bishabosha/enum-extensions
+//    implementation("io.github.bishabosha:enum-extensions_3:0.1.1")
+    implementation("com.beachape:enumeratum_3:1.7.4")
     //    implementation("com.lihaoyi:ammonite_3.4.2:3.0.0-M2-15-9bed9700")
     implementation("org.json:json:20231013") //setTransitive(false) }
     implementation("org.roaringbitmap:RoaringBitmap:0.9.44")

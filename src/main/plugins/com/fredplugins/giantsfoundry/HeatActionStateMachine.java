@@ -1,6 +1,6 @@
 package com.fredplugins.giantsfoundry;
 
-import com.fredplugins.giantsfoundry.enums.Stage;
+import com.fredplugins.giantsfoundry.enums.SStage;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -114,9 +114,9 @@ public class HeatActionStateMachine
 	public void calculateEstimates()
 	{
 		int[] range = State.getCurrentHeatRange();
-		Stage stage = State.getCurrentStage();
+		SStage stage = State.getCurrentStage();
 		int actionsLeft = State.getActionsLeftInStage();
-		int actionsLeft_DeltaHeat = actionsLeft * stage.getHeatChange();
+		int actionsLeft_DeltaHeat = actionsLeft * stage.heatChange();
 		if (isHeating())
 		{
 			if (stage.isHeating())

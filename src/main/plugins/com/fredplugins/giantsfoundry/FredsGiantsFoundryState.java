@@ -3,11 +3,10 @@ package com.fredplugins.giantsfoundry;
 import static com.fredplugins.giantsfoundry.MathUtil.max1;
 import static com.fredplugins.giantsfoundry.FredsGiantsFoundryClientIDs.*;
 
-import com.fredplugins.giantsfoundry.enums.Heat;
-import com.fredplugins.giantsfoundry.enums.Stage;
-import static com.fredplugins.giantsfoundry.enums.Stage.GRINDSTONE;
-import static com.fredplugins.giantsfoundry.enums.Stage.POLISHING_WHEEL;
-import static com.fredplugins.giantsfoundry.enums.Stage.TRIP_HAMMER;
+import com.fredplugins.giantsfoundry.enums.SHeat;
+import com.fredplugins.giantsfoundry.enums.SHeat$;
+import com.fredplugins.giantsfoundry.enums.SStage;
+import com.fredplugins.giantsfoundry.enums.SStage$;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.Client;
@@ -29,13 +28,11 @@ public class FredsGiantsFoundryState
 	@Getter
 	private boolean enabled;
 
-	private final List<Stage> stages = new ArrayList<>();
-	private double heatRangeRatio = 0;
+	private final List<SStage> stages = new ArrayList<>();
 
 	public void reset()
 	{
 		stages.clear();
-		heatRangeRatio = 0;
 	}
 
 	public int getHeatAmount()
@@ -47,79 +44,14 @@ public class FredsGiantsFoundryState
 	{
 		return client.getVarbitValue(VARBIT_PROGRESS);
 	}
-
-	public double getHeatRangeRatio()
+	
+	public List<SStage> getStages()
 	{
-		if (heatRangeRatio == 0)
-		{
-			Widget heatWidget = client.getWidget(WIDGET_HEAT_PARENT);
-			Widget medHeat = client.getWidget(WIDGET_MED_HEAT_PARENT);
-			if (medHeat == null || heatWidget == null)
-			{
-				return 0;
-			}
-
-			heatRangeRatio = medHeat.getWidth() / (double) heatWidget.getWidth();
-		}
-
-		return heatRangeRatio;
-	}
-
-	public int[] getLowHeatRange()
-	{
-		return new int[]{
-			(int) ((1 / 6d - getHeatRangeRatio() / 2) * 1000),
-			(int) ((1 / 6d + getHeatRangeRatio() / 2) * 1000),
-		};
-	}
-
-	public int[] getMedHeatRange()
-	{
-		return new int[]{
-			(int) ((3 / 6d - getHeatRangeRatio() / 2) * 1000),
-			(int) ((3 / 6d + getHeatRangeRatio() / 2) * 1000),
-		};
-	}
-
-	public int[] getHighHeatRange()
-	{
-		return new int[]{
-			(int) ((5 / 6d - getHeatRangeRatio() / 2) * 1000),
-			(int) ((5 / 6d + getHeatRangeRatio() / 2) * 1000),
-		};
-	}
-
-	public List<Stage> getStages()
-	{
-		if (stages.isEmpty())
-		{
-			Widget progressParent = client.getWidget(WIDGET_PROGRESS_PARENT);
-			if (progressParent == null || progressParent.getChildren() == null)
-			{
-				return new ArrayList<>();
-			}
-
-			for (Widget child : progressParent.getChildren())
-			{
-				switch (child.getSpriteId())
-				{
-					case SPRITE_ID_TRIP_HAMMER:
-						stages.add(TRIP_HAMMER);
-						break;
-					case SPRITE_ID_GRINDSTONE:
-						stages.add(GRINDSTONE);
-						break;
-					case SPRITE_ID_POLISHING_WHEEL:
-						stages.add(POLISHING_WHEEL);
-						break;
-				}
-			}
-		}
-
+		SStage$.MODULE$.fromWidget(client, stages);
 		return stages;
 	}
 
-	public Stage getCurrentStage()
+	public SStage getCurrentStage()
 	{
 		int index = (int) (getProgressAmount() / 1000d * getStages().size());
 		if (index < 0 || index > getStages().size() - 1)
@@ -130,51 +62,19 @@ public class FredsGiantsFoundryState
 		return getStages().get(index);
 	}
 
-	public Heat getCurrentHeat()
+	public SHeat getCurrentHeat()
 	{
 		int heat = getHeatAmount();
-
-		int[] low = getLowHeatRange();
-		if (heat > low[0] && heat < low[1])
-		{
-			return Heat.LOW;
-		}
-
-		int[] med = getMedHeatRange();
-		if (heat > med[0] && heat < med[1])
-		{
-			return Heat.MED;
-		}
-
-		int[] high = getHighHeatRange();
-		if (heat > high[0] && heat < high[1])
-		{
-			return Heat.HIGH;
-		}
-
-		return Heat.NONE;
+		double ratio = SHeat$.MODULE$.getHeatRangeRatio(client);
+		return SHeat$.MODULE$.getRangeAt(heat, ratio);
 	}
 
 	public int getHeatChangeNeeded()
 	{
-		Heat requiredHeat = getCurrentStage().getHeat();
+		SHeat requiredHeat = getCurrentStage().heat();
 		int heat = getHeatAmount();
-
-		int[] range;
-		switch (requiredHeat)
-		{
-			case LOW:
-				range = getLowHeatRange();
-				break;
-			case MED:
-				range = getMedHeatRange();
-				break;
-			case HIGH:
-				range = getHighHeatRange();
-				break;
-			default:
-				return 0;
-		}
+		double ratio = SHeat$.MODULE$.getHeatRangeRatio(client);
+		int[] range = requiredHeat.range(ratio);
 
 		if (heat < range[0])
 			return range[0] - heat;
@@ -240,23 +140,19 @@ public class FredsGiantsFoundryState
 		double progressPerStage = getProgressPerStage();
 		double progressTillNext = progressPerStage - progress % progressPerStage;
 
-		Stage current = getCurrentStage();
-		return (int) Math.ceil(progressTillNext / current.getProgressPerAction());
+		SStage current = getCurrentStage();
+		return (int) Math.ceil(progressTillNext / current.progressPerAction());
 	}
 
 	public int[] getCurrentHeatRange()
 	{
-		switch (getCurrentStage())
-		{
-			case POLISHING_WHEEL:
-				return getLowHeatRange();
-			case GRINDSTONE:
-				return getMedHeatRange();
-			case TRIP_HAMMER:
-				return getHighHeatRange();
-			default:
-				return new int[]{0, 0};
+		SStage cStage = getCurrentStage();
+		if(cStage != null) {
+			return cStage.heat().range(SHeat.getHeatRangeRatio(client));
+		} else {
+			return new int[]{0, 0};
 		}
+		//
 	}
 
 	/**
@@ -266,9 +162,9 @@ public class FredsGiantsFoundryState
 	 */
 	public int getActionsForHeatLevel()
 	{
-		Heat heatStage = getCurrentHeat();
-		Stage stage = getCurrentStage();
-		if (heatStage != stage.getHeat())
+		SHeat heatStage = getCurrentHeat();
+		SStage stage = getCurrentStage();
+		if (heatStage != stage.heat())
 		{
 			// not the right heat to start with
 			return 0;
@@ -280,7 +176,7 @@ public class FredsGiantsFoundryState
 		while (heat > range[0] && heat < range[1])
 		{
 			actions++;
-			heat += stage.getHeatChange();
+			heat += stage.heatChange();
 		}
 
 		return actions;

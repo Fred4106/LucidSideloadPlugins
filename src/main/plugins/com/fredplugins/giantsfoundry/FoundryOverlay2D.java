@@ -1,14 +1,14 @@
 package com.fredplugins.giantsfoundry;
 
 import static com.fredplugins.giantsfoundry.FredsGiantsFoundryHelper.getHeatColor;
-import com.fredplugins.giantsfoundry.enums.Heat;
-import com.fredplugins.giantsfoundry.enums.Stage;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import com.fredplugins.giantsfoundry.enums.SHeat;
+import com.fredplugins.giantsfoundry.enums.SStage;
 import net.runelite.api.Client;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -54,19 +54,19 @@ public class FoundryOverlay2D extends OverlayPanel
 
 		if (swordPickedUp)
 		{
-			Heat heat = state.getCurrentHeat();
-			Stage stage = state.getCurrentStage();
+			SHeat heat = state.getCurrentHeat();
+			SStage stage = state.getCurrentStage();
 
 			if (config.drawHeatInfo())
 			{
 				panelComponent.getChildren().add(
-					LineComponent.builder().left("Heat").right(heat.getName() + " (" + state.getHeatAmount() / 10 + "%)").rightColor(heat.getColor()).build()
+					LineComponent.builder().left("Heat").right(heat.name() + " (" + state.getHeatAmount() / 10 + "%)").rightColor(heat.cs()).build()
 				);
 			}
 			if (config.drawStageInfo())
 			{
 				panelComponent.getChildren().add(
-					LineComponent.builder().left("Stage").right(stage.getName() + " (" + state.getProgressAmount() / 10 + "%)").rightColor(stage.getHeat().getColor()).build()
+					LineComponent.builder().left("Stage").right(stage.name() + " (" + state.getProgressAmount() / 10 + "%)").rightColor(stage.heat().cs()).build()
 				);
 			}
 

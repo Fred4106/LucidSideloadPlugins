@@ -65,19 +65,4 @@ public class MouldHelper
 			}
 		}
 	}
-
-//	private Map<Mould, Widget> getOptions(Widget[] children)
-//	{
-//		Map<Mould, Widget> mouldToChild = new LinkedHashMap<>();
-//		for (int i = 2; i < children.length; i += 17)
-//		{
-//			Widget child = children[i];
-//			Mould mould = Mould.forName(child.getText());
-//			if (mould != null && child.getTextColor() != DISABLED_TEXT_COLOR)
-//			{
-//				mouldToChild.put(mould, child);
-//			}
-//		}
-//		return mouldToChild;
-//	}
 }

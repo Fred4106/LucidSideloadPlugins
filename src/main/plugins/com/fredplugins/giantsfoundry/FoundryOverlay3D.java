@@ -6,10 +6,8 @@ import static com.fredplugins.giantsfoundry.FredsGiantsFoundryHelper.getHeatColo
 import static com.fredplugins.giantsfoundry.MouldHelper.SWORD_TYPE_1_VARBIT;
 import static com.fredplugins.giantsfoundry.MouldHelper.SWORD_TYPE_2_VARBIT;
 //import com.fredplugins.giantsfoundry.enums.CommissionType;
-import com.fredplugins.giantsfoundry.enums.Heat;
 import com.fredplugins.giantsfoundry.enums.SCommissionType;
 import com.fredplugins.giantsfoundry.enums.SCommissionType$;
-import com.fredplugins.giantsfoundry.enums.Stage;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -17,6 +15,9 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import javax.inject.Inject;
 
+import com.fredplugins.giantsfoundry.enums.SHeat;
+import com.fredplugins.giantsfoundry.enums.SStage;
+import com.fredplugins.giantsfoundry.enums.SStage$;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
@@ -63,9 +64,9 @@ public class FoundryOverlay3D extends Overlay
 		this.modelOutlineRenderer = modelOutlineRenderer;
 	}
 
-	private Color getObjectColor(Stage stage, Heat heat)
+	private Color getObjectColor(SStage stage, SHeat heat)
 	{
-		if (stage.getHeat() != heat)
+		if (stage.heat() != heat)
 		{
 			return config.toolBad();
 		}
@@ -85,15 +86,15 @@ public class FoundryOverlay3D extends Overlay
 		return config.toolGood();
 	}
 
-	private GameObject getStageObject(Stage stage)
+	private GameObject getStageObject(SStage stage)
 	{
-		switch (stage)
+		switch (stage.name())
 		{
-			case TRIP_HAMMER:
+			case "Hammer":
 				return tripHammer;
-			case GRINDSTONE:
+			case "Grind":
 				return grindstone;
-			case POLISHING_WHEEL:
+			case "Polish":
 				return polishingWheel;
 		}
 		return null;
@@ -125,7 +126,7 @@ public class FoundryOverlay3D extends Overlay
 			return null;
 		}
 
-		Stage stage = state.getCurrentStage();
+		SStage stage = state.getCurrentStage();
 		GameObject stageObject = getStageObject(stage);
 		if (stageObject == null)
 		{
@@ -134,7 +135,7 @@ public class FoundryOverlay3D extends Overlay
 
 		drawHeatingActionOverlay(graphics, stageObject);
 
-		Heat heat = state.getCurrentHeat();
+		SHeat heat = state.getCurrentHeat();
 		Color color = getObjectColor(stage, heat);
 		// TODO Config
 		if (config.highlightStyle() == HighlightStyle.HIGHLIGHT_CLICKBOX)
@@ -146,7 +147,7 @@ public class FoundryOverlay3D extends Overlay
 			drawObjectOutline(graphics, stageObject, color);
 		}
 
-		if ((stage.getHeat() != heat || !state.heatingCoolingState.isIdle()) && config.highlightWaterAndLava())
+		if ((stage.heat() != heat || !state.heatingCoolingState.isIdle()) && config.highlightWaterAndLava())
 		{
 			drawHeatChangers(graphics);
 		}

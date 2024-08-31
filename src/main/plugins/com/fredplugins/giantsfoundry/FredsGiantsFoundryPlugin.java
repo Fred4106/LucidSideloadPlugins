@@ -2,11 +2,11 @@ package com.fredplugins.giantsfoundry;
 
 import com.fredplugins.giantsfoundry.enums.SMould;
 import com.fredplugins.giantsfoundry.enums.SMould$;
+import com.fredplugins.giantsfoundry.enums.SStage;
 import com.google.inject.Provides;
 
 import static com.fredplugins.giantsfoundry.FredsGiantsFoundryClientIDs.VARBIT_GAME_STAGE;
 import static com.fredplugins.giantsfoundry.FredsGiantsFoundryClientIDs.VARBIT_HEAT;
-import com.fredplugins.giantsfoundry.enums.Stage;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -74,7 +74,7 @@ public class FredsGiantsFoundryPlugin extends Plugin
 
 	private static final int REPUTATION_VARBIT = 3436;
 
-	private Stage oldStage;
+	private SStage oldStage;
 
 	private int lastBoost;
 
@@ -396,7 +396,7 @@ public class FredsGiantsFoundryPlugin extends Plugin
 	private void checkBonus()
 	{
 		if (!state.isEnabled() || state.getCurrentStage() == null
-			|| state.getCurrentStage().getHeat() != state.getCurrentHeat()
+			|| state.getCurrentStage().heat() != state.getCurrentHeat()
 			|| !BonusWidget.isActive(client))
 		{
 			bonusNotified = false;

@@ -5,6 +5,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import com.fredplugins.common.OverlayUtil;
 import com.fredplugins.gauntlet.FredGauntletConfig;
 import com.fredplugins.gauntlet.FredGauntletPlugin;
 import net.runelite.api.Client;
@@ -161,7 +162,7 @@ public class OverlayHunllef extends Overlay
                     return;
                 }
 
-                com.fredplugins.gauntlet.overlay.OverlayUtil.renderTextLocation(graphics2D, ticksLeftStr, config.tornadoFontSize(),
+                OverlayUtil.renderTextLocation(graphics2D, ticksLeftStr, config.tornadoFontSize(),
                         0, config.tornadoFontColor(), point,
                         config.tornadoFontShadow(), 0);
             }

@@ -1,5 +1,6 @@
 package com.fredplugins.gauntlet.overlay;
 
+import com.fredplugins.common.OverlayUtil;
 import com.fredplugins.gauntlet.FredGauntletConfig;
 import com.fredplugins.gauntlet.FredGauntletPlugin;
 import com.fredplugins.gauntlet.entity.Hunllef;
@@ -70,7 +71,7 @@ public class OverlayPrayerWidget extends Overlay
 
         final Color phaseColor = phase.getColor();
 
-        final Rectangle rectangle = com.fredplugins.gauntlet.overlay.OverlayUtil.renderPrayerOverlay(graphics2D, client, prayer, phaseColor);
+        final Rectangle rectangle = OverlayUtil.renderPrayerOverlay(graphics2D, client, prayer, phaseColor);
 
         if (rectangle == null)
         {

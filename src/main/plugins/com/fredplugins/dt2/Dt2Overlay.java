@@ -1,19 +1,28 @@
 package com.fredplugins.dt2;
 
+import com.fredplugins.common.OverlayUtil;
+import com.fredplugins.gauntlet.Vertex;
 import net.runelite.api.*;
+import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.model.Jarvis;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Graph;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static com.fredplugins.dt2.ForsakenAssassin.*;
 
 @Singleton
 public class Dt2Overlay extends Overlay {
-
     private static final Color COLOR_ICON_BACKGROUND = new Color(0, 0, 0, 128);
     private static final Color COLOR_ICON_BORDER = new Color(0, 0, 0, 255);
     private static final Color COLOR_ICON_BORDER_FILL = new Color(219, 175, 0, 255);
@@ -37,8 +46,18 @@ public class Dt2Overlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics2D) {
-        for (TileObject cloud : plugin.getClouds()) {
-            LocalPoint lp = cloud.getLocalLocation();
+        if(plugin.getForsakenAssassin().getNpc().isDefined()) {
+            renderForsaken(graphics2D, plugin.getForsakenAssassin());
+        }
+        if(plugin.getKetlaTheUnworthy().getTarget().isDefined()) {
+            renderKetla(graphics2D, plugin.getKetlaTheUnworthy());
+        }
+        return null;
+    }
+
+    public Dimension renderForsaken(Graphics2D graphics2D, ForsakenAssassin forsaken) {
+        for (ForsakenCloud cloud : forsaken.getClouds()) {
+            LocalPoint lp = cloud.c().getLocalLocation();
             if (lp != null) {
                 final Polygon polygon = Perspective.getCanvasTilePoly(client, lp);
 
@@ -47,45 +66,102 @@ public class Dt2Overlay extends Overlay {
                     continue;
                 }
                 
-                Color c;
-                if(cloud.getId() == Dt2HelperPlugin.WHITE_CLOUD_ID) c = Color.WHITE;
-                else if(cloud.getId() == Dt2HelperPlugin.PINK_CLOUD_ID) c = Color.PINK;
-                else c = Color.RED;
-                drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50), 2, polygon);
+                Color c = cloud.tpe().color();
+                OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50), 2, polygon);
             }
         }
-        NPC n = plugin.getForsakenAssassin();
+
+        for (ForsakenProjectile vial : forsaken.getVials()) {
+            LocalPoint tlp = vial.destinationPoint();
+            if(tlp != null) {
+                final Polygon polygon = Perspective.getCanvasTilePoly(client, tlp);
+
+                if (polygon == null)
+                {
+                    continue;
+                }
+
+                Color c = vial.tpe().color();
+                OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 25), 2, polygon);
+            }
+        }
+
+        NPC n = forsaken.getNpc().getOrElse(() -> null);
         if(n != null) {
-            Color c = Color.MAGENTA;
+            Color c = Color.RED;
+            if(forsaken.getClouds().stream().filter(cc -> cc.tpe().entryName().equals("White")).anyMatch(cc -> cc.c().getWorldLocation().equals(n.getWorldLocation()))) {
+                c = Color.GREEN;
+            }
             LocalPoint lp = n.getLocalLocation();
-            if (lp != null) {
+            if(lp != null) {
                 final Polygon polygon = Perspective.getCanvasTilePoly(client, lp);
-                
-                if (polygon != null) {
-                    drawOutlineAndFill(graphics2D, c, new Color( c.getRed(), c.getGreen(), c.getBlue(), 50),
-                            2, polygon);
+
+                if(polygon != null) {
+                    OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50),
+                        2, polygon);
                 }
             }
 
             modelOutlineRenderer.drawOutline(n, 2, c, 0);
         }
-
         return null;
     }
 
-    static void drawOutlineAndFill(final Graphics2D graphics2D, final Color outlineColor, final Color fillColor, final float strokeWidth, final Shape shape)
-    {
-        final Color originalColor = graphics2D.getColor();
-        final Stroke originalStroke = graphics2D.getStroke();
+    public Dimension renderKetla(Graphics2D graphics2D, KetlaTheUnworthy ketla) {
+        if(ketla.getTarget().isDefined()) {
+//            NPC n = .get();
+            NPC n = ketla.getTarget().get().npc();
+            String animationString = ketla.getTarget().flatMap(KetlaTheUnworthy.NpcWrapper::getLastAnimation).map(ka -> {
+                    return ka.entryName() + "(" + ka.id() + ")";
+                }).getOrElse(() -> "None");
+            
+            modelOutlineRenderer.drawOutline(n, 2, Color.ORANGE, 0);
+                String npcText = "id="+n.getId()+",graphicsId=" + n.getGraphic() + ", animation=" + n.getAnimation() + "|" + animationString;
+            final int tileHeight = Perspective.getTileHeight(client, n.getLocalLocation(), client.getTopLevelWorldView().getPlane());
+            Point canvasLocation = Perspective.getCanvasTextLocation(client, graphics2D, n.getLocalLocation(), npcText, tileHeight + 50);
+            if(canvasLocation != null) {
+                net.runelite.client.ui.overlay.OverlayUtil.renderTextLocation(graphics2D, canvasLocation, npcText, Color.ORANGE);
+            }
+        }
+        
+        ketla.getMinions().forEach(m -> {
+            String animationString = m.getLastAnimation().map(ka -> {
+                return ka.entryName() + "(" + ka.id() + ")";
+            }).getOrElse(() -> "None");
+            
+            modelOutlineRenderer.drawOutline(m.npc(), 2, Color.PINK, 0);
+            String npcText = "id="+m.npc().getId()+", animation=" + m.npc().getAnimation() + "|" + animationString;
+            final int tileHeight = Perspective.getTileHeight(client, m.npc().getLocalLocation(), client.getTopLevelWorldView().getPlane());
+            Point canvasLocation = Perspective.getCanvasTextLocation(client, graphics2D, m.npc().getLocalLocation(), npcText, tileHeight + 50);
+            if(canvasLocation != null) {
+                net.runelite.client.ui.overlay.OverlayUtil.renderTextLocation(graphics2D, canvasLocation, npcText, Color.PINK);
+            }
+        });
+        
+        for(Projectile p : ketla.getProjectiles()) {
+            LocalPoint tlp = p.getTarget();
+            LocalPoint projectilePoint = new LocalPoint((int)p.getX(), (int)p.getY(), client.getTopLevelWorldView());
+            if(tlp != null && projectilePoint != null) {
+                final Polygon polygon = Perspective.getCanvasTilePoly(client, tlp);
+                final Polygon projectilePolygon = OverlayUtil.getProjectilePolygon(client, p);
+                String playerText = Optional.ofNullable(p.getInteracting()).filter(x -> x instanceof Player).map(x -> x.getName()).orElse("");
+                String npcText = Optional.ofNullable(p.getInteracting()).filter(x -> x instanceof NPC).map(x -> x.getName() + " | " + ((NPC)x).getId()).orElse("");
+                String interactingText = playerText + npcText;
+                if(interactingText.isBlank()) interactingText = "null";
+                if(polygon != null && projectilePolygon != null) {
+                    Color c = Color.CYAN;
+                    OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 25), 2, polygon);
+                    OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50), 2, projectilePolygon);
+                    String projectileText = "id="+p.getId()+", interacting="+interactingText;
+                    final int tileHeight = Perspective.getTileHeight(client, projectilePoint, client.getTopLevelWorldView().getPlane());
+                    Point canvasLocation =Perspective.getCanvasTextLocation(client, graphics2D, projectilePoint, projectileText, tileHeight + (int) p.getZ());
+                    if(canvasLocation != null) {
+                        net.runelite.client.ui.overlay.OverlayUtil.renderTextLocation(graphics2D, canvasLocation, projectileText, Color.CYAN);
+                    }
+                }
+            }
+        }
 
-        graphics2D.setStroke(new BasicStroke(strokeWidth));
-        graphics2D.setColor(outlineColor);
-        graphics2D.draw(shape);
-
-        graphics2D.setColor(fillColor);
-        graphics2D.fill(shape);
-
-        graphics2D.setColor(originalColor);
-        graphics2D.setStroke(originalStroke);
+        return null;
     }
 }
