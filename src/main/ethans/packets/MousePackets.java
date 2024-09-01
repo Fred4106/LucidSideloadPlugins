@@ -1,6 +1,7 @@
 package packets;
 
 import net.runelite.api.NPC;
+import net.runelite.api.TileObject;
 import packetUtils.ObfuscatedNames;
 import packetUtils.PacketDef;
 import packetUtils.PacketReflection;
@@ -61,6 +62,26 @@ public class MousePackets{
     }
     public static void queueClickPacket(NPC npc) {
         Shape hull = (npc != null) ? npc.getConvexHull() : null;
+        if(hull != null) {
+            Random r = new Random();
+            Point center = new Point((int) hull.getBounds().getCenterX(), (int) hull.getBounds().getCenterY());
+            int x = -1;
+            int y = -1;
+            int timeout = 15;
+            while(!hull.contains(x, y) || timeout > 0) {
+                x = (int) (center.x + r.nextInt((int) hull.getBounds().getWidth()) - (hull.getBounds().getWidth() / 2));
+                y = (int) (center.y + r.nextInt((int) hull.getBounds().getHeight()) - (hull.getBounds().getHeight() / 2));
+                timeout--;
+            }
+            if(timeout > 0) {
+                MousePackets.queueClickPacket(x, y);
+                return;
+            }
+        }
+        MousePackets.queueClickPacket();
+    }
+    public static void queueClickPacket(TileObject to) {
+        Shape hull = (to != null) ? to.getClickbox() : null;
         if(hull != null) {
             Random r = new Random();
             Point center = new Point((int) hull.getBounds().getCenterX(), (int) hull.getBounds().getCenterY());

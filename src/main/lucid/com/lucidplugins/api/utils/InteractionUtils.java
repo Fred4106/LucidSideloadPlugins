@@ -183,7 +183,17 @@ public class InteractionUtils
             }
         });
     }
-
+    public static void useWidgetOnTileObject(Widget w, TileObject object)
+    {
+        Optional<Widget> itemWidget = Optional.ofNullable(w);
+        itemWidget.ifPresent((iw) -> {
+            if (object != null)
+            {
+                MousePackets.queueClickPacket(object);
+                ObjectPackets.queueWidgetOnTileObject(iw, object);
+            }
+        });
+    }
     public static void useLastIdOnWallObject(int id, TileObject object)
     {
         List<Widget> itemWidgets = Inventory.search().withId(id).result();
@@ -222,17 +232,7 @@ public class InteractionUtils
             MousePackets.queueClickPacket();
             PlayerPackets.queueWidgetOnPlayer(player, widget);
     }
-
-    public static void useWidgetOnTileObject(Widget widget, TileObject object)
-    {
-        if (widget == null || object == null)
-        {
-            return;
-        }
-        MousePackets.queueClickPacket();
-        ObjectPackets.queueWidgetOnTileObject(widget, object);
-    }
-
+    
     public static void useWidgetOnTileItem(Widget widget, ETileItem tileItem)
     {
         if (widget == null || tileItem == null)
