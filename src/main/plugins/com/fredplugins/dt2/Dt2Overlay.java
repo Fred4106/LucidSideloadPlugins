@@ -1,22 +1,17 @@
 package com.fredplugins.dt2;
 
-import com.fredplugins.common.OverlayUtil;
-import com.fredplugins.gauntlet.Vertex;
+import com.fredplugins.common.OldOverlayUtil;
 import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.model.Jarvis;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
-import org.benf.cfr.reader.bytecode.analysis.opgraph.Graph;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static com.fredplugins.dt2.ForsakenAssassin.*;
@@ -67,7 +62,7 @@ public class Dt2Overlay extends Overlay {
                 }
                 
                 Color c = cloud.tpe().color();
-                OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50), 2, polygon);
+                OldOverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50), 2, polygon);
             }
         }
 
@@ -82,7 +77,7 @@ public class Dt2Overlay extends Overlay {
                 }
 
                 Color c = vial.tpe().color();
-                OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 25), 2, polygon);
+                OldOverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 25), 2, polygon);
             }
         }
 
@@ -97,7 +92,7 @@ public class Dt2Overlay extends Overlay {
                 final Polygon polygon = Perspective.getCanvasTilePoly(client, lp);
 
                 if(polygon != null) {
-                    OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50),
+                    OldOverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50),
                         2, polygon);
                 }
             }
@@ -143,15 +138,15 @@ public class Dt2Overlay extends Overlay {
             LocalPoint projectilePoint = new LocalPoint((int)p.getX(), (int)p.getY(), client.getTopLevelWorldView());
             if(tlp != null && projectilePoint != null) {
                 final Polygon polygon = Perspective.getCanvasTilePoly(client, tlp);
-                final Polygon projectilePolygon = OverlayUtil.getProjectilePolygon(client, p);
+                final Polygon projectilePolygon = OldOverlayUtil.getProjectilePolygon(client, p);
                 String playerText = Optional.ofNullable(p.getInteracting()).filter(x -> x instanceof Player).map(x -> x.getName()).orElse("");
                 String npcText = Optional.ofNullable(p.getInteracting()).filter(x -> x instanceof NPC).map(x -> x.getName() + " | " + ((NPC)x).getId()).orElse("");
                 String interactingText = playerText + npcText;
                 if(interactingText.isBlank()) interactingText = "null";
                 if(polygon != null && projectilePolygon != null) {
                     Color c = Color.CYAN;
-                    OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 25), 2, polygon);
-                    OverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50), 2, projectilePolygon);
+                    OldOverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 25), 2, polygon);
+                    OldOverlayUtil.drawOutlineAndFill(graphics2D, c, new Color(c.getRed(), c.getGreen(), c.getBlue(), 50), 2, projectilePolygon);
                     String projectileText = "id="+p.getId()+", interacting="+interactingText;
                     final int tileHeight = Perspective.getTileHeight(client, projectilePoint, client.getTopLevelWorldView().getPlane());
                     Point canvasLocation =Perspective.getCanvasTextLocation(client, graphics2D, projectilePoint, projectileText, tileHeight + (int) p.getZ());

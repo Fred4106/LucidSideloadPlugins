@@ -127,7 +127,7 @@ public class TileObjectQuery {
     }
 
     public List<TileObject> result() {
-        return tileObjects;
+        return tileObjects.stream().sorted(Comparator.comparingInt(o -> client.getLocalPlayer().getWorldLocation().distanceTo(o.getWorldLocation()))).collect(Collectors.toList());
     }
 
     public Optional<TileObject> first() {

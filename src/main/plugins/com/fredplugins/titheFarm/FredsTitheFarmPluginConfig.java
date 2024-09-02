@@ -5,10 +5,12 @@ import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.Range;
 
-@ConfigGroup("fredsTitheFarmPlugin")
+@ConfigGroup(FredsTitheFarmPluginConfig.GroupName)
 public interface FredsTitheFarmPluginConfig extends Config
 {
+	final String GroupName = "fredsTitheFarmPlugin";
 	@Alpha
 	@ConfigItem(
 		position = 1,
@@ -43,5 +45,54 @@ public interface FredsTitheFarmPluginConfig extends Config
 	default Color getColorGrown()
 	{
 		return new Color(0, 217, 0);
+	}
+
+	@Alpha
+	@ConfigItem(
+		position = 4,
+		keyName = "hexColorDead",
+		name = "Dead plant",
+		description = "Color of dead plant timer"
+	)
+	default Color getColorDead() {
+		return new Color(64, 64, 64);
+	}
+
+	@Range(
+		min = 6,
+		max = 32
+	)
+	@ConfigItem(
+		keyName = "fontSize",
+		name = "Font Size",
+		description = "sets font size for overlay",
+		position = 10
+	)
+	default int getFontSize()
+	{
+		return 14;
+	}
+
+
+	@ConfigItem(
+		keyName = "fontBold",
+		name = "Bold Font",
+		description = "sets bold font for overlay",
+		position = 11
+	)
+	default boolean getFontBold()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "debugObjectClicked",
+		name = "Debug Object Actions",
+		description = "enables debug overlay for game object menu clicks",
+		position = 12
+	)
+	default boolean isDebugObjectClicked()
+	{
+		return true;
 	}
 }

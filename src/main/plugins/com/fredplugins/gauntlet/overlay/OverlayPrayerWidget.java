@@ -1,6 +1,6 @@
 package com.fredplugins.gauntlet.overlay;
 
-import com.fredplugins.common.OverlayUtil;
+import com.fredplugins.common.OldOverlayUtil;
 import com.fredplugins.gauntlet.FredGauntletConfig;
 import com.fredplugins.gauntlet.FredGauntletPlugin;
 import com.fredplugins.gauntlet.entity.Hunllef;
@@ -71,7 +71,7 @@ public class OverlayPrayerWidget extends Overlay
 
         final Color phaseColor = phase.getColor();
 
-        final Rectangle rectangle = OverlayUtil.renderPrayerOverlay(graphics2D, client, prayer, phaseColor);
+        final Rectangle rectangle = OldOverlayUtil.renderPrayerOverlay(graphics2D, client, prayer, phaseColor);
 
         if (rectangle == null)
         {
@@ -95,7 +95,7 @@ public class OverlayPrayerWidget extends Overlay
 
         final Point canvasPoint = new Point((int) (point.getX() - 3), (int) (point.getY() + 6));
 
-        OverlayUtil.renderTextLocation(graphics2D, text, fontSize, fontStyle, fontColor, canvasPoint, true, 0);
+        OldOverlayUtil.renderTextLocation(graphics2D, text, fontSize, fontStyle, fontColor, canvasPoint, true, 0);
 
         return null;
     }
