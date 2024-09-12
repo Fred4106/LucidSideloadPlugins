@@ -2,7 +2,6 @@ package interactionApi;
 
 import ethanApiPlugin.EthanApiPlugin;
 import net.runelite.api.widgets.Widget;
-import org.w3c.dom.css.Rect;
 import packetUtils.WidgetInfoExtended;
 import packets.MousePackets;
 import packets.WidgetPackets;
