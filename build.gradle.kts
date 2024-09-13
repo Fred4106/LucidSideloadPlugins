@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":mta"))
     implementation(project(":scurriusHelper"))
     implementation(project(":titheFarm"))
+    implementation(project(":titheFarm2"))
 }
 
 tasks {
