@@ -50,7 +50,7 @@ public class PacketUtilsPlugin extends Plugin {
     static Client staticClient;
     public static Method addNodeMethod;
     public static boolean usingClientAddNode = false;
-    public static final int CLIENT_REV = 224;
+    public static final int CLIENT_REV = 225;
     private static String loadedConfigName = "";
     @Inject
     private PluginManager pluginManager;
@@ -150,7 +150,8 @@ public class PacketUtilsPlugin extends Plugin {
         toDelete.add(codeSource.resolve("vanilla.jar"));
         toDelete.add(codeSource.resolve("patched.jar"));
         toDelete.add(codeSource.resolve("doAction.class"));
-        toDelete.add(codeSource.resolve("decompiled.txt"));
+        toDelete.add(codeSource.resolve("client.class"));
+        toDelete.add(codeSource.resolve("doAction.java"));
         for (Path path : toDelete) {
             Files.deleteIfExists(path);
         }
@@ -186,41 +187,12 @@ public class PacketUtilsPlugin extends Plugin {
             log.info("addNodeMethod: " + addNodeMethod);
             return;
         }
-        String doActionClassName = "";
-        String doActionMethodName = "";
+
         Field classes = ClassLoader.class.getDeclaredField("classes");
         classes.setAccessible(true);
         ClassLoader classLoader = client.getClass().getClassLoader();
-        Vector<Class<?>> classesVector = (Vector<Class<?>>) classes.get(classLoader);
-        Class<?>[] params = new Class[]{int.class, int.class, int.class, int.class, int.class, int.class, String.class, String.class, int.class, int.class};
-        for (int i = 0; i < classesVector.size(); i++) {
-            try {
-                //log.inf("class: " + classesVector.get(i));
-                if (classesVector.get(i).getName().equals("ac")) {
-                    //log.inf("skipping ac");
-                    continue;
-                }
-                try {
-                    for (int i1 = 0; i1 < classesVector.get(i).getDeclaredMethods().length; i1++) {
-                        if (!Arrays.equals(Arrays.copyOfRange(classesVector.get(i).getDeclaredMethods()[i1].getParameterTypes(), 0, 10), params)) {
-                            continue;
-                        }
-                        doActionClassName = classesVector.get(i).getSimpleName();
-                        doActionMethodName = classesVector.get(i).getDeclaredMethods()[i1].getName();
-                    }
-                } catch (NoClassDefFoundError error) {
-                    //log.inf("No class def found but continue");
-                    continue;
-                } catch(VerifyError e) {
-                    throw new RuntimeException(e);
-                }
-            } catch (Exception e) {
-                //log.inf("exception");
-            }
-        }
-        System.out.print("finished");
-        final String doActionFinalClassName = doActionClassName;
-        final String doActionFinalMethodName = doActionMethodName;
+        final String doActionFinalClassName = ObfuscatedNames.doActionClassName;
+        final String doActionFinalMethodName = ObfuscatedNames.doActionMethodName;
         System.out.println(doActionFinalClassName);
         System.out.println(doActionFinalMethodName);
         classes.setAccessible(false);
@@ -231,7 +203,8 @@ public class PacketUtilsPlugin extends Plugin {
         Path vanillaOutputPath = codeSource.resolve("vanilla.jar");
         Path patchedOutputPath = codeSource.resolve("patched.jar");
         Path doActionOutputPath = codeSource.resolve("doAction.class");
-        Path decompilationOutputPath = codeSource.resolve("decompiled.txt");
+        Path clientOutputPath = codeSource.resolve("client.class");
+        Path doActionDecompilationOutputPath = codeSource.resolve("doAction.java");
         System.out.println("Downloading vanilla client");
         downloadVanillaJar(vanillaOutputPath, rlConfigURL);
         File vanilla = vanillaOutputPath.toFile();
@@ -263,18 +236,25 @@ public class PacketUtilsPlugin extends Plugin {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                } else if (jarEntry.getName().equals("client.class")) {
+                    try (InputStream inputStream = patchedJar.getInputStream(jarEntry)) {
+                        Files.copy(inputStream, clientOutputPath, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
-        OutputStream decompilationOutputStream = Files.newOutputStream(decompilationOutputPath);
-        PrintStream s = new PrintStream(decompilationOutputStream);
-        System.setOut(s);
+        OutputStream doActionDecompilationOutputStream = Files.newOutputStream(doActionDecompilationOutputPath);
+        PrintStream s2 = new PrintStream(doActionDecompilationOutputStream);
+        System.setOut(s2);
         Main.main(new String[]{doActionOutputPath.toAbsolutePath().toString(), "--methodname", doActionFinalMethodName});
-        s.flush();
-        s.close();
-        decompilationOutputStream.close();
+        s2.flush();
+        s2.close();
+        doActionDecompilationOutputStream.close();
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-        File output = decompilationOutputPath.toFile();
+
+        File output = doActionDecompilationOutputPath.toFile();
         BufferedReader reader = new BufferedReader(new FileReader(output));
         List<String> lines = reader.lines().collect(Collectors.toList());
         String previousLine = null;
@@ -290,10 +270,11 @@ public class PacketUtilsPlugin extends Plugin {
             }
         }
         reader.close();
-        for (String methodCall : methodCalls) {
-            System.out.println(methodCall);
-        }
         String mostUsedMethod = methodCalls.stream()
+                .filter(str -> !str.contains("** while"))
+                .peek(s -> {
+                    System.out.println("method name = \"" + s +"\"");
+                })
                 .collect(Collectors.groupingBy(str -> str, Collectors.counting()))
                 .entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .findFirst().get().getKey();

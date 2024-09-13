@@ -46,6 +46,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static net.runelite.api.Varbits.QUICK_PRAYER;
+import static packetUtils.ObfuscatedNames.npcGetOverheadIconFieldName1;
+import static packetUtils.ObfuscatedNames.npcGetOverheadIconFieldName2;
 
 @PluginDescriptor(
         name = "EthanApiPlugin",
@@ -229,14 +231,15 @@ public class EthanApiPlugin extends Plugin {
 //    }
     @SneakyThrows
     public static HeadIcon getHeadIcon(NPC npc) {
-        Field vi = npc.getClass().getDeclaredField("ao");
+        System.out.println("npcClass: " + npc.getClass());
+        Field vi = npc.getClass().getDeclaredField(npcGetOverheadIconFieldName1);
         vi.setAccessible(true);
         Object viObj = vi.get(npc);
         if (viObj == null) {
             vi.setAccessible(false);
             return getOldHeadIcon(npc);
         }
-        Field adField = viObj.getClass().getDeclaredField("ay");
+        Field adField = viObj.getClass().getDeclaredField(npcGetOverheadIconFieldName2);
         adField.setAccessible(true);
         short[] ad = (short[]) adField.get(viObj);
         adField.setAccessible(false);
@@ -248,6 +251,7 @@ public class EthanApiPlugin extends Plugin {
             return getOldHeadIcon(npc);
         }
         short headIcon = ad[0];
+        System.out.println("headIconIdx = " + headIcon + ";");
         if (headIcon == -1) {
             return getOldHeadIcon(npc);
         }
@@ -460,46 +464,46 @@ public class EthanApiPlugin extends Plugin {
         return null;
     }
 
-    @Deprecated // use client menuAction
-    @SneakyThrows
-    public static void invoke(int var0, int var1, int var2, int var3, int var4,int var5, String var6, String var7, int var8,
-                              int var9) {
-        if (doAction == null) {
-            Field classes = ClassLoader.class.getDeclaredField("classes");
-            classes.setAccessible(true);
-            ClassLoader classLoader = client.getClass().getClassLoader();
-            Vector<Class<?>> classesVector = (Vector<Class<?>>) classes.get(classLoader);
-            Class<?>[] params = new Class[]{int.class, int.class, int.class, int.class, int.class, int.class, String.class, String.class, int.class, int.class};
-            for (int i = 0; i < classesVector.size(); i++) {
-                try {
-                    if (classesVector.get(i).getSuperclass()!=null&&classesVector.get(i).getSuperclass().getName().contains("SSLSocketFactory")) {
-                        continue;
-                    }
-                    try {
-                        for (int i1 = 0; i1 < classesVector.get(i).getDeclaredMethods().length; i1++) {
-                            if (!Arrays.equals(Arrays.copyOfRange(classesVector.get(i).getDeclaredMethods()[i1].getParameterTypes(), 0, 10), params)) {
-                                continue;
-                            }
-                            doAction = classesVector.get(i).getDeclaredMethods()[i1];
-                        }
-                    } catch (NoClassDefFoundError ignored) {
-                    }
-                } catch (Exception ignored) {
-                }
-            }
-        }
-        doAction.setAccessible(true);
-        doAction.invoke(null, var0, var1, var2, var3, var4, var5, var6, var7, var8,var9, Byte.MAX_VALUE);
-        doAction.setAccessible(false);
-    }
-
-    // BACKUP FOR OTHER PLUGINS I HAVE NOT UDPDATED/CBA
-    // REMOVE LATER
-    @SneakyThrows
-    public static void invoke(int var0, int var1, int var2, int var3, int var4, String var6, String var7, int var8,
-                              int var9) {
-        invoke(var0, var1, var2, var3, var4, -1, var6, var7, var8, var9);
-    }
+//    @Deprecated // use client menuAction
+//    @SneakyThrows
+//    public static void invoke(int var0, int var1, int var2, int var3, int var4,int var5, String var6, String var7, int var8,
+//                              int var9) {
+//        if (doAction == null) {
+//            Class<?> qtClass = null;
+//            Field classes = ClassLoader.class.getDeclaredField("classes");
+//            classes.setAccessible(true);
+//            ClassLoader classLoader = client.getClass().getClassLoader();
+//            Vector<Class<?>> classesVector = (Vector<Class<?>>) classes.get(classLoader);
+//
+//            for (Class<?> clazz : classesVector) {
+//                if (clazz.getName().equals(ObfuscatedNames.doActionClassName)) {
+//                    qtClass = clazz;
+//                    break;
+//                }
+//            }
+//
+//            if (qtClass != null) {
+//                try {
+//                    doAction = qtClass.getDeclaredMethod(ObfuscatedNames.doActionMethodName, int.class, int.class, int.class, int.class, int.class, int.class, String.class, String.class, int.class, int.class, int.class);
+//                } catch (NoSuchMethodException ignored) {
+//                }
+//            } else {
+//                System.out.println("Cant find doAction");
+//                return;
+//            }
+//        }
+//        doAction.setAccessible(true);
+//        doAction.invoke(null, var0, var1, var2, var3, var4, var5, var6, var7, var8,var9, -886112733);
+//        doAction.setAccessible(false);
+//    }
+//
+//    // BACKUP FOR OTHER PLUGINS I HAVE NOT UDPDATED/CBA
+//    // REMOVE LATER
+//    @SneakyThrows
+//    public static void invoke(int var0, int var1, int var2, int var3, int var4, String var6, String var7, int var8,
+//                              int var9) {
+//        invoke(var0, var1, var2, var3, var4, -1, var6, var7, var8, var9);
+//    }
 
     @Deprecated
     public static TileObject findObject(int id) {

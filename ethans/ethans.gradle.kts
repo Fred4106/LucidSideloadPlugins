@@ -1,4 +1,3 @@
-//val runeLiteVersion = "1.10.36.1"
 description = "Ethans API"
 
 dependencies {

@@ -4,8 +4,19 @@ plugins {
 }
 
 include(":ethans")
-include(":lucid")
-//include(":cache")
+include(":common")
+include(":commonScala")
+include(":attackTimer")
+include(":customPrayers")
+include(":demonicGorilla")
+include(":dt2")
+include(":gauntlet")
+include(":giantsFoundry")
+include(":layoutHelper")
+include(":mta")
+include(":scurriusHelper")
+include(":titheFarm")
+
 //include(":runelite-api")
 //include(":runescape-api")
 //include(":runescape-client")
@@ -20,9 +31,9 @@ include(":lucid")
 
 for (project in rootProject.children) {
     project.apply {
-        projectDir = file(name)
+//        file(name).exists()
+        projectDir = (if(file(name).exists()) file(name) else file("plugins/${name}"))
         buildFileName = "$name.gradle.kts"
-
         require(projectDir.isDirectory) { "Project '${project.path} must have a $projectDir directory" }
         require(buildFile.isFile) { "Project '${project.path} must have a $buildFile build script" }
     }

@@ -1,17 +1,15 @@
+import org.gradle.jvm.tasks.Jar
 import org.gradle.tooling.internal.protocol.ProjectVersion3
 
 plugins {
-    id("java")
-    id("scala")
+    id("java-library")
     id("com.github.johnrengelman.shadow") version "7.0.0"
 //    id("de.undercouch.download") version "5.6.0"
 }
 
-val runeLiteVersion = "1.10.36.1"
+val runeLiteVersion = "1.10.37"
 val javaVersion = JavaVersion.VERSION_11
-subprojects {
-    apply(plugin="java-library")
-}
+
 allprojects {
     group = "com.fredplugins"
     version = "0.3"
@@ -22,6 +20,7 @@ allprojects {
         gradlePluginPortal()
         mavenCentral()
     }
+    apply(plugin="java-library")
     apply<MavenPublishPlugin>()
 
     dependencies {
@@ -36,17 +35,28 @@ allprojects {
         targetCompatibility = javaVersion
 //        options.encoding = "UTF-8"
     }
+//    configure<Jar> {
+//        System.out.println("inputs: " + inputs.files)
+//        duplicatesStrategy = DuplicatesStrategy.WARN
+//        exclude("META-INF/versions/11/org/roaringbitmap/ArraysShim.class")
+//    }
 }
 
 dependencies {
     implementation(project(":ethans"))
-    implementation(project(":lucid"))
+    implementation(project(":common"))
+    implementation(project(":commonScala"))
 
-    implementation("org.scala-lang:scala3-library_3:3.4.2")
-    implementation("net.codingwell:scala-guice_3:7.0.0") {
-        exclude("com.google.inject", "guice")
-    }
-    implementation("com.beachape:enumeratum_3:1.7.4")
+    implementation(project(":attackTimer"))
+    implementation(project(":customPrayers"))
+    implementation(project(":demonicGorilla"))
+    implementation(project(":dt2"))
+    implementation(project(":gauntlet"))
+    implementation(project(":giantsFoundry"))
+    implementation(project(":layoutHelper"))
+    implementation(project(":mta"))
+    implementation(project(":scurriusHelper"))
+    implementation(project(":titheFarm"))
 }
 
 tasks {
@@ -62,17 +72,17 @@ tasks {
         println()
     }
 
-    compileScala {
-        println("scalaCompile")
-        inputs.sourceFiles.forEach { f ->
-            println("\tIn: " + f)
-        }
-        println()
-        outputs.files.forEach { f ->
-            println("\tOut: " + f)
-        }
-        println()
-    }
+//    compileScala {
+//        println("scalaCompile")
+//        inputs.sourceFiles.forEach { f ->
+//            println("\tIn: " + f)
+//        }
+//        println()
+//        outputs.files.forEach { f ->
+//            println("\tOut: " + f)
+//        }
+//        println()
+//    }
     shadowJar {
 //        this.dependsOn(classes)
         System.out.println("inputs: " + inputs.files)
