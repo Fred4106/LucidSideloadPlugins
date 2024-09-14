@@ -1,12 +1,14 @@
 package com.fredplugins.common
 
+import net.runelite.api.Perspective.localToCanvas
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
-import net.runelite.api.{Client, GameObject, Perspective}
+import net.runelite.api.{Client, GameObject, Perspective, Point}
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import net.runelite.client.util.ColorUtil
 
-import java.awt.{BasicStroke, Color, Font, Graphics2D, Rectangle, Shape}
+import java.awt.geom.Rectangle2D
+import java.awt.{BasicStroke, Color, Font, FontMetrics, Graphics2D, Rectangle, Shape}
 import scala.util.chaining.*
 
 package object overlays {
@@ -48,9 +50,12 @@ package object overlays {
 		val localLoc = gameObject.getLocalLocation
 		renderMinimapArea(localLoc, (3, 3), 1, borderColor, 24, dashed)
 
-		Option(text).filter(_.nonEmpty).zip(Option(gameObject.getCanvasTextLocation(g, text, 0))).foreach {
-			case (str, strLoc) => {
-				OverlayUtil.renderTextLocation(g, strLoc, str, Color.BLACK)
+		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
+			case (str, strLoc@(x, y, h, w)) => {
+				val padding        = 5
+//				val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding * 2)
+//				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
+				OverlayUtil.renderTextLocation(g, new Point(x, y), str, Color.BLACK)
 			}
 		}
 	}
@@ -62,7 +67,27 @@ package object overlays {
 		renderTileArea(localPoint, (1, 1), .4, 0, ColorUtil.colorWithAlpha(fillColor, 255), fillColor.getAlpha, dashed)
 		renderMinimapArea(localPoint, (1, 1), .4, ColorUtil.colorWithAlpha(fillColor, 255), fillColor.getAlpha, dashed)
 
-		val textLocation = Perspective.getCanvasTextLocation(client, g, localPoint, text, 0)
-		if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, text, Color.BLACK)
+//		val textLocation = Perspective.getCanvasTextLocation(client, g, localPoint, text, 0)
+		val textLocation@(x, y, w, h) = getCanvasTextLocation(localPoint, text, 0)
+		if (textLocation != null) {
+			val padding        = 5
+//			val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding*2)
+//			OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
+			OverlayUtil.renderTextLocation(g, new Point(x, y), text, Color.BLACK)
+		}
+	}
+
+	def getCanvasTextLocation(localLocation: LocalPoint, text: String, zOffset: Int)(using graphics: Graphics2D, client: Client): (Int, Int, Int, Int) = {
+		if (text == null) return null
+		val wv = client.getWorldView(localLocation.getWorldView)
+		if (wv == null) return null
+		val plane = wv.getPlane
+		val p     = localToCanvas(client, localLocation, plane, zOffset)
+		if (p == null) return null
+		val fm      = graphics.getFontMetrics
+		val bounds  = fm.getStringBounds(text, graphics)
+		val xOffset = p.getX - (bounds.getWidth / 2).toInt
+		val yOffset = p.getY - (bounds.getHeight / 2).toInt + fm.getAscent
+		(xOffset, yOffset, bounds.getWidth.toInt, bounds.getHeight.toInt)
 	}
 }
