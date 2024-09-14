@@ -58,6 +58,17 @@ public interface FredsTitheFarmV2PluginConfig extends Config
 		return new Color(64, 64, 64);
 	}
 
+		@Alpha
+	@ConfigItem(
+		position = 5,
+		keyName = "hexColorEmpty",
+		name = "Empty plant",
+		description = "Color of empty plant fields"
+	)
+	default Color getColorEmpty() {
+		return new Color(93, 56, 45);
+	}
+
 	@Range(
 		min = 6,
 		max = 32

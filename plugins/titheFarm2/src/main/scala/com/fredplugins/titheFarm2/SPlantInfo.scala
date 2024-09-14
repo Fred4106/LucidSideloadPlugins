@@ -16,20 +16,23 @@ sealed trait SPlantInfo(val tpe: SPlantType2, val age: Int) {
 
 
 object SPlantInfo {
+	sealed trait NonEmptyPlantInfo {
+		this: SPlantInfo =>
+	}
 	case object EmptyPlantInfo extends SPlantInfo(Empty, 0) {
 		override def offset: Int = 0
 	}
-	case class DryPlantInfo(t: SPlantType2, a: Int) extends SPlantInfo(t, a) {
+	case class DryPlantInfo(t: SPlantType2, a: Int) extends SPlantInfo(t, a) with NonEmptyPlantInfo {
 		override def offset: Int = (9 - (0 + (age * 3)))
 		override def needsWater: Boolean = true
 	}
-	case class WateredPlantInfo(t: SPlantType2, a: Int) extends SPlantInfo(t, a)  {
+	case class WateredPlantInfo(t: SPlantType2, a: Int) extends SPlantInfo(t, a) with NonEmptyPlantInfo {
 		override def offset: Int = (9 - (1 + (age * 3)))
 	}
-	case class DeadPlantInfo(t: SPlantType2, a: Int) extends SPlantInfo(t, a) {
+	case class DeadPlantInfo(t: SPlantType2, a: Int) extends SPlantInfo(t, a) with NonEmptyPlantInfo {
 		override def offset: Int = (9 - (2 + (age * 3)))
 	}
-	case class GrownPlantInfo(t: SPlantType2) extends SPlantInfo(t, 3) {
+	case class GrownPlantInfo(t: SPlantType2) extends SPlantInfo(t, 3) with NonEmptyPlantInfo {
 		override def offset: Int = 0
 	}
 

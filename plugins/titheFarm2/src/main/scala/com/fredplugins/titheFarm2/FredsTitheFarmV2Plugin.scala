@@ -20,6 +20,7 @@ import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.overlay.OverlayManager
 import net.runelite.client.util.ColorUtil
 import org.slf4j.Logger
+import lombok.Getter
 
 import java.awt.Color
 import scala.collection.mutable
@@ -93,18 +94,24 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 		farmLookup.tick()
 	}
 
-	def getPlants: List[(TitheFarmPatchLoc, PlantData)] = farmLookup.getData
+//	def getPlants: List[(TitheFarmPatchLoc, PlantData)] = farmLookup.getData
+	def getFarmLookup: TitheFarmLookup = farmLookup
 	def getClickedTiles: List[(Int, WorldPoint)] = clickedTiles.toList
 
 	@Subscribe
 	def onGameObjectSpawned(event: GameObjectSpawned): Unit = {
-		val gameObject: GameObject = event.getGameObject
-		val key = gameObject.getWorldLocation
-		val key2 = gameObject.getLocalLocation.pipe(l => l.getSceneX -> l.getSceneY)
-		val patchLocOpt = TitheFarmPatchLoc.lookup(key2._1, key2._2)
-		patchLocOpt.zip(Option(gameObject).filter(go => SPlantInfo.lookup(go.getId).isDefined)).foreach {
-			case (loc, info) => farmLookup.putPlantInfo(loc, info)
-		}
+		val  zzz = for {
+			go <- Option(event.getGameObject)
+			key <- Option(go.getWorldLocation)
+			info <- SPlantInfo.lookup(go.getId) if key.getRegionID != 2227
+		} farmLookup.putPlantInfo(key, go)
+//		val key = go.getWorldLocation
+//		val key2 = gameObject.getLocalLocation.pipe(l => l.getSceneX -> l.getSceneY)
+//		val patchLocOpt = TitheFarmPatchLoc.lookup(key2._1, key2._2)
+
+//		patchLocOpt.zip(Option(gameObject).filter(go => SPlantInfo.lookup(go.getId).isDefined)).foreach {
+//			case (loc, info) =>
+//		}
 	}
 
 	def wateringCan(query: ItemQuery): List[Widget] = query.withIdFilter {
@@ -210,7 +217,6 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 				//					plants.get(patchLocation)
 				//						val patchObjDef = client.getObjectDefinition(plantType.getIdForState(state))
 //				val patchObject       = TileObjects.search().withId(state.id).atLocation(patchLocation).result().asScala.toList.headOption
-
 				//				val maybeRealLoc = patchObject collect {
 //					case go: GameObject => (go.getSceneMinLocation.getX, go.getSceneMinLocation.getY)
 //				}
@@ -218,16 +224,16 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 //					log.info(s"object at {} is realy at {}", patchLocation, rloc)
 //				})
 //				val worldPoint = me.getWorldLocation.dx(1).dy(1)
-				val localPoint = LocalPoint.fromWorld(client, patchLocation)
-				TitheFarmPatchLoc.lookup(localPoint).flatMap(loc => {
+//				val localPoint = LocalPoint.fromWorld(client, patchLocation)
+//				TitheFarmPatchLoc.lookup(localPoint).flatMap(loc => {
 //					val foundObjs = loc.getGameObject.filter(_.getId == state.id).toList
 //					Option.when(foundObjs.nonEmpty) {
 //						log.debug(s"loc {} has {} game objects", loc, foundObjs)
 //					}.flatten
-					farmLookup.getPlantData(loc).collect {
-						case PlantData(cachedInfo, go, composted, countdown) if (countdown > 100 - 3) => wateringCanWidget.map(wcw => wcw -> go)
-					}
-				}).flatten
+					farmLookup.getPlantData(patchLocation).collect {
+						case PlantData(cachedInfo, go, composted, countdown) if (countdown < 100 && countdown > 100 - 3) => wateringCanWidget.map(wcw => wcw -> go)
+					}.flatten
+//				}).flatten
 			}
 		}.flatten
 	}
@@ -245,17 +251,16 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 //					log.info(s"object at {} is realy at {}", patchLocation, rloc)
 //				})
 
-				val localPoint = LocalPoint.fromWorld(client, patchLocation)
-				TitheFarmPatchLoc.lookup(localPoint).flatMap(loc => {
+//				val localPoint = LocalPoint.fromWorld(client, patchLocation)
+//				TitheFarmPatchLoc.lookup(localPoint).flatMap(loc => {
 //					val foundObjs = loc.getGameObject/*.filter(_.getId == state.id).toList*/
 //					Option.when(foundObjs.nonEmpty) {
 //						log.debug(s"loc {} has {} game objects", loc, foundObjs)
 //					}.flatten
-					farmLookup.getPlantData(loc).collect {
+					farmLookup.getPlantData(patchLocation).collect {
 						case PlantData(cachedInfo, go, _, _) if (cachedInfo == EmptyPlantInfo) => seedWidget.map(swo => swo -> go)
-					}
-				}).flatten
-			}
+					}.flatten
+				}
 		}.flatten
 	}
 
@@ -324,16 +329,16 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
 		val me = menuOptionClicked.getMenuEntry
 		if (me.isGameObjectAction || me.isRuneliteAction) {
+			val ident = me.getIdentifier
 			val worldPoint  = me.getWorldLocation.dx(1).dy(1)
-			val localPoint  = LocalPoint.fromWorld(client, worldPoint)
-			TitheFarmPatchLoc.lookup(localPoint).foreach(patchLoc => {
-				log.info("patch: {}, data: {}, menuOptionClicked: {}", patchLoc, farmLookup.getPlantData(patchLoc), worldPoint)
+//			TitheFarmPatchLoc.lookup(localPoint).foreach(patchLoc => {
+				log.info("menuOptionClicked: {}[{}] contains {}", me.getIdentifier, worldPoint, farmLookup.getPlantData(worldPoint))
 				me.getWorldLocation.tap(pt => {
 					clickedTiles.filterInPlace {
 						case (_, point) => !point.equals(pt)
 					}.addOne((0, pt))
 				})
-			})
+//			})
 		}
 	}
 

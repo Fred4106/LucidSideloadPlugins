@@ -51,7 +51,7 @@ package object overlays {
 		renderMinimapArea(localLoc, (3, 3), 1, borderColor, 24, dashed)
 
 		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
-			case (str, strLoc@(x, y, h, w)) => {
+			case (str, strLoc@(x, y, b)) => {
 				val padding        = 5
 //				val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding * 2)
 //				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
@@ -68,7 +68,7 @@ package object overlays {
 		renderMinimapArea(localPoint, (1, 1), .4, ColorUtil.colorWithAlpha(fillColor, 255), fillColor.getAlpha, dashed)
 
 //		val textLocation = Perspective.getCanvasTextLocation(client, g, localPoint, text, 0)
-		val textLocation@(x, y, w, h) = getCanvasTextLocation(localPoint, text, 0)
+		val textLocation@(x, y, b) = getCanvasTextLocation(localPoint, text, 0)
 		if (textLocation != null) {
 			val padding        = 5
 //			val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding*2)
@@ -76,8 +76,7 @@ package object overlays {
 			OverlayUtil.renderTextLocation(g, new Point(x, y), text, Color.BLACK)
 		}
 	}
-
-	def getCanvasTextLocation(localLocation: LocalPoint, text: String, zOffset: Int)(using graphics: Graphics2D, client: Client): (Int, Int, Int, Int) = {
+	def getCanvasTextLocation(localLocation: LocalPoint, text: String, zOffset: Int)(using graphics: Graphics2D, client: Client): (Int, Int, Rectangle2D) = {
 		if (text == null) return null
 		val wv = client.getWorldView(localLocation.getWorldView)
 		if (wv == null) return null
@@ -88,6 +87,7 @@ package object overlays {
 		val bounds  = fm.getStringBounds(text, graphics)
 		val xOffset = p.getX - (bounds.getWidth / 2).toInt
 		val yOffset = p.getY - (bounds.getHeight / 2).toInt + fm.getAscent
-		(xOffset, yOffset, bounds.getWidth.toInt, bounds.getHeight.toInt)
+		(xOffset, yOffset, bounds)
 	}
 }
+
