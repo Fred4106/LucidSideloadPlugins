@@ -17,6 +17,7 @@ include(":mta")
 include(":scurriusHelper")
 include(":titheFarm")
 include(":titheFarm2")
+include(":superClickHelper")
 
 //include(":runelite-api")
 //include(":runescape-api")

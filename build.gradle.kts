@@ -58,6 +58,7 @@ dependencies {
     implementation(project(":scurriusHelper"))
     implementation(project(":titheFarm"))
     implementation(project(":titheFarm2"))
+    implementation(project(":superClickHelper"))
 }
 
 tasks {
