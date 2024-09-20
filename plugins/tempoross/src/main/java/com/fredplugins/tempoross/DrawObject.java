@@ -12,9 +12,9 @@ import java.time.Instant;
 @AllArgsConstructor
 class DrawObject {
 	private final Tile tile;
+	private final int duration;
 	@Setter
 	private Instant startTime;
-	private final int duration;
 	@Setter
 	private Color color;
 }

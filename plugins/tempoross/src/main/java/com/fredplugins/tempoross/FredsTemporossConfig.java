@@ -10,14 +10,6 @@ import java.awt.*;
 @ConfigGroup(FredsTemporossConfig.GroupName)
 public interface FredsTemporossConfig extends Config {
 	final String GroupName = "superClickHelper";
-
-	enum TimerModes {
-		OFF,
-		PIE,
-		TICKS,
-		SECONDS
-	}
-
 	// Sections
 	@ConfigSection(
 			name = "Fire",
@@ -26,6 +18,34 @@ public interface FredsTemporossConfig extends Config {
 			closedByDefault = false
 	)
 	String fireSection = "Fire";
+	@ConfigSection(
+			name = "Storm",
+			description = "Storm section.",
+			position = 1,
+			closedByDefault = false
+	)
+	String stormSection = "Storm";
+	@ConfigSection(
+			name = "Fishing spots",
+			description = "Fishing spots section.",
+			position = 2,
+			closedByDefault = false
+	)
+	String fishSpotSection = "FishSpots";
+	@ConfigSection(
+			name = "Wave",
+			description = "Wave section.",
+			position = 3,
+			closedByDefault = false
+	)
+	String waveSection = "Waves";
+	@ConfigSection(
+			name = "Infoboxes",
+			description = "Infoboxes section.",
+			position = 4,
+			closedByDefault = false
+	)
+	String infoSection = "Infoboxes";
 
 	@ConfigItem(
 			keyName = "highlightFires",
@@ -49,7 +69,6 @@ public interface FredsTemporossConfig extends Config {
 		return Color.ORANGE;
 	}
 
-
 	@ConfigItem(
 			keyName = "fireStormNotification",
 			name = "Storm Cloud Notification",
@@ -60,13 +79,7 @@ public interface FredsTemporossConfig extends Config {
 	default boolean fireStormNotification() {
 		return false;
 	}
-	@ConfigSection(
-			name = "Storm",
-			description = "Storm section.",
-			position = 1,
-			closedByDefault = false
-	)
-	String stormSection = "Storm";
+
 	@ConfigItem(
 			keyName = "stormIntensityNotification",
 			name = "Storm Intensity Notification",
@@ -77,15 +90,6 @@ public interface FredsTemporossConfig extends Config {
 	default boolean stormIntensityNotification() {
 		return false;
 	}
-
-
-	@ConfigSection(
-			name = "Fishing spots",
-			description = "Fishing spots section.",
-			position = 2,
-			closedByDefault = false
-	)
-	String fishSpotSection = "FishSpots";
 
 	@ConfigItem(
 			keyName = "highlightDoubleSpot",
@@ -119,14 +123,6 @@ public interface FredsTemporossConfig extends Config {
 	default boolean doubleSpotNotification() {
 		return false;
 	}
-
-	@ConfigSection(
-			name = "Wave",
-			description = "Wave section.",
-			position = 3,
-			closedByDefault = false
-	)
-	String waveSection = "Waves";
 
 	@ConfigItem(
 			keyName = "useWaveTimer",
@@ -182,13 +178,6 @@ public interface FredsTemporossConfig extends Config {
 	default boolean waveNotification() {
 		return false;
 	}
-	@ConfigSection(
-			name = "Infoboxes",
-			description = "Infoboxes section.",
-			position = 4,
-			closedByDefault = false
-	)
-	String infoSection = "Infoboxes";
 
 	@ConfigItem(
 			keyName = "fishIndicator",
@@ -222,5 +211,12 @@ public interface FredsTemporossConfig extends Config {
 	)
 	default boolean phaseIndicator() {
 		return true;
+	}
+
+	enum TimerModes {
+		OFF,
+		PIE,
+		TICKS,
+		SECONDS
 	}
 }

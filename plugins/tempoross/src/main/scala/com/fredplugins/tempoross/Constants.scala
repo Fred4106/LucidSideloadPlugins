@@ -29,14 +29,13 @@ object Constants {
 	val NET_IMAGE_ID: Int           = ItemID.TINY_NET
 	val PHASE_IMAGE : BufferedImage = ImageUtil.loadImageResource(classOf[FredsTemporossPlugin], "phases.png")
 
-
 	val FIRE_SPREAD_MILLIS          = 24000
 	val FIRE_SPAWN_MILLIS           = 9600
 	val FIRE_SPREADING_SPAWN_MILLIS = 1200
 	val WAVE_IMPACT_MILLIS          = 7800
-	val TEMPOROSS_HUD_UPDATE = 4075
-	val STORM_INTENSITY      = 350
-	val MAX_STORM_INTENSITY  = 350
+	val TEMPOROSS_HUD_UPDATE        = 4075
+	val STORM_INTENSITY             = 350
+	val MAX_STORM_INTENSITY         = 350
 
 	val FIRE_GAMEOBJECTS: Set[Int] = Set(NullObjectID.NULL_37582, NullObjectID.NULL_41006, NullObjectID.NULL_41007)
 

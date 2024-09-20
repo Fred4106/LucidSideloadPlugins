@@ -38,7 +38,6 @@ class FredsTemporossOverlay @Inject()(val client: Client, val plugin: FredsTempo
 	setLayer(OverlayLayer.ABOVE_SCENE)
 	private val textComponent: TextComponent = new TextComponent
 
-
 	override def render(graphics: Graphics2D): Dimension = {
 		given Graphics2D = graphics
 		given ModelOutlineRenderer = modelOutlineRenderer
@@ -66,10 +65,8 @@ class FredsTemporossOverlay @Inject()(val client: Client, val plugin: FredsTempo
 				if (poly != null) OverlayUtil.renderPolygon(graphics, poly, drawObject.getColor)
 			}
 			if (drawObject.getDuration <= 0 || `object`.getCanvasLocation == null) {
-
 			} else if ((highlightFires != TimerModes.OFF) && FIRE_GAMEOBJECTS.contains(`object`.getId)) {
 				if (tile.getLocalLocation.distanceTo(playerLocation) >= MAX_DISTANCE) {
-
 				} else {
 					if ((highlightFires == TimerModes.SECONDS) || (highlightFires == TimerModes.TICKS)) {
 						var waveTimerMillis = (drawObject.getStartTime.toEpochMilli + drawObject.getDuration) - now.toEpochMilli
@@ -79,18 +76,37 @@ class FredsTemporossOverlay @Inject()(val client: Client, val plugin: FredsTempo
 					}
 					else if (highlightFires == TimerModes.PIE) renderPieElement(`object`, drawObject, now, graphics)
 				}
-			} else if (TETHER_GAMEOBJECTS.contains(`object`.getId) || DAMAGED_TETHER_GAMEOBJECTS.contains(	`object`.getId)) {
+			} else if (TETHER_GAMEOBJECTS.contains(`object`.getId) || DAMAGED_TETHER_GAMEOBJECTS.contains(`object`.getId)) {
 				if (tile.getLocalLocation.distanceTo(playerLocation) < MAX_DISTANCE) {
 					if ((waveTimer == TimerModes.SECONDS) || (waveTimer == TimerModes.TICKS)) {
 						val waveTimerMillis = (drawObject.getStartTime.toEpochMilli + drawObject.getDuration) - now.toEpochMilli
 						renderTextElement(`object`, drawObject, waveTimerMillis, graphics, waveTimer)
 					} else if (waveTimer == TimerModes.PIE) renderPieElement(`object`, drawObject, now, graphics)
-
 				}
-			} //Wave and is not OFF
+			}
+			//Wave and is not OFF
 		})
 	}
+	private def renderTextElement(gameObject: GameObject, drawObject: DrawObject, timerMillis: Long, graphics: Graphics2D, timerMode: TimerModes): Unit = {
+		val timerText = if (timerMode.equals(TimerModes.SECONDS)) String.format("%.1f", timerMillis / 1000f) else String.format("%d", timerMillis / 600)
+		// TICKS
 
+		textComponent.setText(timerText)
+		textComponent.setColor(drawObject.getColor)
+		textComponent.setPosition(new Point(gameObject.getCanvasLocation.getX, gameObject.getCanvasLocation.getY))
+		textComponent.render(graphics)
+	}
+	private def renderPieElement(gameObject: GameObject, drawObject: DrawObject, now: Instant, graphics: Graphics2D): Unit = {
+		//modulo as the fire spreads every 24 seconds
+		val percent = ((now.toEpochMilli - drawObject.getStartTime.toEpochMilli) % drawObject.getDuration) / drawObject.getDuration.asInstanceOf[Float]
+		val ppc     = new ProgressPieComponent
+		ppc.setBorderColor(drawObject.getColor)
+		ppc.setFill(drawObject.getColor)
+		ppc.setProgress(percent)
+		ppc.setDiameter(PIE_DIAMETER)
+		ppc.setPosition(gameObject.getCanvasLocation)
+		ppc.render(graphics)
+	}
 	private def highlightNpcs(graphics: Graphics2D, playerLocation: LocalPoint, now: Instant): Unit = {
 		FredsTemporossLogic.npcs.toList.foreach((npc, startTime) => {
 			val npcComposition = npc.getComposition
@@ -110,26 +126,5 @@ class FredsTemporossOverlay @Inject()(val client: Client, val plugin: FredsTempo
 				ppc.render(graphics)
 			}
 		})
-	}
-
-	private def renderTextElement(gameObject: GameObject, drawObject: DrawObject, timerMillis: Long, graphics: Graphics2D, timerMode: TimerModes): Unit = {
-		val timerText = if (timerMode.equals(TimerModes.SECONDS)) String.format("%.1f", timerMillis / 1000f) else String.format("%d", timerMillis / 600) // TICKS
-
-		textComponent.setText(timerText)
-		textComponent.setColor(drawObject.getColor)
-		textComponent.setPosition(new Point(gameObject.getCanvasLocation.getX, gameObject.getCanvasLocation.getY))
-		textComponent.render(graphics)
-	}
-
-	private def renderPieElement(gameObject: GameObject, drawObject: DrawObject, now: Instant, graphics: Graphics2D): Unit = {
-		//modulo as the fire spreads every 24 seconds
-		val percent = ((now.toEpochMilli - drawObject.getStartTime.toEpochMilli) % drawObject.getDuration) / drawObject.getDuration.asInstanceOf[Float]
-		val ppc     = new ProgressPieComponent
-		ppc.setBorderColor(drawObject.getColor)
-		ppc.setFill(drawObject.getColor)
-		ppc.setProgress(percent)
-		ppc.setDiameter(PIE_DIAMETER)
-		ppc.setPosition(gameObject.getCanvasLocation)
-		ppc.render(graphics)
 	}
 }

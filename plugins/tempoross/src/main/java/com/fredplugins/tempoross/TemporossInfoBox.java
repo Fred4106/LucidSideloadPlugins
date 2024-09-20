@@ -8,16 +8,14 @@ import net.runelite.client.ui.overlay.infobox.InfoBox;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-public class TemporossInfoBox extends InfoBox
-{
+public class TemporossInfoBox extends InfoBox {
 	@Setter
 	@Getter
 	private String text;
 	@Setter
 	private String name;
 
-	public TemporossInfoBox(BufferedImage image, Plugin plugin, String name)
-	{
+	public TemporossInfoBox(BufferedImage image, Plugin plugin, String name) {
 		super(image, plugin);
 		this.name = name;
 	}
@@ -27,8 +25,7 @@ public class TemporossInfoBox extends InfoBox
 		return super.getName() + "_" + this.name;
 	}
 
-	public Color getTextColor()
-	{
+	public Color getTextColor() {
 		return Color.WHITE;
 	}
 }

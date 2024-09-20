@@ -26,158 +26,151 @@ import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 
 @PluginDescriptor(
-  name = "<html><font color=\"#32C8CD\">Freds</font> Tempoross</html>",
-  description = "Useful information and tracking for the Tempoross skilling boss",
-  tags = Array(
-    "fishing", "minigame"
-    , "skilling"
-  ),
-  conflicts = Array(
-    "Tempoross",
-  )
+	name = "<html><font color=\"#32C8CD\">Freds</font> Tempoross</html>",
+	description = "Useful information and tracking for the Tempoross skilling boss",
+	tags = Array(
+		"fishing", "minigame"
+		, "skilling"
+	),
+	conflicts = Array(
+		"Tempoross",
+	)
 )
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class FredsTemporossPlugin() extends Plugin {
-  private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	@Inject val client        : Client               = null
+	@Inject val infoBoxManager: InfoBoxManager       = null
+	@Inject val config        : FredsTemporossConfig = null
+	@Inject val notifier      : Notifier             = null
+	private         val log           : Logger                = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	@Inject private val eventBus      : EventBus              = null
+	@Inject private val overlayManager: OverlayManager        = null
+	@Inject private val overlay       : FredsTemporossOverlay = null
+	@Inject private val itemManager   : ItemManager           = null
+	var rewardInfoBox: TemporossInfoBox = uninitialized
+	var fishInfoBox  : TemporossInfoBox = uninitialized
+	var damageInfoBox: TemporossInfoBox = uninitialized
+	var phaseInfoBox : TemporossInfoBox = uninitialized
 
-  @Inject private val eventBus: EventBus = null
-  @Inject val client: Client = null
-  @Inject private val overlayManager: OverlayManager = null
-  @Inject private val overlay: FredsTemporossOverlay = null
-  @Inject private val itemManager: ItemManager = null
+	given Client = client
 
-  @Inject val infoBoxManager: InfoBoxManager = null
-  @Inject val config: FredsTemporossConfig = null
-  @Inject val notifier: Notifier = null
+	@Provides
+	def getConfig(configManager: ConfigManager): FredsTemporossConfig = {
+		configManager.getConfig[FredsTemporossConfig](classOf[FredsTemporossConfig])
+	}
 
-  var rewardInfoBox: TemporossInfoBox = uninitialized
-  var fishInfoBox: TemporossInfoBox = uninitialized
-  var damageInfoBox: TemporossInfoBox = uninitialized
-  var phaseInfoBox: TemporossInfoBox = uninitialized
+	def redrawInfoBoxes(): Unit = {
+		def addFishInfoBox(): Unit = {
+			import FredsTemporossLogic.{uncookedFish, crystalFish, cookedFish}
+			val text    = (uncookedFish + crystalFish) + "/" + cookedFish + "\n" + (uncookedFish + cookedFish + crystalFish)
+			val tooltip = "Uncooked Fish: " + (uncookedFish + crystalFish) + "</br>Cooked Fish: " + cookedFish + "</br>Total Fish: " + (uncookedFish + cookedFish + crystalFish)
+			if (fishInfoBox == null) {
+				fishInfoBox = createInfobox("fish", itemManager.getImage(FISH_IMAGE_ID), text, tooltip)
+				infoBoxManager.addInfoBox(fishInfoBox)
+			}
+			else {
+				fishInfoBox.setText(text)
+				fishInfoBox.setTooltip(tooltip)
+			}
+		}
 
-  given Client = client
+		def addDamageInfoBox(): Unit = {
+			val text    = Integer.toString(FredsTemporossLogic.damage)
+			val tooltip = "Damage: " + FredsTemporossLogic.damage
+			if (damageInfoBox == null) {
+				damageInfoBox = createInfobox("damage", itemManager.getImage(DAMAGE_IMAGE_ID), text, tooltip)
+				infoBoxManager.addInfoBox(damageInfoBox)
+			}
+			else {
+				damageInfoBox.setText(text)
+				damageInfoBox.setTooltip(tooltip)
+			}
+		}
 
-  @Provides
-  def getConfig(configManager: ConfigManager): FredsTemporossConfig = {
-    configManager.getConfig[FredsTemporossConfig](classOf[FredsTemporossConfig])
-  }
+		def addPhaseInfoBox(): Unit = {
+			val text    = Integer.toString(FredsTemporossLogic.phase)
+			val tooltip = "Phase " + FredsTemporossLogic.phase
+			if (phaseInfoBox == null) {
+				phaseInfoBox = createInfobox("phase", PHASE_IMAGE, text, tooltip)
+				infoBoxManager.addInfoBox(phaseInfoBox)
+			}
+			else {
+				phaseInfoBox.setText(text)
+				phaseInfoBox.setTooltip(tooltip)
+			}
+		}
 
-  def redrawInfoBoxes(): Unit = {
-    def addFishInfoBox(): Unit = {
-      import FredsTemporossLogic.{uncookedFish, crystalFish, cookedFish}
-      val text = (uncookedFish + crystalFish) + "/" + cookedFish + "\n" + (uncookedFish + cookedFish + crystalFish)
-      val tooltip = "Uncooked Fish: " + (uncookedFish + crystalFish) + "</br>Cooked Fish: " + cookedFish + "</br>Total Fish: " + (uncookedFish + cookedFish + crystalFish)
-      if (fishInfoBox == null) {
-        fishInfoBox = createInfobox("fish", itemManager.getImage(FISH_IMAGE_ID), text, tooltip)
-        infoBoxManager.addInfoBox(fishInfoBox)
-      }
-      else {
-        fishInfoBox.setText(text)
-        fishInfoBox.setTooltip(tooltip)
-      }
-    }
+		if (config.phaseIndicator) addPhaseInfoBox()
+		if (config.damageIndicator) {
+			addDamageInfoBox()
+		}
 
-    def addDamageInfoBox(): Unit = {
-      val text = Integer.toString(FredsTemporossLogic.damage)
-      val tooltip = "Damage: " + FredsTemporossLogic.damage
-      if (damageInfoBox == null) {
-        damageInfoBox = createInfobox("damage", itemManager.getImage(DAMAGE_IMAGE_ID), text, tooltip)
-        infoBoxManager.addInfoBox(damageInfoBox)
-      }
-      else {
-        damageInfoBox.setText(text)
-        damageInfoBox.setTooltip(tooltip)
-      }
-    }
+		if (config.fishIndicator) {
+			addFishInfoBox()
+		}
+	}
+	private def createInfobox(name: String, image: BufferedImage, text: String, tooltip: String) = {
+		val infoBox = new TemporossInfoBox(image, this, name)
+		infoBox.setText(text)
+		infoBox.setTooltip(tooltip)
+		infoBox
+	}
+	def addRewardInfoBox(): Unit = {
+		this.addRewardInfoBox(client.getVarbitValue(VARB_REWARD_POOL_NUMBER))
+	}
+	def addRewardInfoBox(rewardPoints: Int): Unit = {
+		val text    = Integer.toString(rewardPoints)
+		val tooltip = rewardPoints + " Reward Point" + (if (rewardPoints == 1) ""
+																										else "s")
+		if (rewardInfoBox == null) {
+			rewardInfoBox = createInfobox("reward", itemManager.getImage(REWARD_POOL_IMAGE_ID), text, tooltip)
+			infoBoxManager.addInfoBox(rewardInfoBox)
+		}
+		else {
+			rewardInfoBox.setText(text)
+			rewardInfoBox.setTooltip(tooltip)
+		}
+	}
+	def addTotemTimers(): Unit = {
+		val tethered = client.getVarbitValue(VARB_IS_TETHERED) > 0
+		FredsTemporossLogic.gameObjects.toList.filter(j => DAMAGED_TETHER_GAMEOBJECTS.contains(j._1.getId) || TETHER_GAMEOBJECTS.contains(j._1.getId)).foreach((`object`, drawObject) => {
+			val color =
+				if (tethered) config.tetheredColor
+				else `object`.getId match {
+					case ObjectID.DAMAGED_MAST_40996 => config.poleBrokenColor
+					case ObjectID.DAMAGED_MAST_40997 => config.poleBrokenColor
+					case ObjectID.DAMAGED_TOTEM_POLE => config.poleBrokenColor
+					case ObjectID.DAMAGED_TOTEM_POLE_41011 => config.poleBrokenColor
+					case _ => config.waveTimerColor
+				}
+			if (FredsTemporossLogic.waveIsIncoming) {
+				drawObject.setStartTime(FredsTemporossLogic.waveIncomingStartTime)
+			}
+			drawObject.setColor(color)
+		})
+	}
 
-    def addPhaseInfoBox(): Unit = {
-      val text = Integer.toString(FredsTemporossLogic.phase)
-      val tooltip = "Phase " + FredsTemporossLogic.phase
-      if (phaseInfoBox == null) {
-        phaseInfoBox = createInfobox("phase", PHASE_IMAGE, text, tooltip)
-        infoBoxManager.addInfoBox(phaseInfoBox)
-      }
-      else {
-        phaseInfoBox.setText(text)
-        phaseInfoBox.setTooltip(tooltip)
-      }
-    }
+	def removeTotemTimers(): Unit = {
+		FredsTemporossLogic.gameObjects.filterInPlace {
+			case (go, doo) => !(Constants.TETHER_GAMEOBJECTS.contains(go.getId) || Constants.DAMAGED_TETHER_GAMEOBJECTS.contains(go.getId))
+		}
+	}
 
-    if (config.phaseIndicator) addPhaseInfoBox()
-    if (config.damageIndicator) {
-      addDamageInfoBox()
-    }
+	override protected def startUp(): Unit = {
+		FredsTemporossLogic.init(this)
+		overlayManager.add(overlay)
+		eventBus.register(FredsTemporossLogic)
+	}
 
-    if (config.fishIndicator) {
-      addFishInfoBox()
-    }
-  }
-
-  def addRewardInfoBox(): Unit = {
-    this.addRewardInfoBox(client.getVarbitValue(VARB_REWARD_POOL_NUMBER))
-  }
-
-  def addRewardInfoBox(rewardPoints: Int): Unit = {
-    val text = Integer.toString(rewardPoints)
-    val tooltip = rewardPoints + " Reward Point" + (if (rewardPoints == 1) ""
-    else "s")
-    if (rewardInfoBox == null) {
-      rewardInfoBox = createInfobox("reward", itemManager.getImage(REWARD_POOL_IMAGE_ID), text, tooltip)
-      infoBoxManager.addInfoBox(rewardInfoBox)
-    }
-    else {
-      rewardInfoBox.setText(text)
-      rewardInfoBox.setTooltip(tooltip)
-    }
-  }
-
-  private def createInfobox(name: String, image: BufferedImage, text: String, tooltip: String) = {
-    val infoBox = new TemporossInfoBox(image, this, name)
-    infoBox.setText(text)
-    infoBox.setTooltip(tooltip)
-    infoBox
-  }
-
-  def addTotemTimers(): Unit = {
-    val tethered = client.getVarbitValue(VARB_IS_TETHERED) > 0
-    FredsTemporossLogic.gameObjects.toList.filter(j => DAMAGED_TETHER_GAMEOBJECTS.contains(j._1.getId) || TETHER_GAMEOBJECTS.contains(j._1.getId)).foreach((`object`, drawObject) => {
-      val color =
-        if (tethered) config.tetheredColor
-        else `object`.getId match {
-          case ObjectID.DAMAGED_MAST_40996 => config.poleBrokenColor
-          case ObjectID.DAMAGED_MAST_40997 => config.poleBrokenColor
-          case ObjectID.DAMAGED_TOTEM_POLE => config.poleBrokenColor
-          case ObjectID.DAMAGED_TOTEM_POLE_41011 => config.poleBrokenColor
-          case _ => config.waveTimerColor
-        }
-      if (FredsTemporossLogic.waveIsIncoming) {
-        drawObject.setStartTime(FredsTemporossLogic.waveIncomingStartTime)
-      }
-      drawObject.setColor(color)
-    })
-  }
-
-  def removeTotemTimers(): Unit = {
-    FredsTemporossLogic.gameObjects.filterInPlace {
-      case (go, doo) => !(Constants.TETHER_GAMEOBJECTS.contains(go.getId) || Constants.DAMAGED_TETHER_GAMEOBJECTS.contains(go.getId))
-    }
-  }
-
-  override protected def startUp(): Unit = {
-    FredsTemporossLogic.init(this)
-    overlayManager.add(overlay)
-    eventBus.register(FredsTemporossLogic)
-  }
-
-  override protected def shutDown(): Unit = {
-    eventBus.unregister(FredsTemporossLogic)
-    overlayManager.remove(overlay)
-    List(fishInfoBox, damageInfoBox, phaseInfoBox, rewardInfoBox).foreach(infoBoxManager.removeInfoBox(_))
-    fishInfoBox = null
-    damageInfoBox = null
-    phaseInfoBox = null
-    rewardInfoBox = null
-  }
+	override protected def shutDown(): Unit = {
+		eventBus.unregister(FredsTemporossLogic)
+		overlayManager.remove(overlay)
+		List(fishInfoBox, damageInfoBox, phaseInfoBox, rewardInfoBox).foreach(infoBoxManager.removeInfoBox(_))
+		fishInfoBox = null
+		damageInfoBox = null
+		phaseInfoBox = null
+		rewardInfoBox = null
+	}
 }
 
