@@ -1,7 +1,8 @@
 package com.fredplugins.superClickHelper
 
 import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlay, renderTileOverlay, withFont}
-import com.fredplugins.common.{OldOverlayUtil, ShimUtils, overlays}
+import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.common.{OldOverlayUtil, overlays}
 import com.google.inject.{Inject, Singleton}
 import net.runelite.api.Perspective.localToCanvas
 import net.runelite.api.coords.LocalPoint

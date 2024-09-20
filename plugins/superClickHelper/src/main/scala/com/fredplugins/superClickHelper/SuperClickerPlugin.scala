@@ -1,7 +1,7 @@
 package com.fredplugins.superClickHelper
 
-import com.fredplugins.common.MenuExtensions.{getNpcOpt, getWorldLocationOpt, isTileObjectAction, isNpcAction, isRuneliteAction}
-import com.fredplugins.common.ShimUtils
+import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getWorldLocationOpt, isTileObjectAction, isNpcAction, isRuneliteAction}
+import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.{Client, DecorativeObject, GameObject, GroundObject, MenuAction, MenuEntry, NPC, Scene, Tile, TileObject, WallObject}

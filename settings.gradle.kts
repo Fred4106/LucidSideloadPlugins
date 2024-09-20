@@ -15,6 +15,7 @@ include(":giantsFoundry")
 include(":layoutHelper")
 include(":mta")
 include(":scurriusHelper")
+include(":tempoross")
 include(":titheFarm")
 include(":titheFarm2")
 include(":superClickHelper")
@@ -33,7 +34,6 @@ include(":superClickHelper")
 
 for (project in rootProject.children) {
     project.apply {
-//        file(name).exists()
         projectDir = (if(file(name).exists()) file(name) else file("plugins/${name}"))
         buildFileName = "$name.gradle.kts"
         require(projectDir.isDirectory) { "Project '${project.path} must have a $projectDir directory" }

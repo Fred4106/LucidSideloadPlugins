@@ -1,9 +1,9 @@
-package com.fredplugins.common
+package com.fredplugins.common.extensions
+
+import com.fredplugins.common.utils.SceneUtils
 import net.runelite.api.MenuAction.*
 import net.runelite.api.coords.WorldPoint
-import net.runelite.api.{Client, MenuAction, MenuEntry, NPC, TileObject}
-
-import scala.jdk.CollectionConverters.IterableHasAsScala
+import net.runelite.api.*
 
 object MenuExtensions {
 	private val tileObjectActions: List[MenuAction] = List(GAME_OBJECT_FIRST_OPTION, GAME_OBJECT_SECOND_OPTION, GAME_OBJECT_THIRD_OPTION, GAME_OBJECT_FOURTH_OPTION, GAME_OBJECT_FIFTH_OPTION, EXAMINE_OBJECT)

@@ -1,13 +1,13 @@
 package com.fredplugins.superClickHelper
 
-import com.fredplugins.common.{SceneUtils, ShimUtils}
+import com.fredplugins.common.utils.{SceneUtils, ShimUtils}
 import net.runelite.api.{Client, MenuEntry, NPC, Player, TileObject}
 import net.runelite.api.events.{MenuEntryAdded, MenuOptionClicked}
 import org.slf4j.Logger
 
 sealed trait MenuEntryTarget {}
 object MenuEntryTarget {
-	import com.fredplugins.common.MenuExtensions._
+	import com.fredplugins.common.extensions.MenuExtensions._
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
 	case class TileObjectTarget(tileObject: TileObject) extends MenuEntryTarget

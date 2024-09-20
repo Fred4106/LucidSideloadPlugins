@@ -1,7 +1,7 @@
 package com.fredplugins.titheFarm2
 
-import com.fredplugins.common.MenuExtensions.getWorldLocationOpt
-import com.fredplugins.common.ShimUtils
+import com.fredplugins.common.extensions.MenuExtensions.getWorldLocationOpt
+import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.titheFarm2
 import com.fredplugins.titheFarm2.SPlantInfo.{DryPlantInfo, EmptyPlantInfo}
 import com.fredplugins.titheFarm2.TitheFarmLookup.PlantData
@@ -117,7 +117,7 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 		}.result().asScala.toList
 	}
 
-	import com.fredplugins.common.MenuExtensions.{getWorldLocation, isRuneliteAction, isTileObjectAction}
+	import com.fredplugins.common.extensions.MenuExtensions.{getWorldLocation, isRuneliteAction, isTileObjectAction}
 
 
 

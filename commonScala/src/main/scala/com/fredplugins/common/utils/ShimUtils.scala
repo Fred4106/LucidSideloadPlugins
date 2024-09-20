@@ -1,4 +1,4 @@
-package com.fredplugins.common
+package com.fredplugins.common.utils
 
 import org.slf4j.{Logger, LoggerFactory}
 

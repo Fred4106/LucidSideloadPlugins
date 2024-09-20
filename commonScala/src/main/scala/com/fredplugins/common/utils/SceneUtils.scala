@@ -1,12 +1,8 @@
-package com.fredplugins.common
+package com.fredplugins.common.utils
 
 import net.runelite.api.{Client, NPC, Player, TileObject}
 import org.slf4j.Logger
 
-import scala.collection.mutable
-import scala.util.chaining.*
-import scala.jdk.CollectionConverters.*
-import scala.jdk.OptionConverters.*
 import scala.util.Try
 
 object SceneUtils {

@@ -1,6 +1,7 @@
-description = "Template Plugin"
+description = "Freds Tempoross Plugin"
 
 plugins {
+//    id("java")
     id("scala")
 }
 

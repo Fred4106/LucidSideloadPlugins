@@ -1,4 +1,3 @@
-import org.gradle.jvm.tasks.Jar
 import org.gradle.tooling.internal.protocol.ProjectVersion3
 
 plugins {
@@ -7,16 +6,20 @@ plugins {
 //    id("de.undercouch.download") version "5.6.0"
 }
 
-val runeLiteVersion = "1.10.37"
+val runeLiteVersion = "1.10.38-SNAPSHOT"
 val javaVersion = JavaVersion.VERSION_11
 
 allprojects {
     group = "com.fredplugins"
-    version = "0.3"
+    version = "0.4"
     repositories {
-        maven {
-            url = uri("https://repo.runelite.net")
-        }
+//        maven {
+//            url = uri("https://repo.runelite.net")
+//            exclusiveContent {
+//
+//            }
+//        }
+        mavenLocal()
         gradlePluginPortal()
         mavenCentral()
     }
@@ -56,6 +59,7 @@ dependencies {
     implementation(project(":layoutHelper"))
     implementation(project(":mta"))
     implementation(project(":scurriusHelper"))
+    implementation(project(":tempoross"))
     implementation(project(":titheFarm"))
     implementation(project(":titheFarm2"))
     implementation(project(":superClickHelper"))

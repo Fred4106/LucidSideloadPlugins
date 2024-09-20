@@ -1,6 +1,6 @@
 package com.fredplugins.titheFarm
 
-import com.fredplugins.common.ShimUtils
+import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.EthanApiPlugin

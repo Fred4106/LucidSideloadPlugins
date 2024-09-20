@@ -1,7 +1,7 @@
 package com.fredplugins.titheFarm
 
-import com.fredplugins.common.ShimUtils
 import com.fredplugins.common.overlays.{renderGameObjectOverlay, renderTileOverlay, withFont}
+import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.titheFarm.SPlantState.Grown
 import com.fredplugins.titheFarm.SPlantType.Empty
 import com.google.inject.{Inject, Singleton}

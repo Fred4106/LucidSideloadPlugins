@@ -97,7 +97,7 @@ public class PacketUtilsPlugin extends Plugin {
         } else {
             log.info("Ethan Vann Plugins loaded on Java 11");
         }
-        setupRuneliteUpdateHandling(RuneLiteProperties.getVersion());
+        setupRuneliteUpdateHandling(RuneLiteProperties.getVersion().replace("-SNAPSHOT", ""));
         cleanup();
         SwingUtilities.invokeLater(() ->
         {
@@ -341,6 +341,6 @@ public class PacketUtilsPlugin extends Plugin {
     }
 
     public String makeString() {
-        return RuneLiteProperties.getVersion() + "-" + client.getRevision() + ".txt";
+        return RuneLiteProperties.getVersion().replace("-SNAPSHOT", "") + "-" + client.getRevision() + ".txt";
     }
 }

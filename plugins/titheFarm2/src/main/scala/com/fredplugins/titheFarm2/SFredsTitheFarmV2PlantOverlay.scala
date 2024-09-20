@@ -1,7 +1,8 @@
 package com.fredplugins.titheFarm2
 
-import com.fredplugins.common.{OldOverlayUtil, ShimUtils, overlays}
+import com.fredplugins.common.{OldOverlayUtil, overlays}
 import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlay, renderTileOverlay, withFont}
+import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.titheFarm2.SPlantInfo.{EmptyPlantInfo, NonEmptyPlantInfo}
 import com.fredplugins.titheFarm2.TitheFarmLookup.PlantData
 import com.google.inject.{Inject, Singleton}

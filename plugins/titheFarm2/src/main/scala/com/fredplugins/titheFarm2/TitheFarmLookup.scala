@@ -1,6 +1,6 @@
 package com.fredplugins.titheFarm2
 
-import com.fredplugins.common.ShimUtils
+import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.titheFarm2.TitheFarmLookup.{PlantData, log}
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.{Client, GameObject, NPC}
