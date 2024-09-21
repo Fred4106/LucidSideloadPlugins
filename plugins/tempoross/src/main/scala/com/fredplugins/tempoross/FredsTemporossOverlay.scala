@@ -32,7 +32,7 @@ import java.time.Instant
 import java.util
 import java.awt.{Color, Dimension, Font, Graphics2D}
 @Singleton
-class FredsTemporossOverlay @Inject()(val client: Client, val plugin: FredsTemporossPlugin, val config: FredsTemporossConfig, val modelOutlineRenderer: ModelOutlineRenderer) extends Overlay {
+class FredsTemporossOverlay @Inject()(val client: Client, val plugin: FredsTemporossPlugin, val config: FredsTemporossConfig, val modelOutlineRenderer: ModelOutlineRenderer) extends Overlay(plugin) {
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	setPosition(OverlayPosition.DYNAMIC)
 	setLayer(OverlayLayer.ABOVE_SCENE)

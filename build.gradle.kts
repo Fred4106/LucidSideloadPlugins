@@ -1,5 +1,16 @@
 import org.gradle.tooling.internal.protocol.ProjectVersion3
 
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+//        maven(url = "https://repo.runelite.net")
+    }
+    dependencies {
+        classpath("org.ajoberstar.grgit:grgit-core:4.1.1")
+    }
+}
+
 plugins {
     id("java-library")
     id("com.github.johnrengelman.shadow") version "7.0.0"
@@ -23,14 +34,14 @@ allprojects {
         gradlePluginPortal()
         mavenCentral()
     }
-    apply(plugin="java-library")
+    apply<JavaLibraryPlugin>()
     apply<MavenPublishPlugin>()
 
     dependencies {
-        this.add("annotationProcessor", "org.projectlombok:lombok:1.18.30")
-        this.add("compileOnly", "org.projectlombok:lombok:1.18.30")
+//        this.add("annotationProcessor", "org.projectlombok:lombok:1.18.30")
+//        this.add("compileOnly", "org.projectlombok:lombok:1.18.30")
         this.add("compileOnly", "org.pf4j:pf4j:3.10.0")
-        this.add("compileOnly", "net.runelite:client:$runeLiteVersion")
+        this.add("compileOnly", "net.runelite:client:${Dependencies.rlVersion}")
         this.add("testImplementation", "junit:junit:4.13.1")
     }
     configure<JavaPluginExtension> {

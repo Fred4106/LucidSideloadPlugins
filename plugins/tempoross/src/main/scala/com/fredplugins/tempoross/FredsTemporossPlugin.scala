@@ -46,6 +46,7 @@ class FredsTemporossPlugin() extends Plugin {
 	private         val log           : Logger                = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	@Inject private val eventBus      : EventBus              = null
 	@Inject private val overlayManager: OverlayManager        = null
+	@Inject() private val panel       : FredsTemporossPanel = null
 	@Inject private val overlay       : FredsTemporossOverlay = null
 	@Inject private val itemManager   : ItemManager           = null
 	var rewardInfoBox: TemporossInfoBox = uninitialized
@@ -63,7 +64,7 @@ class FredsTemporossPlugin() extends Plugin {
 	def redrawInfoBoxes(): Unit = {
 		def addFishInfoBox(): Unit = {
 			import FredsTemporossLogic.{uncookedFish, crystalFish, cookedFish}
-			val text    = (uncookedFish + crystalFish) + "/" + cookedFish + "\n" + (uncookedFish + cookedFish + crystalFish)
+			val text    = (uncookedFish + crystalFish) + "/" + cookedFish
 			val tooltip = "Uncooked Fish: " + (uncookedFish + crystalFish) + "</br>Cooked Fish: " + cookedFish + "</br>Total Fish: " + (uncookedFish + cookedFish + crystalFish)
 			if (fishInfoBox == null) {
 				fishInfoBox = createInfobox("fish", itemManager.getImage(FISH_IMAGE_ID), text, tooltip)
@@ -144,7 +145,7 @@ class FredsTemporossPlugin() extends Plugin {
 					case ObjectID.DAMAGED_TOTEM_POLE_41011 => config.poleBrokenColor
 					case _ => config.waveTimerColor
 				}
-			if (FredsTemporossLogic.waveIsIncoming) {
+			if (FredsTemporossLogic.waveIncomingStartTime != null) {
 				drawObject.setStartTime(FredsTemporossLogic.waveIncomingStartTime)
 			}
 			drawObject.setColor(color)
@@ -159,13 +160,15 @@ class FredsTemporossPlugin() extends Plugin {
 
 	override protected def startUp(): Unit = {
 		FredsTemporossLogic.init(this)
-		overlayManager.add(overlay)
 		eventBus.register(FredsTemporossLogic)
+		overlayManager.add(panel)
+		overlayManager.add(overlay)
 	}
 
 	override protected def shutDown(): Unit = {
-		eventBus.unregister(FredsTemporossLogic)
+		overlayManager.remove(panel)
 		overlayManager.remove(overlay)
+		eventBus.unregister(FredsTemporossLogic)
 		List(fishInfoBox, damageInfoBox, phaseInfoBox, rewardInfoBox).foreach(infoBoxManager.removeInfoBox(_))
 		fishInfoBox = null
 		damageInfoBox = null

@@ -1,6 +1,8 @@
 description = "Ethans API"
 
 dependencies {
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+    compileOnly("org.projectlombok:lombok:1.18.30")
 //    annotationProcessor(dependencyNotation = "org.projectlombok:lombok:1.18.30")
 //    compileOnly("org.projectlombok:lombok:1.18.30")
 //    compileOnly("org.pf4j:pf4j:3.10.0")

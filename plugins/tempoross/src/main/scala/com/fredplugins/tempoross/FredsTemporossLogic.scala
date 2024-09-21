@@ -16,7 +16,7 @@ import scala.jdk.CollectionConverters.*
 object FredsTemporossLogic {
 	val gameObjects          : mutable.Map[GameObject, DrawObject] = mutable.WeakHashMap.empty[GameObject, DrawObject]
 	val npcs                 : mutable.Map[NPC, Long]              = mutable.WeakHashMap.empty[NPC, Long]
-	var waveIsIncoming                                             = false
+//	var waveIsIncoming                                             = false
 	var nearRewardPool                                             = false
 	var previousRegion                                             = 0
 	var phase                                                      = 1
@@ -45,10 +45,10 @@ object FredsTemporossLogic {
 				}
 				case NullObjectID.NULL_41007 => FIRE_SPREADING_SPAWN_MILLIS
 			}
-			gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, duration, plugin.config.fireColor))
+			gameObjects.put(gameObjectSpawned.getGameObject, DrawObject(gameObjectSpawned.getTile, Instant.now, duration, plugin.config.fireColor))
 		} else if (DAMAGED_TETHER_GAMEOBJECTS.contains(gameObjectSpawned.getGameObject.getId)) {
 			//if it is not one of the above, it is a totem/mast and should be added to the totem map, with 7800ms duration, and the regular color totemMap.put(gameObjectSpawned.getGameObject, new Nothing(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, config.waveTimerColor))
-			gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, 0, plugin.config.poleBrokenColor()))
+			gameObjects.put(gameObjectSpawned.getGameObject, DrawObject(gameObjectSpawned.getTile, Instant.now, 0, plugin.config.poleBrokenColor()))
 			//			if (waveIsIncoming) {
 			//				gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, Color.PINK))
 			//				addTotemTimers()
@@ -57,7 +57,7 @@ object FredsTemporossLogic {
 			//			}
 		} else if (TETHER_GAMEOBJECTS.contains(gameObjectSpawned.getGameObject.getId)) {
 			//if it is not one of the above, it is a totem/mast and should be added to the totem map, with 7800ms duration, and the regular color totemMap.put(gameObjectSpawned.getGameObject, new Nothing(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, config.waveTimerColor))
-			gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, 0, Color.pink))
+			gameObjects.put(gameObjectSpawned.getGameObject, DrawObject(gameObjectSpawned.getTile, Instant.now, if(waveIncomingStartTime != null) WAVE_IMPACT_MILLIS else 0, Color.pink))
 			plugin.addTotemTimers()
 			//			if (waveIsIncoming) {
 			//				gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, Color.PINK))
@@ -118,7 +118,8 @@ object FredsTemporossLogic {
 	def reset(): Unit = {
 		npcs.clear
 		gameObjects.clear
-		waveIsIncoming = false
+//		waveIsIncoming = false
+		waveIncomingStartTime = null
 		phase = 1
 		updateFishCount(0, 0, 0)
 	}
@@ -142,12 +143,13 @@ object FredsTemporossLogic {
 		} else {
 			val message = chatMessage.getMessage.toLowerCase
 			if (message.contains(WAVE_INCOMING_MESSAGE)) {
-				waveIsIncoming = true
+//				waveIsIncoming = true
 				waveIncomingStartTime = Instant.now
 				plugin.addTotemTimers()
 				if (plugin.config.waveNotification) plugin.notifier.notify("A colossal wave closes in...")
 			} else if (message.contains(WAVE_END_SAFE) || message.contains(WAVE_END_DANGEROUS)) {
-				waveIsIncoming = false
+//				waveIsIncoming = false
+				waveIncomingStartTime = null
 				plugin.removeTotemTimers()
 			} else if (message.contains(TEMPOROSS_VULNERABLE_MESSAGE)) {
 				phase += 1
