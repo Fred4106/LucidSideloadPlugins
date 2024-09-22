@@ -1,29 +1,24 @@
 package com.fredplugins.tempoross
 
+import com.fredplugins.common.extensions.MenuExtensions
+import com.fredplugins.common.extensions.MenuExtensions.{getTileObjectOpt, isTileObjectAction, isNpcAction, getNpcOpt}
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.tempoross.Constants.*
+import com.fredplugins.tempoross.FredsTemporossLogic.{inMinigame, inRewardArea}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
-import net.runelite.api.coords.WorldPoint
-import net.runelite.api.events.{ChatMessage, GameObjectDespawned, GameObjectSpawned, GameStateChanged, ItemContainerChanged, NpcDespawned, NpcSpawned, ScriptPreFired, VarbitChanged}
-import net.runelite.api.{ChatMessageType, Client, GameObject, GameState, InventoryID, ItemID, NPC, NpcID, NullObjectID, ObjectID}
+import net.runelite.api.Client
+import net.runelite.api.events.{GameTick, MenuEntryAdded, MenuOptionClicked}
 import net.runelite.client.Notifier
+import net.runelite.client.callback.ClientThread
 import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.{EventBus, Subscribe}
-import net.runelite.client.game.ItemManager
-import net.runelite.client.menus.MenuManager
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.overlay.OverlayManager
-import net.runelite.client.ui.overlay.infobox.InfoBoxManager
 import org.slf4j.Logger
 
-import java.awt.Color
-import java.awt.image.BufferedImage
-import java.time.Instant
-import java.util
-import scala.collection.mutable
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
+import scala.util.chaining.scalaUtilChainingOps
 
 @PluginDescriptor(
 	name = "<html><font color=\"#32C8CD\">Freds</font> Tempoross</html>",
@@ -39,123 +34,21 @@ import scala.jdk.CollectionConverters.*
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class FredsTemporossPlugin() extends Plugin {
-	@Inject val client        : Client               = null
-	@Inject val infoBoxManager: InfoBoxManager       = null
-	@Inject val config        : FredsTemporossConfig = null
-	@Inject val notifier      : Notifier             = null
-	private         val log           : Logger                = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
-	@Inject private val eventBus      : EventBus              = null
-	@Inject private val overlayManager: OverlayManager        = null
-	@Inject() private val panel       : FredsTemporossPanel = null
-	@Inject private val overlay       : FredsTemporossOverlay = null
-	@Inject private val itemManager   : ItemManager           = null
-	var rewardInfoBox: TemporossInfoBox = uninitialized
-	var fishInfoBox  : TemporossInfoBox = uninitialized
-	var damageInfoBox: TemporossInfoBox = uninitialized
-	var phaseInfoBox : TemporossInfoBox = uninitialized
+	@Inject val client  : Client               = null
+	@Inject val clientThread  : ClientThread         = null
+	@Inject val config  : FredsTemporossConfig = null
+	@Inject val notifier: Notifier             = null
+	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	@Inject private   val eventBus      : EventBus              = null
+	@Inject private   val overlayManager: OverlayManager        = null
+	@Inject private val panel         : FredsTemporossPanel   = null
+	@Inject private   val overlay       : FredsTemporossOverlay = null
 
 	given Client = client
 
 	@Provides
 	def getConfig(configManager: ConfigManager): FredsTemporossConfig = {
 		configManager.getConfig[FredsTemporossConfig](classOf[FredsTemporossConfig])
-	}
-
-	def redrawInfoBoxes(): Unit = {
-		def addFishInfoBox(): Unit = {
-			import FredsTemporossLogic.{uncookedFish, crystalFish, cookedFish}
-			val text    = (uncookedFish + crystalFish) + "/" + cookedFish
-			val tooltip = "Uncooked Fish: " + (uncookedFish + crystalFish) + "</br>Cooked Fish: " + cookedFish + "</br>Total Fish: " + (uncookedFish + cookedFish + crystalFish)
-			if (fishInfoBox == null) {
-				fishInfoBox = createInfobox("fish", itemManager.getImage(FISH_IMAGE_ID), text, tooltip)
-				infoBoxManager.addInfoBox(fishInfoBox)
-			}
-			else {
-				fishInfoBox.setText(text)
-				fishInfoBox.setTooltip(tooltip)
-			}
-		}
-
-		def addDamageInfoBox(): Unit = {
-			val text    = Integer.toString(FredsTemporossLogic.damage)
-			val tooltip = "Damage: " + FredsTemporossLogic.damage
-			if (damageInfoBox == null) {
-				damageInfoBox = createInfobox("damage", itemManager.getImage(DAMAGE_IMAGE_ID), text, tooltip)
-				infoBoxManager.addInfoBox(damageInfoBox)
-			}
-			else {
-				damageInfoBox.setText(text)
-				damageInfoBox.setTooltip(tooltip)
-			}
-		}
-
-		def addPhaseInfoBox(): Unit = {
-			val text    = Integer.toString(FredsTemporossLogic.phase)
-			val tooltip = "Phase " + FredsTemporossLogic.phase
-			if (phaseInfoBox == null) {
-				phaseInfoBox = createInfobox("phase", PHASE_IMAGE, text, tooltip)
-				infoBoxManager.addInfoBox(phaseInfoBox)
-			}
-			else {
-				phaseInfoBox.setText(text)
-				phaseInfoBox.setTooltip(tooltip)
-			}
-		}
-
-		if (config.phaseIndicator) addPhaseInfoBox()
-		if (config.damageIndicator) {
-			addDamageInfoBox()
-		}
-
-		if (config.fishIndicator) {
-			addFishInfoBox()
-		}
-	}
-	private def createInfobox(name: String, image: BufferedImage, text: String, tooltip: String) = {
-		val infoBox = new TemporossInfoBox(image, this, name)
-		infoBox.setText(text)
-		infoBox.setTooltip(tooltip)
-		infoBox
-	}
-	def addRewardInfoBox(): Unit = {
-		this.addRewardInfoBox(client.getVarbitValue(VARB_REWARD_POOL_NUMBER))
-	}
-	def addRewardInfoBox(rewardPoints: Int): Unit = {
-		val text    = Integer.toString(rewardPoints)
-		val tooltip = rewardPoints + " Reward Point" + (if (rewardPoints == 1) ""
-																										else "s")
-		if (rewardInfoBox == null) {
-			rewardInfoBox = createInfobox("reward", itemManager.getImage(REWARD_POOL_IMAGE_ID), text, tooltip)
-			infoBoxManager.addInfoBox(rewardInfoBox)
-		}
-		else {
-			rewardInfoBox.setText(text)
-			rewardInfoBox.setTooltip(tooltip)
-		}
-	}
-	def addTotemTimers(): Unit = {
-		val tethered = client.getVarbitValue(VARB_IS_TETHERED) > 0
-		FredsTemporossLogic.gameObjects.toList.filter(j => DAMAGED_TETHER_GAMEOBJECTS.contains(j._1.getId) || TETHER_GAMEOBJECTS.contains(j._1.getId)).foreach((`object`, drawObject) => {
-			val color =
-				if (tethered) config.tetheredColor
-				else `object`.getId match {
-					case ObjectID.DAMAGED_MAST_40996 => config.poleBrokenColor
-					case ObjectID.DAMAGED_MAST_40997 => config.poleBrokenColor
-					case ObjectID.DAMAGED_TOTEM_POLE => config.poleBrokenColor
-					case ObjectID.DAMAGED_TOTEM_POLE_41011 => config.poleBrokenColor
-					case _ => config.waveTimerColor
-				}
-			if (FredsTemporossLogic.waveIncomingStartTime != null) {
-				drawObject.setStartTime(FredsTemporossLogic.waveIncomingStartTime)
-			}
-			drawObject.setColor(color)
-		})
-	}
-
-	def removeTotemTimers(): Unit = {
-		FredsTemporossLogic.gameObjects.filterInPlace {
-			case (go, doo) => !(Constants.TETHER_GAMEOBJECTS.contains(go.getId) || Constants.DAMAGED_TETHER_GAMEOBJECTS.contains(go.getId))
-		}
 	}
 
 	override protected def startUp(): Unit = {
@@ -169,11 +62,75 @@ class FredsTemporossPlugin() extends Plugin {
 		overlayManager.remove(panel)
 		overlayManager.remove(overlay)
 		eventBus.unregister(FredsTemporossLogic)
-		List(fishInfoBox, damageInfoBox, phaseInfoBox, rewardInfoBox).foreach(infoBoxManager.removeInfoBox(_))
-		fishInfoBox = null
-		damageInfoBox = null
-		phaseInfoBox = null
-		rewardInfoBox = null
+	}
+
+	private var wasInMinigame = false
+	private var wasInRewardArea = false
+	@Subscribe
+	def onGameTick(tick: GameTick): Unit = {
+		Option((wasInRewardArea || wasInMinigame, inRewardArea || inMinigame)).foreach {
+//			case (true, false) => overlayManager.remove(panel)
+//			case (false, true) => overlayManager.add(panel)
+			case (_, _) =>
+		}
+		Option((wasInMinigame, inMinigame)).foreach {
+			case (true, false) => {
+//				overlayManager.remove(overlay)
+//				eventBus.unregister(FredsTemporossLogic)
+				FredsTemporossLogic.reset()
+			}
+			case (false, true) => {
+				FredsTemporossLogic.spawnLoc = client.getLocalPlayer.getWorldLocation
+//				eventBus.register(FredsTemporossLogic)
+//				overlayManager.add(overlay)
+			}
+			case (_, _) =>
+		}
+		wasInRewardArea = inRewardArea
+		wasInMinigame = inMinigame
+
+//		client.getVarbitValue(VARB_REWARD_POOL_NUMBER)
+	}
+
+
+	def onMenuEntryAdded(mea: MenuEntryAdded): Unit = {
+		val me = mea.getMenuEntry
+		val tlwv = client.getTopLevelWorldView
+		val temp = Option(
+			(me.getOption, me.getTarget, me.getType, me.getIdentifier, (me.getParam0, me.getParam1))
+		)
+		val toLog = temp.collect{
+			case (opt, targ, tpe, ident, (x, y)) if(me.isTileObjectAction) => {
+				Option(tlwv.getScene.getTiles.apply(tlwv.getPlane)(x)(y)).map(_.getWorldLocation).map(wp => (opt, targ, tpe, ident, (x, y), wp))
+					.map {
+						case (opt, _, tpe, ident, (x, y), wp) => s"Object(ident=${ident}, sLoc=($x, $y), wp=$wp, tpe=${tpe})"
+					}.getOrElse(s"Error: tpe=${tpe}")
+			}
+			case (opt, targ, tpe, ident, (x, y)) if(me.isNpcAction) => s"NPC(index=$ident, id=${me.getNpc.getId}, sLoc=${(x, y)}, tpe=${tpe})"
+//			case (opt, targ, tpe, ident, (x, y)) => s"opt=\"$opt\", targ=\"$targ\", ident=$ident, param=${(x, y)}, tpe=${tpe}"
+		}.foreach(toLog=>{
+			log.debug("Added: ({})",toLog)
+		})
+	}
+
+	@Subscribe
+	def onMenuOptionClicked(mec: MenuOptionClicked): Unit = {
+		val me = mec.getMenuEntry
+		val tlwv = client.getTopLevelWorldView
+		val temp = Option(
+			(me.getOption, me.getTarget, me.getType, me.getIdentifier, (me.getParam0, me.getParam1))
+		)
+		val toLog = temp.map{
+			case (opt, targ, tpe, ident, (x, y)) if(me.isTileObjectAction) => {
+				Option(tlwv.getScene.getTiles.apply(tlwv.getPlane)(x)(y)).map(_.getWorldLocation).map(wp => (opt, targ, tpe, ident, (x, y), wp))
+					.map {
+						case (opt, _, tpe, ident, (x, y), wp) => s"Object(opt=\"$opt\", targ=\"$targ\", id=${ident}, sLoc=($x, $y), wp=$wp, tpe=${tpe})"
+					}.getOrElse(s"Error: tpe=${tpe}")
+			}
+			case (opt, targ, tpe, ident, (x, y)) if(me.isNpcAction) => s"NPC(opt=\"$opt\", targ=\"$targ\", index=$ident, id=${me.getNpc.getId}, sLoc=${(x, y)}, tpe=${tpe})"
+			case (opt, targ, tpe, ident, (x, y)) => s"opt=\"$opt\", targ=\"$targ\", ident=$ident, param=${(x, y)}, tpe=${tpe}"
+		}.get
+		log.debug("Clicked: ({})",toLog)
 	}
 }
 

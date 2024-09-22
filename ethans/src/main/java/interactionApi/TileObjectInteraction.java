@@ -15,7 +15,7 @@ public class TileObjectInteraction {
     public static boolean interact(String name, String... actions) {
         return TileObjects.search().withName(name).first().flatMap(tileObject ->
         {
-            MousePackets.queueClickPacket();
+            MousePackets.queueClickPacket(tileObject);
             ObjectPackets.queueObjectAction(tileObject, false, actions);
             return Optional.of(true);
         }).orElse(false);
@@ -24,7 +24,7 @@ public class TileObjectInteraction {
     public static boolean interact(int id, String... actions) {
         return TileObjects.search().withId(id).first().flatMap(tileObject ->
         {
-            MousePackets.queueClickPacket();
+            MousePackets.queueClickPacket(tileObject);
             ObjectPackets.queueObjectAction(tileObject, false, actions);
             return Optional.of(true);
         }).orElse(false);
@@ -38,7 +38,7 @@ public class TileObjectInteraction {
         if (comp == null) {
             return false;
         }
-        MousePackets.queueClickPacket();
+        MousePackets.queueClickPacket(tileObject);
         ObjectPackets.queueObjectAction(tileObject, false, actions);
         return true;
     }

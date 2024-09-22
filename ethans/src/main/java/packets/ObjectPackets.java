@@ -1,6 +1,7 @@
 package packets;
 
 import ethanApiPlugin.collections.query.TileObjectQuery;
+import lombok.extern.slf4j.Slf4j;
 import packetUtils.PacketDef;
 import packetUtils.PacketReflection;
 import lombok.SneakyThrows;
@@ -17,11 +18,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 public class ObjectPackets {
     @SneakyThrows
-    public static void queueObjectAction(int actionFieldNo, int objectId, int worldPointX, int worldPointY,
+    private static void queueObjectAction(int actionFieldNo, int objectId, int worldPointX, int worldPointY,
                                          boolean ctrlDown) {
+        log.debug("actionFieldNo={}, objectId={}, worldPoint=({}, {}), ctrlDown={}", actionFieldNo, objectId, worldPointX, worldPointY, ctrlDown);
         int ctrl = ctrlDown ? 1 : 0;
+
         switch (actionFieldNo) {
             case 1:
                 PacketReflection.sendPacket(PacketDef.getOpLoc1(), objectId, worldPointX, worldPointY, ctrl);
@@ -78,6 +82,7 @@ public class ObjectPackets {
         }
 
         if (num < 1 || num > 10) {
+            log.debug("num was {} from actions {}, actionsList {}", num, actionlist,  actions.toArray(new String[] {}));
             return;
         }
         queueObjectAction(num, object.getId(), wp.getX(), wp.getY(), ctrlDown);

@@ -1,10 +1,17 @@
 package com.fredplugins.tempoross
 
-import com.fredplugins.tempoross.Constants._
-import net.runelite.api.{ChatMessageType, GameObject, GameState, InventoryID, ItemID, NPC, NpcID, NullObjectID}
+import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.tempoross.Constants.*
+import com.lucidplugins.api.utils.{InteractionUtils, NpcUtils}
+import ethanApiPlugin.collections.TileObjects
+import ethanApiPlugin.pathfinding.GlobalCollisionMap
+import interactionApi.{NPCInteraction, TileObjectInteraction}
+import net.runelite.api.{ChatMessageType, GameObject, GameState, InventoryID, ItemID, NPC, NpcID, NullObjectID, ObjectComposition, TileObject}
 import net.runelite.api.coords.WorldPoint
-import net.runelite.api.events.{ChatMessage, GameObjectDespawned, GameObjectSpawned, GameStateChanged, ItemContainerChanged, NpcDespawned, NpcSpawned, ScriptPreFired, VarbitChanged}
+import net.runelite.api.events.{ChatMessage, GameObjectDespawned, GameObjectSpawned, GameStateChanged, GameTick, ItemContainerChanged, NpcDespawned, NpcSpawned, ScriptPreFired, VarbitChanged}
 import net.runelite.client.eventbus.{EventBus, Subscribe}
+import org.slf4j.Logger
+import packets.{MousePackets, ObjectPackets}
 
 import java.awt.Color
 import java.time.Instant
@@ -12,159 +19,227 @@ import java.util
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters.*
+import scala.util.{Random, Try}
+import scala.util.chaining.*
 
 object FredsTemporossLogic {
-	val gameObjects          : mutable.Map[GameObject, DrawObject] = mutable.WeakHashMap.empty[GameObject, DrawObject]
-	val npcs                 : mutable.Map[NPC, Long]              = mutable.WeakHashMap.empty[NPC, Long]
-//	var waveIsIncoming                                             = false
-	var nearRewardPool                                             = false
-	var previousRegion                                             = 0
+	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	val fireObjects          : mutable.ListBuffer[(GameObject, Int)] = mutable.ListBuffer.empty
+	val tetherObjects          : mutable.ListBuffer[GameObject] = mutable.ListBuffer.empty[GameObject]
+	val npcs                 : mutable.ListBuffer[(NPC, WorldPoint, Int)] = mutable.ListBuffer.empty
+//	var previousRegion                                             = 0
+	var canAutoFishDouble: Boolean = true
 	var phase                                                      = 1
 	var uncookedFish                                               = 0
 	var cookedFish                                                 = 0
 	var crystalFish                                                = 0
 	var waveIncomingStartTime: Instant                             = uninitialized
+	var waveIncomingStartTick: Int                                 = -1
+
+	var spawnLoc: WorldPoint = uninitialized
+
 	private var plugin: FredsTemporossPlugin = uninitialized
 	def init(plugin: FredsTemporossPlugin): Unit = {
 		this.plugin = plugin
+		reset()
 	}
+
 	def damage: Int = {
 		uncookedFish * DAMAGE_PER_UNCOOKED + cookedFish * DAMAGE_PER_COOKED + crystalFish * DAMAGE_PER_CRYSTAL
 	}
+
+	def region: Int = Try(WorldPoint.fromLocalInstance(plugin.client, plugin.client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1)
+	def inMinigame: Boolean = region == TEMPOROSS_REGION
+	def inRewardArea: Boolean = UNKAH_REGIONS.contains(region)
+	def ticksTillWave: Int = Option(waveIncomingStartTick).filter(_ != -1).map(wt => (wt + WAVE_IMPACT_TICKS) - plugin.client.getTickCount).getOrElse(-1)
+	def expandTileObjToStr(to: Option[TileObject]): String = {
+		to.collect {
+			case go: GameObject => {
+				val id            = go.getId
+				val comp          = plugin.client.getObjectDefinition(id)
+				val name          = comp.getName
+				val actions       = comp.getActions.mkString("[", ", ", "]")
+				val actions2Str   = Try(comp.getImpostor).map(_.getActions).map(iActions => s", impostorActions=${iActions.mkString("[", ", ", "]")}").getOrElse("")
+				val impostorIdStr = Try(comp.getImpostor).map(_.getId).map(iid => s", impostorId=${iid}").getOrElse("")
+				s"GameObject(id=${id}, name=${name}, actions=${actions}${actions2Str}${impostorIdStr})"
+			}
+			case j => {
+				val bits          = j.getHash
+				val id            = (bits >> 17 & 0xffffffff).toInt
+				//						val wall = (bits >> 16 & 1).toInt
+				val tpe           = (bits >> 14 & 3).toInt
+				val sceneY        = (bits >> 7 & 127).toInt
+				val sceneX        = (bits >> 0 & 127).toInt
+				val comp          = plugin.client.getObjectDefinition(id)
+				val actions       = comp.getActions.mkString("[", ", ", "]")
+				val actions2Str   = Try(comp.getImpostor).map(_.getActions).map(iActions => s", impostorActions=${iActions.mkString("[", ", ", "]")}").getOrElse("")
+				val impostorIdStr = Try(comp.getImpostor).map(_.getId).map(iid => s", impostorId=${iid}").getOrElse("")
+				s"Other(id=${id}, tpe=$tpe, sLoc=${(sceneX, sceneY)}, actions=${actions}${actions2Str}${impostorIdStr})"
+			}
+		}.getOrElse("None")
+	}
+	def expandNpcToStr(npcOpt: Option[NPC]): String = {
+		npcOpt.map(npc => {
+			val id            = npc.getId
+			val index         = npc.getIndex
+			val comp          = npc.getComposition
+			val name          = comp.getName
+			val actions       = comp.getActions.mkString("[", ", ", "]")
+			val actions2Str   = Option(npc.getTransformedComposition).filter(_ != comp).map(_.getActions).map(iActions => s", impostorActions=${iActions.mkString("[", ", ", "]")}").getOrElse("")
+			val impostorIdStr = Option(npc.getTransformedComposition).filter(_ != comp).map(_.getId).map(iid => s", impostorId=${iid}").getOrElse("")
+			s"NPC(id=${id}, index=$index, name=${name}, actions=${actions}${actions2Str}${impostorIdStr})"
+		}).getOrElse("None")
+	}
+
 	@Subscribe
 	def onGameObjectSpawned(gameObjectSpawned: GameObjectSpawned): Unit = {
-		if (!FIRE_GAMEOBJECTS.concat(TETHER_GAMEOBJECTS).concat(DAMAGED_TETHER_GAMEOBJECTS).contains(gameObjectSpawned.getGameObject.getId)) {
-		} else if (FIRE_GAMEOBJECTS.contains(gameObjectSpawned.getGameObject.getId)) {
-			val duration = gameObjectSpawned.getGameObject.getId match {
-				case NullObjectID.NULL_37582 => FIRE_SPREAD_MILLIS
-				case NullObjectID.NULL_41006 => {
-					if (plugin.config.fireStormNotification()) {
-						plugin.notifier.notify("A strong wind blows as clouds roll in...")
-					}
-					FIRE_SPAWN_MILLIS
-				}
-				case NullObjectID.NULL_41007 => FIRE_SPREADING_SPAWN_MILLIS
+		if(!inMinigame) return
+		if (FIRE_GAMEOBJECTS.contains(gameObjectSpawned.getGameObject.getId)) {
+			if(plugin.config.fireStormNotification() && gameObjectSpawned.getGameObject.getId == NullObjectID.NULL_41006) {
+				plugin.notifier.notify("A strong wind blows as clouds roll in...")
 			}
-			gameObjects.put(gameObjectSpawned.getGameObject, DrawObject(gameObjectSpawned.getTile, Instant.now, duration, plugin.config.fireColor))
-		} else if (DAMAGED_TETHER_GAMEOBJECTS.contains(gameObjectSpawned.getGameObject.getId)) {
-			//if it is not one of the above, it is a totem/mast and should be added to the totem map, with 7800ms duration, and the regular color totemMap.put(gameObjectSpawned.getGameObject, new Nothing(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, config.waveTimerColor))
-			gameObjects.put(gameObjectSpawned.getGameObject, DrawObject(gameObjectSpawned.getTile, Instant.now, 0, plugin.config.poleBrokenColor()))
-			//			if (waveIsIncoming) {
-			//				gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, Color.PINK))
-			//				addTotemTimers()
-			//			} else {
-			//				gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, 0, Color.ORANGE))
-			//			}
-		} else if (TETHER_GAMEOBJECTS.contains(gameObjectSpawned.getGameObject.getId)) {
-			//if it is not one of the above, it is a totem/mast and should be added to the totem map, with 7800ms duration, and the regular color totemMap.put(gameObjectSpawned.getGameObject, new Nothing(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, config.waveTimerColor))
-			gameObjects.put(gameObjectSpawned.getGameObject, DrawObject(gameObjectSpawned.getTile, Instant.now, if(waveIncomingStartTime != null) WAVE_IMPACT_MILLIS else 0, Color.pink))
-			plugin.addTotemTimers()
-			//			if (waveIsIncoming) {
-			//				gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, WAVE_IMPACT_MILLIS, Color.PINK))
-			//				addTotemTimers()
-			//			} else {
-			//				gameObjects.put(gameObjectSpawned.getGameObject, new DrawObject(gameObjectSpawned.getTile, Instant.now, 0, Color.ORANGE))
-			//			}
+			fireObjects.addOne(gameObjectSpawned.getGameObject -> plugin.client.getTickCount)
+		} else if (TETHER_GAMEOBJECTS.concat(DAMAGED_TETHER_GAMEOBJECTS).contains(gameObjectSpawned.getGameObject.getId)) {
+			tetherObjects.addOne(gameObjectSpawned.getGameObject)
 		}
 	}
+	def findAmmoCrate: Option[NPC] =  NpcUtils.search().filter(n => AMMO_NPCS_CRATE_IDS.contains(n.getId)).nearestToPlayer().toScala
+	def findTetherSpot: Option[TileObject] =  TileObjects.search().filter(to => TETHER_GAMEOBJECTS.contains(to.getId)).withinDistance(15).nearestToPlayer().toScala
 	@Subscribe
 	def onGameObjectDespawned(gameObjectDespawned: GameObjectDespawned): Unit = {
-		gameObjects.remove(gameObjectDespawned.getGameObject)
+		if(!inMinigame) return
+		tetherObjects.filterInPlace(_ != gameObjectDespawned.getGameObject)
+		fireObjects.filterInPlace(_._1 != gameObjectDespawned.getGameObject)
 	}
 	@Subscribe
 	def onScriptPreFired(scriptPreFired: ScriptPreFired): Unit = {
-		if (!plugin.config.stormIntensityNotification || (scriptPreFired.getScriptId != TEMPOROSS_HUD_UPDATE)) {
-		} else {
+		if (inMinigame && scriptPreFired.getScriptId == TEMPOROSS_HUD_UPDATE) {
 			val stack = plugin.client.getIntStack
 			if (stack(0) == STORM_INTENSITY) {
 				val currentStormIntensity            = stack(1)
-				val ninetyPercentOfMaxStormIntensity = (MAX_STORM_INTENSITY * .9).asInstanceOf[Int]
+				val ninetyPercentOfMaxStormIntensity = (MAX_STORM_INTENSITY * .88).asInstanceOf[Int]
 				// Compare to a 3 unit window. Seems to increase by 2 every tick, so this should make sure it only notifies once.
-				if (currentStormIntensity > ninetyPercentOfMaxStormIntensity && currentStormIntensity < ninetyPercentOfMaxStormIntensity + 3) plugin.notifier.notify("You are running out of time!")
+				val shouldAlarm = (currentStormIntensity > ninetyPercentOfMaxStormIntensity && currentStormIntensity < ninetyPercentOfMaxStormIntensity + 3)
+				if(shouldAlarm) {
+					if(plugin.config.stormIntensityNotification) plugin.notifier.notify("You are running out of time!")
+//						plugin.clientThread.
+					if(plugin.config.autoFill()) plugin.clientThread.runOnSeparateThread(() => {
+//						var found = false
+						var ammoCrateOpt: Option[NPC] = Option.empty
+						var timeout = 15
+						while(ammoCrateOpt.isEmpty && timeout > 0) {
+							Thread.sleep((Random.nextDouble() * 200 + 200).toLong)
+							ammoCrateOpt = findAmmoCrate
+							if(ammoCrateOpt.isEmpty) {
+								if(!InteractionUtils.isMoving) InteractionUtils.walk(spawnLoc)
+							}
+							timeout=timeout-1
+						}
+						if (ammoCrateOpt.isDefined) {
+							log.debug(s"Should be auto filling {}", expandNpcToStr(ammoCrateOpt))
+							NPCInteraction.interact(ammoCrateOpt.get, "Fill")
+							//getObjectComposition(ammoCrateOpt.get.getId).getId
+//							TileObjectInteraction.interact("Ammunition crate", "Fill")
+						}
+					})
+				}
 			}
 		}
 	}
+	def getObjectComposition(id: Int): ObjectComposition = {
+		val objectComposition = plugin.client.getObjectDefinition(id)
+		if (objectComposition.getImpostorIds == null) objectComposition
+		else objectComposition.getImpostor
+	}
+	@Subscribe
+	def onGameTick(tick: GameTick): Unit = {
+		if(inMinigame) {
+			npcs.mapInPlace {
+				case j@(npc, point, _) if npc.getWorldLocation == point => j
+				case (npc, _, _) => (npc, npc.getWorldLocation, plugin.client.getTickCount)
+			}
+			if(ticksTillWave == 8) {
+				val tetherOpt = findTetherSpot
+				val expandedTetherStr = expandTileObjToStr(tetherOpt)
+				if(plugin.config.autoTether()) plugin.clientThread.runOnSeparateThread(() => {
+					Thread.sleep((Random.nextDouble() * 200).toLong + 200)
+					if (tetherOpt.isDefined) {
+						log.debug("Should be auto tethering to {}", expandedTetherStr)
+						plugin.clientThread.invokeLater(() => {
+							TileObjectInteraction.interact(tetherOpt.get, "Tether")
+						})
+					} else {
+					}
+				})
+			}
+		}
+	}
+
 	@Subscribe
 	def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
-		if (NpcID.FISHING_SPOT_10569 == npcSpawned.getNpc.getId) {
-			if (plugin.config.highlightDoubleSpot) npcs.put(npcSpawned.getNpc, Instant.now.toEpochMilli)
-			if (plugin.config.doubleSpotNotification) plugin.notifier.notify("A double Harpoonfish spot has appeared.")
+		if (inMinigame && Constants.FISH_SPOTS.contains(npcSpawned.getNpc.getId)) {
+			npcs.addOne((npcSpawned.getNpc, npcSpawned.getNpc.getWorldLocation, if(npcSpawned.getNpc.getWorldLocation.distanceTo(plugin.client.getLocalPlayer.getWorldLocation) < 14) plugin.client.getTickCount else -1))
+			if(FISH_SPOTS.indexOf(npcSpawned.getNpc.getId) == 0) {
+				if (plugin.config.doubleSpotNotification) plugin.notifier.notify("A double Harpoonfish spot has appeared.")
+				if (plugin.client.getItemContainer(InventoryID.INVENTORY).pipe(ic => ic.size - ic.count) > 0) {
+					if(canAutoFishDouble) plugin.clientThread.runOnSeparateThread(() => {
+						log.debug(s"Should be auto fishing {}", expandNpcToStr(Option(npcSpawned.getNpc)))
+						//						if (npcSpawned.getNpc) {
+						Thread.sleep((Random.nextDouble() * 500 + 200).toLong)
+						NPCInteraction.interact(npcSpawned.getNpc, "Harpoon")
+						canAutoFishDouble = false
+//						}
+					})
+				}
+			}
 		}
 	}
+
 	@Subscribe
 	def onNpcDespawned(npcDespawned: NpcDespawned): Unit = {
-		npcs.remove(npcDespawned.getNpc)
+		if(inMinigame) npcs.filterInPlace(_._1 != npcDespawned.getNpc)
 	}
-	@Subscribe
-	def onGameStateChanged(gameStateChanged: GameStateChanged): Unit = {
-		if (gameStateChanged.getGameState == GameState.LOADING) {
-			reset()
-		}
-		if (plugin.client.getLocalPlayer != null) {
-			val region = WorldPoint.fromLocalInstance(plugin.client, plugin.client.getLocalPlayer.getLocalLocation).getRegionID
-			if (region != TEMPOROSS_REGION && (previousRegion == TEMPOROSS_REGION)) reset()
-			else if (region == TEMPOROSS_REGION && (previousRegion != TEMPOROSS_REGION)) plugin.redrawInfoBoxes()
-			nearRewardPool = region == UNKAH_BOAT_REGION || region == UNKAH_REWARD_POOL_REGION
 
-			if (nearRewardPool) plugin.addRewardInfoBox()
-			else {
-				plugin.infoBoxManager.removeInfoBox(plugin.rewardInfoBox)
-				plugin.rewardInfoBox = null
-			}
-
-			previousRegion = region
-		}
-	}
 	def reset(): Unit = {
+		canAutoFishDouble = plugin.config.autoFishDouble()
 		npcs.clear
-		gameObjects.clear
-//		waveIsIncoming = false
+		fireObjects.clear
+		tetherObjects.clear
 		waveIncomingStartTime = null
+		waveIncomingStartTick = -1
 		phase = 1
 		updateFishCount(0, 0, 0)
+		spawnLoc = null
 	}
 	def updateFishCount(uncooked: Int, cooked: Int, crystal: Int): Unit = {
 		this.uncookedFish = uncooked
 		this.cookedFish = cooked
 		this.crystalFish = crystal
 	}
-	@Subscribe
-	def onVarbitChanged(event: VarbitChanged): Unit = {
-		if (event.getVarbitId == VARB_REWARD_POOL_NUMBER) if (nearRewardPool) plugin.addRewardInfoBox(event.getValue)
-																											else if (event.getVarbitId == VARB_IS_TETHERED) {
-																												// The varb is a bitfield that refers to what totem/mast the player is tethered to,
-																												// with each bit corresponding to a different object, so when tethered, the totem color should update
-																												plugin.addTotemTimers()
-																											}
-	}
+
 	@Subscribe
 	def onChatMessage(chatMessage: ChatMessage): Unit = {
-		if (chatMessage.getType != ChatMessageType.GAMEMESSAGE) {
-		} else {
+		if (inMinigame && chatMessage.getType == ChatMessageType.GAMEMESSAGE) {
 			val message = chatMessage.getMessage.toLowerCase
 			if (message.contains(WAVE_INCOMING_MESSAGE)) {
-//				waveIsIncoming = true
 				waveIncomingStartTime = Instant.now
-				plugin.addTotemTimers()
+				waveIncomingStartTick = plugin.client.getTickCount
 				if (plugin.config.waveNotification) plugin.notifier.notify("A colossal wave closes in...")
 			} else if (message.contains(WAVE_END_SAFE) || message.contains(WAVE_END_DANGEROUS)) {
-//				waveIsIncoming = false
 				waveIncomingStartTime = null
-				plugin.removeTotemTimers()
+				waveIncomingStartTick = -1
 			} else if (message.contains(TEMPOROSS_VULNERABLE_MESSAGE)) {
 				phase += 1
-				plugin.redrawInfoBoxes()
 			}
 		}
 	}
 
 	@Subscribe
 	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
-		if ((event.getContainerId != InventoryID.INVENTORY.getId) || (!plugin.config.fishIndicator && !plugin.config.damageIndicator) || (plugin.fishInfoBox == null && plugin.damageInfoBox == null)) {
-		} else {
+		if (inMinigame && event.getContainerId == InventoryID.INVENTORY.getId) {
 			val inventory = event.getItemContainer
 			updateFishCount(inventory.count(ItemID.RAW_HARPOONFISH), inventory.count(ItemID.HARPOONFISH), inventory.count(ItemID.CRYSTALLISED_HARPOONFISH))
-			plugin.redrawInfoBoxes()
 		}
 	}
 }

@@ -28,7 +28,10 @@ object SceneUtils {
 			//			val wallObjectOpt = Option(tile.getWallObject).filter(_.getId == id)
 			//			val decorativeObjectOpt = Option(tile.getDecorativeObject).filter(_.getId == id)
 			//			val groundObjectOpt = Option(tile.getGroundObject).filter(_.getId == id)
-			List(tile.getWallObject, tile.getDecorativeObject, tile.getGroundObject).prependedAll(tile.getGameObjects.toList).find(to => to != null && to.getId == id)
+			List(tile.getWallObject, tile.getDecorativeObject, tile.getGroundObject).prependedAll(tile.getGameObjects.toList).filter(_ != null).find(to => {
+				val comp = client.getObjectDefinition(to.getId)
+				Option(comp.getImpostorIds).map(_.toList.appended(to.getId)).getOrElse(List(to.getId)).contains(id)
+			})
 		}.flatten
 	}
 }

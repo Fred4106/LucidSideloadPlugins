@@ -92,32 +92,53 @@ public interface FredsTemporossConfig extends Config {
 	}
 
 	@ConfigItem(
-			keyName = "highlightDoubleSpot",
-			name = "Highlight Double Fishing Spot",
-			description = "Highlights the fishing spot where you can get double fish as well as a timer when it approximately depletes",
+			keyName = "highlightNormalSpot",
+			name = "Highlight Normal Fishing Spot",
+			description = "Highlights the normal fishing spot.",
 			position = 0,
 			section = fishSpotSection
 	)
-	default boolean highlightDoubleSpot() {
-		return true;
+	default TimerModes highlightNormalSpot() {
+		return TimerModes.TICKS;
+	}
+	@ConfigItem(
+			keyName = "normalSpotColor",
+			name = "Normal Spot Color",
+			description = "Color of the normal Spot highlight tiles",
+			position = 1,
+			section = fishSpotSection
+	)
+	default Color normalSpotColor() {
+		return Color.CYAN;
+	}
+
+	@ConfigItem(
+			keyName = "highlightDoubleSpot",
+			name = "Highlight Double Fishing Spot",
+			description = "Highlights the fishing spot where you can get double fish as well as a timer when it approximately depletes",
+			position = 2,
+			section = fishSpotSection
+	)
+	default TimerModes highlightDoubleSpot() {
+		return TimerModes.PIE;
 	}
 
 	@ConfigItem(
 			keyName = "doubleSpotColor",
 			name = "Double Spot Color",
 			description = "Color of the Double Spot highlight tiles",
-			position = 1,
+			position = 3,
 			section = fishSpotSection
 	)
 	default Color doubleSpotColor() {
-		return Color.CYAN;
+		return Color.WHITE;
 	}
 
 	@ConfigItem(
 			keyName = "doubleSpotNotification",
 			name = "Double Spot Notification",
 			description = "Notify when a double spot appears",
-			position = 2,
+			position = 4,
 			section = fishSpotSection
 	)
 	default boolean doubleSpotNotification() {
@@ -210,6 +231,47 @@ public interface FredsTemporossConfig extends Config {
 
 	)
 	default boolean phaseIndicator() {
+		return true;
+	}
+
+	@ConfigSection(
+			name = "Auto",
+			description = "Auto section.",
+			position = 5,
+			closedByDefault = false
+	)
+	String autoSection = "Auto";
+	@ConfigItem(
+			keyName = "autoFishDouble",
+			name = "Fish Double",
+			description = "Automatically fish double spot when it spawns",
+			position = 0,
+			section = autoSection
+
+	)
+	default boolean autoFishDouble() {
+		return false;
+	}
+	@ConfigItem(
+			keyName = "autoTether",
+			name = "Tether",
+			description = "Automatically tether when wave spawns",
+			position = 1,
+			section = autoSection
+
+	)
+	default boolean autoTether() {
+		return true;
+	}
+	@ConfigItem(
+			keyName = "autoFill",
+			name = "Fill Ammo Crate",
+			description = "Automatically fill crate when storm is high",
+			position = 2,
+			section = autoSection
+
+	)
+	default boolean autoFill() {
 		return true;
 	}
 
