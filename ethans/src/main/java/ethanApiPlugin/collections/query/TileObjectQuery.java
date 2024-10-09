@@ -7,6 +7,7 @@ import net.runelite.api.ObjectComposition;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.RuneLite;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -51,7 +52,11 @@ public class TileObjectQuery {
         tileObjects = tileObjects.stream().filter(tileObject -> tileObject.getId() == id).collect(Collectors.toList());
         return this;
     }
-
+    public TileObjectQuery withId(int ... ids) {
+        //        List<Integer> = Arrays.stream(ids).collect(Collectors::toList)
+    tileObjects = tileObjects.stream().filter(tileObject -> ArrayUtils.contains(ids, tileObject.getId())).collect(Collectors.toList());
+        return this;
+    }
     public TileObjectQuery withAction(String action) {
         tileObjects =
                 tileObjects.stream().filter(tileObject ->

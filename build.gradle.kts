@@ -17,12 +17,11 @@ plugins {
 //    id("de.undercouch.download") version "5.6.0"
 }
 
-val runeLiteVersion = "1.10.38-SNAPSHOT"
 val javaVersion = JavaVersion.VERSION_11
 
 allprojects {
     group = "com.fredplugins"
-    version = "0.4"
+    version = "0.5"
     repositories {
 //        maven {
 //            url = uri("https://repo.runelite.net")
@@ -68,6 +67,7 @@ dependencies {
     implementation(project(":gauntlet"))
     implementation(project(":giantsFoundry"))
     implementation(project(":layoutHelper"))
+    implementation(project(":mixology"))
     implementation(project(":mta"))
     implementation(project(":scurriusHelper"))
     implementation(project(":tempoross"))
