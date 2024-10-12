@@ -1,9 +1,12 @@
 package com.fredplugins.mixology;
 
 import com.google.common.collect.ImmutableList;
+import net.runelite.api.TileObject;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 public enum MixType {
-	None(54914, 54915, 54916),
 	Mox(54907, 54910, 54913),
 	Lye(54906, 54909, 54912),
 	Aga(54905, 54908, 54911);
@@ -16,7 +19,8 @@ public enum MixType {
 		this.pedestal_ids = ImmutableList.of(id1, id2, id3);
 	}
 
-//	public static MixType fromVarbit(int varbit) {
-//		return books.get(varbit);
-//	}
+	public static Optional<MixType> fromId(int id) {
+		return Arrays.stream(values()).filter(mt -> mt.pedestal_ids.contains(id)).findFirst();
+	}
+
 }
