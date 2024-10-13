@@ -17,12 +17,14 @@ public enum Brew {
 	MMM("Mammoth-might mix", Mox, Mox, Mox, 190),
 	MMA("Mystic mana amalgam", Mox, Mox, Aga, 215),
 	MML("Marley's moonlight", Mox, Mox, Lye, 240),
+	// MML("Marley's moonlight", Mox, Mox, Lye, 240),
 	AAA("Alco-augmentator", Aga, Aga, Aga, 190),
-	ALA("Aqualux amalgam", Aga, Lye, Aga, 290),
+	// ALA("Aqualux amalgam", Aga, Lye, Aga, 290),
 	AAM("Azure aura mix", Aga, Aga, Mox, 265),
+	ALA("Aqualux amalgam", Aga, Lye, Aga, 290),
 	LLL("Liplack liquor", Lye, Lye, Lye, 190),
-	ALL("Anti-leech lotion", Aga, Lye, Lye, 340),
 	MLL("Megalite liquid", Mox, Lye, Lye, 315),
+	ALL("Anti-leech lotion", Aga, Lye, Lye, 340),
 	MAL("Mixalot", Mox, Aga, Lye, 365);
 
 	final String name;

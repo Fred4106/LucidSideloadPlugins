@@ -67,73 +67,30 @@ class FredsMixologyPlugin() extends Plugin {
 		//		overlayManager.remove(overlay)
 		//		eventBus.unregister(FredsTemporossLogic)
 	}
-	sealed trait CachedBox[P] {
-		protected var cached    : (P, P) = uninitialized
-		protected var cachedTick: Int    = -1
-		def value: (P, P) = {
-			this.cached
-		}
 
-		def current: P = value._1
-		def previous: P = value._2
-		/* = {
-	def previous: P  = {
-			update()
-			cached
-		}*/
-		def map[B](func: P => B): CachedBox[B] = {
-			val parentVal: CachedBox[P] = this
-			new CachedBox[B] {
-				cached = (func(parentVal.current), func(parentVal.previous))
-				def parent: CachedBox[P] = parentVal
-				override def value: (B, B) = {
-//					val parentValue = parent.value
-					if (cachedTick != parent.cachedTick) {
-						this.cached = (func(parent.current), Option(this.previous).getOrElse(func(parent.previous)))
-						this.cachedTick = parent.cachedTick
-					}
-					super.value
-				}
-			}
-		}
-	}
-
-	def cachedBox[A](initialPrevious: A)(s: () => A): CachedBox[A] = {
-		new CachedBox[A] {
-			this.cached = (initialPrevious, initialPrevious)
-			override def value: (A, A) = {
-				if (cachedTick != client.getTickCount) {
-					cached = (s(), cached._1)
-					cachedTick = client.getTickCount
-				}
-				super.value
-			}
-		}
-	}
-	val region    : CachedBox[Int]     = cachedBox[Int](-1)(() => Try(WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1))
-	val isInRegion: CachedBox[Boolean] = region.map(_ == 5521)
-
-	val pedistals: CachedBox[List[MixType]] = cachedBox[List[MixType]](List.empty)(() => {
-		TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
-			to => MixType.fromId(to.morphId).toScala
-		}
-	})
+	var region    : Int    = -1
+	var previousRegion: Int = -1
+	var isInRegion: Boolean = false
+	var previousIsInRegion: Boolean =false
+	var pedestals: List[MixType] = List.empty
+	var previousPedistals: List[MixType] = List.empty
 
 	//	val toolBenchBrews: CachedBox[List[(TileObject, Brew)]] = cachedBox[List[(ProcessesType, Brew)]]()
 	//	Brew(None)(a => {
 	//		a.pip
 	//	})
 
-	val toolBenches: CachedBox[List[(ProcessesType, (TileObject, Option[Brew]))]] = cachedBox(List.empty[(ProcessesType, (TileObject, Option[Brew]))])(() => {
-		for {
-			mode <- ProcessesType.values().toList
-			to <- TileObjects.search().withId(mode.baseId).nearestToPlayer().toScala
-			brew = Brew.values.find(b => to.morphId - mode.emptyId - 1 == b.ordinal())
-		} yield (mode, (to, brew))
-	})
+	var toolBenches: List[(ProcessesType, (TileObject, Option[Brew]))] = List.empty
+	var previousToolBenches: List[(ProcessesType, (TileObject, Option[Brew]))] = List.empty
 	@Subscribe
 	def onGameTick(tick: GameTick): Unit = {
-		isInRegion.value match {
+		previousRegion = region
+		previousIsInRegion = isInRegion
+		region = Try(WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1)
+		isInRegion = region == 5521
+
+
+		(isInRegion, previousIsInRegion) match {
 			case (true, false) => {
 				//now in region
 				//set state
@@ -143,14 +100,27 @@ class FredsMixologyPlugin() extends Plugin {
 			}
 			case (_, _) =>
 		}
-		toolBenches.value
-		clientThread.invoke(new Runnable {
-			override def run(): Unit = {
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "", "mixology", false)
-			}
-		})
 
-		log.warn("isInRegion {}, region {}", isInRegion.value, region)
+		if(isInRegion) {
+			previousPedistals = pedestals
+			pedestals = TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
+				to => MixType.fromId(to.morphId).toScala
+			}
+			previousToolBenches = toolBenches
+			toolBenches = for {
+				mode <- ProcessesType.values().toList
+				to <- TileObjects.search().withId(mode.baseId).nearestToPlayer().toScala
+				brew = Brew.values.find(b => to.morphId - mode.emptyId - 1 == b.ordinal())
+			} yield (mode, (to, brew))
+		}
+		
+//		clientThread.invoke(new Runnable {
+//			override def run(): Unit = {
+//				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "", "mixology", false)
+//			}
+//		})
+//
+//		log.warn("isInRegion {}, region {}", isInRegion, region)
 	}
 	@Subscribe
 	def onScriptPostFired(event: ScriptPostFired): Unit = {

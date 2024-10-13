@@ -28,10 +28,10 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 	setPosition(OverlayPosition.BOTTOM_LEFT)
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	override def render(graphics: Graphics2D): Dimension = {
-		if(plugin.isInRegion.value == (false, false)) return null
+		if(!plugin.isInRegion && !plugin.previousIsInRegion) return null
 		panelComponent.getChildren.add(TitleComponent.builder.text("Mixology").color(Color.GREEN).build)
-		if (plugin.isInRegion.current) {
-			(plugin.pedistals.current).tap(current => {
+		if (plugin.isInRegion) {
+			(plugin.pedestals).tap(current => {
 				panelComponent.getChildren.add(
 					LineComponent.builder
 						.left(s"Recipe")
@@ -39,12 +39,12 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 						.build
 				)
 			})
-			plugin.toolBenches.current.foreach{
+			plugin.toolBenches.foreach{
 				case (processesType, (tb, brewOpt)) => {
 					LineComponent.builder
 						.left(s"Station ${processesType}")
 						.right(s"${tb.wrapped.sceneLoc} $brewOpt")
-						.build.tap(				panelComponent.getChildren.add(_))
+						.build.tap(panelComponent.getChildren.add(_))
 				}
 			}
 			(0 until 3).map(plugin.getBrewType).zipWithIndex.map(j => (j._2,j._1._1, j._1._2)).foreach {
