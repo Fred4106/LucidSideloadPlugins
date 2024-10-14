@@ -68,29 +68,55 @@ class FredsMixologyPlugin() extends Plugin {
 		//		eventBus.unregister(FredsTemporossLogic)
 	}
 
-	var region    : Int    = -1
-	var previousRegion: Int = -1
-	var isInRegion: Boolean = false
-	var previousIsInRegion: Boolean =false
-	var pedestals: List[MixType] = List.empty
-	var previousPedistals: List[MixType] = List.empty
+	case class State(region: Int, pedestals: List[SMixType], toolBenches: List[(SProcessType, (TileObject, Option[SBrew]))], orders: List[(SProcessType, SBrew)]) {
+		def isInRegion: Boolean = region == 5521
+	}
 
-	//	val toolBenchBrews: CachedBox[List[(TileObject, Brew)]] = cachedBox[List[(ProcessesType, Brew)]]()
-	//	Brew(None)(a => {
-	//		a.pip
-	//	})
+	def buildState: State = {
+		val region = Try(WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1)
+		if(region == 5521) {
+			val toolBenches = TileObjects.search().withId(55389, 55390, 55391).result().asScala.toList.sortBy(_.getId).flatMap {
+				to => SProcessType.fromToolBench(to).map(spt => (spt, to -> SBrew.fromToolBench(to)))
+			}
+			val pedestals = TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
+				to => SMixType.fromPedestal(to)
+			}
+			val orders = (0 until 3).toList.map(VARBIT_POTION_ORDER(_)).map(varbitOrderId => {
+				client.getVarbitValue(varbitOrderId + 1) -> client.getVarbitValue(varbitOrderId)
+			}).map {
+				case (mod, brew) => SProcessType.fromOrderValue(mod).zip(SBrew.fromOrderValue(brew)).get
+			}
+			State(region, pedestals, toolBenches, orders)
+		} else {
+			State(region, List.empty, List.empty, List.empty)
+		}
+	}
+	def emptyState: State = State(-1, List.empty, List.empty, List.empty)
+	var state    : State    = emptyState
+	var previousState: State = emptyState
+	//	var region    : Int    = -1
+	//	var previousRegion: Int = -1
+//	var isInRegion: Boolean = false
+//	var previousIsInRegion: Boolean =false
+//	var pedestals: List[SMixType] = List.empty
+//	var previousPedistals: List[SMixType] = List.empty
+//	var toolBenches: List[(SProcessType, (TileObject, Option[SBrew]))] = List.empty
+//	var previousToolBenches: List[(SProcessType, (TileObject, Option[SBrew]))] = List.empty
+//	var orders: List[(SProcessType, SBrew)] = List.empty
+//	var previousOrders: List[(SProcessType, SBrew)] = List.empty
 
-	var toolBenches: List[(ProcessesType, (TileObject, Option[Brew]))] = List.empty
-	var previousToolBenches: List[(ProcessesType, (TileObject, Option[Brew]))] = List.empty
+
 	@Subscribe
 	def onGameTick(tick: GameTick): Unit = {
-		previousRegion = region
-		previousIsInRegion = isInRegion
-		region = Try(WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1)
-		isInRegion = region == 5521
+		previousState = state
+		state = buildState
+//		previousRegion = region
+//		previousIsInRegion = isInRegion
+//		region = Try(WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1)
+//		isInRegion = region == 5521
 
 
-		(isInRegion, previousIsInRegion) match {
+		(state.isInRegion, previousState.isInRegion) match {
 			case (true, false) => {
 				//now in region
 				//set state
@@ -101,18 +127,25 @@ class FredsMixologyPlugin() extends Plugin {
 			case (_, _) =>
 		}
 
-		if(isInRegion) {
-			previousPedistals = pedestals
-			pedestals = TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
-				to => MixType.fromId(to.morphId).toScala
-			}
-			previousToolBenches = toolBenches
-			toolBenches = for {
-				mode <- ProcessesType.values().toList
-				to <- TileObjects.search().withId(mode.baseId).nearestToPlayer().toScala
-				brew = Brew.values.find(b => to.morphId - mode.emptyId - 1 == b.ordinal())
-			} yield (mode, (to, brew))
-		}
+		log.debug("state: {}", state)
+
+//		if(isInRegion) {
+//			previousOrders = orders
+//			orders = (0 until 3).toList.map(VARBIT_POTION_ORDER(_)).map(varbitOrderId => {
+//				client.getVarbitValue(varbitOrderId + 1) -> client.getVarbitValue(varbitOrderId)
+//			}).map {
+//				case (mod, brew) => SProcessType.fromOrderValue(mod).zip(SBrew.fromOrderValue(brew)).get
+//			}
+//
+//			previousPedistals = pedestals
+//			pedestals = TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
+//				to => SMixType.fromPedistal(to)
+//			}
+//			previousToolBenches = toolBenches
+//			toolBenches = TileObjects.search().withId(55389, 55390, 55391).result().asScala.toList.sortBy(_.getId).flatMap {
+//				to => SProcessType.fromToolBench(to).map(spt => (spt, to -> SBrew.fromToolBench(to)))
+//			}
+//		}
 		
 //		clientThread.invoke(new Runnable {
 //			override def run(): Unit = {
@@ -135,10 +168,6 @@ class FredsMixologyPlugin() extends Plugin {
 //		}
 	}
 
-	def getBrewType(idx: Int): (ProcessesType, Brew) = {
-		(ProcessesType.values()(client.getVarbitValue(VARBIT_POTION_MODIFIER(idx)) - 1),
-		Brew.values()(client.getVarbitValue(VARBIT_POTION_ORDER(idx)) - 1))
-	}
 	@Subscribe
 	def onMenuOptionClicked(mec: MenuOptionClicked): Unit = {
 		val me = mec.getMenuEntry
