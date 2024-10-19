@@ -2,14 +2,14 @@ package com.fredplugins.mixology
 
 import com.fredplugins.common.extensions.MenuExtensions
 import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getTileObjectOpt, isNpcAction, isTileObjectAction}
-import com.fredplugins.common.extensions.ObjectExtensions.{morphId, composition, impostorComposition, isImpostor, wrapped}
+import com.fredplugins.common.extensions.ObjectExtensions.{composition, impostorComposition, isImpostor, morphId, wrapped}
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{TileObjects, Widgets}
-import net.runelite.api.{ChatMessageType, Client, TileObject}
+import net.runelite.api.{ChatMessageType, Client, InventoryID, ItemContainer, TileObject}
 import net.runelite.api.coords.WorldPoint
-import net.runelite.api.events.{GameTick, MenuEntryAdded, MenuOptionClicked, ScriptPostFired}
+import net.runelite.api.events.{GameTick, ItemContainerChanged, MenuEntryAdded, MenuOptionClicked, ScriptPostFired, VarbitChanged}
 import net.runelite.client.Notifier
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.config.ConfigManager
@@ -156,6 +156,29 @@ class FredsMixologyPlugin() extends Plugin {
 //
 //		log.warn("isInRegion {}, region {}", isInRegion, region)
 	}
+
+	@Subscribe
+	def onItemContainerChanged(ev: ItemContainerChanged): Unit = {
+		if(ev.getContainerId == InventoryID.INVENTORY.getId) {
+			val container = ev.getItemContainer
+			val itemsList = (for{
+				idx <- (0 until container.size)
+				(id, qty) <- Option(container.getItem(idx)).map(i => i.getId -> i.getQuantity)
+			} yield (idx, id, qty))
+				.pipe(_.toList)
+			val inventoryID = InventoryID.values().toList.find(_.getId == container.getId).get
+			log.debug("ItemContainerChanged({}) = {}", inventoryID, container.count())
+			itemsList.foreach(ie => {
+				log.debug("    {} = ({}, {})", ie._1, ie._2, ie._3)
+			})
+		}
+	}
+
+	@Subscribe
+	def onVarbitChanged(ev: VarbitChanged): Unit = {
+		log.debug("VarbitChanged({}, {}) = {}", ev.getVarbitId, ev.getVarpId, ev.getValue)
+	}
+
 	@Subscribe
 	def onScriptPostFired(event: ScriptPostFired): Unit = {
 		if (event.getScriptId != PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER) return

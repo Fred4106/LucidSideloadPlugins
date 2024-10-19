@@ -122,7 +122,6 @@ package object mixology {
 		case object MAL extends SBrew(MIXALOT, 365) {}
 
 		def fromToolBench(to: TileObject)(using client: Client): Option[SBrew] = {
-//			log.debug("SBrew fromToolBench: {} morph: {}", to.getId, to.morphId)
 			Option(to).filter(_.morphId != -1).map(to =>
 				to.morphId - (to.getId match {
 					case 55390 => 54881
@@ -141,9 +140,6 @@ package object mixology {
 				case 9 => MLL//"Megalite liquid"
 				case 10 =>MAL//"Mixalot"
 			}
-//			emptyIdOpt.map(eid => {
-//				Brew.values.find(b => to.morphId - eid - 1 == b.ordinal())
-//			})
 		}
 		def fromOrderValue(i: Int): Option[SBrew] = {
 //			log.debug("SBrew fromOrderValue: {}", i)
