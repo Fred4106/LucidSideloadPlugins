@@ -56,12 +56,12 @@ package object mixology {
 		case object Alembic extends SProcessType {}
 
 		def fromToolBench(to: TileObject): Option[SProcessType] = {
-			log.debug("SProcessType fromToolBench: {}", to.getId)
+//			log.debug("SProcessType fromToolBench: {}", to.getId)
 			Option(to.getId - 55389).filter((0 to 2).contains(_)).map(List(Retort, Agitator, Alembic).apply(_))
 		}
 
 		def fromOrderValue(i: Int): Option[SProcessType] = {
-			log.debug("SProcessType fromOrderValue: {}", i)
+//			log.debug("SProcessType fromOrderValue: {}", i)
 			Option.when( 1 to 3 contains i){List(Agitator, Retort, Alembic)(i-1)}
 		}
 	}
@@ -122,7 +122,7 @@ package object mixology {
 		case object MAL extends SBrew(MIXALOT, 365) {}
 
 		def fromToolBench(to: TileObject)(using client: Client): Option[SBrew] = {
-			log.debug("SBrew fromToolBench: {} morph: {}", to.getId, to.morphId)
+//			log.debug("SBrew fromToolBench: {} morph: {}", to.getId, to.morphId)
 			Option(to).filter(_.morphId != -1).map(to =>
 				to.morphId - (to.getId match {
 					case 55390 => 54881
@@ -146,7 +146,7 @@ package object mixology {
 //			})
 		}
 		def fromOrderValue(i: Int): Option[SBrew] = {
-			log.debug("SBrew fromOrderValue: {}", i)
+//			log.debug("SBrew fromOrderValue: {}", i)
 			Option(i).collect[SBrew] {
 				case 1 => MMM
 				case 2 => MMA

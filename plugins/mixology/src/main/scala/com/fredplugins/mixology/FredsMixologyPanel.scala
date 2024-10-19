@@ -38,7 +38,7 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 		val ordersLines: Seq[LineData] = plugin.state.orders.zipWithIndex.map[LineData] {
 			case ((pt, br), idx) => s"Order ${idx + 1}" -> s"${pt} ${br}"
 		}.prepended("Orders")
-
+//		log.info("benchesLines: {}", benchesLines)
 		List[LineData | Seq[LineData]](mixCodeLine, benchesLines, ordersLines).flatMap {
 			case a: LineData => Seq(a)
 			case b: Seq[LineData] => b

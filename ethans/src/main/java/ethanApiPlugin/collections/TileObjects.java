@@ -9,6 +9,8 @@ import net.runelite.client.eventbus.Subscribe;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Singleton
 public class TileObjects {
 //    static Client client = RuneLite.getInjector().getInstance(Client.class);
@@ -91,27 +93,28 @@ public class TileObjects {
                     if (gameObject.getId() == -1) {
                         continue;
                     }
-                    tileObjects.add(gameObject);
+                    if(!tileObjects.contains(gameObject)) tileObjects.add(gameObject);
                 }
                 if (tile.getGroundObject() != null) {
                     if (tile.getGroundObject().getId() == -1) {
                         continue;
                     }
-                    tileObjects.add(tile.getGroundObject());
+                    if(!tileObjects.contains(tile.getGroundObject())) tileObjects.add(tile.getGroundObject());
                 }
                 if (tile.getWallObject() != null) {
                     if (tile.getWallObject().getId() == -1) {
                         continue;
                     }
-                    tileObjects.add(tile.getWallObject());
+                    if(!tileObjects.contains(tile.getWallObject())) tileObjects.add(tile.getWallObject());
                 }
                 if (tile.getDecorativeObject() != null) {
                     if (tile.getDecorativeObject().getId() == -1) {
                         continue;
                     }
-                    tileObjects.add(tile.getDecorativeObject());
+                    if(!tileObjects.contains(tile.getDecorativeObject())) tileObjects.add(tile.getDecorativeObject());
                 }
             }
         }
+
     }
 }

@@ -2,7 +2,7 @@ package com.fredplugins.mixology
 
 import com.fredplugins.common.extensions.MenuExtensions
 import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getTileObjectOpt, isNpcAction, isTileObjectAction}
-import com.fredplugins.common.extensions.ObjectExtensions.morphId
+import com.fredplugins.common.extensions.ObjectExtensions.{morphId, composition, impostorComposition, isImpostor, wrapped}
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
@@ -75,9 +75,10 @@ class FredsMixologyPlugin() extends Plugin {
 	def buildState: State = {
 		val region = Try(WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1)
 		if(region == 5521) {
-			val toolBenches = TileObjects.search().withId(55389, 55390, 55391).result().asScala.toList.sortBy(_.getId).flatMap {
-				to => SProcessType.fromToolBench(to).map(spt => (spt, to -> SBrew.fromToolBench(to)))
-			}
+			val toolBenches = TileObjects.search().withId(55389, 55390, 55391).result().asScala.toList.sortBy(_.getId)
+				.flatMap {
+					to => SProcessType.fromToolBench(to).map(spt => (spt, to -> SBrew.fromToolBench(to)))
+				}
 			val pedestals = TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
 				to => SMixType.fromPedestal(to)
 			}

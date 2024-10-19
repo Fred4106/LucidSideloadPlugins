@@ -2,10 +2,6 @@ package com.fredplugins.mixology;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigSection;
-
-import java.awt.*;
 
 @ConfigGroup(FredsMixologyConfig.GroupName)
 public interface FredsMixologyConfig extends Config {
