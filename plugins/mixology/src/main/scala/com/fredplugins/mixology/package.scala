@@ -12,7 +12,8 @@ import org.slf4j.Logger
 import scala.util.chaining.*
 package object mixology {
 	private val log: Logger = ShimUtils.getLogger("com.fredsplugins.mixology", "DEBUG")
-	val PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER = 7063
+	inline def PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS: Int = 7063
+	inline def PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS: Int = 7064
 
 	val VARBIT_POTION_ORDER = List(11315, 11317, 11319)
 	val VARBIT_POTION_MODIFIER= List(11316, 11318, 11320)
@@ -46,6 +47,8 @@ package object mixology {
 	val COMPONENT_POTION_ORDERS_GROUP_ID: Int = 882
 	val COMPONENT_POTION_ORDERS: Int = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2
 
+//	type OrderType = (SProcessType, SBrew)
+	type AllOrdersType = ((SProcessType, SBrew), (SProcessType, SBrew), (SProcessType, SBrew))
 
 	sealed trait SProcessType {
 		this: Product =>
@@ -108,6 +111,7 @@ package object mixology {
 		}
 
 		def totalWorth: Int = worth.values.sum
+		inline def processedId: Int = unprocessedId + 10
 	}
 	object SBrew {
 		case object MMM extends SBrew(MAMMOTHMIGHT_MIX, 190) {}
@@ -120,7 +124,7 @@ package object mixology {
 		case object ALL extends SBrew(ANTILEECH_LOTION, 340) {}
 		case object MLL extends SBrew(MEGALITE_LIQUID, 315) {}
 		case object MAL extends SBrew(MIXALOT, 365) {}
-
+		inline def values: List[SBrew] = List(MMM, MMA, MML, AAA, ALA, AAM, LLL, ALL, MLL, MAL)
 		def fromToolBench(to: TileObject)(using client: Client): Option[SBrew] = {
 			Option(to).filter(_.morphId != -1).map(to =>
 				to.morphId - (to.getId match {
@@ -141,7 +145,7 @@ package object mixology {
 				case 10 =>MAL//"Mixalot"
 			}
 		}
-		def fromOrderValue(i: Int): Option[SBrew] = {
+		def fromIdx(i: Int): Option[SBrew] = {
 //			log.debug("SBrew fromOrderValue: {}", i)
 			Option(i).collect[SBrew] {
 				case 1 => MMM

@@ -30,23 +30,46 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	type LineData = (String, String) | String
 	private def lines: Seq[LineData] = {
-		val mixCodeLine: LineData = "Mix" -> plugin.state.pedestals.foldLeft("")((a, b) => s"$a${b.letter}")
+		val mixCodeLine: LineData = "Mix" -> TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
+			to => SMixType.fromPedestal(to)
+		}.foldLeft("")((j, j2) => s"${j}${j2.letter}")
 
-		val benchesLines: Seq[LineData] = plugin.state.toolBenches.flatMap((pt, tpl) => tpl._2.map(pt -> _)).map[LineData] {
-			case (processesType, brew) => s"$processesType" -> s"$brew"
+//		val benchesLines: Seq[LineData] = plugin.state.toolBenches.flatMap((pt, tpl) => tpl._2.map(pt -> _)).map[LineData] {
+//			case (processesType, brew) => s"$processesType" -> s"$brew"
+//		}.prepended("Toolbenches")
+		val benchesLines: Seq[LineData] = List(SProcessType.Alembic -> plugin.alembicPotionType, SProcessType.Agitator -> plugin.agitatorPotionType, SProcessType.Retort -> plugin.retortPotionType).map {
+			case (z, zz) => (s"${z}", zz.map(zzz => s"${zzz}").getOrElse("Empty"))
+		}.map[LineData] {
+			case (processesTypeStr, brewStr) => processesTypeStr -> brewStr
 		}.prepended("Toolbenches")
-		val ordersLines: Seq[LineData] = plugin.state.orders.zipWithIndex.map[LineData] {
+		val ordersLines: Seq[LineData] = plugin.potionOrders.pipe(x => List(x._1, x._2, x._3).zipWithIndex).map[LineData] {
 			case ((pt, br), idx) => s"Order ${idx + 1}" -> s"${pt} ${br}"
+//			case (processType, brew) =>
+//			case (, idx) => s"Order ${idx + 1}" -> s"${pt} ${br}"
 		}.prepended("Orders")
+		val inventoryLines: Seq[LineData] = plugin.inventorySnapshot//.filter(j => SBrew.values.exists(b => b.unprocessedId == j._2 || b.processedId == j._2))
+			.map[LineData] {
+//				case (idx, id, qty) if SBrew.values.exists(b => b.unprocessedId == id) => s"${idx}" -> s"Unprocessed(${SBrew.values.find(b => b.unprocessedId == id).get})"
+//				case (idx, id, qty) if SBrew.values.exists(b => b.processedId == id) => s"${idx}" -> s"Processed(${SBrew.values.find(b => b.processedId == id).get}, ${"Unknown"})"
+				case (idx, id, qty) => s"${idx}" -> s"(${id}, ${qty})"
+			}.prepended("Inventory")
+
+		val debugLines: Seq[LineData] = List(
+			SProcessType.Agitator -> (plugin.previousAgitatorProgess, plugin.agitatorQuickActionTicks),
+			SProcessType.Alembic -> (plugin.previousAlembicProgress, plugin.alembicQuickActionTicks),
+		)
+			.map[LineData] {
+				case (processType, (prog, ticks)) => s"${processType}" -> s"${prog} | ${ticks}"
+			}.prepended("debug")
 //		log.info("benchesLines: {}", benchesLines)
-		List[LineData | Seq[LineData]](mixCodeLine, benchesLines, ordersLines).flatMap {
+		List[LineData | Seq[LineData]](mixCodeLine, benchesLines, ordersLines, inventoryLines, debugLines).flatMap {
 			case a: LineData => Seq(a)
 			case b: Seq[LineData] => b
 		}
 	}
 	override def render(graphics: Graphics2D): Dimension = {
-		if(!plugin.state.isInRegion && !plugin.previousState.isInRegion) return null
-		if (plugin.state.isInRegion) {
+//		if(!plugin.state.isInRegion && !plugin.previousState.isInRegion) return null
+		if (plugin.inLab) {
 			List[LayoutableRenderableEntity|Seq[LayoutableRenderableEntity]](
 				TitleComponent.builder.text("Mixology").color(Color.GREEN).build,
 				lines.map {
