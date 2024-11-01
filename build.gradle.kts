@@ -21,7 +21,7 @@ val javaVersion = JavaVersion.VERSION_11
 
 allprojects {
     group = "com.fredplugins"
-    version = "0.6"
+    version = "0.7"
     repositories {
 //        maven {
 //            url = uri("https://repo.runelite.net")
@@ -111,7 +111,7 @@ tasks {
 //val runeLiteVersion = "1.10.36.1"
 //group = "com.fredplugins"
 //
-//val javaMajorVersion = JavaVersion.VERSION_11.majorVersion
+    //val javaMajorVersion = JavaVersion.VERSION_11.majorVersion
 //sourceSets {
 //    main {
 //        scala {

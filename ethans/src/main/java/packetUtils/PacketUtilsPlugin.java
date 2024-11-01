@@ -213,12 +213,13 @@ public class PacketUtilsPlugin extends Plugin {
         } else {
             log.info("Vanilla jar does not exist");
         }
-        String[] versionSplits = version.split("\\.");
-        int length = versionSplits.length;
+
         if (version.contains("snapshot")) {
             log.info("replacing snapshot version");
             version = version.replace("-SNAPSHOT", "");
         }
+        String[] versionSplits = version.split("\\.");
+        int length = versionSplits.length;
         if ((length > 0 && Integer.parseInt(versionSplits[0]) > 1 || (length > 1) && (Integer.parseInt(versionSplits[1]) > 10) )|| (length > 2 && Integer.parseInt(versionSplits[2]) > 34)) {
             String url = "https://repo.runelite.net/net/runelite/injected-client/" + version + "/injected-client-" + version + ".jar";
             URL injectedURL = new URL(url);
