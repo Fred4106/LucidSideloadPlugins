@@ -33,20 +33,23 @@ allprojects {
         gradlePluginPortal()
         mavenCentral()
     }
-    apply<JavaLibraryPlugin>()
-    apply<MavenPublishPlugin>()
+    if(!name.equals("plugins")) {
+        println("allprojects $name")
+        apply<JavaLibraryPlugin>()
+        apply<MavenPublishPlugin>()
 
-    dependencies {
+        dependencies {
 //        this.add("annotationProcessor", "org.projectlombok:lombok:1.18.30")
 //        this.add("compileOnly", "org.projectlombok:lombok:1.18.30")
-        this.add("compileOnly", "org.pf4j:pf4j:3.10.0")
-        this.add("compileOnly", "net.runelite:client:${Dependencies.rlVersion}")
-        this.add("testImplementation", "junit:junit:4.13.1")
-    }
-    configure<JavaPluginExtension> {
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
+            this.add("compileOnly", "org.pf4j:pf4j:3.10.0")
+            this.add("compileOnly", "net.runelite:client:${Dependencies.rlVersion}")
+            this.add("testImplementation", "junit:junit:4.13.1")
+        }
+        configure<JavaPluginExtension> {
+            sourceCompatibility = javaVersion
+            targetCompatibility = javaVersion
 //        options.encoding = "UTF-8"
+        }
     }
 //    configure<Jar> {
 //        System.out.println("inputs: " + inputs.files)
@@ -60,20 +63,20 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":commonScala"))
 
-    implementation(project(":attackTimer"))
-    implementation(project(":customPrayers"))
-    implementation(project(":demonicGorilla"))
-    implementation(project(":dt2"))
-    implementation(project(":gauntlet"))
-    implementation(project(":giantsFoundry"))
-    implementation(project(":layoutHelper"))
-    implementation(project(":mixology"))
-    implementation(project(":mta"))
-    implementation(project(":scurriusHelper"))
-    implementation(project(":tempoross"))
-    implementation(project(":titheFarm"))
-    implementation(project(":titheFarm2"))
-    implementation(project(":superClickHelper"))
+    implementation(project(":plugins:attackTimer"))
+    implementation(project(":plugins:customPrayers"))
+    implementation(project(":plugins:demonicGorilla"))
+    implementation(project(":plugins:dt2"))
+    implementation(project(":plugins:gauntlet"))
+    implementation(project(":plugins:giantsFoundry"))
+    implementation(project(":plugins:layoutHelper"))
+    implementation(project(":plugins:mixology"))
+    implementation(project(":plugins:mta"))
+    implementation(project(":plugins:scurriusHelper"))
+    implementation(project(":plugins:tempoross"))
+    implementation(project(":plugins:titheFarm"))
+    implementation(project(":plugins:titheFarm2"))
+    implementation(project(":plugins:superClickHelper"))
 }
 
 tasks {

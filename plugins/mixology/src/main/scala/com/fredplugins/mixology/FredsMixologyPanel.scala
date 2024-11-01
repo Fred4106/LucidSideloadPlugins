@@ -55,6 +55,7 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 			}.prepended("Inventory")
 
 		val debugLines: Seq[LineData] = List(
+			SProcessType.Retort -> (plugin.previousRetortProgess, if(plugin.previousRetortProgess < 17 && plugin.previousRetortProgess > 0) 1 else 0),
 			SProcessType.Agitator -> (plugin.previousAgitatorProgess, plugin.agitatorQuickActionTicks),
 			SProcessType.Alembic -> (plugin.previousAlembicProgress, plugin.alembicQuickActionTicks),
 		)
@@ -68,7 +69,6 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 		}
 	}
 	override def render(graphics: Graphics2D): Dimension = {
-//		if(!plugin.state.isInRegion && !plugin.previousState.isInRegion) return null
 		if (plugin.inLab) {
 			List[LayoutableRenderableEntity|Seq[LayoutableRenderableEntity]](
 				TitleComponent.builder.text("Mixology").color(Color.GREEN).build,

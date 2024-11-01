@@ -6,20 +6,20 @@ plugins {
 include(":ethans")
 include(":common")
 include(":commonScala")
-include(":attackTimer")
-include(":customPrayers")
-include(":demonicGorilla")
-include(":dt2")
-include(":gauntlet")
-include(":giantsFoundry")
-include(":layoutHelper")
-include(":mixology")
-include(":mta")
-include(":scurriusHelper")
-include(":tempoross")
-include(":titheFarm")
-include(":titheFarm2")
-include(":superClickHelper")
+include(":plugins:attackTimer")
+include(":plugins:customPrayers")
+include(":plugins:demonicGorilla")
+include(":plugins:dt2")
+include(":plugins:gauntlet")
+include(":plugins:giantsFoundry")
+include(":plugins:layoutHelper")
+include(":plugins:mixology")
+include(":plugins:mta")
+include(":plugins:scurriusHelper")
+include(":plugins:tempoross")
+include(":plugins:titheFarm")
+include(":plugins:titheFarm2")
+include(":plugins:superClickHelper")
 
 //include(":runelite-api")
 //include(":runescape-api")
@@ -35,9 +35,19 @@ include(":superClickHelper")
 
 for (project in rootProject.children) {
     project.apply {
-        projectDir = (if(file(name).exists()) file(name) else file("plugins/${name}"))
-        buildFileName = "$name.gradle.kts"
+        println(name)
+        projectDir = file(name)//(if(file(name).exists()) file(name) else null)//file("plugins/${name}"))
         require(projectDir.isDirectory) { "Project '${project.path} must have a $projectDir directory" }
+        buildFileName = "$name.gradle.kts"
+        require(buildFile.isFile) { "Project '${project.path} must have a $buildFile build script" }
+    }
+}
+for (project in project(":plugins").children) {
+    project.apply {
+        println(name)
+        projectDir = file("plugins/${name}")//(if(file(name).exists()) file(name) else null)//file("plugins/${name}"))
+        require(projectDir.isDirectory) { "Project '${project.path} must have a $projectDir directory" }
+        buildFileName = "$name.gradle.kts"
         require(buildFile.isFile) { "Project '${project.path} must have a $buildFile build script" }
     }
 }

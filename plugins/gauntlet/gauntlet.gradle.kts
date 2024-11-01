@@ -5,7 +5,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:${Dependencies.lombokVersion}")
     implementation(project(":ethans"))
     implementation(project(":common"))
-    implementation(project(":attackTimer"))
+    implementation(project(":plugins:attackTimer"))
 }
 
 

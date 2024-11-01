@@ -166,17 +166,25 @@ class FredsMixologyPlugin() extends Plugin {
 		else log.warn("unHighlightLevers")
 	}
 	def parseInventory(container: ItemContainer): List[(Int, Int, Int)] = {
-		container.getItems.toList.zipWithIndex.map(_.swap).collect {
-			case (idx: Int, i: Item) => (idx, i.getId, i.getQuantity)
-		}
+		container.getItems.toList.zipWithIndex.filter(x => x._1 != null && x._1.getId != -1 && x._1.getQuantity != -1).map(_.swap).map (
+			_ match {
+				case (idx: Int, i: Item) => (idx, i.getId, i.getQuantity)
+			}
+		)
 	}
+
+//	def parseInventory(container: List[(Int, Item)]: List[(Int, Int, Int)] = {
+//		container.collect {
+//			case (idx: Int, i: Item) => (idx, i.getId, i.getQuantity)
+//		}.filter(i => i._2 != -1 && i._3 != -1)
+//	}
 	@Subscribe
 	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
 		if (inLab && event.getContainerId == InventoryID.INVENTORY.getId) {
 			val currentInventory = parseInventory(event.getItemContainer)
 			val sharedElements = currentInventory.intersect(inventorySnapshot)
-			val addedElements = currentInventory.filter(u => sharedElements.contains(u)).diff(inventorySnapshot.filter(u => sharedElements.contains(u)))
-			val removedElements = inventorySnapshot.filter(u => sharedElements.contains(u)).diff(currentInventory.filter(u => sharedElements.contains(u)))
+			val addedElements = currentInventory.diff(sharedElements)
+			val removedElements = inventorySnapshot.diff(sharedElements)
 			val qtyChanged = addedElements.map(x => x._1 -> x._2).intersect(removedElements.map(x => x._1 -> x._2)).map{
 				case (idx, id) => {
 					(
@@ -186,10 +194,18 @@ class FredsMixologyPlugin() extends Plugin {
 					)
 				}
 			}
-			val realAddedElements = addedElements.filterNot(x => qtyChanged.map(z => z._1 -> z._2).contains((x._1, x._2)))
-			val realRemovedElements = removedElements.filterNot(x => qtyChanged.map(z => z._1 -> z._2).contains((x._1, x._2)))
 
-			log.debug("added {}, removed {}, realAdded {}, realRemoved {}, qtyChanged {}", addedElements, removedElements, realAddedElements, realRemovedElements, qtyChanged)
+			log.debug("logStr: {}",
+				List(
+						"shared" -> sharedElements,
+						"added" -> addedElements,
+						"removed" -> removedElements,
+						"qtyChanged" -> qtyChanged
+					)
+					.filter(_._2.nonEmpty)
+					.map(u => s"${u._1}=${u._2}")
+					.mkString("\n\t", "\n\t", "\n")
+			)
 			inventorySnapshot = currentInventory
 		}
 //		// Do not update the highlight if there's a potion in a station
@@ -312,19 +328,13 @@ class FredsMixologyPlugin() extends Plugin {
 //					resetDefaultHighlight(AlchemyObject.ALEMBIC)
 			}
 			previousAlembicProgress = value
-		} /*else if (varbitId == VARBIT_RETORT_PROGRESS) {
-			if (agitatorQuickActionTicks == 2) {
-				// quick action was triggered two ticks ago, so it's now too late
-//				resetDefaultHighlight(AlchemyObject.AGITATOR)
-				agitatorQuickActionTicks = 0
-			}
-			if (agitatorQuickActionTicks == 1) agitatorQuickActionTicks = 2
-			if (value < previousAgitatorProgess) {
+		} else if (varbitId == VARBIT_RETORT_PROGRESS) {
+			if (value < previousRetortProgess) {
 				// progress was set back due to a quick action failure
 //				resetDefaultHighlight(AlchemyObject.AGITATOR)
 			}
-			previousAgitatorProgess = value
-		} */else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
+			previousRetortProgess = value
+		} else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
 				// agitator quick action was just successfully popped
 //				resetDefaultHighlight(AlchemyObject.AGITATOR)
 		} else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
@@ -350,7 +360,6 @@ class FredsMixologyPlugin() extends Plugin {
 		}
 	}
 	override protected def startUp(): Unit = {
-		inventorySnapshot = clientThread.runOnClientThread(() => parseInventory(client.getItemContainer(InventoryID.INVENTORY)))
 		inLab = clientThread.runOnClientThread(() => {
 			val ordersLayer = client.getWidget(COMPONENT_POTION_ORDERS_GROUP_ID, 0)
 			if (ordersLayer == null || ordersLayer.isSelfHidden) {
@@ -359,6 +368,7 @@ class FredsMixologyPlugin() extends Plugin {
 				true
 			}
 		})
+		inventorySnapshot = parseInventory(clientThread.runOnClientThread(() => client.getItemContainer(InventoryID.INVENTORY)))
 
 		//		FredsTemporossLogic.init(this)
 		//		eventBus.register(FredsTemporossLogic)
