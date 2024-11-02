@@ -69,18 +69,18 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 		}
 	}
 	override def render(graphics: Graphics2D): Dimension = {
-		if (plugin.inLab) {
-			List[LayoutableRenderableEntity|Seq[LayoutableRenderableEntity]](
-				TitleComponent.builder.text("Mixology").color(Color.GREEN).build,
-				lines.map {
-						case (left, right) => LineComponent.builder.left(left).right(right).build
-						case line: String => TitleComponent.builder.text(line).build
-					}
-			).flatMap {
-				case x: LayoutableRenderableEntity => List(x)
-				case x: Seq[LayoutableRenderableEntity] => x
-			}.foreach(u => panelComponent.getChildren.add(u))
-		}
+//		if (plugin.inLab) {
+		List[LayoutableRenderableEntity|Seq[LayoutableRenderableEntity]](
+			TitleComponent.builder.text("Mixology").color(Color.GREEN).build,
+			lines.map {
+					case (left, right) => LineComponent.builder.left(left).right(right).build
+					case line: String => TitleComponent.builder.text(line).build
+				}
+		).flatMap {
+			case x: LayoutableRenderableEntity => List(x)
+			case x: Seq[LayoutableRenderableEntity] => x
+		}.foreach(u => panelComponent.getChildren.add(u))
+//		}
 		super.render(graphics)
 	}
 }

@@ -166,11 +166,9 @@ class FredsMixologyPlugin() extends Plugin {
 		else log.warn("unHighlightLevers")
 	}
 	def parseInventory(container: ItemContainer): List[(Int, Int, Int)] = {
-		container.getItems.toList.zipWithIndex.filter(x => x._1 != null && x._1.getId != -1 && x._1.getQuantity != -1).map(_.swap).map (
-			_ match {
-				case (idx: Int, i: Item) => (idx, i.getId, i.getQuantity)
-			}
-		)
+		container.getItems.zipWithIndex.collect {
+			case (i: Item, idx: Int) if i.getId != -1 && i.getQuantity != -1  => (idx, i.getId, i.getQuantity)
+		}.toList
 	}
 
 //	def parseInventory(container: List[(Int, Item)]: List[(Int, Int, Int)] = {
@@ -180,33 +178,43 @@ class FredsMixologyPlugin() extends Plugin {
 //	}
 	@Subscribe
 	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
-		if (inLab && event.getContainerId == InventoryID.INVENTORY.getId) {
-			val currentInventory = parseInventory(event.getItemContainer)
-			val sharedElements = currentInventory.intersect(inventorySnapshot)
-			val addedElements = currentInventory.diff(sharedElements)
-			val removedElements = inventorySnapshot.diff(sharedElements)
-			val qtyChanged = addedElements.map(x => x._1 -> x._2).intersect(removedElements.map(x => x._1 -> x._2)).map{
-				case (idx, id) => {
-					(
-						idx,
-						id,
-						addedElements.find(y => y._1 == idx && y._2 == id).map(_._3).getOrElse(0) - removedElements.find(y => y._1 == idx && y._2 == id).map(_._3).getOrElse(0)
-					)
+		if (event.getContainerId == InventoryID.INVENTORY.getId) {
+			val (qtyElements, addedElements, removedElements) = parseInventory(event.getItemContainer).pipe {
+				cur => {
+					(cur.diff(inventorySnapshot) -> inventorySnapshot.diff(cur)).pipe {
+						case (addedElements, removedElements) => {
+							addedElements.partition(added => removedElements.exists(removed => removed._1 == added._1 && removed._2 == added._2)).pipe {
+								case (qtyElements, realAddedElements) => {
+									val (qtyMinusElements: List[(Int, Int, Int)], realRemovedElements: List[(Int, Int, Int)]) = removedElements.partition(r => qtyElements.exists(q => q._1 == r._1 && q._2 == r._2)) //sharedElements1.contains(r))
+									(qtyElements.map(q => (q._1, q._2, q._3 - qtyMinusElements.find(r => r._1 == q._1 && r._2 == q._2).map(_._3).getOrElse(0))), realAddedElements, realRemovedElements)
+								}
+							}.tap(_ => inventorySnapshot = cur)
+						}
+					}
 				}
 			}
+//			val addedElements =
+//			val removedElements =//(currentInventory.contains(_))._2
 
-			log.debug("logStr: {}",
-				List(
-						"shared" -> sharedElements,
+//			val qtyChanged = addedElements.map(x => x._1 -> x._2).intersect(removedElements.map(x => x._1 -> x._2)).map{
+//				case (idx, id) => {
+//					(
+//						idx,
+//						id,
+//						addedElements.find(y => y._1 == idx && y._2 == id).map(_._3).getOrElse(0) - removedElements.find(y => y._1 == idx && y._2 == id).map(_._3).getOrElse(0)
+//					)
+//				}
+//			}
+
+			val str = List(
+						"qtyChanged" -> qtyElements,
 						"added" -> addedElements,
 						"removed" -> removedElements,
-						"qtyChanged" -> qtyChanged
 					)
 					.filter(_._2.nonEmpty)
 					.map(u => s"${u._1}=${u._2}")
 					.mkString("\n\t", "\n\t", "\n")
-			)
-			inventorySnapshot = currentInventory
+			log.debug(s"logStr: ${str}")
 		}
 //		// Do not update the highlight if there's a potion in a station
 //		if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) return
@@ -238,14 +246,14 @@ class FredsMixologyPlugin() extends Plugin {
 		if (VARBIT_POTION_ORDER.contains(varbitId) || VARBIT_POTION_MODIFIER.contains(varbitId)) {
 			potionOrders = this.potionOrders match {
 				case ((p1,o1), (p2,o2), (p3,o3)) => {
-					(varbitId, (if(VARBIT_POTION_ORDER.contains(varbitId)) fromIdx(value) else fromOrderValue(value))) match {
-						case (VARBIT_POTION_ORDER_1, b: Option[SBrew]) => ((p1, b.orNull), (p2, o2), (p3,o3))
-						case (VARBIT_POTION_ORDER_2, b: Option[SBrew]) => ((p1, o1), (p2, b.orNull), (p3,o3))
-						case (VARBIT_POTION_ORDER_3, b: Option[SBrew]) => ((p1, o1), (p2, o2), (p3, b.orNull))
-						case (VARBIT_POTION_MODIFIER_1, b:Option[SProcessType]) => ((b.orNull, o1), (p2, o2), (p3,o3))
-						case (VARBIT_POTION_MODIFIER_2, b:Option[SProcessType]) => ((p1, o1), (b.orNull, o2), (p3,o3))
-						case (VARBIT_POTION_MODIFIER_3, b:Option[SProcessType]) => ((p1, o1), (p2, o2), (b.orNull, o3))
-					}
+					Option[(Int, SBrew | SProcessType | Null)]((varbitId, (if(VARBIT_POTION_ORDER.contains(varbitId)) fromIdx(value).orNull else fromOrderValue(value).orNull))).collect {
+						case (VARBIT_POTION_ORDER_1, b: SBrew) => ((p1, b), (p2, o2), (p3,o3))
+						case (VARBIT_POTION_ORDER_2, b: SBrew) => ((p1, o1), (p2, b), (p3,o3))
+						case (VARBIT_POTION_ORDER_3, b: SBrew) => ((p1, o1), (p2, o2), (p3, b))
+						case (VARBIT_POTION_MODIFIER_1, b:SProcessType) => ((b, o1), (p2, o2), (p3,o3))
+						case (VARBIT_POTION_MODIFIER_2, b:SProcessType) => ((p1, o1), (b, o2), (p3,o3))
+						case (VARBIT_POTION_MODIFIER_3, b:SProcessType) => ((p1, o1), (p2, o2), (b, o3))
+					}.getOrElse(((null, null), (null, null), (null,null)))
 				}
 			}
 		} else if (varbitId == VARBIT_ALEMBIC_POTION) {
@@ -368,7 +376,7 @@ class FredsMixologyPlugin() extends Plugin {
 				true
 			}
 		})
-		inventorySnapshot = parseInventory(clientThread.runOnClientThread(() => client.getItemContainer(InventoryID.INVENTORY)))
+		//clientThread.runOnClientThread(() => parseInventory(client.getItemContainer(InventoryID.INVENTORY)))
 
 		//		FredsTemporossLogic.init(this)
 		//		eventBus.register(FredsTemporossLogic)
