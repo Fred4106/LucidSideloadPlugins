@@ -77,7 +77,6 @@ package object mixology {
 		case object Mox extends SMixType
 		case object Lye extends SMixType
 		case object Aga extends SMixType
-		case object UNKNOWN extends SMixType
 
 		def fromPedestal(to: TileObject)(using client: Client): Option[SMixType] =
 			Option.when(to.morphId != -1 && (55392 to 55394).contains(to.getId)) {

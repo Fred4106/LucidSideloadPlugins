@@ -50,9 +50,8 @@ class FredsMixologyPlugin() extends Plugin {
 	@Inject private val eventBus      : EventBus           = null
 	@Inject private val overlayManager: OverlayManager     = null
 	@Inject private val panel         : FredsMixologyPanel = null
-	//	@Inject private   val overlay       : FredsTemporossOverlay = null
-//	var state        : State = emptyState
-//	var previousState: State = emptyState
+
+
 	var potionOrders: AllOrdersType = ((null, null), (null, null), (null,null))
 	var inventorySnapshot: List[(Int, Int, Int)] = List.empty
 	var inLab: Boolean = false
@@ -72,66 +71,16 @@ class FredsMixologyPlugin() extends Plugin {
 	def getConfig(configManager: ConfigManager): FredsMixologyConfig = {
 		configManager.getConfig[FredsMixologyConfig](classOf[FredsMixologyConfig])
 	}
-//	def emptyState: State = State(-1, List.empty, List.empty, List.empty)
+
 	@Subscribe
 	def onGameTick(tick: GameTick): Unit = {
-//		previousState = state
-//		state = buildState
-//		(state.isInRegion, previousState.isInRegion) match {
-//			case (true, false) => {
-//				//now in region
-//				//set state
-//			}
-//			case (false, true) => {
-//				//clear state
-//			}
-//			case (_, _) =>
-//		}
 	}
-//	def buildState: State = {
-//		val region = Try(WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation).getRegionID).getOrElse(-1)
-//		if (region == 5521) {
-//			val toolBenches = TileObjects.search().withId(55389, 55390, 55391).result().asScala.toList.sortBy(_.getId)
-//				.flatMap {
-//					to => SProcessType.fromToolBench(to).map(spt => (spt, to -> SBrew.fromToolBench(to)))
-//				}
-//			val pedestals   = TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
-//				to => SMixType.fromPedestal(to)
-//			}
-//			val orders      = (0 until 3).toList.map(VARBIT_POTION_ORDER(_)).map(varbitOrderId => {
-//				client.getVarbitValue(varbitOrderId + 1) -> client.getVarbitValue(varbitOrderId)
-//			}).map {
-//				case (mod, brew) => SProcessType.fromOrderValue(mod).zip(SBrew.fromOrderValue(brew)).get
-//			}
-//			State(region, pedestals, toolBenches, orders)
-//		} else {
-//			State(region, List.empty, List.empty, List.empty)
-//		}
-//	}
-//	@Subscribe
-//	def onItemContainerChanged(ev: ItemContainerChanged): Unit = {
-//		if (ev.getContainerId == InventoryID.INVENTORY.getId) {
-//			val container   = ev.getItemContainer
-//			val itemsList   = (for {
-//				idx <- (0 until container.size)
-//				(id, qty) <- Option(container.getItem(idx)).map(i => i.getId -> i.getQuantity)
-//			} yield {
-//				(idx, id, qty)
-//			})
-//				.pipe(_.toList)
-//			val inventoryID = InventoryID.values().toList.find(_.getId == container.getId).get
-//			log.debug("ItemContainerChanged({}) = {}", inventoryID, container.count())
-//			itemsList.foreach(ie => {
-//				log.debug("    {} = ({}, {})", ie._1, ie._2, ie._3)
-//			})
-//		}
-//	}
-//
 
 	@Subscribe
 	def onGameStateChanged(event: GameStateChanged): Unit = {
 		if ((event.getGameState == GameState.LOGIN_SCREEN) || (event.getGameState == GameState.HOPPING)) log.debug("highlightedObjects.clear"); //highlightedObjects.clear
 	}
+
 	@Subscribe
 	def onWidgetLoaded(event: WidgetLoaded): Unit = {
 		if (event.getGroupId != COMPONENT_POTION_ORDERS_GROUP_ID) return
@@ -146,12 +95,14 @@ class FredsMixologyPlugin() extends Plugin {
 //		highlightLevers
 //		tryHighlightNextStation
 	}
+
 	@Subscribe
 	def onWidgetClosed(event: WidgetClosed): Unit = {
 		if (event.getGroupId != COMPONENT_POTION_ORDERS_GROUP_ID) return
 		log.debug("highlightedObjects.clear")//highlightedObjects.clear
 		inLab = false
 	}
+
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		if (!event.getGroup.equals(FredsMixologyConfig.GroupName)) return
@@ -171,11 +122,6 @@ class FredsMixologyPlugin() extends Plugin {
 		}.toList
 	}
 
-//	def parseInventory(container: List[(Int, Item)]: List[(Int, Int, Int)] = {
-//		container.collect {
-//			case (idx: Int, i: Item) => (idx, i.getId, i.getQuantity)
-//		}.filter(i => i._2 != -1 && i._3 != -1)
-//	}
 	@Subscribe
 	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
 		if (event.getContainerId == InventoryID.INVENTORY.getId) {
@@ -193,18 +139,6 @@ class FredsMixologyPlugin() extends Plugin {
 					}
 				}
 			}
-//			val addedElements =
-//			val removedElements =//(currentInventory.contains(_))._2
-
-//			val qtyChanged = addedElements.map(x => x._1 -> x._2).intersect(removedElements.map(x => x._1 -> x._2)).map{
-//				case (idx, id) => {
-//					(
-//						idx,
-//						id,
-//						addedElements.find(y => y._1 == idx && y._2 == id).map(_._3).getOrElse(0) - removedElements.find(y => y._1 == idx && y._2 == id).map(_._3).getOrElse(0)
-//					)
-//				}
-//			}
 
 			val str = List(
 						"qtyChanged" -> qtyElements,
@@ -214,6 +148,7 @@ class FredsMixologyPlugin() extends Plugin {
 					.filter(_._2.nonEmpty)
 					.map(u => s"${u._1}=${u._2}")
 					.mkString("\n\t", "\n\t", "\n")
+
 			log.debug(s"logStr: ${str}")
 		}
 //		// Do not update the highlight if there's a potion in a station
@@ -237,6 +172,7 @@ class FredsMixologyPlugin() extends Plugin {
 //			}
 //		}
 	}
+
 	@Subscribe
 	def onVarbitChanged(event: VarbitChanged): Unit = {
 		val varbitId = event.getVarbitId
@@ -246,7 +182,7 @@ class FredsMixologyPlugin() extends Plugin {
 		if (VARBIT_POTION_ORDER.contains(varbitId) || VARBIT_POTION_MODIFIER.contains(varbitId)) {
 			potionOrders = this.potionOrders match {
 				case ((p1,o1), (p2,o2), (p3,o3)) => {
-					Option[(Int, SBrew | SProcessType | Null)]((varbitId, (if(VARBIT_POTION_ORDER.contains(varbitId)) fromIdx(value).orNull else fromOrderValue(value).orNull))).collect {
+					Option((varbitId, (if(VARBIT_POTION_ORDER.contains(varbitId)) fromIdx(value).orNull else fromOrderValue(value).orNull))).asInstanceOf[Option[(Int, SBrew | SProcessType |  Null)]].collect {
 						case (VARBIT_POTION_ORDER_1, b: SBrew) => ((p1, b), (p2, o2), (p3,o3))
 						case (VARBIT_POTION_ORDER_2, b: SBrew) => ((p1, o1), (p2, b), (p3,o3))
 						case (VARBIT_POTION_ORDER_3, b: SBrew) => ((p1, o1), (p2, o2), (p3, b))
@@ -350,6 +286,7 @@ class FredsMixologyPlugin() extends Plugin {
 //			resetDefaultHighlight(AlchemyObject.ALEMBIC)
 		}
 	}
+
 	@Subscribe
 	def onGraphicsObjectCreated(event: GraphicsObjectCreated): Unit = {
 		val spotAnimId = event.getGraphicsObject.getId
@@ -367,6 +304,7 @@ class FredsMixologyPlugin() extends Plugin {
 			agitatorQuickActionTicks = 1
 		}
 	}
+
 	override protected def startUp(): Unit = {
 		inLab = clientThread.runOnClientThread(() => {
 			val ordersLayer = client.getWidget(COMPONENT_POTION_ORDERS_GROUP_ID, 0)
@@ -376,40 +314,12 @@ class FredsMixologyPlugin() extends Plugin {
 				true
 			}
 		})
-		//clientThread.runOnClientThread(() => parseInventory(client.getItemContainer(InventoryID.INVENTORY)))
-
-		//		FredsTemporossLogic.init(this)
-		//		eventBus.register(FredsTemporossLogic)
 		overlayManager.add(panel)
-		//		overlayManager.add(overlay)
 	}
+
 	override protected def shutDown(): Unit = {
 		overlayManager.remove(panel)
 		//		overlayManager.remove(overlay)
 		//		eventBus.unregister(FredsTemporossLogic)
 	}
-//	case class State(region: Int, pedestals: List[SMixType], toolBenches: List[(SProcessType, (TileObject, Option[SBrew]))], orders: List[(SProcessType, SBrew)]) {
-//		def isInRegion: Boolean = region == 5521
-//	}
-
-	//	@Subscribe
-	//	def onMenuOptionClicked(mec: MenuOptionClicked): Unit = {
-	//		val me = mec.getMenuEntry
-	//		val tlwv = client.getTopLevelWorldView
-	//		val temp = Option(
-	//			(me.getOption, me.getTarget, me.getType, me.getIdentifier, (me.getParam0, me.getParam1))
-	//		)
-	//		val toLog = temp.map{
-	//			case (opt, targ, tpe, ident, (x, y)) if	(me.isTileObjectAction) => {
-	//				Option(tlwv.getScene.getTiles.apply(tlwv.getPlane)(x)(y)).map(_.getWorldLocation).map(wp => (opt, targ, tpe, ident, (x, y), wp))
-	//					.map {
-	//						case (opt, _, tpe, ident, (x, y), wp) => s"Object(opt=\"$opt\", targ=\"$targ\", id=${ident}, sLoc=($x, $y), wp=$wp, tpe=${tpe})"
-	//					}.getOrElse(s"Error: tpe=${tpe}")
-	//			}
-	//			case (opt, targ, tpe, ident, (x, y)) if(me.isNpcAction) => s"NPC(opt=\"$opt\", targ=\"$targ\", index=$ident, id=${me.getNpc.getId}, sLoc=${(x, y)}, tpe=${tpe})"
-	//			case (opt, targ, tpe, ident, (x, y)) => s"opt=\"$opt\", targ=\"$targ\", ident=$ident, param=${(x, y)}, tpe=${tpe}"
-	//		}.get
-	//		log.debug("Clicked: ({})",toLog)
-	//	}
 }
-
