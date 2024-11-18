@@ -5,7 +5,7 @@ plugins {
 dependencies {
     api(project(":common"))
 
-    api("org.scala-lang:scala3-library_3:3.5.0")
+    api("org.scala-lang:scala3-library_3:3.5.1")
 
     api("net.codingwell:scala-guice_3:7.0.0") {
         exclude("com.google.inject", "guice")

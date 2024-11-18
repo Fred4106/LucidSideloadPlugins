@@ -21,7 +21,7 @@ val javaVersion = JavaVersion.VERSION_11
 
 allprojects {
     group = "com.fredplugins"
-    version = "0.7"
+    version = "0.8"
     repositories {
 //        maven {
 //            url = uri("https://repo.runelite.net")
@@ -63,6 +63,8 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":commonScala"))
 
+    implementation(project(":plugins:recolorCG"))
+    implementation(project(":plugins:zulrahHelper"))
     implementation(project(":plugins:attackTimer"))
     implementation(project(":plugins:customPrayers"))
     implementation(project(":plugins:demonicGorilla"))

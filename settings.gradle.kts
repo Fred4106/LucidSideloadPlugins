@@ -6,6 +6,8 @@ plugins {
 include(":ethans")
 include(":common")
 include(":commonScala")
+include(":plugins:recolorCG")
+include(":plugins:zulrahHelper")
 include(":plugins:attackTimer")
 include(":plugins:customPrayers")
 include(":plugins:demonicGorilla")

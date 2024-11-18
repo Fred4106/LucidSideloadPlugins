@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Owain van Brakel <https://github.com/Owain94>
+ * Copyright (c) 2018, Devin French <https://github.com/devinfrench>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,9 +22,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package net.runelite.client.plugins.zulrah.phase;
 
-object Dependencies {
-    const val rlVersion = "1.10.44-SNAPSHOT"
-    const val lombokVersion = "1.18.30"
-    const val jetbrainsAnnotations = "23.0.0"
+public enum SafeLocation
+{
+	WEST,
+	EAST,
+	SOUTH,
+	SOUTH_WEST,
+	SOUTH_EAST,
+	TOP_EAST,
+	TOP_WEST,
+	PILLAR_WEST_INSIDE,
+	PILLAR_WEST_OUTSIDE,
+	PILLAR_EAST_INSIDE,
+	PILLAR_EAST_OUTSIDE
 }

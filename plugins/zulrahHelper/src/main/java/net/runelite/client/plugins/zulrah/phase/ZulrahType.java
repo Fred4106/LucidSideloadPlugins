@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Owain van Brakel <https://github.com/Owain94>
+ * Copyright (c) 2018, Devin French <https://github.com/devinfrench>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,9 +22,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package net.runelite.client.plugins.zulrah.phase;
 
-object Dependencies {
-    const val rlVersion = "1.10.44-SNAPSHOT"
-    const val lombokVersion = "1.18.30"
-    const val jetbrainsAnnotations = "23.0.0"
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.NPC;
+import net.runelite.api.NpcID;
+
+@Slf4j
+public enum ZulrahType
+{
+	RANGE,
+	MAGIC,
+	MELEE;
+
+	private static final int ZULRAH_RANGE = NpcID.ZULRAH;
+	private static final int ZULRAH_MELEE = NpcID.ZULRAH_2043;
+	private static final int ZULRAH_MAGIC = NpcID.ZULRAH_2044;
+
+	public static ZulrahType valueOf(NPC zulrah)
+	{
+		int id = zulrah.getId();
+		switch (id)
+		{
+			case ZULRAH_RANGE:
+				return ZulrahType.RANGE;
+			case ZULRAH_MELEE:
+				return ZulrahType.MELEE;
+			case ZULRAH_MAGIC:
+				return ZulrahType.MAGIC;
+		}
+		log.debug("Unknown Zulrah Id: {}", id);
+		return null;
+	}
 }
