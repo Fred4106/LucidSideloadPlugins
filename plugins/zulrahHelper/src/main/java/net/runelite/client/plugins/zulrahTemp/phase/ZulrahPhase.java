@@ -22,13 +22,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.phase;
+package net.runelite.client.plugins.zulrahTemp.phase;
 
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.NPC;
 import net.runelite.api.coords.WorldPoint;
 
 import java.awt.Color;
 
+@Slf4j
 public class ZulrahPhase
 {
 	private static final Color RANGE_COLOR = new Color(150, 255, 0, 150);
@@ -53,11 +55,13 @@ public class ZulrahPhase
 	{
 		ZulrahLocation zulrahLocation = ZulrahLocation.valueOf(start, zulrah);
 		ZulrahType type = ZulrahType.valueOf(zulrah);
-		if (zulrahLocation == null || type == null)
+		ZulrahPhase toRet = null;
+		if (zulrahLocation != null && type != null)
 		{
-			return null;
+			toRet = new ZulrahPhase(zulrahLocation, type, false, SafeLocation.TOP_EAST);
 		}
-		return new ZulrahPhase(zulrahLocation, type, false, SafeLocation.TOP_EAST);
+		log.debug("ZulrahPhase.valueOf(start={}, zulrah={}) = {}\n\tzulrahLocation = {}\n\tzulrahType = {}", start, zulrah, toRet, zulrahLocation, type);
+		return toRet;
 	}
 
 	public ZulrahLocation getZulrahLocation()

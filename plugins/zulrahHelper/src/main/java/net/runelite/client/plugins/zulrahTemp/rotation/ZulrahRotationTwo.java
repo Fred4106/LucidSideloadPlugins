@@ -22,19 +22,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.phase;
+package net.runelite.client.plugins.zulrahTemp.rotation;
 
-public enum SafeLocation
+import net.runelite.client.plugins.zulrahTemp.phase.SafeLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahType;
+
+public class ZulrahRotationTwo extends ZulrahRotation
 {
-	WEST,
-	EAST,
-	SOUTH,
-	SOUTH_WEST,
-	SOUTH_EAST,
-	TOP_EAST,
-	TOP_WEST,
-	PILLAR_WEST_INSIDE,
-	PILLAR_WEST_OUTSIDE,
-	PILLAR_EAST_INSIDE,
-	PILLAR_EAST_OUTSIDE
+	public ZulrahRotationTwo()
+	{
+		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.PILLAR_WEST_OUTSIDE);
+		add(ZulrahLocation.WEST, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_OUTSIDE);
+		add(ZulrahLocation.SOUTH, ZulrahType.MAGIC, SafeLocation.SOUTH_WEST);
+		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.PILLAR_WEST_INSIDE);
+		add(ZulrahLocation.EAST, ZulrahType.RANGE, SafeLocation.SOUTH_EAST);
+		add(ZulrahLocation.SOUTH, ZulrahType.MAGIC, SafeLocation.SOUTH_WEST);
+		add(ZulrahLocation.WEST, ZulrahType.RANGE, true, SafeLocation.TOP_WEST);
+		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.TOP_WEST);
+		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_WEST);
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Rotation 2";
+	}
 }

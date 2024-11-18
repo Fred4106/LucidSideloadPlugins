@@ -22,36 +22,80 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.phase;
+package net.runelite.client.plugins.zulrahTemp;
 
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.plugins.zulrahTemp.phase.SafeLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahPhase;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahType;
+import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotation;
 
-@Slf4j
-public enum ZulrahType
+public class ZulrahInstance
 {
-	RANGE,
-	MAGIC,
-	MELEE;
+	private WorldPoint start;
+	private ZulrahRotation rotation;
+	private ZulrahPhase phase;
+	private int stage;
 
-	private static final int ZULRAH_RANGE = NpcID.ZULRAH;
-	private static final int ZULRAH_MELEE = NpcID.ZULRAH_2043;
-	private static final int ZULRAH_MAGIC = NpcID.ZULRAH_2044;
-
-	public static ZulrahType valueOf(NPC zulrah)
+	public ZulrahInstance(NPC zulrah)
 	{
-		int id = zulrah.getId();
-		switch (id)
+		start = zulrah.getWorldLocation();
+	}
+
+	public WorldPoint getStartWorldPoint()
+	{
+		return start;
+	}
+
+	public ZulrahRotation getRotation()
+	{
+		return rotation;
+	}
+
+	public void setRotation(ZulrahRotation rotation)
+	{
+		this.rotation = rotation;
+	}
+
+	public ZulrahPhase getPhase()
+	{
+		return rotation != null ? rotation.getPhase(stage) : phase;
+	}
+
+	public void setPhase(ZulrahPhase phase)
+	{
+		this.phase = phase;
+	}
+
+	public int getStage()
+	{
+		return stage;
+	}
+
+	public void nextStage()
+	{
+		++stage;
+	}
+
+	public void reset()
+	{
+		rotation = null;
+		phase = null;
+		stage = 0;
+	}
+
+	public ZulrahPhase getNextPhase()
+	{
+		if (rotation != null)
 		{
-			case ZULRAH_RANGE:
-				return ZulrahType.RANGE;
-			case ZULRAH_MELEE:
-				return ZulrahType.MELEE;
-			case ZULRAH_MAGIC:
-				return ZulrahType.MAGIC;
+			return rotation.getPhase(stage + 1);
 		}
-		log.debug("Unknown Zulrah Id: {}", id);
+		else if (phase != null && phase.getType() == ZulrahType.MAGIC)
+		{
+			return new ZulrahPhase(ZulrahLocation.SOUTH, ZulrahType.RANGE, false, SafeLocation.PILLAR_WEST_INSIDE);
+		}
 		return null;
 	}
 }

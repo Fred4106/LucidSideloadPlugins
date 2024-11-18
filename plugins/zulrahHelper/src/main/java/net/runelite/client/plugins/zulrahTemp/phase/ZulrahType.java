@@ -22,33 +22,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.rotation;
+package net.runelite.client.plugins.zulrahTemp.phase;
 
-import net.runelite.client.plugins.zulrah.phase.SafeLocation;
-import net.runelite.client.plugins.zulrah.phase.ZulrahLocation;
-import net.runelite.client.plugins.zulrah.phase.ZulrahType;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.NPC;
+import net.runelite.api.NpcID;
 
-public class ZulrahRotationFour extends ZulrahRotation
+@Slf4j
+public enum ZulrahType
 {
-	public ZulrahRotationFour()
-	{
-		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.EAST, ZulrahType.MAGIC, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.SOUTH, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_INSIDE);
-		add(ZulrahLocation.WEST, ZulrahType.MAGIC, SafeLocation.PILLAR_WEST_INSIDE);
-		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.PILLAR_EAST_OUTSIDE);
-		add(ZulrahLocation.EAST, ZulrahType.RANGE, SafeLocation.PILLAR_EAST_OUTSIDE);
-		add(ZulrahLocation.SOUTH, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_OUTSIDE);
-		add(ZulrahLocation.WEST, ZulrahType.MAGIC, SafeLocation.PILLAR_WEST_OUTSIDE);
-		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.EAST, ZulrahType.MAGIC, true, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.TOP_EAST);
-	}
+	RANGE,
+	MAGIC,
+	MELEE;
 
-	@Override
-	public String toString()
+	private static final int ZULRAH_RANGE = NpcID.ZULRAH;
+	private static final int ZULRAH_MELEE = NpcID.ZULRAH_2043;
+	private static final int ZULRAH_MAGIC = NpcID.ZULRAH_2044;
+
+	public static ZulrahType valueOf(NPC zulrah)
 	{
-		return "Rotation 4";
+		int id = zulrah.getId();
+		switch (id)
+		{
+			case ZULRAH_RANGE:
+				return ZulrahType.RANGE;
+			case ZULRAH_MELEE:
+				return ZulrahType.MELEE;
+			case ZULRAH_MAGIC:
+				return ZulrahType.MAGIC;
+		}
+		log.debug("Unknown Zulrah Id: {}", id);
+		return null;
 	}
 }

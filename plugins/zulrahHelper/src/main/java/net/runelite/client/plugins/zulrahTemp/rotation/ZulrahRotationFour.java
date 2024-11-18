@@ -22,31 +22,33 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.rotation;
+package net.runelite.client.plugins.zulrahTemp.rotation;
 
-import net.runelite.client.plugins.zulrah.phase.SafeLocation;
-import net.runelite.client.plugins.zulrah.phase.ZulrahLocation;
-import net.runelite.client.plugins.zulrah.phase.ZulrahType;
+import net.runelite.client.plugins.zulrahTemp.phase.SafeLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahType;
 
-public class ZulrahRotationThree extends ZulrahRotation
+public class ZulrahRotationFour extends ZulrahRotation
 {
-	public ZulrahRotationThree()
+	public ZulrahRotationFour()
 	{
 		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.EAST, ZulrahType.RANGE, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.TOP_WEST);
-		add(ZulrahLocation.WEST, ZulrahType.MAGIC, SafeLocation.WEST);
-		add(ZulrahLocation.SOUTH, ZulrahType.RANGE, SafeLocation.SOUTH_EAST);
-		add(ZulrahLocation.EAST, ZulrahType.MAGIC, SafeLocation.PILLAR_EAST_OUTSIDE);
-		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_OUTSIDE);
-		add(ZulrahLocation.WEST, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_OUTSIDE);
-		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.EAST, ZulrahType.MAGIC, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.SOUTH, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_INSIDE);
+		add(ZulrahLocation.WEST, ZulrahType.MAGIC, SafeLocation.PILLAR_WEST_INSIDE);
+		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.PILLAR_EAST_OUTSIDE);
+		add(ZulrahLocation.EAST, ZulrahType.RANGE, SafeLocation.PILLAR_EAST_OUTSIDE);
+		add(ZulrahLocation.SOUTH, ZulrahType.RANGE, SafeLocation.PILLAR_EAST_OUTSIDE);
+		add(ZulrahLocation.WEST, ZulrahType.MAGIC, SafeLocation.PILLAR_WEST_OUTSIDE);
+		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.PILLAR_EAST_OUTSIDE);
+		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.PILLAR_EAST_OUTSIDE);
 		add(ZulrahLocation.EAST, ZulrahType.MAGIC, true, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.TOP_EAST);
 	}
 
 	@Override
 	public String toString()
 	{
-		return "Rotation 3";
+		return "Rotation 4";
 	}
 }

@@ -22,32 +22,48 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.rotation;
+package net.runelite.client.plugins.zulrahTemp.overlays;
 
-import net.runelite.client.plugins.zulrah.phase.SafeLocation;
-import net.runelite.client.plugins.zulrah.phase.ZulrahLocation;
-import net.runelite.client.plugins.zulrah.phase.ZulrahType;
+import com.google.inject.Inject;
+import net.runelite.client.plugins.zulrahTemp.ZulrahInstance;
+import net.runelite.client.plugins.zulrahTemp.ZulrahPlugin;
+import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotation;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.components.PanelComponent;
+import net.runelite.client.ui.overlay.components.TitleComponent;
 
-public class ZulrahRotationTwo extends ZulrahRotation
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+
+public class ZulrahRotationOverlay extends Overlay
 {
-	public ZulrahRotationTwo()
+	private final PanelComponent panelComponent = new PanelComponent();
+	private ZulrahPlugin plugin;
+
+	@Inject
+	ZulrahRotationOverlay(ZulrahPlugin plugin)
 	{
-		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.TOP_EAST);
-		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.PILLAR_WEST_OUTSIDE);
-		add(ZulrahLocation.WEST, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_OUTSIDE);
-		add(ZulrahLocation.SOUTH, ZulrahType.MAGIC, SafeLocation.SOUTH_WEST);
-		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.PILLAR_WEST_INSIDE);
-		add(ZulrahLocation.EAST, ZulrahType.RANGE, SafeLocation.SOUTH_EAST);
-		add(ZulrahLocation.SOUTH, ZulrahType.MAGIC, SafeLocation.SOUTH_WEST);
-		add(ZulrahLocation.WEST, ZulrahType.RANGE, true, SafeLocation.TOP_WEST);
-		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.TOP_WEST);
-		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_WEST);
+		setPosition(OverlayPosition.ABOVE_CHATBOX_RIGHT);
+		this.plugin = plugin;
 	}
 
 	@Override
-	public String toString()
+	public Dimension render(Graphics2D graphics)
 	{
-		return "Rotation 2";
+		panelComponent.getChildren().clear();
+		ZulrahInstance instance = plugin.getInstance();
+		if (instance == null)
+		{
+			return null;
+		}
+		ZulrahRotation rotation = instance.getRotation();
+		if (rotation == null)
+		{
+			panelComponent.getChildren().add(TitleComponent.builder().text("Zulrah " + "???").build());
+		} else {
+			panelComponent.getChildren().add(TitleComponent.builder().text("Zulrah " + rotation).build());
+		}
+		return panelComponent.render(graphics);
 	}
 }

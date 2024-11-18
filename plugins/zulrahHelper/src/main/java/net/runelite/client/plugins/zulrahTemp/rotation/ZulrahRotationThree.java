@@ -22,47 +22,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.overlays;
+package net.runelite.client.plugins.zulrahTemp.rotation;
 
-import com.google.inject.Inject;
-import net.runelite.client.plugins.zulrah.ZulrahInstance;
-import net.runelite.client.plugins.zulrah.ZulrahPlugin;
-import net.runelite.client.plugins.zulrah.rotation.ZulrahRotation;
-import net.runelite.client.ui.overlay.Overlay;
-import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.components.PanelComponent;
-import net.runelite.client.ui.overlay.components.TitleComponent;
+import net.runelite.client.plugins.zulrahTemp.phase.SafeLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahLocation;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahType;
 
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-
-public class ZulrahRotationOverlay extends Overlay
+public class ZulrahRotationThree extends ZulrahRotation
 {
-	private final PanelComponent panelComponent = new PanelComponent();
-	private ZulrahPlugin plugin;
-
-	@Inject
-	ZulrahRotationOverlay(ZulrahPlugin plugin)
+	public ZulrahRotationThree()
 	{
-		setPosition(OverlayPosition.ABOVE_CHATBOX_RIGHT);
-		this.plugin = plugin;
+		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.EAST, ZulrahType.RANGE, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.NORTH, ZulrahType.MELEE, SafeLocation.TOP_WEST);
+		add(ZulrahLocation.WEST, ZulrahType.MAGIC, SafeLocation.WEST);
+		add(ZulrahLocation.SOUTH, ZulrahType.RANGE, SafeLocation.SOUTH_EAST);
+		add(ZulrahLocation.EAST, ZulrahType.MAGIC, SafeLocation.PILLAR_EAST_OUTSIDE);
+		add(ZulrahLocation.NORTH, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_OUTSIDE);
+		add(ZulrahLocation.WEST, ZulrahType.RANGE, SafeLocation.PILLAR_WEST_OUTSIDE);
+		add(ZulrahLocation.NORTH, ZulrahType.MAGIC, SafeLocation.TOP_EAST);
+		add(ZulrahLocation.EAST, ZulrahType.MAGIC, true, SafeLocation.TOP_EAST);
 	}
 
 	@Override
-	public Dimension render(Graphics2D graphics)
+	public String toString()
 	{
-		panelComponent.getChildren().clear();
-		ZulrahInstance instance = plugin.getInstance();
-		if (instance == null)
-		{
-			return null;
-		}
-		ZulrahRotation rotation = instance.getRotation();
-		if (rotation == null)
-		{
-			return null;
-		}
-		panelComponent.getChildren().add(TitleComponent.builder().text("Zulrah " + rotation.toString()).build());
-		return panelComponent.render(graphics);
+		return "Rotation 3";
 	}
 }

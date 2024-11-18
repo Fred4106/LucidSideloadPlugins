@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah.phase;
+package net.runelite.client.plugins.zulrahTemp.phase;
 
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.NPC;

@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.zulrah;
+package net.runelite.client.plugins.zulrahTemp;
 
 import com.google.inject.Binder;
 import javax.inject.Inject;
@@ -36,14 +36,14 @@ import net.runelite.api.events.GameTick;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.plugins.zulrah.overlays.ZulrahRotationOverlay;
-import net.runelite.client.plugins.zulrah.overlays.ZulrahTileOverlay;
-import net.runelite.client.plugins.zulrah.phase.ZulrahPhase;
-import net.runelite.client.plugins.zulrah.rotation.ZulrahRotation;
-import net.runelite.client.plugins.zulrah.rotation.ZulrahRotationFour;
-import net.runelite.client.plugins.zulrah.rotation.ZulrahRotationOne;
-import net.runelite.client.plugins.zulrah.rotation.ZulrahRotationThree;
-import net.runelite.client.plugins.zulrah.rotation.ZulrahRotationTwo;
+import net.runelite.client.plugins.zulrahTemp.overlays.ZulrahRotationOverlay;
+import net.runelite.client.plugins.zulrahTemp.overlays.ZulrahTileOverlay;
+import net.runelite.client.plugins.zulrahTemp.phase.ZulrahPhase;
+import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotation;
+import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotationFour;
+import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotationOne;
+import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotationThree;
+import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotationTwo;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 @PluginDescriptor(
@@ -89,6 +89,14 @@ public class ZulrahPlugin extends Plugin
 	{
 		overlayManager.add(tileOverlay);
 		overlayManager.add(rotationOverlay);
+		npcZulrah = null;
+	}
+
+	@Override
+	protected void shutDown() throws Exception
+	{
+		overlayManager.remove(tileOverlay);
+		overlayManager.remove(rotationOverlay);
 		npcZulrah = null;
 	}
 
@@ -142,6 +150,7 @@ public class ZulrahPlugin extends Plugin
 		if (instance.getPhase() == null)
 		{
 			instance.setPhase(phase);
+			log.debug("Zulrah phase set for first time to {}, Stage: {}", phase, instance.getStage());
 		}
 		else if (!instance.getPhase().equals(phase))
 		{
@@ -166,6 +175,8 @@ public class ZulrahPlugin extends Plugin
 			{
 				log.debug("Zulrah rotation found: {}", rotation);
 				instance.setRotation(rotation);
+			} else {
+				log.debug("Found {} valid rotations: {}", potential, rotation);
 			}
 		}
 		else if (rotation.canReset(instance.getStage()))
