@@ -9,6 +9,7 @@ import com.fredplugins.zulrahhelper.ui.ZulrahHelperPanel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -394,8 +395,9 @@ public class FredsZulrahHelperPlugin extends Plugin
 	}
 
 	public int distanceToTile(StandLocation p) {
-		return client.getLocalPlayer().getWorldLocation().distanceTo(StandLocation.getWorldPoint(startPosition, p));
-//		p
-// 		client.getLocalPlayer().getLocalLocation()
+		return Optional.ofNullable(startPosition).map(sp -> StandLocation.getWorldPoint(sp, p)).map(swp -> {
+			log.debug("standLocation {} has worldpoint {}", p, swp);
+			return client.getLocalPlayer().getWorldLocation().distanceTo(swp);
+		}).orElse(100);
 	}
 }

@@ -64,6 +64,9 @@ public enum StandLocation
 	}
 
 	public static WorldPoint getWorldPoint(WorldPoint zulrahStart, StandLocation sl) {
+		if(zulrahStart == null) {
+			return null;
+		}
 		switch(sl) {
 			case START:
 				return new WorldPoint(zulrahStart.getX() + 8, zulrahStart.getY() + 4, zulrahStart.getPlane());

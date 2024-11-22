@@ -29,9 +29,7 @@ import com.fredplugins.zulrahhelper.options.StandLocation;
 import com.fredplugins.zulrahhelper.tree.Node;
 import com.fredplugins.zulrahhelper.tree.Step;
 import com.google.inject.Inject;
-import net.runelite.client.plugins.zulrahTemp.ZulrahInstance;
-import net.runelite.client.plugins.zulrahTemp.ZulrahPlugin;
-import net.runelite.client.plugins.zulrahTemp.rotation.ZulrahRotation;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.LineComponent;
@@ -40,6 +38,7 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Optional;
 
 public class ZulrahHelperOverlay extends Overlay
 {
@@ -87,7 +86,17 @@ public class ZulrahHelperOverlay extends Overlay
 					.rightColor(currentStep.getPrayers().stream().map(p -> plugin.isPrayerEnabled(p)).reduce(false, (a, b) -> a | b) ? Color.GREEN : Color.RED);
 		}
 		panelComponent.getChildren().add(prayerBuilder.build());
-
+		panelComponent.getChildren().add(
+				LineComponent.builder()
+						.left("StartLocation")
+						.right(
+								Optional.ofNullable(plugin.startPosition).map(WorldPoint::toString).orElse("null")
+						)
+						.rightColor(
+								Optional.ofNullable(plugin.startPosition).map(i -> Color.GREEN).orElse(Color.RED)
+						)
+						.build()
+		);
 		panelComponent.getChildren().add(
 				LineComponent.builder()
 						.left("StandLocation")
