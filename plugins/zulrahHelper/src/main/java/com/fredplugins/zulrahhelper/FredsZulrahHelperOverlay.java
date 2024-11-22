@@ -25,7 +25,6 @@
 package com.fredplugins.zulrahhelper;
 
 import com.fredplugins.zulrahhelper.options.Prayer;
-import com.fredplugins.zulrahhelper.options.StandLocation;
 import com.fredplugins.zulrahhelper.tree.Node;
 import com.fredplugins.zulrahhelper.tree.Step;
 import com.google.inject.Inject;
@@ -37,16 +36,15 @@ import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 
 import java.awt.*;
-import java.util.List;
 import java.util.Optional;
 
-public class ZulrahHelperOverlay extends Overlay
+public class FredsZulrahHelperOverlay extends Overlay
 {
 	private final PanelComponent panelComponent = new PanelComponent();
 	private FredsZulrahHelperPlugin plugin;
 
 	@Inject
-	ZulrahHelperOverlay(FredsZulrahHelperPlugin plugin)
+	FredsZulrahHelperOverlay(FredsZulrahHelperPlugin plugin)
 	{
 		setPosition(OverlayPosition.ABOVE_CHATBOX_RIGHT);
 		this.plugin = plugin;

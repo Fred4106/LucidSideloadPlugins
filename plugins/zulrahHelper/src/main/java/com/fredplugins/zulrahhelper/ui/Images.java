@@ -34,13 +34,14 @@ import java.awt.image.BufferedImage;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.util.ImageUtil;
 
+import javax.swing.*;
+
 public class Images
 {
-	private static final BufferedImage FLOOR_IMG = ImageUtil.loadImageResource(Step.class, "/floor.png");
-	private static final BufferedImage SNAKELINGS = ImageUtil.loadImageResource(Step.class, "/options/snakeling2.png");
-	private static final BufferedImage HITSPLAT = ImageUtil.loadImageResource(Step.class, "/options/hitsplat.png");
-	private static final BufferedImage VENOM = ImageUtil.loadImageResource(Step.class, "/options/venom.png");
-	private static final BufferedImage RESET = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "/ui/reset_icon.png");;
+	public static BufferedImage FLOOR_IMG =  ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "floor.png");
+	public static BufferedImage SNAKELINGS = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/snakeling2.png");
+	public static BufferedImage HITSPLAT =   ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/hitsplat.png");
+	public static BufferedImage VENOM =      ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/venom.png");
 
 
 	private static final int WIDTH = 105;
@@ -113,8 +114,10 @@ public class Images
 
 		if (step.isReset())
 		{
-			var p = 23;
-			g.drawImage(RESET, p, p, RESET.getWidth() * 3, RESET.getHeight() * 3, null);
+//			final BufferedImage resetImg = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "ui/reset_icon.png");
+//			g.drawImage(resetImg, 23, 23, resetImg.getWidth() * 3, resetImg.getHeight() * 3, null);
+			g.setColor(Color.BLACK);
+			g.drawString("R", WIDTH/2, HEIGHT/2);
 		}
 
 		g.dispose();

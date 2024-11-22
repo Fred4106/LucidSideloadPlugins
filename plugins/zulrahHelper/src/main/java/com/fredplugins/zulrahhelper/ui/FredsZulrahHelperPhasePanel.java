@@ -41,7 +41,7 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
 @Slf4j
-public class ZulrahHelperPhasePanel extends JPanel implements MouseListener
+public class FredsZulrahHelperPhasePanel extends JPanel implements MouseListener
 {
 	private final FredsZulrahHelperPlugin plugin;
 	private final Node node;
@@ -52,7 +52,7 @@ public class ZulrahHelperPhasePanel extends JPanel implements MouseListener
 
 	private final PatternTree tree;
 
-	ZulrahHelperPhasePanel(FredsZulrahHelperPlugin plugin, PatternTree tree, Node node, int columns)
+	FredsZulrahHelperPhasePanel(FredsZulrahHelperPlugin plugin, PatternTree tree, Node node, int columns)
 	{
 		this.plugin = plugin;
 		this.node = node;

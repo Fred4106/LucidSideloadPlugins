@@ -26,6 +26,8 @@
 package com.fredplugins.zulrahhelper.options;
 
 import java.awt.image.BufferedImage;
+
+import com.fredplugins.zulrahhelper.FredsZulrahHelperPlugin;
 import lombok.Getter;
 import net.runelite.client.util.ImageUtil;
 
@@ -39,7 +41,7 @@ public enum Prayer
 
 	Prayer(String file)
 	{
-		this.image = ImageUtil.loadImageResource(Prayer.class, "/options/" + file);
+		this.image = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/" + file);
 	}
 
 	public net.runelite.api.Prayer getRlPrayer() {

@@ -5,7 +5,7 @@ import com.fredplugins.zulrahhelper.options.StandLocation;
 import com.google.inject.Provides;
 import com.fredplugins.zulrahhelper.tree.Node;
 import com.fredplugins.zulrahhelper.tree.PatternTree;
-import com.fredplugins.zulrahhelper.ui.ZulrahHelperPanel;
+import com.fredplugins.zulrahhelper.ui.FredsZulrahHelperPanel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -92,13 +92,13 @@ public class FredsZulrahHelperPlugin extends Plugin
 	private PatternTree tree;
 
 	@Inject
-	private ZulrahHelperOverlay zulrahHelperOverlay;
+	private FredsZulrahHelperOverlay fredsZulrahHelperOverlay;
 
 	@Inject
 	@Getter
 	private FredsZulrahHelperConfig config;
 
-	private ZulrahHelperPanel panel;
+	private FredsZulrahHelperPanel panel;
 	private NavigationButton navButton;
 
 	private final List<HotkeyListener> hotkeys = new ArrayList<>();
@@ -113,16 +113,16 @@ public class FredsZulrahHelperPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		npcZulrah = null;
-		overlayManager.add(zulrahHelperOverlay);
-		panel = injector.getInstance(ZulrahHelperPanel.class);
+		overlayManager.add(fredsZulrahHelperOverlay);
+
+		panel = injector.getInstance(FredsZulrahHelperPanel.class);
 		navButton = NavigationButton.builder()
-			.tooltip("Zulrah Helper")
-			.icon(ImageUtil.loadImageResource(getClass(), "/icon.png"))
+			.tooltip("Freds Zulrah Helper")
+			.icon(ImageUtil.loadImageResource(getClass(), "icon.png"))
 			.priority(70)
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navButton);
-
 		initHotkeys();
 		togglePanel(!config.autoHide(), false);
 		reset();
@@ -131,12 +131,12 @@ public class FredsZulrahHelperPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		npcZulrah = null;
-		startPosition = null;
-		overlayManager.remove(zulrahHelperOverlay);
 		clientToolbar.removeNavigation(navButton);
+		overlayManager.remove(fredsZulrahHelperOverlay);
 		hotkeys.forEach(keyManager::unregisterKeyListener);
 		hotkeys.clear();
+		npcZulrah = null;
+		startPosition = null;
 	}
 
 	public Node getCurrentNode()
@@ -222,12 +222,12 @@ public class FredsZulrahHelperPlugin extends Plugin
 				togglePanel(true, true);
 			}
 
-			if (wasInInstance && !client.isInInstancedRegion())
+			if (wasInInstance && !client.getTopLevelWorldView().isInstance())
 			{
 				reset();
 			}
 
-			wasInInstance = client.isInInstancedRegion();
+			wasInInstance = client.getTopLevelWorldView().isInstance();
 		}
 		else
 		{
@@ -257,7 +257,7 @@ public class FredsZulrahHelperPlugin extends Plugin
 	{
 		final int regionId = getRegionId();
 		return regionId == ZULANDRA_REGION_ID ||
-			((regionId == ZULRAH_SPAWN_REGION_ID || regionId == ZULRAH_REGION_ID) && client.isInInstancedRegion());
+			((regionId == ZULRAH_SPAWN_REGION_ID || regionId == ZULRAH_REGION_ID) && client.getTopLevelWorldView().isInstance());
 	}
 
 	private int getRegionId()

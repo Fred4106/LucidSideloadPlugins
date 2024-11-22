@@ -51,14 +51,14 @@ import net.runelite.client.util.SwingUtil;
 
 @Slf4j
 @Singleton
-public class ZulrahHelperPanel extends PluginPanel
+public class FredsZulrahHelperPanel extends PluginPanel
 {
 	private static final ImageIcon RESET_ICON;
 	private static final ImageIcon RESET_HOVER_ICON;
 
 	static
 	{
-		final BufferedImage addIcon = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "/ui/reset_icon.png");
+		final BufferedImage addIcon = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "ui/reset_icon.png");
 		RESET_ICON = new ImageIcon(addIcon);
 		RESET_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(addIcon, 0.53f));
 	}
@@ -69,7 +69,7 @@ public class ZulrahHelperPanel extends PluginPanel
 	private final JPanel phasesView = new JPanel(new GridBagLayout());
 
 	@Inject
-	ZulrahHelperPanel(FredsZulrahHelperPlugin plugin, PatternTree tree)
+	FredsZulrahHelperPanel(FredsZulrahHelperPlugin plugin, PatternTree tree)
 	{
 		this.plugin = plugin;
 		this.tree = tree;
@@ -81,7 +81,7 @@ public class ZulrahHelperPanel extends PluginPanel
 		northPanel.setBorder(new EmptyBorder(1, 0, 10, 0));
 
 		JLabel title = new JLabel();
-		title.setText("Zulrah Helper");
+		title.setText("Freds Zulrah Helper");
 		title.setForeground(Color.WHITE);
 
 		northPanel.add(title, BorderLayout.WEST);
@@ -142,7 +142,7 @@ public class ZulrahHelperPanel extends PluginPanel
 				createLabel(String.format("Current Phase: %s #%d", title, phaseNumber), constraints);
 			}
 
-			rowPanel.add(new ZulrahHelperPhasePanel(plugin, tree, node, 1), rowConstraints);
+			rowPanel.add(new FredsZulrahHelperPhasePanel(plugin, tree, node, 1), rowConstraints);
 			rowConstraints.gridx++;
 
 			if (node.size() >= 2)
@@ -156,7 +156,7 @@ public class ZulrahHelperPanel extends PluginPanel
 
 				for (var nc : node.getChildren())
 				{
-					rowPanel.add(new ZulrahHelperPhasePanel(plugin, tree, nc, node.size()), rowConstraints);
+					rowPanel.add(new FredsZulrahHelperPhasePanel(plugin, tree, nc, node.size()), rowConstraints);
 					rowConstraints.gridx++;
 				}
 			}
