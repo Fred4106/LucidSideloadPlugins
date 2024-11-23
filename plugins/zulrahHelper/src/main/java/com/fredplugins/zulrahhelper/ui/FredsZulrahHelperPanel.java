@@ -50,29 +50,18 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
-@Singleton
 public class FredsZulrahHelperPanel extends PluginPanel
 {
-	private static final ImageIcon RESET_ICON;
-	private static final ImageIcon RESET_HOVER_ICON;
-
-	static
-	{
-		final BufferedImage addIcon = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "ui/reset_icon.png");
-		RESET_ICON = new ImageIcon(addIcon);
-		RESET_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(addIcon, 0.53f));
-	}
+	private static final ImageIcon RESET_ICON = new ImageIcon(FredsZulrahHelperPlugin.RESET_IMG);
+	private static final ImageIcon RESET_HOVER_ICON  = new ImageIcon(ImageUtil.alphaOffset(FredsZulrahHelperPlugin.RESET_IMG, 0.53f));
 
 	private final FredsZulrahHelperPlugin plugin;
-	private final PatternTree tree;
 
 	private final JPanel phasesView = new JPanel(new GridBagLayout());
 
-	@Inject
-	FredsZulrahHelperPanel(FredsZulrahHelperPlugin plugin, PatternTree tree)
+	public FredsZulrahHelperPanel(FredsZulrahHelperPlugin plugin)
 	{
 		this.plugin = plugin;
-		this.tree = tree;
 
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -119,7 +108,7 @@ public class FredsZulrahHelperPanel extends PluginPanel
 		JPanel rowPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints rowConstraints = resetRowConstraints();
 
-		var path = tree.buildPath();
+		var path = plugin.getBuildPath();//tree.buildPath();
 		int phaseNumber = 1;
 		String title = null;
 		for (var node : path)
@@ -137,12 +126,12 @@ public class FredsZulrahHelperPanel extends PluginPanel
 				rowConstraints = resetRowConstraints();
 			}
 
-			if (node.equals(tree.getState()))
+			if (node.equals(plugin.getTree().getState()))
 			{
 				createLabel(String.format("Current Phase: %s #%d", title, phaseNumber), constraints);
 			}
 
-			rowPanel.add(new FredsZulrahHelperPhasePanel(plugin, tree, node, 1), rowConstraints);
+			rowPanel.add(new FredsZulrahHelperPhasePanel(plugin, plugin.getTree(), node, 1), rowConstraints);
 			rowConstraints.gridx++;
 
 			if (node.size() >= 2)
@@ -156,7 +145,7 @@ public class FredsZulrahHelperPanel extends PluginPanel
 
 				for (var nc : node.getChildren())
 				{
-					rowPanel.add(new FredsZulrahHelperPhasePanel(plugin, tree, nc, node.size()), rowConstraints);
+					rowPanel.add(new FredsZulrahHelperPhasePanel(plugin, plugin.getTree(), nc, node.size()), rowConstraints);
 					rowConstraints.gridx++;
 				}
 			}

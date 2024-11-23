@@ -38,12 +38,6 @@ import javax.swing.*;
 
 public class Images
 {
-	public static BufferedImage FLOOR_IMG =  ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "floor.png");
-	public static BufferedImage SNAKELINGS = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/snakeling2.png");
-	public static BufferedImage HITSPLAT =   ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/hitsplat.png");
-	public static BufferedImage VENOM =      ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/venom.png");
-
-
 	private static final int WIDTH = 105;
 	private static final int HEIGHT = 105;
 
@@ -60,10 +54,10 @@ public class Images
 		g.setColor(config.darkMode() ? DARK_BACKGROUND : LIGHT_BACKGROUND);
 		g.fillRect(0, 0, WIDTH, HEIGHT);
 
-		int px = (WIDTH - FLOOR_IMG.getWidth()) / 2 + 1;
-		int py = (HEIGHT - FLOOR_IMG.getHeight()) / 2;
+		int px = (WIDTH - FredsZulrahHelperPlugin.FLOOR_IMG.getWidth()) / 2 + 1;
+		int py = (HEIGHT - FredsZulrahHelperPlugin.FLOOR_IMG.getHeight()) / 2;
 
-		g.drawImage(FLOOR_IMG, null, px, py);
+		g.drawImage(FredsZulrahHelperPlugin.FLOOR_IMG, null, px, py);
 
 		for (var p : step.getPoints())
 		{
@@ -97,27 +91,29 @@ public class Images
 		g.setFont(FontManager.getRunescapeBoldFont());
 		if (config.displayAttackIcons() && step.getAttacks() > 0)
 		{
-			drawSplat(g, Color.WHITE, HITSPLAT, step.getAttacks() + "", 0);
+			drawSplat(g, Color.WHITE, FredsZulrahHelperPlugin.HITSPLAT, step.getAttacks() + "", 0);
 		}
 
 		if (config.displayVenom() && step.getVenom() > 0)
 		{
-			drawSplat(g, Color.WHITE, VENOM, step.getVenom() + "", WIDTH / 2 - VENOM.getWidth() / 2);
+			drawSplat(g, Color.WHITE, FredsZulrahHelperPlugin.VENOM, step.getVenom() + "", WIDTH / 2 - FredsZulrahHelperPlugin.VENOM.getWidth() / 2);
 		}
 
 		if (config.displaySnakelings() && step.getSnakelings() > 0)
 		{
 			var c = config.darkMode() ? Color.WHITE : Color.BLACK;
-			var x = WIDTH - SNAKELINGS.getWidth() * 2 + PADDING * 2;
-			drawSplat(g, c, SNAKELINGS, step.getSnakelings() + "", x, x + PADDING);
+			var x = WIDTH - FredsZulrahHelperPlugin.SNAKELINGS.getWidth() * 2 + PADDING * 2;
+			drawSplat(g, c, FredsZulrahHelperPlugin.SNAKELINGS, step.getSnakelings() + "", x, x + PADDING);
 		}
 
 		if (step.isReset())
 		{
-//			final BufferedImage resetImg = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "ui/reset_icon.png");
-//			g.drawImage(resetImg, 23, 23, resetImg.getWidth() * 3, resetImg.getHeight() * 3, null);
-			g.setColor(Color.BLACK);
-			g.drawString("R", WIDTH/2, HEIGHT/2);
+			if(FredsZulrahHelperPlugin.RESET_IMG != null) {
+				g.drawImage(FredsZulrahHelperPlugin.RESET_IMG, 23, 23, FredsZulrahHelperPlugin.RESET_IMG.getWidth() * 3, FredsZulrahHelperPlugin.RESET_IMG.getHeight() * 3, null);
+			} else {
+				g.setColor(Color.BLACK);
+				g.drawString("R", WIDTH / 2, HEIGHT / 2);
+			}
 		}
 
 		g.dispose();
@@ -127,10 +123,10 @@ public class Images
 	private static void drawSplat(Graphics2D g, Color c, BufferedImage img, String text, int splatX, int textX)
 	{
 		var fm = g.getFontMetrics();
-		g.drawImage(img, null, splatX + PADDING, HEIGHT - PADDING - HITSPLAT.getHeight());
+		g.drawImage(img, null, splatX + PADDING, HEIGHT - PADDING - FredsZulrahHelperPlugin.HITSPLAT.getHeight());
 		var tw = fm.stringWidth(text);
-		var cx = HITSPLAT.getWidth() / 2 - tw / 2 + (tw % 2 == 1 ? -2 : 0);
-		var cy = HITSPLAT.getHeight() / 2 - fm.getFont().getSize();
+		var cx = FredsZulrahHelperPlugin.HITSPLAT.getWidth() / 2 - tw / 2 + (tw % 2 == 1 ? -2 : 0);
+		var cy = FredsZulrahHelperPlugin.HITSPLAT.getHeight() / 2 - fm.getFont().getSize();
 
 		var tx = textX + PADDING + cx;
 		var ty = HEIGHT - PADDING + cy;

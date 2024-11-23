@@ -40,7 +40,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-@Singleton
 @Slf4j
 public class PatternTree
 {
@@ -50,7 +49,6 @@ public class PatternTree
 	@NonNull
 	protected Node state;
 
-	@Inject
 	public PatternTree()
 	{
 		this.root = build();

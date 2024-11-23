@@ -6,6 +6,8 @@ import com.google.inject.Provides;
 import com.fredplugins.zulrahhelper.tree.Node;
 import com.fredplugins.zulrahhelper.tree.PatternTree;
 import com.fredplugins.zulrahhelper.ui.FredsZulrahHelperPanel;
+
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +44,13 @@ import net.runelite.client.util.ImageUtil;
 )
 public class FredsZulrahHelperPlugin extends Plugin
 {
+	public static BufferedImage ICON_16 = ImageUtil.loadImageResource(com.fredplugins.zulrahhelper.FredsZulrahHelperPlugin.class, "icon.png");
+	public static BufferedImage FLOOR_IMG =  ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "floor.png");
+	public static BufferedImage SNAKELINGS = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/snakeling2.png");
+	public static BufferedImage HITSPLAT =   ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/hitsplat.png");
+	public static BufferedImage VENOM =      ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "options/venom.png");
+	public static BufferedImage RESET_IMG = ImageUtil.loadImageResource(FredsZulrahHelperPlugin.class, "ui/reset.png");
+
 	static final String CONFIG_GROUP = "fredszulrahhelper";
 	static final String SECTION_IMAGE_OPTIONS = "Image Options";
 	static final String SECTION_HOTKEYS = "Hotkeys";
@@ -88,8 +97,8 @@ public class FredsZulrahHelperPlugin extends Plugin
 	@Inject
 	private OverlayManager overlayManager;
 
-	@Inject
-	private PatternTree tree;
+	@Getter
+	private PatternTree tree = new PatternTree();
 
 	@Inject
 	private FredsZulrahHelperOverlay fredsZulrahHelperOverlay;
@@ -115,10 +124,10 @@ public class FredsZulrahHelperPlugin extends Plugin
 		npcZulrah = null;
 		overlayManager.add(fredsZulrahHelperOverlay);
 
-		panel = injector.getInstance(FredsZulrahHelperPanel.class);
+		panel = new FredsZulrahHelperPanel(this);
 		navButton = NavigationButton.builder()
 			.tooltip("Freds Zulrah Helper")
-			.icon(ImageUtil.loadImageResource(getClass(), "icon.png"))
+			.icon(ICON_16)
 			.priority(70)
 			.panel(panel)
 			.build();
@@ -142,6 +151,11 @@ public class FredsZulrahHelperPlugin extends Plugin
 	public Node getCurrentNode()
 	{
 		return tree.getState();
+	}
+	
+	public List<Node> getBuildPath()
+	{
+		return tree.buildPath();
 	}
 
 	@Subscribe
