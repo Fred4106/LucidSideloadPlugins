@@ -104,6 +104,9 @@ public class FredsZulrahHelperPlugin extends Plugin
 	private FredsZulrahHelperOverlay fredsZulrahHelperOverlay;
 
 	@Inject
+	private FredsZulrahHelperSceneOverlay fredsZulrahHelperSceneOverlay;
+
+	@Inject
 	@Getter
 	private FredsZulrahHelperConfig config;
 
@@ -123,6 +126,7 @@ public class FredsZulrahHelperPlugin extends Plugin
 	{
 		npcZulrah = null;
 		overlayManager.add(fredsZulrahHelperOverlay);
+		overlayManager.add(fredsZulrahHelperSceneOverlay);
 
 		panel = new FredsZulrahHelperPanel(this);
 		navButton = NavigationButton.builder()
@@ -142,6 +146,7 @@ public class FredsZulrahHelperPlugin extends Plugin
 	{
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(fredsZulrahHelperOverlay);
+		overlayManager.remove(fredsZulrahHelperSceneOverlay);
 		hotkeys.forEach(keyManager::unregisterKeyListener);
 		hotkeys.clear();
 		npcZulrah = null;

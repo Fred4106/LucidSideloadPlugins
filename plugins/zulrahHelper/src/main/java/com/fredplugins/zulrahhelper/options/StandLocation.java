@@ -63,15 +63,27 @@ public enum StandLocation
 		g.drawLine(x - 1, y + HEIGHT, x + WIDTH - 1, y);
 	}
 
+	public WorldPoint getWorldPoint(WorldPoint zulrahStart) {
+		return getWorldPoint(zulrahStart, this);
+	}
+
 	public static WorldPoint getWorldPoint(WorldPoint zulrahStart, StandLocation sl) {
 		if(zulrahStart == null) {
 			return null;
 		}
 		switch(sl) {
 			case START:
-				return new WorldPoint(zulrahStart.getX() + 8, zulrahStart.getY() + 4, zulrahStart.getPlane());
+				return new WorldPoint(zulrahStart.getX() + 6, zulrahStart.getY() + 5, zulrahStart.getPlane());
 			case START_MAGMA:
-				return new WorldPoint(zulrahStart.getX() + 10, zulrahStart.getY() + 3, zulrahStart.getPlane());
+				return new WorldPoint(zulrahStart.getX() + 8, zulrahStart.getY() + 4, zulrahStart.getPlane());
+			case PILLAR_1_NORTH:
+				return new WorldPoint(zulrahStart.getX() + 6, zulrahStart.getY() - 1, zulrahStart.getPlane());
+			case SOUTH:
+				return new WorldPoint(zulrahStart.getX() + 2, zulrahStart.getY() - 5, zulrahStart.getPlane());
+			case PILLAR_2_NORTH:
+				return new WorldPoint(zulrahStart.getX() - 2, zulrahStart.getY() - 1, zulrahStart.getPlane());
+			case PILLAR_2_WEST:
+				return new WorldPoint(zulrahStart.getX() - 2, zulrahStart.getY() - 2, zulrahStart.getPlane());
 			default:
 				log.debug("Cant find worldpoint for {} starting from {}", sl, zulrahStart);
 				return new WorldPoint(zulrahStart.getX(), zulrahStart.getY(), zulrahStart.getPlane());

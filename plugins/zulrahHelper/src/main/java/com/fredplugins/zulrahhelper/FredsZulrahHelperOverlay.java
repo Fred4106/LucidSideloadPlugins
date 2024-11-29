@@ -40,7 +40,7 @@ import java.util.Optional;
 
 public class FredsZulrahHelperOverlay extends Overlay
 {
-	private final PanelComponent panelComponent = new PanelComponent();
+	private final PanelComponent panelComponent2 = new PanelComponent();
 	private FredsZulrahHelperPlugin plugin;
 
 	@Inject
@@ -50,17 +50,16 @@ public class FredsZulrahHelperOverlay extends Overlay
 		this.plugin = plugin;
 	}
 
-	@Override
-	public Dimension render(Graphics2D graphics)
+	private void buildPanelComponent(PanelComponent p)
 	{
-		panelComponent.getChildren().clear();
+				p.getChildren().clear();
 		Node currentNode = plugin.getCurrentNode();
 		if (currentNode == null)
-		{return null;}
+		{return;}
 		Step currentStep = currentNode.getValue();
 
-		panelComponent.getChildren().add(TitleComponent.builder().text("Zulrah Helper").build());
-		panelComponent.getChildren().add(LineComponent.builder().left( "Step").right(currentStep.getTitle()).build());
+		p.getChildren().add(TitleComponent.builder().text("Zulrah Helper").build());
+		p.getChildren().add(LineComponent.builder().left( "Step").right(currentStep.getTitle()).build());
 
 		LineComponent.LineComponentBuilder prayerBuilder = LineComponent.builder().left("Prayer");
 		if(currentStep.getPrayers().isEmpty()) {
@@ -70,7 +69,7 @@ public class FredsZulrahHelperOverlay extends Overlay
 		} else {
 			prayerBuilder = prayerBuilder
 					.right(
-							currentStep.getPrayers().stream().map(p -> p.name()).reduce("", (a, b) -> {
+							currentStep.getPrayers().stream().map(x -> x.name()).reduce("", (a, b) -> {
 
 								if(a.length() == 0) {
 									return b;
@@ -81,10 +80,10 @@ public class FredsZulrahHelperOverlay extends Overlay
 								}
 							})
 					)
-					.rightColor(currentStep.getPrayers().stream().map(p -> plugin.isPrayerEnabled(p)).reduce(false, (a, b) -> a | b) ? Color.GREEN : Color.RED);
+					.rightColor(currentStep.getPrayers().stream().map(x -> plugin.isPrayerEnabled(x)).reduce(false, (a, b) -> a | b) ? Color.GREEN : Color.RED);
 		}
-		panelComponent.getChildren().add(prayerBuilder.build());
-		panelComponent.getChildren().add(
+		p.getChildren().add(prayerBuilder.build());
+		p.getChildren().add(
 				LineComponent.builder()
 						.left("StartLocation")
 						.right(
@@ -95,14 +94,14 @@ public class FredsZulrahHelperOverlay extends Overlay
 						)
 						.build()
 		);
-		panelComponent.getChildren().add(
+		p.getChildren().add(
 				LineComponent.builder()
 						.left("StandLocation")
 						.right(
 								currentStep
 										.getPoints()
 										.stream()
-										.map(p -> p.name() + "[" + plugin.distanceToTile(p) + "]")
+										.map(x -> x.name() + "[" + plugin.distanceToTile(x) + "]")
 										.reduce("", (a, b) -> {
 											if(a.length() == 0) {
 												return b;
@@ -115,12 +114,17 @@ public class FredsZulrahHelperOverlay extends Overlay
 								currentStep
 										.getPoints()
 										.stream()
-										.mapToInt(p -> plugin.distanceToTile(p))
+										.mapToInt(x -> plugin.distanceToTile(x))
 										.min().orElse(100) == 0
 										? Color.GREEN : Color.RED
 						)
 						.build()
 		);
-		return panelComponent.render(graphics);
+	}
+	@Override
+	public Dimension render(Graphics2D graphics)
+	{
+		buildPanelComponent(panelComponent2);
+		return panelComponent2.render(graphics);
 	}
 }

@@ -75,6 +75,7 @@ dependencies {
     implementation(project(":plugins:mixology"))
     implementation(project(":plugins:mta"))
     implementation(project(":plugins:scurriusHelper"))
+    implementation(project(":plugins:teleportMaps"))
     implementation(project(":plugins:tempoross"))
     implementation(project(":plugins:titheFarm"))
     implementation(project(":plugins:titheFarm2"))

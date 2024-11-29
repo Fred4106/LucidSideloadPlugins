@@ -1,0 +1,34 @@
+[
+  {
+    "index": 12,
+    "name": "Cam Torum Entrance",
+    "x": 261,
+    "y": 234
+  },
+  {
+    "index": 22,
+    "name": "Civitas illa Fortis (Grand Museum)",
+    "x": 343,
+    "y": 248,
+    "hotkey": {
+      "x": 358,
+      "y": 263
+    }
+  },
+  {
+    "index": 23,
+    "name":  "Civitas illa Fortis (Temple)",
+    "x": 238,
+    "y": 114
+  },
+  {
+    "index": 78,
+    "name": "Salvager Overlook",
+    "x": 292,
+    "y": 185,
+    "hotkey": {
+      "x": 308,
+      "y": 200
+    }
+  }
+]
