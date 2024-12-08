@@ -1,0 +1,47 @@
+package com.fredplugins.scurriushelper
+
+import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlay, renderTileOverlay, withFont}
+import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.common.{OldOverlayUtil, overlays}
+import com.google.inject.{Inject, Singleton}
+import net.runelite.api.Perspective.localToCanvas
+import net.runelite.api.coords.LocalPoint
+import net.runelite.api.{Client, Perspective, Point}
+import net.runelite.client.eventbus.{EventBus, Subscribe}
+import net.runelite.client.events.ConfigChanged
+import net.runelite.client.ui.FontManager
+import net.runelite.client.ui.overlay.components.ProgressPieComponent
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
+import net.runelite.client.ui.overlay.{Overlay, OverlayLayer, OverlayPosition, OverlayUtil}
+import net.runelite.client.util.ColorUtil
+import org.slf4j.Logger
+
+import java.awt.geom.Rectangle2D
+import java.awt.*
+import scala.compiletime.uninitialized
+import scala.util.chaining.*
+
+@Singleton
+class FredsScurriusOverlay @Inject()(val client: Client, val plugin: FredsScurriusHelper, val config: FredsScurriusHelperConfig, val eventbus: EventBus, val modelOutlineRenderer: ModelOutlineRenderer) extends Overlay {
+	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	setPosition(OverlayPosition.DYNAMIC)
+	setLayer(OverlayLayer.ABOVE_WIDGETS)
+	setPriority(Overlay.PRIORITY_HIGHEST)
+	object Cache {
+		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), config.getFontSize)
+		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), (config.getFontSize * 1.5).toInt)
+	}
+
+	override def render(graphics: Graphics2D): Dimension = {
+		given Graphics2D = graphics
+
+		given ModelOutlineRenderer = modelOutlineRenderer
+
+		given Client = client
+
+		withFont(Cache.cachedFont) {
+
+		}
+		null
+	}
+}

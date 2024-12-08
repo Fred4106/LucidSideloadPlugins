@@ -13,13 +13,14 @@ object SInteractionUtils {
 	val client: Client = RuneLite.getInjector.getInstance(classOf[Client])
 
 	def offset(toOffset: WorldArea, offset: Int): WorldArea = new WorldArea(toOffset.getX - offset, toOffset.getY - offset, toOffset.getWidth + 2 * offset, toOffset.getHeight + 2 * offset, toOffset.getPlane)
+
 	def worldAreaCorners(wa: WorldArea): List[WorldPoint] = {
 		List(
 			new WorldPoint(wa.getX, wa.getY, wa.getPlane),
 			new WorldPoint(wa.getX + wa.getWidth, wa.getY, wa.getPlane),
-			new WorldPoint(wa.getX, wa.getY+wa.getHeight, wa.getPlane),
-			new WorldPoint(wa.getX + wa.getWidth, wa.getY+wa.getHeight, wa.getPlane)
-			)
+			new WorldPoint(wa.getX, wa.getY + wa.getHeight, wa.getPlane),
+			new WorldPoint(wa.getX + wa.getWidth, wa.getY + wa.getHeight, wa.getPlane)
+		)
 	}
 
 	def worldAreaTiles(wa: WorldArea): List[WorldPoint] = {
@@ -39,8 +40,8 @@ object SInteractionUtils {
 		val safeTiles = com.lucidplugins.api.utils.InteractionUtils.getAll(
 			(tile: Tile) => {
 				validTiles(tile.getWorldLocation) &&
-				!list.contains(tile.getLocalLocation) &&
-				com.lucidplugins.api.utils.InteractionUtils.isWalkable(tile.getWorldLocation)
+					!list.contains(tile.getLocalLocation) &&
+					com.lucidplugins.api.utils.InteractionUtils.isWalkable(tile.getWorldLocation)
 			}).asScala.toList.sortBy(t => com.lucidplugins.api.utils.InteractionUtils.distanceTo2DHypotenuse(t.getWorldLocation, client.getLocalPlayer.getWorldLocation))
 		safeTiles.headOption.map(_.getWorldLocation).toJava
 	}

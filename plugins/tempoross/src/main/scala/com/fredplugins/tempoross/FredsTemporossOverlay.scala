@@ -147,15 +147,6 @@ class FredsTemporossOverlay @Inject()(val client: Client, val plugin: FredsTempo
 					case TimerModes.TICKS => renderTextElement(pt, startTick, duration, color, graphics, TimerModes.TICKS)
 					case TimerModes.SECONDS => renderTextElement(pt, startTick, duration, color, graphics, TimerModes.SECONDS)
 				}
-				//testing shows a time between 20 and 27 seconds. even though it isn't fully accurate, it is still better than nothing
-				//				val percent = (client.getTickCount - startTick).doubleValue / DOUBLE_SPOT_MOVE_TICKS.doubleValue
-				//				val ppc     = new ProgressPieComponent
-				//				ppc.setBorderColor(config.doubleSpotColor)
-				//				ppc.setFill(config.doubleSpotColor)
-				//				ppc.setProgress(percent)
-				//				ppc.setDiameter(PIE_DIAMETER)
-				//				ppc.setPosition(Perspective.localToCanvas(client, lp, client.getPlane))
-				//				ppc.render(graphics)
 			}
 		})
 	}

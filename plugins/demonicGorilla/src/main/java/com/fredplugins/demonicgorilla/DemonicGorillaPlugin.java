@@ -334,7 +334,7 @@ public class DemonicGorillaPlugin extends Plugin
 				{
 					onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.RANGED);
 				}
-				else if (animationId == AnimationID.DEMONIC_GORILLA_AOE_ATTACK && interacting != null)
+				else if (animationId == AnimationID.DEMONIC_GORILLA_PRAYER_SWITCH && interacting != null)
 				{
 					// Note that AoE animation is the same as prayer switch animation
 					// so we need to check if the prayer was switched or not.
