@@ -4,13 +4,20 @@ import net.runelite.api.coords.{LocalPoint, WorldArea, WorldPoint}
 import net.runelite.api.{Client, NPC, Tile}
 import net.runelite.client.RuneLite
 
-import java.util.Optional
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import scala.util.chaining.*
 
 object SInteractionUtils {
 	val client: Client = RuneLite.getInjector.getInstance(classOf[Client])
+
+	def approxDistanceTo(wp1: WorldPoint, wp2: WorldPoint): Int = {
+		math.max(math.abs(wp1.getX - wp2.getX), math.abs(wp1.getY - wp2.getY))
+	}
+
+	def distanceTo2DHypotenuse(main: WorldPoint, other: WorldPoint): Double = {
+		math.hypot(main.getX-other.getX, main.getY-other.getY)
+	}
 
 	def offset(toOffset: WorldArea, offset: Int): WorldArea = new WorldArea(toOffset.getX - offset, toOffset.getY - offset, toOffset.getWidth + 2 * offset, toOffset.getHeight + 2 * offset, toOffset.getPlane)
 
@@ -30,8 +37,7 @@ object SInteractionUtils {
 			})
 		}).toList
 	}
-
-	def getClosestSafeLocationInNPCMeleeDistance(list: java.util.List[LocalPoint], target: NPC): Optional[WorldPoint] = {
+	def getClosestSafeLocationInNPCMeleeDistance(list: List[LocalPoint], target: NPC): Option[WorldPoint] = {
 		val validTiles: WorldPoint => Boolean = target.getWorldArea.pipe(ta => {
 			val offArea = offset(ta, 1)
 			val corners = worldAreaCorners(offArea)
@@ -42,8 +48,24 @@ object SInteractionUtils {
 				validTiles(tile.getWorldLocation) &&
 					!list.contains(tile.getLocalLocation) &&
 					com.lucidplugins.api.utils.InteractionUtils.isWalkable(tile.getWorldLocation)
-			}).asScala.toList.sortBy(t => com.lucidplugins.api.utils.InteractionUtils.distanceTo2DHypotenuse(t.getWorldLocation, client.getLocalPlayer.getWorldLocation))
-		safeTiles.headOption.map(_.getWorldLocation).toJava
+			}).asScala.toList.sortBy(t => distanceTo2DHypotenuse(t.getWorldLocation, client.getLocalPlayer.getWorldLocation))
+		safeTiles.headOption.map(_.getWorldLocation)
+	}
+
+
+	def getClosestSafeLocationNotInNPCMeleeDistance(list: List[LocalPoint], target: NPC, maxRange: Int = 6): Option[WorldPoint] = {
+		def isNpcInMeleeDistanceToLocation(wp: WorldPoint): Boolean = {
+			offset(target.getWorldArea, 1).contains(wp)
+		}
+		val safeTiles = com.lucidplugins.api.utils.InteractionUtils.getAll(
+			(tile: Tile) => {
+					!list.contains(tile.getLocalLocation) &&
+						!isNpcInMeleeDistanceToLocation(tile.getWorldLocation) &&
+						!target.getWorldArea.contains(tile.getWorldLocation) &&
+						approxDistanceTo(tile.getWorldLocation, client.getLocalPlayer.getWorldLocation) < maxRange &&
+						com.lucidplugins.api.utils.InteractionUtils.isWalkable(tile.getWorldLocation)
+			}).asScala.toList.sortBy(t => distanceTo2DHypotenuse(t.getWorldLocation, client.getLocalPlayer.getWorldLocation))
+		safeTiles.headOption.map(_.getWorldLocation)
 	}
 }
 

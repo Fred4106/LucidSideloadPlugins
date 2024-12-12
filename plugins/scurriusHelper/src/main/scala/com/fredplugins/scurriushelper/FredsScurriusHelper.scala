@@ -135,29 +135,36 @@ class FredsScurriusHelper() extends Plugin {
 		if (id == FALLING_CEILING_GRAPHIC) fallingCeilingToTicks.put(graphicsObject, DURATION)
 	}
 
-	@Subscribe private def onNpcSpawned(event: NpcSpawned): Unit = {
-		if (event.getNpc.getId == SCURRIUS || event.getNpc.getId == SCURRIUS_PUBLIC) if (config.attackOnSpawn) lastDodgeTick = client.getTickCount
+	@Subscribe
+	private def onNpcSpawned(event: NpcSpawned): Unit = {
+		inline def isScurrius: Boolean = event.getNpc.getId == SCURRIUS || event.getNpc.getId == SCURRIUS_PUBLIC
+		if (config.attackOnSpawn && isScurrius) {
+			lastDodgeTick = client.getTickCount
+		}
 	}
 
-	@Subscribe private def onAnimationChanged(event: AnimationChanged): Unit = {
+	@Subscribe
+	private def onAnimationChanged(event: AnimationChanged): Unit = {
 		if (!event.getActor.isInstanceOf[NPC]) return
 		val npc = event.getActor.asInstanceOf[NPC]
 		if (npc.getName != null && npc.getName == "Scurrius" && npc.getAnimation == 10705 && NpcUtils.getNearestNpc("Giant rat") == null) if (config.autoPray) CombatUtils.deactivatePrayers(false)
 	}
 
-	@Subscribe private def onProjectileMoved(event: ProjectileMoved): Unit = {
+	@Subscribe
+	private def onProjectileMoved(event: ProjectileMoved): Unit = {
 		val projectile = event.getProjectile
 		if (projectile.getRemainingCycles != (projectile.getEndCycle - projectile.getStartCycle)) return
 		if (projectile.getId != 2642 && projectile.getId != 2640) return
 		val scurrius = NpcUtils.getNearestNpc("Scurrius")
-		if (scurrius == null || (event.getProjectile.getInteracting ne client.getLocalPlayer)) return
+		if (scurrius == null || (event.getProjectile.getInteracting != client.getLocalPlayer)) return
 		if (!attacks.contains(projectile)) {
 			attacks.addOne(projectile)
 			if (config.autoPray) CombatUtils.deactivatePrayer(Prayer.PROTECT_FROM_MELEE)
 		}
 	}
 
-	@Subscribe private def onGameTick(event: GameTick): Unit = {
+	@Subscribe
+	private def onGameTick(event: GameTick): Unit = {
 		val instancePoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation)
 		if (instancePoint.getRegionID != 13210 || instancePoint.getRegionX < 23) return
 		handlePrayers()
@@ -226,8 +233,8 @@ class FredsScurriusHelper() extends Plugin {
 				if (scurrius != null) {
 					val unsafeTiles = fallingCeilingToTicks.keys.map(_.getLocation).toList
 					var safeTile = Option.empty[WorldPoint]
-					if (config.stayMelee) safeTile = SInteractionUtils.getClosestSafeLocationInNPCMeleeDistance(unsafeTiles.asJava, scurrius).toScala
-					else safeTile = Option(InteractionUtils.getClosestSafeLocationNotInNPCMeleeDistance(unsafeTiles.asJava, scurrius))
+					if (config.stayMelee) safeTile = SInteractionUtils.getClosestSafeLocationInNPCMeleeDistance(unsafeTiles, scurrius)
+					else safeTile = SInteractionUtils.getClosestSafeLocationNotInNPCMeleeDistance(unsafeTiles, scurrius)
 					if (safeTile.isDefined) {
 						InteractionUtils.walk(safeTile.get)
 						justDodged = true

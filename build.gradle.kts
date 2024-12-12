@@ -21,7 +21,7 @@ val javaVersion = JavaVersion.VERSION_11
 
 allprojects {
     group = "com.fredplugins"
-    version = "0.9"
+    version = "1.0.0"
     repositories {
 //        maven {
 //            url = uri("https://repo.runelite.net")
