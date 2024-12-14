@@ -1,7 +1,7 @@
-package com.fredplugins.scurriushelper
+package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
-import com.fredplugins.scurriushelper.helpers.ScurriusLogic
+import com.fredplugins.pvmHelper.helpers.ScurriusLogic
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
@@ -30,34 +30,35 @@ import scala.util.{Random, Try}
 import scala.util.chaining.*
 
 @PluginDescriptor(
-	name = "<html><font color=\"#32C8CD\">Freds</font> Scurrius Helper V2</html>",
-	description = "Dodges Scurrius' falling ceiling attack and re-attacks",
-	tags =  Array("pvm", "scurrius", "prayer", "helper", "maps"),
-	conflicts = Array("<html><font color=\"#32CD32\">Lucid </font>Scurrius Helper</html>")
+	name = "<html><font color=\"#32C8CD\">Freds</font> Pvm Helper</html>",
+	description = "Provides some auto movement and prayer help for limited set of bosses",
+	tags =  Array("pvm", "scurrius", "prayer", "helper", "maps")
 )
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
-class FredsScurriusHelper() extends Plugin {
+class FredsPvmHelper() extends Plugin {
 	@Inject val client: Client = null
 	@Inject val clientThread: ClientThread = null
-	@Inject val config: FredsScurriusHelperConfig = null
+	@Inject val config: FredsPvmHelperConfig = null
 	@Inject val notifier: Notifier = null
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
 	@Inject private val eventBus: EventBus = null
 	@Inject private val overlayManager: OverlayManager = null
-	@Inject private val panel: FredsScurriusPanel = null
-	@Inject private val overlay: FredsScurriusOverlay = null
+	@Inject private val configManager: ConfigManager = null
+	@Inject private val panel: FredsPvmHelperPanel = null
+	@Inject private val overlay: FredsPvmHelperOverlay = null
 
 	given Client = client
-	given FredsScurriusHelperConfig = config
+	given ConfigManager = configManager
+	given FredsPvmHelperConfig = config
 	lazy val bossLogics: Seq[BossToolTrait] = Seq(
 		ScurriusLogic()
 	)
 
 	@Provides
-	def getConfig(configManager: ConfigManager): FredsScurriusHelperConfig = {
-		configManager.getConfig[FredsScurriusHelperConfig](classOf[FredsScurriusHelperConfig])
+	def getConfig(configManager: ConfigManager): FredsPvmHelperConfig = {
+		configManager.getConfig[FredsPvmHelperConfig](classOf[FredsPvmHelperConfig])
 	}
 
 
@@ -85,7 +86,7 @@ class FredsScurriusHelper() extends Plugin {
 
 	@Subscribe
 	def onConfigChanged(e: ConfigChanged): Unit = {
-		if(e.getGroup == FredsScurriusHelperConfig.GroupName) {
+		if(e.getGroup == FredsPvmHelperConfig.GroupName) {
 			e.getKey match {
 				case "fontSize" | "fontBold" => {
 					overlay.Cache.cachedFont = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), config.getFontSize)

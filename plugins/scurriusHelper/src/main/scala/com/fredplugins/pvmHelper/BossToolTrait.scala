@@ -1,4 +1,4 @@
-package com.fredplugins.scurriushelper
+package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.utils.ShimUtils
 import net.runelite.api.Client

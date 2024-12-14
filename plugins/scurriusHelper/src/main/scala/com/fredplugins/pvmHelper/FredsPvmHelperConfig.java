@@ -1,31 +1,25 @@
-package com.fredplugins.scurriushelper;
+package com.fredplugins.pvmHelper;
 
 import net.runelite.client.config.*;
 
-@ConfigGroup(FredsScurriusHelperConfig.GroupName)
-public interface FredsScurriusHelperConfig extends Config {
-	final String GroupName = "freds-scurrius-helper";
+@ConfigGroup(FredsPvmHelperConfig.GroupName)
+public interface FredsPvmHelperConfig extends Config {
+	final String GroupName = "fredspvmhelper";
+
+	//region Scurrius
 	@ConfigSection(
-		name = "General",
-		description = "General settings",
+		name = "Scurrius",
+		description = "Scurrius settings",
 		position = 0
 	)
-	String GENERAL_PANEL = "General";
-
-	@ConfigSection(
-		name = "Panel",
-		description = "Debug Panel details",
-		position = 1
-	)
-	String DEBUG_PANEL = "Debug";
-
+	String SCURRIUS_SECTION = "scurrius";
 
 	@ConfigItem(
 		name = "Dodge within melee range",
 		description = "Dodges only to tiles within melee range of Scurrius (for meleeing)",
 		position = 0,
-		keyName = "stayMelee",
-		section = GENERAL_PANEL
+		keyName = "scurrius-stayMelee",
+		section = SCURRIUS_SECTION
 	)
 	default boolean stayMelee() {
 		return false;
@@ -35,8 +29,8 @@ public interface FredsScurriusHelperConfig extends Config {
 		name = "Attack after dodging",
 		description = "Attacks Scurrius after dodging the falling ceiling attack",
 		position = 1,
-		keyName = "attackAfterDodge",
-		section = GENERAL_PANEL
+		keyName = "scurrius-attackAfterDodge",
+		section = SCURRIUS_SECTION
 	)
 	default boolean attackAfterDodge() {
 		return false;
@@ -46,8 +40,8 @@ public interface FredsScurriusHelperConfig extends Config {
 		name = "Attack On Spawn",
 		description = "Attacks Scurrius when he spawns",
 		position = 2,
-		keyName = "attackOnSpawn",
-		section = GENERAL_PANEL
+		keyName = "scurrius-attackOnSpawn",
+		section = SCURRIUS_SECTION
 	)
 	default boolean attackOnSpawn() {
 		return false;
@@ -57,8 +51,8 @@ public interface FredsScurriusHelperConfig extends Config {
 		name = "Attack Giant Rats",
 		description = "Attacks Giant Rats When Scurrius is dead",
 		position = 3,
-		keyName = "attackRats",
-		section = GENERAL_PANEL
+		keyName = "scurrius-attackRats",
+		section = SCURRIUS_SECTION
 	)
 	default boolean attackRats() {
 		return false;
@@ -68,8 +62,8 @@ public interface FredsScurriusHelperConfig extends Config {
 		name = "Prioritize Giant Rats over Scurrius",
 		description = "Attacks Giant Rats Over Scurrius to kill them first",
 		position = 4,
-		keyName = "prioritizeRats",
-		section = GENERAL_PANEL
+		keyName = "scurrius-prioritizeRats",
+		section = SCURRIUS_SECTION
 	)
 	default boolean prioritizeRats() {
 		return false;
@@ -79,13 +73,21 @@ public interface FredsScurriusHelperConfig extends Config {
 		name = "Auto Pray",
 		description = "Auto pray against attacks",
 		position = 5,
-		keyName = "autoPray",
-		section = GENERAL_PANEL
+		keyName = "scurrius-autoPray",
+		section = SCURRIUS_SECTION
 	)
 	default boolean autoPray() {
 		return false;
 	}
+	//endregion
 
+	//region Debug
+	@ConfigSection(
+		name = "Panel",
+		description = "Debug Panel details",
+		position = 1
+	)
+	String DEBUG_PANEL = "Debug";
 
 	@Range(
 		min = 6,
@@ -115,4 +117,5 @@ public interface FredsScurriusHelperConfig extends Config {
 	{
 		return true;
 	}
+	//endregion
 }

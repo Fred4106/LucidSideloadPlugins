@@ -1,4 +1,4 @@
-package com.fredplugins.scurriushelper
+package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Singleton}
@@ -13,7 +13,7 @@ import java.time.Instant
 import scala.util.Try
 import scala.util.chaining.scalaUtilChainingOps
 @Singleton
-class FredsScurriusPanel @Inject()(val client: Client, plugin: FredsScurriusHelper) extends OverlayPanel(plugin) {
+class FredsPvmHelperPanel @Inject()(val client: Client, plugin: FredsPvmHelper) extends OverlayPanel(plugin) {
 	setLayer(OverlayLayer.ABOVE_SCENE)
 	setPosition(OverlayPosition.BOTTOM_LEFT)
 		val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")

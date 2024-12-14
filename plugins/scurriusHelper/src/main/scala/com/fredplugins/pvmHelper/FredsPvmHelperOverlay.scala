@@ -1,4 +1,4 @@
-package com.fredplugins.scurriushelper
+package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlay, renderTileOverlay, withFont}
 import com.fredplugins.common.utils.ShimUtils
@@ -22,7 +22,7 @@ import scala.compiletime.uninitialized
 import scala.util.chaining.*
 
 @Singleton
-class FredsScurriusOverlay @Inject()(val client: Client, val plugin: FredsScurriusHelper, val config: FredsScurriusHelperConfig, val eventbus: EventBus, val modelOutlineRenderer: ModelOutlineRenderer) extends Overlay {
+class FredsPvmHelperOverlay @Inject()(val client: Client, val plugin: FredsPvmHelper, val config: FredsPvmHelperConfig, val eventbus: EventBus, val modelOutlineRenderer: ModelOutlineRenderer) extends Overlay {
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	setPosition(OverlayPosition.DYNAMIC)
 	setLayer(OverlayLayer.ABOVE_WIDGETS)
