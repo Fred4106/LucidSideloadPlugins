@@ -1,8 +1,7 @@
 package com.fredplugins.pvmHelper.helpers
 
 import com.fredplugins.common.utils.SInteractionUtils
-import com.fredplugins.pvmHelper.helpers.ScurriusConfig.ConfigObj
-import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperConfig}
+import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperConfig, FredsPvmHelperPanel}
 import com.google.gson.JsonObject
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import net.runelite.api.coords.WorldPoint
@@ -12,75 +11,76 @@ import net.runelite.client.config.{Config, ConfigGroup, ConfigItem, ConfigManage
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
-import scala.reflect.Selectable.reflectiveSelectable
 
+import scala.reflect.Selectable.reflectiveSelectable
 import java.awt.Color
 import scala.util.Try
 import scala.util.chaining.*
+import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
+//import com.fredplugins.pvmHelper.helpers.ScurriusLogic.{DURATION, FALLING_CEILING_GRAPHIC, SCURRIUS, SCURRIUS_PUBLIC}
+import com.google.inject.{Inject, Provides, Singleton}
+import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
+import ethanApiPlugin.EthanApiPlugin
+import ethanApiPlugin.collections.{TileObjects, Widgets}
+import net.runelite.api.{ChatMessageType, Client, GameState, GraphicsObject, InventoryID, Item, ItemContainer, NPC, Prayer, Projectile, TileObject}
+import net.runelite.client.Notifier
+import net.runelite.client.callback.ClientThread
+import net.runelite.client.config.ConfigManager
+import net.runelite.client.eventbus.{EventBus, Subscribe}
+import net.runelite.client.events.ConfigChanged
+import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
+import net.runelite.client.ui.FontManager
+import net.runelite.client.ui.overlay.OverlayManager
+import org.slf4j.Logger
 
-//@ConfigGroup("fredspvmhelper")
-abstract class ConfigPropValue[T] {
-	def value: T
-	def value_=(value: T): Unit
-}
+import java.awt.Font
+import scala.jdk.StreamConverters.StreamHasToScala
+import java.util
+import java.util.stream.Collectors
+import scala.collection.mutable
+import scala.compiletime.uninitialized
+import scala.jdk.CollectionConverters.*
+import scala.jdk.IntAccumulator
+import scala.jdk.OptionConverters.*
+import scala.util.{Random, Try}
+import scala.util.chaining.*
 
-given Conversion[String, Boolean] = (_.toBoolean)
-given Conversion[Boolean, String] = (_.toString)
-//object ConfigPropFactory {
-//	def createKey[T](encode: T => String, decode: String => T, group: String, subGroup: String, key: String)(defaultValue: T)(using cm: ConfigManager): ConfigPropValue[T] = {
-//
-//	}
-//}
+@PluginDescriptor(
+	name = "<html><font color=\"#A1004B\">Freds</font> Scurrius Helper</html>",
+	description = "Dodges Scurrius' falling ceiling attack and re-attacks",
+	tags =  Array("pvm", "scurrius", "prayer", "helper", "maps"),
+	conflicts = Array("<html><font color=\"#32CD32\">Lucid </font>Scurrius Helper</html>")
+)
+@PluginDependency(classOf[EthanApiPlugin])
+@Singleton
+class ScurriusLogic() extends Plugin with BossToolTrait {
+	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	@Inject val client: Client = null
+	@Inject val clientThread: ClientThread = null
+	@Inject val config: ScurriusConfig = null
+	@Inject val notifier: Notifier = null
 
-//trait ScurriusConfig {
-//	def stayMelee: ConfigPropValue[Boolean]
-////	def stayMelee_=(melee: Boolean): Unit
-//
-//	def attackAfterDodge: ConfigPropValue[Boolean]
-//	def attackOnSpawn: ConfigPropValue[Boolean]
-//	def attackRats: ConfigPropValue[Boolean]
-//	def prioritizeRats: ConfigPropValue[Boolean]
-//	def autoPray: ConfigPropValue[Boolean]
-//}
-object ScurriusConfig {
-	type ConfigObj = Object {val stayMelee: ConfigPropValue[Boolean]; val attackRats: ConfigPropValue[Boolean]; val autoPray: ConfigPropValue[Boolean]; val attackOnSpawn: ConfigPropValue[Boolean]; val attackAfterDodge: ConfigPropValue[Boolean]; val prioritizeRats: ConfigPropValue[Boolean]}
-	def load(using configManager: ConfigManager): ConfigObj = {
-		inline def makeKey[T](inline keyName: String, inline iv: T)(using decode: Conversion[String, T], encode: Conversion[T, String]): ConfigPropValue[T] = {
-			new ConfigPropValue[T] {
-				override def value_=(value: T): Unit = {
-					encode(value).pipe(ev => configManager.setConfiguration(FredsPvmHelperConfig.GroupName, s"scurrius-${keyName}", ev))
-				}
+	@Inject private val eventBus: EventBus = null
+	@Inject private val overlayManager: OverlayManager = null
+	@Inject private val configManager: ConfigManager = null
+//	@Inject private val overlay: FredsPvmHelperOverlay = null
 
-				override def value: T = configManager.getConfiguration(FredsPvmHelperConfig.GroupName, s"scurrius-${keyName}").pipe(decode)
-			}.tap(cpv => cpv.value = iv)
-		}
+	given Client = client
 
-
-		new {
-			val stayMelee: ConfigPropValue[Boolean] = makeKey("stayMelee", false)
-			val attackAfterDodge: ConfigPropValue[Boolean] = makeKey("attackAfterDodge", false)
-			val attackOnSpawn: ConfigPropValue[Boolean] = makeKey("attackOnSpawn", false)
-			val attackRats: ConfigPropValue[Boolean] = makeKey(" qattackRats", false)
-			val prioritizeRats: ConfigPropValue[Boolean] = makeKey("prioritizeRats", false)
-			val autoPray: ConfigPropValue[Boolean] = makeKey("autoPray", false)
-		}
+	@Provides
+	def getConfig(configManager: ConfigManager): ScurriusConfig = {
+		configManager.getConfig[ScurriusConfig](classOf[ScurriusConfig])
 	}
-}
-class ScurriusLogic(using client: Client, configManager: ConfigManager) extends BossToolTrait {
-	private val FALLING_CEILING_GRAPHIC: Int = 2644
-	private val SCURRIUS: Int = 7222
-	private val SCURRIUS_PUBLIC: Int = 7221
-	private val DURATION: Int = 9
 
-	private var bossNpc: NPC = _
+	private val panel: FredsPvmHelperPanel[ScurriusLogic] = new FredsPvmHelperPanel(this){}
+
+	private var bossNpc: NPC = uninitialized
 	private var justDodged: Boolean = false
 	private var lastDodgeTick: Int = 0
 	private var lastRatTick: Int = 0
 	private var lastActivateTick: Int = 0
 	private var fallingCeilingToTicks: Map[GraphicsObject, Int] = Map.empty //new HashMap<>();
 	private var attacks: List[Projectile] = List.empty
-
-	private val config: ConfigObj = ScurriusConfig.load
 
 	override def resetState(): Unit = {
 		bossNpc = null
@@ -92,6 +92,32 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 		fallingCeilingToTicks = Map.empty
 	}
 
+	@Subscribe
+	def onConfigChanged(e: ConfigChanged): Unit = {
+		if (e.getGroup == ScurriusConfig.GroupName) {
+			e.getKey match {
+				case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
+			}
+		}
+	}
+
+
+	override protected def startUp(): Unit = {
+		resetState()
+		overlayManager.add(panel)
+		//		overlayManager.add(overlay)
+	}
+
+	override protected def shutDown(): Unit = {
+		overlayManager.remove(panel)
+		//		overlayManager.remove(overlay)
+		resetState()
+	}
+
+	private val FALLING_CEILING_GRAPHIC: Int = 2644
+	private val SCURRIUS: Int = 7222
+	private val SCURRIUS_PUBLIC: Int = 7221
+	private val DURATION: Int = 9
 
 	@Subscribe
 	private def onGraphicsObjectCreated(event: GraphicsObjectCreated): Unit = {
@@ -108,7 +134,7 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 	@Subscribe
 	private def onNpcSpawned(event: NpcSpawned): Unit = {
 		if (!inArea()) return
-		if (config.attackOnSpawn.value && isScurrius(event.getNpc)) {
+		if (config.attackOnSpawn && isScurrius(event.getNpc)) {
 			lastDodgeTick = client.getTickCount
 		}
 	}
@@ -119,7 +145,7 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 		if (!inArea()) return
 		val npc = event.getActor.asInstanceOf[NPC]
 		if (isScurrius(npc) && npc.getAnimation == 10705 && NpcUtils.getNearestNpc("Giant rat") == null) {
-			if (config.autoPray.value) {
+			if (config.autoPray) {
 				CombatUtils.deactivatePrayers(false)
 			}
 		}
@@ -137,13 +163,12 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 
 		if (!attacks.contains(projectile)) {
 			attacks = attacks.appended(projectile)
-			if (config.autoPray.value) CombatUtils.deactivatePrayer(Prayer.PROTECT_FROM_MELEE)
+			if (config.autoPray) CombatUtils.deactivatePrayer(Prayer.PROTECT_FROM_MELEE)
 		}
 	}
 
 	@Subscribe
 	private def onGameTick(event: GameTick): Unit = {
-		//		val instancePoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation)
 		if (!inArea()) return //instancePoint.getRegionID != 13210 || instancePoint.getRegionX < 23) return
 		handlePrayers()
 		attacks = attacks.filter((proj: Projectile) => proj.getRemainingCycles > 30)
@@ -155,9 +180,9 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 		}
 		val scurrius = NpcUtils.getNearestNpc("Scurrius")
 		if (!justDodged) {
-			if (config.attackAfterDodge.value && (client.getLocalPlayer.getInteracting ne scurrius)) {
+			if (config.attackAfterDodge && (client.getLocalPlayer.getInteracting ne scurrius)) {
 				val tSinceLastDodge = client.getTickCount - lastDodgeTick
-				if (tSinceLastDodge < 3) if (scurrius != null) if (!config.prioritizeRats.value || getEligibleRat == null) NpcUtils.attackNpc(scurrius)
+				if (tSinceLastDodge < 3) if (scurrius != null) if (!config.prioritizeRats || getEligibleRat == null) NpcUtils.attackNpc(scurrius)
 			}
 		}
 		var attackRat = true
@@ -168,13 +193,13 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 			if (targetHpPercent > 0) attackRat = false
 		}
 		if (justDodged) return
-		if (config.attackRats.value && attackRat || config.prioritizeRats.value) {
+		if (config.attackRats && attackRat || config.prioritizeRats) {
 			val giantRat = getEligibleRat
 			if (giantRat != null && (giantRat ne client.getLocalPlayer.getInteracting)) {
 				NpcUtils.attackNpc(giantRat)
 				lastRatTick = client.getTickCount
 			}
-			else if (config.prioritizeRats.value && giantRat == null) {
+			else if (config.prioritizeRats && giantRat == null) {
 				val tSinceLatRatHit = client.getTickCount - lastRatTick
 				if (scurrius != null && tSinceLatRatHit < 8 && (client.getLocalPlayer.getInteracting ne scurrius)) NpcUtils.attackNpc(scurrius)
 			}
@@ -182,7 +207,7 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 	}
 
 	private def handlePrayers(): Unit = {
-		if (!config.autoPray.value) return
+		if (!config.autoPray) return
 		var prayer: Prayer = null
 		//		import scala.collection.JavaConversions._
 		for (projectile <- attacks) {
@@ -221,7 +246,7 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 				if (scurrius != null) {
 					val unsafeTiles = fallingCeilingToTicks.keys.map(_.getLocation).toList
 					var safeTile = Option.empty[WorldPoint]
-					if (config.stayMelee.value) {
+					if (config.stayMelee) {
 						safeTile = SInteractionUtils.getClosestSafeLocationInNPCMeleeDistance(unsafeTiles, scurrius)
 					} else {
 						safeTile = SInteractionUtils.getClosestSafeLocationNotInNPCMeleeDistance(unsafeTiles, scurrius)
@@ -249,10 +274,6 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 
 	override def layoutPanel(): Seq[LayoutableRenderableEntity] = {
 		Seq(
-			//			LineComponent.builder
-			//				.left("region")
-			//				.right(s"inArea(${getRegion}, ${getRegionX}, ${getRegionY}) = ${inArea()}")
-			//				.build,
 			LineComponent.builder
 				.left("Npc")
 				.right(s"${bossNpc}")
@@ -280,9 +301,7 @@ class ScurriusLogic(using client: Client, configManager: ConfigManager) extends 
 
 	inline def getRegionId: Int = Try(getLocalPlayerWorldPoint.getRegionID).getOrElse(-1)
 
-
 	override def inArea(): Boolean = {
-		val toRet = getLocalPlayerWorldPoint.pipe(x => x.getRegionID == 13210 && x.getRegionX >= 23)
-		toRet
+		getLocalPlayerWorldPoint.pipe(x => x.getRegionID == 13210 && x.getRegionX >= 23)
 	}
 }

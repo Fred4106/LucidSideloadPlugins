@@ -7,9 +7,9 @@ import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import org.slf4j.Logger
 
-abstract class BossToolTrait {
-	def log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
-	def name: String = this.getClass.getSimpleName.stripSuffix("Logic")
+trait BossToolTrait {
+//	def log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+//	def name: String = this.getClass.getSimpleName.stripSuffix("Logic")
 
 	def resetState(): Unit = {}
 	def inArea(): Boolean

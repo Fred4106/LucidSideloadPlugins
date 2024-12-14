@@ -22,7 +22,7 @@ import scala.compiletime.uninitialized
 import scala.util.chaining.*
 
 @Singleton
-class FredsPvmHelperOverlay @Inject()(val client: Client, val plugin: FredsPvmHelper, val config: FredsPvmHelperConfig, val eventbus: EventBus, val modelOutlineRenderer: ModelOutlineRenderer) extends Overlay {
+class FredsPvmHelperOverlay @Inject()(val client: Client, val config: FredsPvmHelperConfig, val modelOutlineRenderer: ModelOutlineRenderer) extends Overlay() {
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	setPosition(OverlayPosition.DYNAMIC)
 	setLayer(OverlayLayer.ABOVE_WIDGETS)

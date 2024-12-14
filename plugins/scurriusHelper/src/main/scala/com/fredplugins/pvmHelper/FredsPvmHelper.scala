@@ -6,6 +6,7 @@ import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{TileObjects, Widgets}
+import net.runelite.api.coords.WorldPoint
 import net.runelite.api.{ChatMessageType, Client, GameState, GraphicsObject, InventoryID, Item, ItemContainer, NPC, Prayer, Projectile, TileObject}
 import net.runelite.client.Notifier
 import net.runelite.client.callback.ClientThread
@@ -15,6 +16,7 @@ import net.runelite.client.events.ConfigChanged
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.FontManager
 import net.runelite.client.ui.overlay.OverlayManager
+import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent}
 import org.slf4j.Logger
 
 import java.awt.Font
@@ -36,64 +38,66 @@ import scala.util.chaining.*
 )
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
-class FredsPvmHelper() extends Plugin {
+class FredsPvmHelper() extends Plugin with BossToolTrait {
+	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	@Inject val client: Client = null
 	@Inject val clientThread: ClientThread = null
 	@Inject val config: FredsPvmHelperConfig = null
 	@Inject val notifier: Notifier = null
-	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
 	@Inject private val eventBus: EventBus = null
 	@Inject private val overlayManager: OverlayManager = null
 	@Inject private val configManager: ConfigManager = null
-	@Inject private val panel: FredsPvmHelperPanel = null
-	@Inject private val overlay: FredsPvmHelperOverlay = null
-
+	//	@Inject private val overlay: FredsPvmHelperOverlay = null
 	given Client = client
-	given ConfigManager = configManager
-	given FredsPvmHelperConfig = config
-	lazy val bossLogics: Seq[BossToolTrait] = Seq(
-		ScurriusLogic()
-	)
+
+	private val panel: FredsPvmHelperPanel[FredsPvmHelper] = new FredsPvmHelperPanel(this){}
 
 	@Provides
 	def getConfig(configManager: ConfigManager): FredsPvmHelperConfig = {
 		configManager.getConfig[FredsPvmHelperConfig](classOf[FredsPvmHelperConfig])
 	}
 
-
-	private def resetState(): Unit = {
-		bossLogics.foreach(_.resetState())
+	override def resetState(): Unit = {
 	}
+
 
 	override protected def startUp(): Unit = {
 		resetState()
-		bossLogics.foreach(bl => {
-			eventBus.register(bl)
-		})
 		overlayManager.add(panel)
-//		overlayManager.add(overlay)
 	}
 
 	override protected def shutDown(): Unit = {
 		overlayManager.remove(panel)
-		bossLogics.foreach(bl => {
-			eventBus.unregister(bl)
-		})
-//		overlayManager.remove(overlay)
 		resetState()
 	}
 
-	@Subscribe
-	def onConfigChanged(e: ConfigChanged): Unit = {
-		if(e.getGroup == FredsPvmHelperConfig.GroupName) {
-			e.getKey match {
-				case "fontSize" | "fontBold" => {
-					overlay.Cache.cachedFont = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), config.getFontSize)
-					overlay.Cache.countdownFont = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), (config.getFontSize * 1.5).toInt)
-				}
-				case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
-			}
-		}
+	inline def getLocalPlayerWorldPoint: WorldPoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation)
+	inline def getRegionId: Int = Try(getLocalPlayerWorldPoint.getRegionID).getOrElse(-1)
+
+	override def layoutPanel(): Seq[LayoutableRenderableEntity] = {
+		Seq(
+			LineComponent.builder
+				.left("RegionId")
+				.right(s"${getRegionId}")
+				.build
+//			LineComponent.builder
+//				.left("justDodged")
+//				.right(s"${client}")
+//				.build,
+//			LineComponent.builder
+//				.left("lastDodgeTick")
+//				.right(s"${lastDodgeTick}")
+//				.build,
+//			LineComponent.builder
+//				.left("lastRatTick")
+//				.right(s"${lastRatTick}")
+//				.build,
+//			LineComponent.builder
+//				.left("lastActivateTick")
+//				.right(s"${lastActivateTick}")
+//				.build
+		)
 	}
+	override def inArea(): Boolean = true
 }
