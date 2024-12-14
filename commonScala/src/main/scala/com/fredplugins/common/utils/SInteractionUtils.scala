@@ -1,4 +1,4 @@
-package com.fredplugins.scurriushelper
+package com.fredplugins.common.utils
 
 import net.runelite.api.coords.{LocalPoint, WorldArea, WorldPoint}
 import net.runelite.api.{Client, NPC, Tile}
@@ -9,8 +9,6 @@ import scala.jdk.OptionConverters.*
 import scala.util.chaining.*
 
 object SInteractionUtils {
-	val client: Client = RuneLite.getInjector.getInstance(classOf[Client])
-
 	def approxDistanceTo(wp1: WorldPoint, wp2: WorldPoint): Int = {
 		math.max(math.abs(wp1.getX - wp2.getX), math.abs(wp1.getY - wp2.getY))
 	}
@@ -37,7 +35,7 @@ object SInteractionUtils {
 			})
 		}).toList
 	}
-	def getClosestSafeLocationInNPCMeleeDistance(list: List[LocalPoint], target: NPC): Option[WorldPoint] = {
+	def getClosestSafeLocationInNPCMeleeDistance(list: List[LocalPoint], target: NPC)(using client: Client): Option[WorldPoint] = {
 		val validTiles: WorldPoint => Boolean = target.getWorldArea.pipe(ta => {
 			val offArea = offset(ta, 1)
 			val corners = worldAreaCorners(offArea)
@@ -53,17 +51,17 @@ object SInteractionUtils {
 	}
 
 
-	def getClosestSafeLocationNotInNPCMeleeDistance(list: List[LocalPoint], target: NPC, maxRange: Int = 6): Option[WorldPoint] = {
+	def getClosestSafeLocationNotInNPCMeleeDistance(list: List[LocalPoint], target: NPC, maxRange: Int = 6)(using client: Client): Option[WorldPoint] = {
 		def isNpcInMeleeDistanceToLocation(wp: WorldPoint): Boolean = {
 			offset(target.getWorldArea, 1).contains(wp)
 		}
 		val safeTiles = com.lucidplugins.api.utils.InteractionUtils.getAll(
 			(tile: Tile) => {
-					!list.contains(tile.getLocalLocation) &&
-						!isNpcInMeleeDistanceToLocation(tile.getWorldLocation) &&
-						!target.getWorldArea.contains(tile.getWorldLocation) &&
-						approxDistanceTo(tile.getWorldLocation, client.getLocalPlayer.getWorldLocation) < maxRange &&
-						com.lucidplugins.api.utils.InteractionUtils.isWalkable(tile.getWorldLocation)
+				!list.contains(tile.getLocalLocation) &&
+					!isNpcInMeleeDistanceToLocation(tile.getWorldLocation) &&
+					!target.getWorldArea.contains(tile.getWorldLocation) &&
+					approxDistanceTo(tile.getWorldLocation, client.getLocalPlayer.getWorldLocation) < maxRange &&
+					com.lucidplugins.api.utils.InteractionUtils.isWalkable(tile.getWorldLocation)
 			}).asScala.toList.sortBy(t => distanceTo2DHypotenuse(t.getWorldLocation, client.getLocalPlayer.getWorldLocation))
 		safeTiles.headOption.map(_.getWorldLocation)
 	}

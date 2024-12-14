@@ -439,7 +439,7 @@ public class FredGauntletPlugin extends Plugin
 
             if ((hunllef.getPlayerAttackCount() == 6 || hunllef.getPlayerAttackCount() == 1) && (config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.RANGED_5_1 || config.weaponSwitchMode() == FredGauntletConfig.WeaponSwitchStyle.MAGE_5_1))
             {
-                swapWeapon51(hunllef.getPlayerAttackCount(), hunllef.getHeadIcon().orElse(null));
+				swapWeapon51MageRange(hunllef.getPlayerAttackCount(), hunllef.getHeadIcon().orElse(null));
             }
         }
 
@@ -1249,7 +1249,7 @@ public class FredGauntletPlugin extends Plugin
         lastSwitchTick = client.getTickCount();
     }
 
-    private void swapWeapon51(int attackCount, HeadIcon current)
+    private void swapWeapon51MageRange(int attackCount, HeadIcon current)
     {
         assert(current != null);
         if (attackCount == 1)

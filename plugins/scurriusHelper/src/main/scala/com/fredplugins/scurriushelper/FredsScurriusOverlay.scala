@@ -5,7 +5,7 @@ import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.common.{OldOverlayUtil, overlays}
 import com.google.inject.{Inject, Singleton}
 import net.runelite.api.Perspective.localToCanvas
-import net.runelite.api.coords.LocalPoint
+import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.api.{Client, Perspective, Point}
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 import net.runelite.client.events.ConfigChanged
@@ -39,9 +39,17 @@ class FredsScurriusOverlay @Inject()(val client: Client, val plugin: FredsScurri
 
 		given Client = client
 
-		withFont(Cache.cachedFont) {
-
-		}
+//		withFont(Cache.cachedFont) {
+//			plugin.getFallingCeilingToTicks.toList.foreach(in => {
+//				val wp = WorldPoint.fromLocal(client, in._1.getLocation)
+//				renderTileOverlay(wp, s"${in._2}", Color.RED, false)
+//			})
+//			plugin.getAttacks.foreach(proj => {
+//				val lp = LocalPoint(proj.getX.toInt, proj.getY.toInt, proj.getTarget.getWorldView)
+//				val wp = WorldPoint.fromLocal(client, lp)
+//				renderTileOverlay(wp, s"${proj.getId}", Color.GREEN, false)
+//			})
+//		}
 		null
 	}
 }

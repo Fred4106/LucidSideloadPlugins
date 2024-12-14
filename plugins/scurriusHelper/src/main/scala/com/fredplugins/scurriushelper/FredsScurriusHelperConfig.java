@@ -87,8 +87,6 @@ public interface FredsScurriusHelperConfig extends Config {
 	}
 
 
-
-
 	@Range(
 		min = 6,
 		max = 32

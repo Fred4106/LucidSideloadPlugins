@@ -3,8 +3,8 @@ plugins {
     scala
 }
 dependencies {
-    api(project(":common"))
-
+    implementation(project(":ethans"))
+    implementation(project(":common"))
     api("org.scala-lang:scala3-library_3:3.5.1")
 
     api("net.codingwell:scala-guice_3:7.0.0") {
