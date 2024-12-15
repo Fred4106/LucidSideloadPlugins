@@ -2,8 +2,8 @@ package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Singleton}
-import net.runelite.api.{Client, GameObject, TileObject}
 import net.runelite.api.coords.WorldPoint
+import net.runelite.api.{Client, GameObject, TileObject}
 import net.runelite.client.plugins.Plugin
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
 import net.runelite.client.ui.overlay.{OverlayLayer, OverlayPanel, OverlayPosition}
@@ -23,10 +23,11 @@ abstract class FredsPvmHelperPanel[P <: Plugin & BossToolTrait](val plugin: P) e
 		def buildEntrySet(btt: BossToolTrait): Seq[LayoutableRenderableEntity] = {
 			Option(btt.layoutPanel()).filter(_.nonEmpty).map(_.prepended(TitleComponent.builder.text(plugin.getName).color(Color.CYAN).build)).getOrElse(Seq.empty)
 		}
-		if(plugin.inArea()) {
-				buildEntrySet(plugin).foreach(bte => {
-					panelComponent.getChildren.add(bte)
-				})
+
+		if (plugin.inArea()) {
+			buildEntrySet(plugin).foreach(bte => {
+				panelComponent.getChildren.add(bte)
+			})
 		}
 		super.render(graphics)
 	}

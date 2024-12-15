@@ -1,22 +1,21 @@
 package com.fredplugins.pvmHelper.helpers
 
-import com.fredplugins.common.utils.SInteractionUtils
+import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
 import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperConfig, FredsPvmHelperPanel}
 import com.google.gson.JsonObject
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import net.runelite.api.coords.WorldPoint
-import net.runelite.api.events.{AnimationChanged, GameTick, GraphicsObjectCreated, NpcSpawned, ProjectileMoved}
-import net.runelite.api.{Client, GameObject, GraphicsObject, NPC, Prayer, Projectile}
-import net.runelite.client.config.{Config, ConfigGroup, ConfigItem, ConfigManager, ConfigSection}
+import net.runelite.api.events.*
+import net.runelite.api.*
+import net.runelite.client.config.*
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
 
-import scala.reflect.Selectable.reflectiveSelectable
 import java.awt.Color
+import scala.reflect.Selectable.reflectiveSelectable
 import scala.util.Try
 import scala.util.chaining.*
-import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
 //import com.fredplugins.pvmHelper.helpers.ScurriusLogic.{DURATION, FALLING_CEILING_GRAPHIC, SCURRIUS, SCURRIUS_PUBLIC}
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
@@ -34,7 +33,6 @@ import net.runelite.client.ui.overlay.OverlayManager
 import org.slf4j.Logger
 
 import java.awt.Font
-import scala.jdk.StreamConverters.StreamHasToScala
 import java.util
 import java.util.stream.Collectors
 import scala.collection.mutable
@@ -42,38 +40,33 @@ import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 import scala.jdk.IntAccumulator
 import scala.jdk.OptionConverters.*
-import scala.util.{Random, Try}
+import scala.jdk.StreamConverters.StreamHasToScala
 import scala.util.chaining.*
+import scala.util.{Random, Try}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#A1004B\">Freds</font> Scurrius Helper</html>",
 	description = "Dodges Scurrius' falling ceiling attack and re-attacks",
-	tags =  Array("pvm", "scurrius", "prayer", "helper", "maps"),
+	tags = Array("pvm", "scurrius", "prayer", "helper", "maps"),
 	conflicts = Array("<html><font color=\"#32CD32\">Lucid </font>Scurrius Helper</html>")
 )
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class ScurriusLogic() extends Plugin with BossToolTrait {
-	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	@Inject val client: Client = null
 	@Inject val clientThread: ClientThread = null
 	@Inject val config: ScurriusConfig = null
 	@Inject val notifier: Notifier = null
-
+	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	@Inject private val eventBus: EventBus = null
 	@Inject private val overlayManager: OverlayManager = null
 	@Inject private val configManager: ConfigManager = null
-//	@Inject private val overlay: FredsPvmHelperOverlay = null
-
-	given Client = client
-
-	@Provides
-	def getConfig(configManager: ConfigManager): ScurriusConfig = {
-		configManager.getConfig[ScurriusConfig](classOf[ScurriusConfig])
-	}
-
-	private val panel: FredsPvmHelperPanel[ScurriusLogic] = new FredsPvmHelperPanel(this){}
-
+	//	@Inject private val overlay: FredsPvmHelperOverlay = null
+	private val panel: FredsPvmHelperPanel[ScurriusLogic] = new FredsPvmHelperPanel(this) {}
+	private val FALLING_CEILING_GRAPHIC: Int = 2644
+	private val SCURRIUS: Int = 7222
+	private val SCURRIUS_PUBLIC: Int = 7221
+	private val DURATION: Int = 9
 	private var bossNpc: NPC = uninitialized
 	private var justDodged: Boolean = false
 	private var lastDodgeTick: Int = 0
@@ -82,14 +75,11 @@ class ScurriusLogic() extends Plugin with BossToolTrait {
 	private var fallingCeilingToTicks: Map[GraphicsObject, Int] = Map.empty //new HashMap<>();
 	private var attacks: List[Projectile] = List.empty
 
-	override def resetState(): Unit = {
-		bossNpc = null
-		justDodged = false
-		lastDodgeTick = 0
-		lastRatTick = 0
-		lastActivateTick = 0
-		attacks = List.empty
-		fallingCeilingToTicks = Map.empty
+	given Client = client
+
+	@Provides
+	def getConfig(configManager: ConfigManager): ScurriusConfig = {
+		configManager.getConfig[ScurriusConfig](classOf[ScurriusConfig])
 	}
 
 	@Subscribe
@@ -101,6 +91,32 @@ class ScurriusLogic() extends Plugin with BossToolTrait {
 		}
 	}
 
+	override def layoutPanel(): Seq[LayoutableRenderableEntity] = {
+		Seq(
+			LineComponent.builder
+				.left("Npc")
+				.right(s"${bossNpc}")
+				.build,
+			LineComponent.builder
+				.left("justDodged")
+				.right(s"${justDodged}")
+				.build,
+			LineComponent.builder
+				.left("lastDodgeTick")
+				.right(s"${lastDodgeTick}")
+				.build,
+			LineComponent.builder
+				.left("lastRatTick")
+				.right(s"${lastRatTick}")
+				.build,
+			LineComponent.builder
+				.left("lastActivateTick")
+				.right(s"${lastActivateTick}")
+				.build
+		)
+	}
+
+	inline def getRegionId: Int = Try(getLocalPlayerWorldPoint.getRegionID).getOrElse(-1)
 
 	override protected def startUp(): Unit = {
 		resetState()
@@ -108,16 +124,21 @@ class ScurriusLogic() extends Plugin with BossToolTrait {
 		//		overlayManager.add(overlay)
 	}
 
+	override def resetState(): Unit = {
+		bossNpc = null
+		justDodged = false
+		lastDodgeTick = 0
+		lastRatTick = 0
+		lastActivateTick = 0
+		attacks = List.empty
+		fallingCeilingToTicks = Map.empty
+	}
+
 	override protected def shutDown(): Unit = {
 		overlayManager.remove(panel)
 		//		overlayManager.remove(overlay)
 		resetState()
 	}
-
-	private val FALLING_CEILING_GRAPHIC: Int = 2644
-	private val SCURRIUS: Int = 7222
-	private val SCURRIUS_PUBLIC: Int = 7221
-	private val DURATION: Int = 9
 
 	@Subscribe
 	private def onGraphicsObjectCreated(event: GraphicsObjectCreated): Unit = {
@@ -128,8 +149,6 @@ class ScurriusLogic() extends Plugin with BossToolTrait {
 			fallingCeilingToTicks = fallingCeilingToTicks.updated(graphicsObject, DURATION)
 		}
 	}
-
-	inline def isScurrius(npc: NPC): Boolean = npc != null && (npc.getId == SCURRIUS || npc.getId == SCURRIUS_PUBLIC)
 
 	@Subscribe
 	private def onNpcSpawned(event: NpcSpawned): Unit = {
@@ -150,6 +169,8 @@ class ScurriusLogic() extends Plugin with BossToolTrait {
 			}
 		}
 	}
+
+	inline def isScurrius(npc: NPC): Boolean = npc != null && (npc.getId == SCURRIUS || npc.getId == SCURRIUS_PUBLIC)
 
 	@Subscribe
 	private def onProjectileMoved(event: ProjectileMoved): Unit = {
@@ -272,36 +293,9 @@ class ScurriusLogic() extends Plugin with BossToolTrait {
 		}
 	})
 
-	override def layoutPanel(): Seq[LayoutableRenderableEntity] = {
-		Seq(
-			LineComponent.builder
-				.left("Npc")
-				.right(s"${bossNpc}")
-				.build,
-			LineComponent.builder
-				.left("justDodged")
-				.right(s"${justDodged}")
-				.build,
-			LineComponent.builder
-				.left("lastDodgeTick")
-				.right(s"${lastDodgeTick}")
-				.build,
-			LineComponent.builder
-				.left("lastRatTick")
-				.right(s"${lastRatTick}")
-				.build,
-			LineComponent.builder
-				.left("lastActivateTick")
-				.right(s"${lastActivateTick}")
-				.build
-		)
-	}
-
-	inline def getLocalPlayerWorldPoint: WorldPoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation)
-
-	inline def getRegionId: Int = Try(getLocalPlayerWorldPoint.getRegionID).getOrElse(-1)
-
 	override def inArea(): Boolean = {
 		getLocalPlayerWorldPoint.pipe(x => x.getRegionID == 13210 && x.getRegionX >= 23)
 	}
+
+	inline def getLocalPlayerWorldPoint: WorldPoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation)
 }
