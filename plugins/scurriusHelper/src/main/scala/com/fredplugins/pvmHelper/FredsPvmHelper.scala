@@ -1,7 +1,7 @@
 package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
-import com.fredplugins.pvmHelper.helpers.ScurriusLogic
+import com.fredplugins.pvmHelper.scurrius.ScurriusLogic
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
@@ -32,7 +32,7 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 
 @PluginDescriptor(
-	name = "<html><font color=\"#32C8CD\">Freds</font> Pvm Helper</html>",
+	name = "<html><font color=\"#A1004B\">Freds</font> PVM Helper</html>",
 	description = "Provides some auto movement and prayer help for limited set of bosses",
 	tags = Array("pvm", "scurrius", "prayer", "helper", "maps")
 )

@@ -1,4 +1,4 @@
-package com.fredplugins.pvmHelper.helpers;
+package com.fredplugins.pvmHelper.scurrius;
 
 import net.runelite.client.config.*;
 

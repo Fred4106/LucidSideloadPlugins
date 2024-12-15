@@ -7,6 +7,7 @@ import net.runelite.api.{Client, GameObject, TileObject}
 import net.runelite.client.plugins.Plugin
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
 import net.runelite.client.ui.overlay.{OverlayLayer, OverlayPanel, OverlayPosition}
+import net.runelite.client.util.Text
 import org.slf4j.Logger
 
 import java.awt.{Color, Dimension, Graphics2D}
@@ -21,7 +22,8 @@ abstract class FredsPvmHelperPanel[P <: Plugin & BossToolTrait](val plugin: P) e
 
 	override def render(graphics: Graphics2D): Dimension = {
 		def buildEntrySet(btt: BossToolTrait): Seq[LayoutableRenderableEntity] = {
-			Option(btt.layoutPanel()).filter(_.nonEmpty).map(_.prepended(TitleComponent.builder.text(plugin.getName).color(Color.CYAN).build)).getOrElse(Seq.empty)
+			Option(btt.layoutPanel()).filter(_.nonEmpty).map(_.prepended(TitleComponent.builder.text(Text.standardize(plugin.getName)).color(Color.CYAN).build))
+				.getOrElse(Seq.empty)
 		}
 
 		if (plugin.inArea()) {

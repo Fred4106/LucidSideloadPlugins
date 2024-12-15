@@ -1,4 +1,4 @@
-package com.fredplugins.pvmHelper.helpers
+package com.fredplugins.pvmHelper.scurrius
 
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
 import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperConfig, FredsPvmHelperPanel}
@@ -45,7 +45,7 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 
 @PluginDescriptor(
-	name = "<html><font color=\"#A1004B\">Freds</font> Scurrius Helper</html>",
+	name = "<html><font color=\"#A1004B\">Freds</font> PVM Helper - Scurrius</html>",
 	description = "Dodges Scurrius' falling ceiling attack and re-attacks",
 	tags = Array("pvm", "scurrius", "prayer", "helper", "maps"),
 	conflicts = Array("<html><font color=\"#32CD32\">Lucid </font>Scurrius Helper</html>")
