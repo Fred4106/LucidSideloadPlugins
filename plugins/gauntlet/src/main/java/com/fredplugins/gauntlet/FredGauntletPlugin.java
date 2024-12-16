@@ -70,7 +70,7 @@ public class FredGauntletPlugin extends Plugin
     public static final int HUNLLEF_STYLE_SWITCH_TO_MAGE = 8754;
     public static final int HUNLLEF_STYLE_SWITCH_TO_RANGE = 8755;
 
-    public static final int[] MELEE_WEAPONS = {ItemID.CRYSTAL_HALBERD_PERFECTED, ItemID.CORRUPTED_HALBERD_PERFECTED, ItemID.CRYSTAL_HALBERD_ATTUNED, ItemID.CORRUPTED_HALBERD_ATTUNED, ItemID.CRYSTAL_HALBERD_BASIC, ItemID.CORRUPTED_HALBERD_BASIC, ItemID.CRYSTAL_SCEPTRE, ItemID.CORRUPTED_SCEPTRE};
+    public static final int[] MELEE_WEAPONS = {ItemID.CRYSTAL_HALBERD_PERFECTED, ItemID.CORRUPTED_HALBERD_PERFECTED, ItemID.CRYSTAL_HALBERD_ATTUNED, ItemID.CORRUPTED_HALBERD_ATTUNED, ItemID.CRYSTAL_HALBERD_BASIC, ItemID.CORRUPTED_HALBERD_BASIC, ItemID.CRYSTAL_SCEPTRE, ItemID.CORRUPTED_SCEPTRE, 30340};
     public static final int[] MELEE_WEAPONS2 = {ItemID.CRYSTAL_SCEPTRE, ItemID.CORRUPTED_SCEPTRE};
     private static final int[] RANGE_WEAPONS = {ItemID.CRYSTAL_BOW_PERFECTED, ItemID.CORRUPTED_BOW_PERFECTED, ItemID.CRYSTAL_BOW_ATTUNED, ItemID.CORRUPTED_BOW_ATTUNED, ItemID.CRYSTAL_BOW_BASIC, ItemID.CORRUPTED_BOW_BASIC};
     private static final int[] MAGE_WEAPONS = {ItemID.CRYSTAL_STAFF_PERFECTED, ItemID.CORRUPTED_STAFF_PERFECTED, ItemID.CRYSTAL_STAFF_ATTUNED, ItemID.CORRUPTED_STAFF_ATTUNED, ItemID.CRYSTAL_STAFF_BASIC, ItemID.CORRUPTED_STAFF_BASIC};
@@ -100,10 +100,9 @@ public class FredGauntletPlugin extends Plugin
             ProjectileID.HUNLLEF_RANGE_ATTACK, ProjectileID.HUNLLEF_CORRUPTED_RANGE_ATTACK
     );
 
-    private static final Set<Integer> PROJECTILE_PRAYER_IDS = Set.of(
-            ProjectileID.HUNLLEF_PRAYER_ATTACK, ProjectileID.HUNLLEF_CORRUPTED_PRAYER_ATTACK
-    );
-
+	private static final Set<Integer> PROJECTILE_PRAYER_IDS = Set.of(
+		ProjectileID.HUNLLEF_PRAYER_ATTACK, ProjectileID.HUNLLEF_CORRUPTED_PRAYER_ATTACK
+	);
     private static final Set<Integer> PROJECTILE_IDS = new HashSet<>();
 
     static
@@ -231,15 +230,9 @@ public class FredGauntletPlugin extends Plugin
     private boolean inHunllef;
 
     private int lastSwitchTick = 0;
-
-    private int removeWepTick = 0;
-
     private int lastAttackTick = 0;
-
     private int lastDodgeTick = -1;
-
     private WorldPoint lastSafeTile;
-
     private WorldPoint secondLastSafeTile;
 
 
@@ -1194,7 +1187,7 @@ public class FredGauntletPlugin extends Plugin
     private Prayer getPrayerBasedOnWeapon()
     {
         if(config.autoOffense()) {
-            if(EquipmentUtils.contains(RANGE_WEAPONS)) {
+			if(EquipmentUtils.contains(RANGE_WEAPONS)) {
                 return config.offenseRangePrayer().getPrayer();
             }
             if(EquipmentUtils.contains(MAGE_WEAPONS)) {

@@ -1,6 +1,8 @@
 package com.fredplugins.pvmHelper.jad
 
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
+import com.fredplugins.pvmHelper.jad.TzMobType.*
+import com.fredplugins.pvmHelper.jad.{*, given}
 import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperConfig, FredsPvmHelperPanel}
 import com.google.gson.JsonObject
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
@@ -11,11 +13,8 @@ import net.runelite.client.config.*
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
-
+import com.fredplugins.common.Locatable.given
 import java.awt.Color
-import scala.reflect.Selectable.reflectiveSelectable
-import scala.util.Try
-import scala.util.chaining.*
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
@@ -40,9 +39,9 @@ import scala.jdk.CollectionConverters.*
 import scala.jdk.IntAccumulator
 import scala.jdk.OptionConverters.*
 import scala.jdk.StreamConverters.StreamHasToScala
-import scala.util.chaining.*
 import scala.util.{Random, Try}
-
+import scala.reflect.Selectable.reflectiveSelectable
+import scala.util.chaining.*
 @PluginDescriptor(
 	name = "<html><font color=\"#A1004B\">Freds</font> PVM Helper - Jad</html>",
 	description = "Auto prayers against monsters in the Fight Caves",
@@ -66,7 +65,7 @@ class JadLogic() extends Plugin with BossToolTrait {
 //	private var lastRatTick: Int = 0
 //	private var lastActivateTick: Int = 0
 //	private var fallingCeilingToTicks: Map[GraphicsObject, Int] = Map.empty //new HashMap<>();
-	private var monsters: List[NPC] = List.empty
+	private var monsters: List[TzMob] = List.empty
 
 	given Client = client
 
@@ -110,19 +109,27 @@ class JadLogic() extends Plugin with BossToolTrait {
 				.right(s"${lastActivateTick}")
 				.build*/
 		).appendedAll(
-			monsters.flatMap(m => {
-				val correctPrayer = Option(m).collect {
-					case kz if isKetZek(kz) => Prayer.PROTECT_FROM_MAGIC
-					case kz if isTokXil(kz) => Prayer.PROTECT_FROM_MISSILES
-					case kz if isYtMejKot(kz) => Prayer.PROTECT_FROM_MELEE
-				}.map(p => m -> p)
-				correctPrayer.toList
-			}).map{
-				case (m, p) =>					LineComponent.builder
-					.left(s"${m.getName} ${m.getId}")
-					.right(s"${p}")
+			monsters.map(m => {
+				val correctPrayer = Option(m.tpe).collect {
+					case KetZek => Prayer.PROTECT_FROM_MAGIC
+					case  TokXil => Prayer.PROTECT_FROM_MISSILES
+					case YtMejKot => Prayer.PROTECT_FROM_MELEE
+				}
+				LineComponent.builder
+					.left(s"${m.tpe} ${m.distanceTo(localPlayer)}")
+					.right(s"${correctPrayer.map(_.toString).getOrElse("None")}")
 					.build
-			}
+			})
+		).appended(
+			LineComponent.builder
+			.left(s"Requested Prayer")
+			.right(s"${requestedJadPrayer}")
+			.build
+		).appended(
+		LineComponent.builder
+			.left(s"Ticks Since")
+			.right(s"${client.getTickCount - requestedJadPrayerTime}")
+			.build
 		)
 	}
 
@@ -134,6 +141,8 @@ class JadLogic() extends Plugin with BossToolTrait {
 
 	override def resetState(): Unit = {
 		monsters = List.empty
+		requestedJadPrayerTime = client.getTickCount
+		requestedJadPrayer = None
 	}
 
 	override protected def shutDown(): Unit = {
@@ -152,42 +161,46 @@ class JadLogic() extends Plugin with BossToolTrait {
 //		}
 //	}
 
-	//mage
-	inline def isKetZek(npc: NPC): Boolean = npc != null && (npc.getId == 3125 || npc.getId == 3126)
-	//range
-	inline def isTokXil(npc: NPC): Boolean = npc != null && (npc.getId == 3121 || npc.getId == 3122)
-	inline def isYtMejKot(npc: NPC): Boolean = npc != null && (npc.getId == 3123 || npc.getId == 3124)
-
-
-
 	@Subscribe
 	private def onNpcSpawned(event: NpcSpawned): Unit = {
 		if (!inArea() || event.getNpc == null) return
 		log.debug(s"Spawned ${event.getNpc.pipe(p => p.getId -> p.getName)}")
-		monsters = monsters.appended(event.getNpc)
+		TzMob(event.getNpc).foreach(mob => {
+			monsters = (monsters :+ mob).sortBy(_.distanceTo(localPlayer))
+		})
 	}
 
 	@Subscribe
 	private def onNpcDespawned(event: NpcDespawned): Unit = {
 		if (!inArea() || event.getNpc == null) return
 		log.debug(s"Despawned ${event.getNpc.pipe(p => p.getId -> p.getName)}")
-		monsters = monsters.filter(_ != event.getNpc)
+		monsters = monsters.filterNot(_.wrapped == event.getNpc)
 	}
 
-//	@Subscribe
-//	private def onAnimationChanged(event: AnimationChanged): Unit = {
-//		if (!event.getActor.isInstanceOf[NPC]) return
-//		if (!inArea()) return
-//		if (!inArea()) return
-//		val npc = event.getActor.asInstanceOf[NPC]
-//		if (isScurrius(npc) && npc.getAnimation == 10705 && NpcUtils.getNearestNpc("Giant rat") == null) {
-//			if (config.autoPray) {
-//				CombatUtils.deactivatePrayers(false)
-//			}
-//		}
-//	}
-//
-//
+	var requestedJadPrayer = Option.empty[Prayer]
+	var requestedJadPrayerTime: Int = -1
+	@Subscribe
+	private def onAnimationChanged(event: AnimationChanged): Unit = {
+		if (!event.getActor.isInstanceOf[NPC]) return
+		if (!inArea()) return
+		val npc = event.getActor.asInstanceOf[NPC]
+		val toActOn = monsters.find(_.wrapped == npc).filter(_.tpe == TzTokJad)
+			if(toActOn.isDefined) {
+				val jad = toActOn.get
+				val toRequest = Option(jad.wrapped.getAnimation).collect {
+					case AnimationID.TZTOK_JAD_MAGIC_ATTACK => Prayer.PROTECT_FROM_MAGIC
+					case AnimationID.TZTOK_JAD_RANGE_ATTACK => Prayer.PROTECT_FROM_MISSILES
+				}.tap(op => if(op.isEmpty && jad.wrapped.getAnimation != -1) {
+					log.debug("Unknown animation id {}", jad.wrapped.getAnimation)
+				})
+				if(toRequest.isDefined) {
+					requestedJadPrayer = toRequest
+					requestedJadPrayerTime = client.getTickCount
+				}
+			}
+	}
+
+
 //	@Subscribe
 //	private def onProjectileMoved(event: ProjectileMoved): Unit = {
 //		val projectile = event.getProjectile
@@ -204,11 +217,60 @@ class JadLogic() extends Plugin with BossToolTrait {
 //		}
 //	}
 
+//	@Subscribe
+//	private def onHitsplatApplied(event: HitsplatApplied): Unit = {
+//		if(!inArea()) return
+//		if(event.getActor != localPlayer) return
+//		if(!event.getHitsplat.isMine) return
+//		if(requestedJadPrayer.isDefined) {
+//			requestedJadPrayer = None
+//		}
+//	}
+
 	@Subscribe
 	private def onGameTick(event: GameTick): Unit = {
 		if (!inArea()) return //instancePoint.getRegionID != 13210 || instancePoint.getRegionX < 23) return
-		monsters.foreach(m => log.debug(s"${m.getId}, ${m.getName}, ${m.getWorldLocation}"))
-		handlePrayers()
+//		monsters.foreach(m => log.debug(s"${m.getId}, ${m.getName}, ${m.asInstanceOf[NPC]}"))
+		if(!monsters.exists(_.tpe== TzTokJad)) {
+			handlePrayers()
+		} else {
+			val jad: TzMob = monsters.find(_.tpe == TzTokJad).get
+			val timeSinceReqeuest = client.getTickCount - requestedJadPrayerTime
+			def mageAndRangeProjectiles(prayer: Prayer): List[Projectile] = {
+				Option(prayer).collect {
+					case Prayer.PROTECT_FROM_MAGIC => 448
+					case Prayer.PROTECT_FROM_MISSILES => 449
+				}.map(id =>
+					client.getTopLevelWorldView.getProjectiles.asScala.toList.filter(p => p.getId == id)
+				).getOrElse(List.empty)
+			}
+			if(requestedJadPrayer.map(mageAndRangeProjectiles).exists(_.isEmpty) && timeSinceReqeuest > 3) {
+				requestedJadPrayer = None
+				requestedJadPrayerTime = client.getTickCount
+			}
+
+
+//			{
+//				case m if m.getId == 448 =>
+//				case m if m.getId == 449 =>
+//			}
+//
+//			448 TzTok-Jad Magic Projectile
+//			449 - TzTok-Jad Range Projectile
+
+			requestedJadPrayer match {
+				case Some(p) => CombatUtils.activatePrayer(p)
+				case None => CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE)
+			}
+
+			if(jad.wrapped.isDead) {
+				CombatUtils.deactivatePrayers(false)
+			} else {
+				CombatUtils.activatePrayer(Prayer.ULTIMATE_STRENGTH)
+				CombatUtils.activatePrayer(Prayer.INCREDIBLE_REFLEXES)
+			}
+			//handle jad
+		}
 //		attacks = attacks.filter((proj: Projectile) => proj.getRemainingCycles > 30)
 //		justDodged = false
 //		if (fallingCeilingToTicks.nonEmpty) {
@@ -244,72 +306,35 @@ class JadLogic() extends Plugin with BossToolTrait {
 //		}
 	}
 
-	private def handlePrayers(): Unit = {
-		if (config.autoPrayMage() && monsters.filter(isKetZek(_)).nonEmpty) {
-			CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC)
-		} else if(config.autoPrayRange() && monsters.filter(isTokXil(_)).nonEmpty) {
-			CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MISSILES)
-		} else if(config.autoPrayMelee() && monsters.filter(isYtMejKot(_)).nonEmpty) {
-			CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE)
-		} else {
-			CombatUtils.deactivatePrayers(true)
-		}
-
-		//		import scala.collection.JavaConversions._
-//		for (projectile <- attacks) {
-//			val cyclesToTicks = Math.floor(projectile.getRemainingCycles / 30.0F).toInt
-//			if (cyclesToTicks <= 1) {
-//				if (projectile.getId == 2642) {
-//					prayer = Prayer.PROTECT_FROM_MISSILES
-//				} else {
-//					prayer = Prayer.PROTECT_FROM_MAGIC
-//				}
-//			}
-//		}
-//		if (prayer != null) {
-//			CombatUtils.activatePrayer(prayer)
-//		} else {
-//			val targetingMe = NpcUtils.getNearestNpc((npc: NPC) => (npc.getName != null && npc.getName == "Giant rat") || (npc.getName != null && npc.getName == "Scurrius" && npc.getPoseAnimation == 10687 && npc.getAnimation != 10705))
-//			if (targetingMe != null) {
-//				if (3.size == 0) {
-//					CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE)
-//					lastActivateTick = client.getTickCount
-//				}
-//				else {
-//					if (client.isPrayerActive(Prayer.PROTECT_FROM_MELEE) && client.getTickCount - lastActivateTick < 3 || attacks.size > 0) return
-//					CombatUtils.deactivatePrayers(true)
-//				}
-//			}
-//		}
-	}
-
-//	private def dodgeFallingCeiling(): Unit = {
-//		for (fallingCeiling <- fallingCeilingToTicks.toSet) {
-//			val unsafeTile = fallingCeiling._1.getLocation
-//			val playerTile = client.getLocalPlayer.getLocalLocation
-//			if (unsafeTile.getX == playerTile.getX && unsafeTile.getY == playerTile.getY) {
-//				val scurrius = NpcUtils.getNearestNpc("Scurrius")
-//				if (scurrius != null) {
-//					val unsafeTiles = fallingCeilingToTicks.keys.map(_.getLocation).toList
-//					var safeTile = Option.empty[WorldPoint]
-//					if (config.stayMelee) {
-//						safeTile = SInteractionUtils.getClosestSafeLocationInNPCMeleeDistance(unsafeTiles, scurrius)
-//					} else {
-//						safeTile = SInteractionUtils.getClosestSafeLocationNotInNPCMeleeDistance(unsafeTiles, scurrius)
-//					}
-//					if (safeTile.isDefined) {
-//						InteractionUtils.walk(safeTile.get)
-//						justDodged = true
-//						lastDodgeTick = client.getTickCount
-//					}
-//				}
-//			}
-//		}
+//	def shouldPrayAgainst(tzMob: TzMob): Boolean = {
+//		val v3 = (tzMob.tpe == KetZek && config.autoPrayMage() && tzMob.distanceTo(localPlayer) < 18)
+//		val v1 = (tzMob.tpe == TokXil && config.autoPrayRange() && tzMob.distanceTo(localPlayer) < 18)
+//		val v2 = (tzMob.tpe == YtMejKot && config.autoPrayMelee() && tzMob.distanceTo(localPlayer) < 3)
+//		v1 || v2 || v3
 //	}
 
-	override def inArea(): Boolean = {
-		getLocalPlayerWorldPoint.pipe(x => x.getRegionID == 9551)
+	def shouldPrayAgainst(tzMob: TzMob): Option[Prayer] = {
+		Option(tzMob).collect({
+			case t if t.tpe == KetZek && t.distanceTo(localPlayer) < 20 && config.autoPrayMage() => Prayer.PROTECT_FROM_MAGIC
+			case t if t.tpe == TokXil && t.distanceTo(localPlayer) < 20 && config.autoPrayRange() => Prayer.PROTECT_FROM_MISSILES
+			case t if t.tpe == YtMejKot && t.distanceTo(localPlayer) < 4 && config.autoPrayMelee() => Prayer.PROTECT_FROM_MELEE
+		})
+	}
+	private def handlePrayers(): Unit = {
+		//		val toMatch = List(KetZek -> Prayer.PROTECT_FROM_MAGIC, TokXil ->Prayer.PROTECT_FROM_MISSILES, YtMejKot ->Prayer.PROTECT_FROM_MELEE)
+
+		val monstersToPrayAgainst: List[TzMob] = monsters.filter(shouldPrayAgainst(_).isDefined).sortBy(_.distanceTo(localPlayer)).groupBy(_.tpe).toList.sortBy(_._1.ordinal).reverse.flatMap(_._2)
+
+		monstersToPrayAgainst.flatMap(shouldPrayAgainst).headOption match {
+			case Some(value) => CombatUtils.activatePrayer(value)
+			case None => CombatUtils.deactivatePrayers(true)
+		}
 	}
 
-	inline def getLocalPlayerWorldPoint: WorldPoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer.getLocalLocation)
+	override def inArea(): Boolean = {
+		localPlayer.convert.worldPoint.getRegionID == 9551
+	}
+
+	inline def localPlayer: Player = client.getLocalPlayer
+	inline def getLocalPlayerWorldPoint: WorldPoint = WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation)
 }
