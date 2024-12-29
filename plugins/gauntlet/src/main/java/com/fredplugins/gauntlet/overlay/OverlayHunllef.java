@@ -130,11 +130,6 @@ public class OverlayHunllef extends Overlay
         {
             final int timeLeft = tornado.getTimeLeft();
 
-            if (timeLeft < 0)
-            {
-                continue;
-            }
-
             final NPC npc = tornado.getNpc();
 
             if (config.tornadoTileOutline())
@@ -150,6 +145,11 @@ public class OverlayHunllef extends Overlay
                 drawOutlineAndFill(graphics2D, config.tornadoOutlineColor(), config.tornadoFillColor(),
                         config.tornadoTileOutlineWidth(), polygon);
             }
+
+            if (timeLeft < 0)
+           {
+               continue;
+           }
 
             if (config.tornadoTickCounter())
             {

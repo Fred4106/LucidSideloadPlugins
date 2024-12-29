@@ -343,6 +343,10 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 						case Mage => CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC)
 					}
 				}
+				val wepItem = client.getItemContainer(InventoryID.EQUIPMENT).getItem(EquipmentInventorySlot.WEAPON.getSlotIdx)
+				if(wepItem != null && wepItem.getId == 30340) {
+					if(!CombatUtils.isSpecEnabled) CombatUtils.toggleSpec()
+				}
 
 				State.HunllefState.onTick()
 				projectilesSpawnedThisTick = Set.empty

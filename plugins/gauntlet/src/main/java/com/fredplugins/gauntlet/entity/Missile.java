@@ -68,6 +68,8 @@ public class Missile
             case ProjectileID.HUNLLEF_PRAYER_ATTACK:
             case ProjectileID.HUNLLEF_CORRUPTED_PRAYER_ATTACK:
                 return Color.MAGENTA;
+            case 3164:
+                return Color.pink;
             default:
                 throw new IllegalArgumentException("Unsupported gauntlet projectile id: " + projectileId);
         }
@@ -85,6 +87,7 @@ public class Missile
                 return skillIconManager.getSkillImage(Skill.RANGED);
             case ProjectileID.HUNLLEF_PRAYER_ATTACK:
             case ProjectileID.HUNLLEF_CORRUPTED_PRAYER_ATTACK:
+			case 3164:
                 return skillIconManager.getSkillImage(Skill.PRAYER);
             default:
                 throw new IllegalArgumentException("Unsupported gauntlet projectile id: " + projectileId);

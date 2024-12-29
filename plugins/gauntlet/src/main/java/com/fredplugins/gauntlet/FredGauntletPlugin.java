@@ -101,7 +101,10 @@ public class FredGauntletPlugin extends Plugin
     );
 
 	private static final Set<Integer> PROJECTILE_PRAYER_IDS = Set.of(
-		ProjectileID.HUNLLEF_PRAYER_ATTACK, ProjectileID.HUNLLEF_CORRUPTED_PRAYER_ATTACK
+			ProjectileID.HUNLLEF_PRAYER_ATTACK, ProjectileID.HUNLLEF_CORRUPTED_PRAYER_ATTACK
+		);
+	private static final Set<Integer> PROJECTILE_INVERSION_IDS = Set.of(
+		3164
 	);
     private static final Set<Integer> PROJECTILE_IDS = new HashSet<>();
 
@@ -109,7 +112,8 @@ public class FredGauntletPlugin extends Plugin
     {
         PROJECTILE_IDS.addAll(PROJECTILE_MAGIC_IDS);
         PROJECTILE_IDS.addAll(PROJECTILE_RANGE_IDS);
-        PROJECTILE_IDS.addAll(PROJECTILE_PRAYER_IDS);
+		PROJECTILE_IDS.addAll(PROJECTILE_PRAYER_IDS);
+		PROJECTILE_IDS.addAll(PROJECTILE_INVERSION_IDS);
     }
 
     private static final Set<Integer> HUNLLEF_IDS = Set.of(
@@ -119,7 +123,7 @@ public class FredGauntletPlugin extends Plugin
             NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038
     );
 
-    private static final Set<Integer> TORNADO_IDS = Set.of(NullNpcID.NULL_9025, NullNpcID.NULL_9039);
+    private static final Set<Integer> TORNADO_IDS = Set.of(NullNpcID.NULL_9025, NullNpcID.NULL_9039, NullNpcID.NULL_14142);
 
     private static final Set<Integer> DEMIBOSS_IDS = Set.of(
             NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR,
