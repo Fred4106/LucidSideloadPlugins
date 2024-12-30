@@ -1,15 +1,17 @@
-package com.fredplugins.pvmHelper.hunleff
+package com.fredplugins.pvmHelper.hunllef
 
 import com.fredplugins.common.Locatable
-import com.fredplugins.common.Locatable.given
-import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperPanel, hunleff}
+import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
+import com.fredplugins.pvmHelper.hunllef.Tornado.isTornado
+import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperOverlay, FredsPvmHelperPanel}
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.{CombatUtils, MessageUtils}
+import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, InventoryUtils, MessageUtils}
 import ethanApiPlugin.EthanApiPlugin
-import net.runelite.api.coords.WorldPoint
-import net.runelite.api.events.*
+import ethanApiPlugin.collections.NPCs
+import ethanApiPlugin.collections.query.NPCQuery
 import net.runelite.api.*
+import net.runelite.api.coords.{LocalPoint, WorldPoint}
+import net.runelite.api.events.*
 import net.runelite.client.Notifier
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.config.ConfigManager
@@ -18,14 +20,14 @@ import net.runelite.client.events.ConfigChanged
 import net.runelite.client.game.SkillIconManager
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.overlay.OverlayManager
-import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent}
+import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
 
 import java.awt.Color
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
-import scala.util.Try
-import scala.util.chaining.*
+import scala.util.chaining.scalaUtilChainingOps
 @PluginDescriptor(
 	name = "<html><font color=\"#A1004B\">Freds</font> PVM Helper - Hunllef</html>",
 	description = "Helps fight the echo Hunllef",
@@ -39,13 +41,17 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 	@Inject val skillIconManager: SkillIconManager = null
 	@Inject val config: HunleffConfig = null
 	@Inject val notifier: Notifier = null
+	@Inject val modelOutlineRenderer: ModelOutlineRenderer = null
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	@Inject private val eventBus: EventBus = null
 	@Inject private val overlayManager: OverlayManager = null
-	private val panel: FredsPvmHelperPanel[HunllefLogic] = new FredsPvmHelperPanel(this) {}
 
 	given Client = client
 	given SkillIconManager = skillIconManager
+	given ModelOutlineRenderer = modelOutlineRenderer
+
+	private lazy val panel: FredsPvmHelperPanel[HunllefLogic] = new FredsPvmHelperPanel[HunllefLogic](this) {}
+	private lazy val overlay: FredsPvmHelperOverlay[HunllefLogic] = new FredsPvmHelperOverlay[HunllefLogic] (this) {}
 
 	@Provides
 	def getConfig(configManager: ConfigManager): HunleffConfig = {
@@ -54,7 +60,7 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 
 	@Subscribe
 	def onConfigChanged(e: ConfigChanged): Unit = {
-		if (e.getGroup == hunleff.HunleffConfig.GroupName) {
+		if (e.getGroup == HunleffConfig.GroupName) {
 			e.getKey match {
 				case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
 			}
@@ -64,18 +70,12 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 
 	inline def isGauntletVarbitSet: Boolean = client.getVarbitValue(9178) == 1
 	inline def isHunllefVarbitSet: Boolean = client.getVarbitValue(9177) == 1
-//
-//	inline def localPlayer: Player = client.getLocalPlayer
-//	inline def getLocalPlayerWorldPoint: WorldPoint = WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation)
 
 	override def inArea(): Boolean = {
 		State.inGauntlet || State.inHunllef
 	}
 
-	sealed trait HunllefCycle {}
 
-	case class Range(couldBeInverted: Boolean = false) extends HunllefCycle {}
-	case object Mage extends HunllefCycle {}
 
 	object State {
 		var inGauntlet: Boolean = false
@@ -140,7 +140,7 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 		}
 
 //		var missile: Missile = null
-//		var tornadoes: Set[Tornado] = Set.empty
+		var tornadoes: Set[Tornado] = Set.empty
 
 		var wrongAttackStyle: Boolean = false
 		var switchWeapon: Boolean = false
@@ -157,6 +157,7 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 		projectilesSpawnedThisTick = Set.empty[Int]
 		HunllefState.reset()
 
+		tornadoes = Set.empty[Tornado]
 		lastSafeTile = null
 		secondLastSafeTile = null
 
@@ -165,31 +166,45 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 	}
 
 	override def layoutPanel(): Seq[LayoutableRenderableEntity] = {
-		import State.*
 
+		val spacerElement = "" -> ""
+		val block1 =
+			Seq("inGauntlet" -> State.inGauntlet,
+				"inHunllef" -> State.inHunllef,
+				"nextCycle" -> State.HunllefState.getNextCycle,
+				"ticksTillAttack" -> State.HunllefState.getTicksUntilNextAttack
+			).map(d => LineComponent.builder.left(d._1).right(Option(d._2).map(_.toString).getOrElse("None")).build())
+		val block2 = {
+			(State.tornadoes.toList.partition(_.isInstanceOf[Tornado.ChaseTornado]) match {
+				case (tl1, tl2) => {
+					Seq(
+					tl1.map(t => LineComponent.builder().left("Chase").right(s"age=${client.getTickCount - t.spawnTick}, spawn=${t.spawnLoc}").rightColor(Color.MAGENTA).build()),
+					tl2.map(t => LineComponent.builder().left("Roaming").right(s"age=${client.getTickCount - t.spawnTick}, spawn=${t.spawnLoc}").rightColor(Color.BLUE).build()),
+					).flatten
+				}
+			}).prepended(TitleComponent.builder().text("Tornadoes").build())
+		}
+		block1 ++ block2
+	}
 
-		Seq("inGauntlet" -> State.inGauntlet,
-		"inHunllef" -> State.inHunllef,
-		"hunllef(cycle, ticksTillAttack)" -> (State.HunllefState.getNextCycle, State.HunllefState.getTicksUntilNextAttack),
-		"lastSwitchTick" -> State.lastSwitchTick,
-		"lastAttackTick" -> State.lastAttackTick,
-		"lastDodgeTick" -> State.lastDodgeTick,
-		"lastSafeTile" -> State.lastSafeTile,
-		"secondLastSafeTile" -> State.secondLastSafeTile,
-		"wrongAttackStyle" -> State.wrongAttackStyle,
-		"switchWeapon" -> State.switchWeapon)
-			.map(d => LineComponent.builder.left(d._1).right(Option(d._2).map(_.toString).getOrElse("None")).build())
+	override def tilesToPaint(): Seq[(Actor, Color, String)] = {
+		State.tornadoes.toList.map {
+			case ct: Tornado.ChaseTornado => (ct.wrapped, Color.RED, s"${ct.wrapped.toString}, ${client.getTickCount - ct.spawnTick}")
+			case rt: Tornado.RoamingTornado => (rt.wrapped, Color.BLUE, s"${rt.wrapped.toString}, ${client.getTickCount - rt.spawnTick}")
+		}
 	}
 
 	override protected def startUp(): Unit = {
 		resetState()
 		overlayManager.add(panel)
-		//		overlayManager.add(overlay)
+		overlayManager.add(overlay)
 	}
 
 
 	override protected def shutDown(): Unit = {
 		overlayManager.remove(panel)
+		overlayManager.remove(overlay)
+
 		//		overlayManager.remove(overlay)
 		resetState()
 	}
@@ -215,13 +230,6 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 		}
 	}
 
-	def isHunllef(n: NPC): Boolean = {
-		Set(NpcID.CRYSTALLINE_HUNLLEF, NpcID.CRYSTALLINE_HUNLLEF_9022,
-			NpcID.CRYSTALLINE_HUNLLEF_9023, NpcID.CRYSTALLINE_HUNLLEF_9024,
-			NpcID.CORRUPTED_HUNLLEF, NpcID.CORRUPTED_HUNLLEF_9036,
-			NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038).contains(n.getId)
-	}
-
 	@Subscribe
 	private def onNpcSpawned(event: NpcSpawned): Unit = {
 		if (!inArea() || event.getNpc == null) return
@@ -229,10 +237,11 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 
 		if (isHunllef(event.getNpc)) {
 			State.HunllefState.reset()
-		}
-		/* else if (Tornado.validIds.contains(event.getNpc.getId)) {
-			State.tornadoes = State.tornadoes + new Tornado(event.getNpc)
-		}*/ else {
+		} else if (isTornado(event.getNpc)) {
+			Tornado.apply(event.getNpc).foreach(toAdd => {
+				State.tornadoes = State.tornadoes + toAdd
+			})
+		} else {
 			shouldLog = false
 		}
 
@@ -247,9 +256,9 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 		var shouldLog: Boolean = true
 		if (isHunllef(event.getNpc)) {
 			State.HunllefState.reset()
-		}/* else if (State.tornadoes.exists(_.npc == event.getNpc)) {
-			State.tornadoes = State.tornadoes.filter(t => t.npc != event.getNpc)
-		}*/ else {shouldLog = false}
+		} else if (State.tornadoes.exists(_.wrapped == event.getNpc)) {
+			State.tornadoes = State.tornadoes.filter(t => t.wrapped != event.getNpc)
+		} else {shouldLog = false}
 
 		if(shouldLog) {
 			logTick(s"Despawned npc[${event.getNpc.getIndex}] = {id=${event.getNpc.getId}, name=${event.getNpc.getName}}")
@@ -301,7 +310,8 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 //			requestedJadPrayer = None
 //		}
 //	}
-	@Subscribe private def onChatMessage(event: ChatMessage): Unit = {
+	@Subscribe
+	private def onChatMessage(event: ChatMessage): Unit = {
 		val `type` = event.getType
 		logTick(s"onChatMessage: \"${event.getMessage}\"")
 		if (event.getMessage.contains("prayers have been disabled")) {
@@ -320,6 +330,9 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 	}
 
 //	var oldHunleffCycle: HunllefCycle = State.HunllefState.getNextCycle
+
+	var lastHeadIcon: HeadIcon = null
+
 	@Subscribe
 	private def onGameTick(event: GameTick): Unit = {
 		if (!inArea()) {
@@ -328,6 +341,8 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 			if(State.inHunllef) {
 				val currentCycle = State.HunllefState.getNextCycle
 //				val oldHunleffCycle = State.HunllefState.getLastCycle
+				import scala.jdk.OptionConverters.*
+				val hunleffNpc: Option[NPC] = NPCs.search().idInList(HunllefIds.map(Integer.valueOf).asJava).first.toScala
 
 				if(projectilesSpawnedThisTick.nonEmpty) {
 					logTick(s"hunllef spawned these projectiles ${projectilesSpawnedThisTick.mkString("Set(", ", ", ")")}")
@@ -343,11 +358,18 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 						case Mage => CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC)
 					}
 				}
+				hunleffNpc.map(EthanApiPlugin.getHeadIcon(_)).tap(hi => logTick(s"Head icon changed to ${hi}")) match {
+//					case HeadIcon.RANGE_MAGE_MELEE => InventoryUtils.wieldItem(30340)
+//					case null => InventoryUtils.wieldItem(23857)
+					case _ => //InventoryUtils.wieldItem(23851)
+				}
+
 				val wepItem = client.getItemContainer(InventoryID.EQUIPMENT).getItem(EquipmentInventorySlot.WEAPON.getSlotIdx)
 				if(wepItem != null && wepItem.getId == 30340) {
 					if(!CombatUtils.isSpecEnabled) CombatUtils.toggleSpec()
+				} else if(wepItem != null && wepItem.getId == 23851) {
+					CombatUtils.activateQuickPrayers()
 				}
-
 				State.HunllefState.onTick()
 				projectilesSpawnedThisTick = Set.empty
 			}
@@ -357,46 +379,6 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 			logTick ("GameTick\n")
 			didLogThisTick = false
 		}
-
-			//		attacks = attacks.filter((proj: Projectile) => proj.getRemainingCycles > 30)
-//		justDodged = false
-//		if (fallingCeilingToTicks.nonEmpty) {
-//			dodgeFallingCeiling()
-//			fallingCeilingToTicks = (fallingCeilingToTicks.toList.map(in => in._1 -> (in._2 - 1)).filter(_._2 > 0)).toMap
-//			//			fallingCeilingToTicks.filterInPlace((_: GraphicsObject, v: Int) => v > 0)
-//		}
-//		val scurrius = NpcUtils.getNearestNpc("Scurrius")
-//		if (!justDodged) {
-//			if (config.attackAfterDodge && (client.getLocalPlayer.getInteracting ne scurrius)) {
-//				val tSinceLastDodge = client.getTickCount - lastDodgeTick
-//				if (tSinceLastDodge < 3) if (scurrius != null) if (!config.prioritizeRats || getEligibleRat == null) NpcUtils.attackNpc(scurrius)
-//			}
-//		}
-//		var attackRat = true
-//		if (scurrius != null) {
-//			val ratio = scurrius.getHealthRatio
-//			val scale = scurrius.getHealthScale
-//			val targetHpPercent = ratio.toDouble / scale.toDouble * 100
-//			if (targetHpPercent > 0) attackRat = false
-//		}
-//		if (justDodged) return
-//		if (config.attackRats && attackRat || config.prioritizeRats) {
-//			val giantRat = getEligibleRat
-//			if (giantRat != null && (giantRat ne client.getLocalPlayer.getInteracting)) {
-//				NpcUtils.attackNpc(giantRat)
-//				lastRatTick = client.getTickCount
-//			}
-//			else if (config.prioritizeRats && giantRat == null) {
-//				val tSinceLatRatHit = client.getTickCount - lastRatTick
-//				if (scurrius != null && tSinceLatRatHit < 8 && (client.getLocalPlayer.getInteracting ne scurrius)) NpcUtils.attackNpc(scurrius)
-//			}
-//		}
 	}
 
-//	def shouldPrayAgainst(tzMob: TzMob): Boolean = {
-//		val v3 = (tzMob.tpe == KetZek && config.autoPrayMage() && tzMob.distanceTo(localPlayer) < 18)
-//		val v1 = (tzMob.tpe == TokXil && config.autoPrayRange() && tzMob.distanceTo(localPlayer) < 18)
-//		val v2 = (tzMob.tpe == YtMejKot && config.autoPrayMelee() && tzMob.distanceTo(localPlayer) < 3)
-//		v1 || v2 || v3
-//	}
 }

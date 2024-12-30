@@ -1,55 +1,65 @@
 package com.fredplugins.common
 
-import net.runelite.api.{Actor, Client, GameObject, NPC, Player, Projectile, Scene, TileObject, WorldView}
+import net.runelite.api.{Actor, ActorSpotAnim, Client, GameObject, IterableHashTable, Model, NPC, Node, Player, Point, Projectile, Scene, SpritePixels, TileObject, WorldView}
 import net.runelite.api.coords.{LocalPoint, WorldArea, WorldPoint}
-import Locatable.given
+
+import java.awt.{Graphics2D, Polygon, Shape}
+import java.awt.image.BufferedImage
+import scala.swing.ListView.Renderer.Wrapped
 import scala.util.chaining.*
 
-type LocatableType = NPC | Player | TileObject | Projectile
-class Locatable(val wrapped: LocatableType) {
-	def localPoint: LocalPoint = {
-		wrapped match {
-			case actor: Actor => actor.getLocalLocation
-			case to: TileObject => to.getLocalLocation
-			case proj: Projectile => LocalPoint(proj.getX.intValue, proj.getY.intValue, proj.getZ.intValue)
-		}
-	}
-	def worldPoint(using client: Client): WorldPoint = {
-		WorldPoint.fromLocalInstance(client, localPoint)
-//		wrapped match {
-//			case actor: Actor => actor.getWorldLocation
-//			case to: TileObject => to.getWorldLocation
-//			case _: Projectile =>
-//		}
-	}
-	def worldArea(using client: Client): WorldArea = {
-		wrapped match {
-			case actor: Actor => actor.getWorldArea
-			case to: GameObject => {
-				WorldPoint.fromScene(client.getTopLevelWorldView, to.getSceneMinLocation.getX, to.getSceneMinLocation.getY, to.getPlane)
-					.pipe(mwp => WorldArea(mwp, to.sizeX(), to.sizeY()))
-			}
-			case to: TileObject => {
-								WorldArea(worldPoint, 1, 1)
-			}
-			case proj: Projectile => WorldArea(worldPoint, 1, 1)
-		}
-	}
-
-	def distanceTo(other: Locatable)(using client: Client): Int = {
-		worldArea.distanceTo(other.worldArea)
-	}
-}
+//trait Locatable {
+//	def worldPoint: WorldPoint
+//}
 
 object Locatable {
-	given Conversion[LocatableType, Locatable] = (x: LocatableType) => Locatable(x)
+	type LocatableType = Actor | TileObject | Projectile
+	extension (n: LocatableType)(using client: Client) {
+		def findWorldView: Option[WorldView] = {
+			Option(n).collect {
+				case a: Actor => {
+					a.getWorldView
+				}
+				case p: Projectile => {
+					client.getWorldView(client.getScene.getWorldViewId)
+				}
+				case to: TileObject => {
+					to.getWorldView
+				}
+			}
+		}
+		def findLocalCord: Option[LocalPoint] = {
+			Option(n).collect {
+				case a: Actor => {
+					a.getLocalLocation
+				}
+				case p: Projectile if(p.findWorldView.isDefined) => {
+					val x: Int = p.getX.toInt
+					val y: Int = p.getY.toInt
+					new LocalPoint(x, y, p.findWorldView.get)
+				}
+				case to: TileObject => {
+					val x: Int = to.getX
+					val y: Int = to.getY
+					new LocalPoint(x, y, to.getWorldView)
+				}
+			}.filter(_.isInScene)
+		}
+		def findWorldCord: Option[WorldPoint] = {
+			n.findLocalCord.map(lc => {
+				WorldPoint.fromLocalInstance(client, lc, client.getPlane)
+			})
+		}
+		def findSceneCord: Option[(Int, Int)] = {
+			n.findLocalCord.map(lc=>lc.getSceneX -> lc.getSceneY)
+		}
 
-//	(lpt: LocatableType)(using client: Client): Locatable = {
-//		new Locatable {
-//			override def wrapped: LocatableType = lpt
-//		}
-//	}
-
+		def distanceTo(o: LocatableType): Int = {
+			n.findWorldCord.zip(o.findWorldCord).map{
+				case (np, op) => np.distanceTo(op)
+			}.getOrElse(-1)
+		}
+	}
 //	given Conversion[Actor, Locatable] = (a: Actor) => new Locatable(() => a.getWorldView, () => a.getLocalLocation)
 //	given Conversion[TileObject, Locatable] = (to: TileObject) => new Locatable(() => to.getWorldView, () => to.getLocalLocation)
 //	given Conversion[Projectile, Locatable] = (to:Projectile) => new Locatable(() => to.getWorldView, () => to.getLocalLocation)

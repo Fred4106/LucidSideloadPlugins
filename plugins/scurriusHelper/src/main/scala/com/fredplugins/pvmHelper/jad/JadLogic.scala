@@ -13,7 +13,7 @@ import net.runelite.client.config.*
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
-import com.fredplugins.common.Locatable.given
+import com.fredplugins.common.Locatable.{given, *}
 import java.awt.Color
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
@@ -82,8 +82,8 @@ class JadLogic() extends Plugin with BossToolTrait {
 			}
 		}
 	}
-
-	def isFightCavesActive: Boolean = client.getTopLevelWorldView.getMapRegions.contains(9551)
+	
+		def isFightCavesActive: Boolean = client.getTopLevelWorldView.getMapRegions.contains(9551)
 	def isInTzhaarArea: Boolean = client.getTopLevelWorldView.getMapRegions.contains(9808) && !client.getTopLevelWorldView.isInstance
 
 	override def layoutPanel(): Seq[LayoutableRenderableEntity] = {
@@ -116,7 +116,7 @@ class JadLogic() extends Plugin with BossToolTrait {
 					case YtMejKot => Prayer.PROTECT_FROM_MELEE
 				}
 				LineComponent.builder
-					.left(s"${m.tpe} ${m.distanceTo(localPlayer)}")
+					.left(s"${m.tpe} ${m.convert.distanceTo(localPlayer)}")
 					.right(s"${correctPrayer.map(_.toString).getOrElse("None")}")
 					.build
 			})
@@ -166,7 +166,7 @@ class JadLogic() extends Plugin with BossToolTrait {
 		if (!inArea() || event.getNpc == null) return
 		log.debug(s"Spawned ${event.getNpc.pipe(p => p.getId -> p.getName)}")
 		TzMob(event.getNpc).foreach(mob => {
-			monsters = (monsters :+ mob).sortBy(_.distanceTo(localPlayer))
+				monsters = (monsters :+ mob).sortBy(_.wrapped.distanceTo(localPlayer))
 		})
 	}
 
@@ -331,9 +331,8 @@ class JadLogic() extends Plugin with BossToolTrait {
 		}
 	}
 
-	override def inArea(): Boolean = {
-		localPlayer.convert.worldPoint.getRegionID == 9551
-	}
+	override def inArea(): Boolean =
+		localPlayer.findWorldCord.exists(_.getRegionID == 9551)
 
 	inline def localPlayer: Player = client.getLocalPlayer
 	inline def getLocalPlayerWorldPoint: WorldPoint = WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation)

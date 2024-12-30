@@ -1,4 +1,4 @@
-package com.fredplugins.pvmHelper.hunleff;
+package com.fredplugins.pvmHelper.hunllef;
 
 import net.runelite.client.config.*;
 

@@ -64,15 +64,15 @@ package object overlays {
 //		val poly       = Perspective.getCanvasTilePoly(client, localPoint)
 //		if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(fillColor, 255), fillColor, getStroke(2, dashed))
 
-		renderTileArea(localPoint, (1, 1), .4, 0, ColorUtil.colorWithAlpha(fillColor, 255), fillColor.getAlpha, dashed)
-		renderMinimapArea(localPoint, (1, 1), .4, ColorUtil.colorWithAlpha(fillColor, 255), fillColor.getAlpha, dashed)
+		renderTileArea(localPoint, (1, 1), .4, 0, ColorUtil.colorWithAlpha(fillColor,32), fillColor.getAlpha, dashed)
+		renderMinimapArea(localPoint, (1, 1), .4, ColorUtil.colorWithAlpha(fillColor, 32), fillColor.getAlpha, dashed)
 
 //		val textLocation = Perspective.getCanvasTextLocation(client, g, localPoint, text, 0)
 		val textLocation@(x, y, b) = getCanvasTextLocation(localPoint, text, 0)
 		if (textLocation != null) {
 			val padding        = 5
-//			val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding*2)
-//			OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
+			val textBackground = new Rectangle(x - padding, y - padding, b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding*2)
+			OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
 			OverlayUtil.renderTextLocation(g, new Point(x, y), text, Color.BLACK)
 		}
 	}

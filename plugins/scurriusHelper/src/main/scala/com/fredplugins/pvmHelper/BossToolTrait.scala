@@ -1,11 +1,15 @@
 package com.fredplugins.pvmHelper
 
+import com.fredplugins.common.Locatable
 import com.fredplugins.common.utils.ShimUtils
-import net.runelite.api.Client
+import net.runelite.api.{Actor, Client}
+import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.NpcSpawned
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import org.slf4j.Logger
+
+import java.awt.Color
 
 trait BossToolTrait {
 	//	def log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
@@ -16,5 +20,7 @@ trait BossToolTrait {
 	def inArea(): Boolean
 
 	def layoutPanel(): Seq[LayoutableRenderableEntity] = List.empty
+
+	def tilesToPaint(): Seq[(Actor, Color, String)] = List.empty
 }
 

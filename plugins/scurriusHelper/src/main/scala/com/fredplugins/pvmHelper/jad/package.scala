@@ -1,8 +1,9 @@
 package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.Locatable
-import net.runelite.api.coords.{LocalPoint, WorldPoint}
-import net.runelite.api.{NPC, Prayer}
+import com.fredplugins.common.Locatable.{given, *}
+import net.runelite.api.coords.{LocalPoint, WorldArea, WorldPoint}
+import net.runelite.api.{Client, NPC, Prayer}
 import net.runelite.client.plugins.attackstyles.AttackStylesPlugin
 
 import scala.compiletime.uninitialized
@@ -41,18 +42,20 @@ package object jad {
 		def wrapped: NPC
 		def getId: Int = wrapped.getId
 		def getName: String = wrapped.getName
+//		override def localPoint: LocalPoint = wrapped
+//		override def worldArea(using client: Client): WorldArea = ???
 	}
 
 	object TzMob {
 		def apply(npc: NPC): Option[TzMob] = {
 			TzMobType.values.find(_.npcIsType(npc)).map(tpe => {
-				new TzMob(tpe) {
+				val toret = new TzMob(tpe) {
 					override val wrapped: NPC = npc
 				}
+				toret
 			})
 		}
 	}
 
-	given Conversion[TzMob, Locatable] = (a: TzMob) => a.wrapped
-
+	given Conversion[TzMob, NPC] = (a: TzMob) => a.wrapped
 }

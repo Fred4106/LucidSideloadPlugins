@@ -18,7 +18,9 @@ import scala.util.chaining.scalaUtilChainingOps
 abstract class FredsPvmHelperPanel[P <: Plugin & BossToolTrait](val plugin: P) extends OverlayPanel(plugin) {
 	setLayer(OverlayLayer.ABOVE_SCENE)
 	setPosition(OverlayPosition.BOTTOM_LEFT)
-	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+
+	override def getName: String = super.getName + plugin.getClass.getSimpleName
+	val log: Logger = ShimUtils.getLogger(this.getClass.getName+s"[${plugin.getClass.getName}]", "DEBUG")
 
 	override def render(graphics: Graphics2D): Dimension = {
 		def buildEntrySet(btt: BossToolTrait): Seq[LayoutableRenderableEntity] = {
