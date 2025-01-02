@@ -174,7 +174,7 @@ public class PacketReflection {
         }
         if (params != null) {
             for(int i = 0; i < Math.min(params.size(), objects.length); i++) {
-                System.out.println("\t" + def.name + "(" + i + ")[\"" + params.get(i) + "\"] = " + objects[i] + ";");
+//                System.out.println("\t" + def.name + "(" + i + ")[\"" + params.get(i) + "\"] = " + objects[i] + ";");
             }
 
             for (int i = 0; i < def.writeData.length; i++) {

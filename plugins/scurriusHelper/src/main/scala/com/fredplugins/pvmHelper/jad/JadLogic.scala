@@ -60,6 +60,7 @@ class JadLogic() extends Plugin with BossToolTrait {
 //	@Inject private val configManager: ConfigManager = null
 	private val panel: FredsPvmHelperPanel[JadLogic] = new FredsPvmHelperPanel(this) {}
 
+
 //	private var justDodged: Boolean = false
 //	private var lastDodgeTick: Int = 0
 //	private var lastRatTick: Int = 0

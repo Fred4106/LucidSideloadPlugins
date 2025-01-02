@@ -71,7 +71,7 @@ package object overlays {
 		val textLocation@(x, y, b) = getCanvasTextLocation(localPoint, text, 0)
 		if (textLocation != null) {
 			val padding        = 5
-			val textBackground = new Rectangle(x - padding, y - padding, b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding*2)
+			val textBackground = new Rectangle(x - padding, y - padding - (b.getHeight.toInt/2), b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding*2)
 			OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
 			OverlayUtil.renderTextLocation(g, new Point(x, y), text, Color.BLACK)
 		}
