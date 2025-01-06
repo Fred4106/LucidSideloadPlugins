@@ -31,10 +31,10 @@ public interface HunleffConfig extends Config {
 		keyName = "autoOffensive",
 		section = hunllefSection
 	)
-	default boolean autoOffense()
-	{
+	default boolean autoOffense() {
 		return false;
 	}
+
 	@ConfigItem(
 		name = "Auto defense pray",
 		description = "Auto selects defence prayer.",
@@ -42,8 +42,7 @@ public interface HunleffConfig extends Config {
 		keyName = "autoDefense",
 		section = hunllefSection
 	)
-	default boolean autoDefense()
-	{
+	default boolean autoDefense() {
 		return false;
 	}
 
@@ -54,10 +53,10 @@ public interface HunleffConfig extends Config {
 		keyName = "autoDodge",
 		section = hunllefSection
 	)
-	default boolean autoDodge()
-	{
+	default boolean autoDodge() {
 		return false;
 	}
+
 	//endregion
 	//region iconSize
 	@ConfigSection(
@@ -66,6 +65,7 @@ public interface HunleffConfig extends Config {
 		position = 1
 	)
 	String overlaySection = "overlaySettings";
+
 	@Range(
 		min = 12,
 		max = 64
@@ -78,8 +78,7 @@ public interface HunleffConfig extends Config {
 		section = overlaySection
 	)
 	@Units(Units.PIXELS)
-	default int hunllefAttackStyleIconSize()
-	{
+	default int hunllefAttackStyleIconSize() {
 		return 18;
 	}
 
@@ -95,8 +94,7 @@ public interface HunleffConfig extends Config {
 		section = overlaySection
 	)
 	@Units(Units.PIXELS)
-	default int projectileIconSize()
-	{
+	default int projectileIconSize() {
 		return 18;
 	}
 }

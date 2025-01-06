@@ -19,102 +19,107 @@ import scala.util.Try
 
 package object hunllef {
 	val log: Logger = ShimUtils.getLogger("com.fredplugins.pvmHelper.hunllef", "DEBUG")
-//	enum RoamingTornadoSegment(tiles: IndexedSeq[(Int, Int, Int, Int)]) {
-//		case NORTH extends RoamingTornadoSegment(
-//			(0 until 11).map(i => 50 -> (51+i)).map(x => (7768, x._1, x._2, 1))
-//		)
-//		case SE extends RoamingTornadoSegment(
-//			(0 until 11).map(i => (51+i) -> (60-i)).map(x => (7768, x._1, x._2, 1))
-//		)
-//		case WEST extends RoamingTornadoSegment(
-//			(0 until 11).map(i => (60-i) -> 50).map(x => (7768, x._1, x._2, 1))
-//		)
-//		case NE extends RoamingTornadoSegment(
-//			(0 until 11).map(i => (51+i) -> (51+i)).map(x => (7768, x._1, x._2, 1))
-//		)
-//		case SOUTH extends RoamingTornadoSegment(
-//			(0 until 11).map(i => 51 -> (60 - i)).map(x => (7768, x._1, x._2, 1))
-//		)
-//		case NW extends RoamingTornadoSegment(
-//			(0 until 11).map(i => (60-i) -> (51+i)).map(x => (7768, x._1, x._2, 1))
-//		)
-//		case EAST extends RoamingTornadoSegment(
-//			(0 until 11).map(i => (51+i) -> 61).map(x => (7768, x._1, x._2, 1))
-//		)
-//		case SW extends RoamingTornadoSegment(
-//			(0 until 11).map(i => (60-i) -> (60-i)).map(x => (7768, x._1, x._2, 1))
-//		)
-//
-//		lazy val worldPoints: Seq[WorldPoint] = tiles.map((a, b, c, d) => WorldPoint.fromRegion(a, b,c,d))
-//		def instancePoints(using client: Client): Seq[(WorldPoint, Seq[WorldPoint])] =  worldPoints.map(wp => wp -> WorldPoint.toLocalInstance(client.getScene, wp).asScala.toSeq)
-//	}
-//
-//	object RoamingTornadoSegment {
-//		type RoamingTornadoAddress = (RoamingTornadoSegment, Int)
-//		def getFromSpawnRoomLoc(wp: WorldPoint)(using client: Client): RoamingTornadoAddress = {
-//			client.getScene.getTiles
-//			println(wp)
-//
-////			val temp = Seq(NORTH, WEST, SOUTH, EAST).filter(seg => {
-////				seg.instancePoints.exists(xx => {xx._2.contains(wp)})
-////			}).map(seg => {
-////				seg.instancePoints.indexWhere(_._2.contains(wp)).map(seg.instancePoints.indexOf(xx) => xx -> seg).map(_.swap)
-////			})
-//
-//			log.debug("Searching for {} and found {}", wp, temp)
-//		}
-//		extension (in: RoamingTornadoAddress) {
-//			def toWorldPoint(using client: Client): WorldPoint = {
-//				assert(in._2 >= 0 && in._2 < 11)
-//				in._1.instancePoints.toMap.apply(in._2).head
-//			}
-//			def getNext(jump: Int = 1): RoamingTornadoAddress = {
-//				val nextIdx = ((in._1.ordinal * 11) + in._2 + jump)%88
-//				val (segIdx, tIdx) = ((nextIdx / 11) -> (nextIdx%11))
-////				val tIdx = (in._2 + jump) % 11
-////				val segIdx = (in._1.ordinal + ((in._2 + jump)/11)) % RoamingTornadoSegment.values.length
-//				val res = RoamingTornadoSegment.fromOrdinal(segIdx) -> tIdx
-//				res
-//			}
-//		}
-//	}
+	//	enum RoamingTornadoSegment(tiles: IndexedSeq[(Int, Int, Int, Int)]) {
+	//		case NORTH extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => 50 -> (51+i)).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//		case SE extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => (51+i) -> (60-i)).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//		case WEST extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => (60-i) -> 50).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//		case NE extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => (51+i) -> (51+i)).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//		case SOUTH extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => 51 -> (60 - i)).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//		case NW extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => (60-i) -> (51+i)).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//		case EAST extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => (51+i) -> 61).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//		case SW extends RoamingTornadoSegment(
+	//			(0 until 11).map(i => (60-i) -> (60-i)).map(x => (7768, x._1, x._2, 1))
+	//		)
+	//
+	//		lazy val worldPoints: Seq[WorldPoint] = tiles.map((a, b, c, d) => WorldPoint.fromRegion(a, b,c,d))
+	//		def instancePoints(using client: Client): Seq[(WorldPoint, Seq[WorldPoint])] =  worldPoints.map(wp => wp -> WorldPoint.toLocalInstance(client.getScene, wp).asScala.toSeq)
+	//	}
+	//
+	//	object RoamingTornadoSegment {
+	//		type RoamingTornadoAddress = (RoamingTornadoSegment, Int)
+	//		def getFromSpawnRoomLoc(wp: WorldPoint)(using client: Client): RoamingTornadoAddress = {
+	//			client.getScene.getTiles
+	//			println(wp)
+	//
+	////			val temp = Seq(NORTH, WEST, SOUTH, EAST).filter(seg => {
+	////				seg.instancePoints.exists(xx => {xx._2.contains(wp)})
+	////			}).map(seg => {
+	////				seg.instancePoints.indexWhere(_._2.contains(wp)).map(seg.instancePoints.indexOf(xx) => xx -> seg).map(_.swap)
+	////			})
+	//
+	//			log.debug("Searching for {} and found {}", wp, temp)
+	//		}
+	//		extension (in: RoamingTornadoAddress) {
+	//			def toWorldPoint(using client: Client): WorldPoint = {
+	//				assert(in._2 >= 0 && in._2 < 11)
+	//				in._1.instancePoints.toMap.apply(in._2).head
+	//			}
+	//			def getNext(jump: Int = 1): RoamingTornadoAddress = {
+	//				val nextIdx = ((in._1.ordinal * 11) + in._2 + jump)%88
+	//				val (segIdx, tIdx) = ((nextIdx / 11) -> (nextIdx%11))
+	////				val tIdx = (in._2 + jump) % 11
+	////				val segIdx = (in._1.ordinal + ((in._2 + jump)/11)) % RoamingTornadoSegment.values.length
+	//				val res = RoamingTornadoSegment.fromOrdinal(segIdx) -> tIdx
+	//				res
+	//			}
+	//		}
+	//	}
 
 	sealed trait HunllefCycle {}
 
 	case class Range(couldBeInverted: Boolean = false) extends HunllefCycle {}
+
 	case object Mage extends HunllefCycle {}
 
-//
+	//
 	val HunllefIds: List[Int] = List(NpcID.CRYSTALLINE_HUNLLEF, NpcID.CRYSTALLINE_HUNLLEF_9022,
-				NpcID.CRYSTALLINE_HUNLLEF_9023, NpcID.CRYSTALLINE_HUNLLEF_9024,
-				NpcID.CORRUPTED_HUNLLEF, NpcID.CORRUPTED_HUNLLEF_9036,
-				NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038,NpcID.CRYSTALLINE_HUNLLEF_12123)
+		NpcID.CRYSTALLINE_HUNLLEF_9023, NpcID.CRYSTALLINE_HUNLLEF_9024,
+		NpcID.CORRUPTED_HUNLLEF, NpcID.CORRUPTED_HUNLLEF_9036,
+		NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038, NpcID.CRYSTALLINE_HUNLLEF_12123)
+
 	def isHunllef(n: NPC): Boolean = {
 		HunllefIds.contains(n.getId)
 	}
 
-//	class HunllefInstanceData {
-//		def worldPointTo
-//	}
+	//	class HunllefInstanceData {
+	//		def worldPointTo
+	//	}
 
 	abstract class Tornado(val wrapped: NPC)(using client: Client) {
 		val spawnTick: Int = client.getTickCount
 		//this is in tile space coords
 		val spawnLoc: WorldPoint = getWorldLocation
+
 		def getWorldLocation: WorldPoint = wrapped.getWorldLocation
+
 		def getRoomPos: (Int, Int) = (getWorldLocation).pipe(a => (a.getX, a.getY))
 
 		def age: Int = client.getTickCount - spawnTick
-//		def getRoomCoord: (Int, Int) = WorldPwrapped.getWorldLocation
-//		private var lastLoc: Option[(Int, Int)] =  None
-//		private var lastdirectionV: Option[Direction] = None
-//		private var directionV: Option[Direction] = None
-//		def getHistory: List[(Int, (Int, Int))]  = tileHistory.toList
+		//		def getRoomCoord: (Int, Int) = WorldPwrapped.getWorldLocation
+		//		private var lastLoc: Option[(Int, Int)] =  None
+		//		private var lastdirectionV: Option[Direction] = None
+		//		private var directionV: Option[Direction] = None
+		//		def getHistory: List[(Int, (Int, Int))]  = tileHistory.toList
 	}
 
 	object Tornado {
 		class ChaseTornado(w: NPC)(using client: Client) extends Tornado(w) {
 			val diesOnTick: Int = spawnTick + 21
+
 			def timeToLive: Int = Math.max(diesOnTick - client.getTickCount, 0)
 		}
 
@@ -136,12 +141,15 @@ package object hunllef {
 
 	sealed trait Action {
 		val name: String
+
 		def shouldRun(using client: Client): Boolean
+
 		def run(): Unit
 	}
+
 	object Action {
 		transparent trait ProductActionMixin {
-			this: Action with	 Product =>
+			this: Action with Product =>
 			override val name: String = this.asInstanceOf[Product].toString
 		}
 
@@ -188,6 +196,7 @@ package object hunllef {
 		}
 
 		case object PrayRange extends Action with PrayerActionMixin(Prayer.PROTECT_FROM_MISSILES)
+
 		case object PrayMagic extends Action with PrayerActionMixin(Prayer.PROTECT_FROM_MAGIC)
 
 		def wield(id: Int)(using client: Client): Action = {

@@ -11,21 +11,21 @@ import scala.util.{Random, Try}
 import scala.util.chaining.*
 
 package object jad {
-//	enum AttackStyle {
-//		case MELEE
-//		case RANGE
-//		case MAGIC
-//	}
+	//	enum AttackStyle {
+	//		case MELEE
+	//		case RANGE
+	//		case MAGIC
+	//	}
 
-//	trait Locatable {
-//		def worldPoint: WorldPoint
-//		def localPoint: LocalPoint
-//		def distanceTo(other: Locatable): Int = {
-//			worldPoint.distanceTo(other.worldPoint)
-//		}
-//	}
+	//	trait Locatable {
+	//		def worldPoint: WorldPoint
+	//		def localPoint: LocalPoint
+	//		def distanceTo(other: Locatable): Int = {
+	//			worldPoint.distanceTo(other.worldPoint)
+	//		}
+	//	}
 
-	enum TzMobType(ids: Int *)  {
+	enum TzMobType(ids: Int*) {
 		case TzKih extends TzMobType(2189, 2190, 3116, 3117)
 		case TzKek extends TzMobType(2191, 2192, 3118, 3119, 3120)
 		case TokXil extends TzMobType(2193, 3121, 2194, 3122)
@@ -38,12 +38,15 @@ package object jad {
 			npc != null && ids.contains(npc.getId)
 		}
 	}
+
 	abstract class TzMob(val tpe: TzMobType) {
 		def wrapped: NPC
+
 		def getId: Int = wrapped.getId
+
 		def getName: String = wrapped.getName
-//		override def localPoint: LocalPoint = wrapped
-//		override def worldArea(using client: Client): WorldArea = ???
+		//		override def localPoint: LocalPoint = wrapped
+		//		override def worldArea(using client: Client): WorldArea = ???
 	}
 
 	object TzMob {

@@ -20,7 +20,8 @@ abstract class FredsPvmHelperPanel[P <: Plugin & BossToolTrait](val plugin: P) e
 	setPosition(OverlayPosition.BOTTOM_LEFT)
 
 	override def getName: String = super.getName + plugin.getClass.getSimpleName
-	val log: Logger = ShimUtils.getLogger(this.getClass.getName+s"[${plugin.getClass.getName}]", "DEBUG")
+
+	val log: Logger = ShimUtils.getLogger(this.getClass.getName + s"[${plugin.getClass.getName}]", "DEBUG")
 
 	override def render(graphics: Graphics2D): Dimension = {
 		def buildEntrySet(btt: BossToolTrait): Seq[LayoutableRenderableEntity] = {
