@@ -18,7 +18,10 @@ object NamedAnimationEntry extends ConfigParser {
 	def encode(str: String): Option[NamedAnimationEntry] = {
 		parse(phrase(entryParser), str) match {
 			case Success(result, next) => Option(result)
-			case NoSuccess(partial, input) =>  None
+			case x@NoSuccess(partial, input) =>  {
+				println(x)
+				None
+			}
 		}
 	}
 

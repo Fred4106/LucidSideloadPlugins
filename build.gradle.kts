@@ -76,6 +76,7 @@ dependencies {
     implementation(project(":plugins:layoutHelper"))
     implementation(project(":plugins:mixology"))
     implementation(project(":plugins:mta"))
+    implementation(project(":plugins:pvmDebugger"))
     implementation(project(":plugins:scurriusHelper"))
     implementation(project(":plugins:teleportMaps"))
     implementation(project(":plugins:tempoross"))

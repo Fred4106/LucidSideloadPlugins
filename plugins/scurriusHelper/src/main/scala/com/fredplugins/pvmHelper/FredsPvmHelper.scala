@@ -59,15 +59,10 @@ class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 
 	case class State(regionId: Int, projectiles: List[Projectile], npcAnimations: Map[NPC, Int], playerAnimation: Int) {
 		def withRegionId(id: Int): State = if (id == regionId) this else copy(regionId = id)
-
 		def withProjectile(p: Projectile): State = if (projectiles.contains(p)) this else copy(projectiles = projectiles :+ p)
-
 		def withoutNpc(n: NPC): State = if (!npcAnimations.contains(n)) this else copy(npcAnimations = npcAnimations.removed(n))
-
 		def withNpc(n: NPC): State = if (npcAnimations.contains(n)) this else copy(npcAnimations = npcAnimations.updated(n, n.getAnimation))
-
 		def withNpcAnimation(n: NPC, aid: Int): State = if (npcAnimations.get(n).contains(aid)) this else copy(npcAnimations = npcAnimations.updated(n, aid))
-
 		def withPlayerAnimation(aid: Int): State = if (playerAnimation == aid) this else copy(playerAnimation = aid)
 	}
 
@@ -109,18 +104,26 @@ class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 	def getConfig(configManager: ConfigManager): FredsPvmHelperConfig = {
 		configManager.getConfig[FredsPvmHelperConfig](classOf[FredsPvmHelperConfig])
 	}
-	lazy val animationConfigEntries: Map[Int, () => NamedAnimationEntry] = {
-		configManager.getConfigDescriptor(config).getItems.asScala.toList.filter(cid => {
-			cid.getItem.section() == FredsPvmHelperConfig.ANIMATION_NAMES_SECTION
-		}).map(cid => {
-			cid.name.toInt -> (() => {
-				configManager.getConfiguration(FredsPvmHelperConfig.GroupName, cid.key).pipe(NamedAnimationEntry.encode(_)).get
-			})
-		}).toMap
-	}
-	object ConfigObj {
-		def animation(i: Int): Option[NamedAnimationEntry] = {
-			animationConfigEntries.get(i).map(_.apply)
+//	lazy val animationConfigEntries: Map[Int, () => NamedAnimationEntry] = {
+//		configManager.getConfigDescriptor(config).getItems.asScala.toList.filter(cid => {
+//			cid.getItem.section() == FredsPvmHelperConfig.ANIMATION_NAMES_SECTION
+//		}).map(cid => {
+//			cid.name.toInt -> (() => {
+//				configManager.getConfiguration(FredsPvmHelperConfig.GroupName, cid.key).pipe(NamedAnimationEntry.encode(_)).get
+//			})
+//		}).toMap
+//	}
+//	object ConfigObj {
+//		def animation(i: Int): Option[NamedAnimationEntry] = {
+//			animationConfigEntries.get(i).map(_.apply)
+//		}
+//	}
+	object Config {
+		def getNamedAnimationEntries: List[NamedAnimationEntry] = {
+			config.namedAnimationEntries().lines().iterator().asScala.toList.flatMap(NamedAnimationEntry.encode)
+		}
+		def getNamedAnimationEntry(i: Int): NamedAnimationEntry = {
+			getNamedAnimationEntries.apply(i)
 		}
 	}
 
@@ -129,17 +132,17 @@ class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 		//		def withEntry(configItem: ConfigItem)
 		if (e.getGroup == FredsPvmHelperConfig.GroupName) {
 			//			if(e.getKey.startsWith("animation")) {
-			Option(e.getKey).filter(_.startsWith("animation")).flatMap(_.drop(9).toIntOption.filter(animationConfigEntries.contains)).foreach(animationKey => {
-				NamedAnimationEntry.roundTrip(e.getNewValue) match {
-					case Some(fae) => 	{
-						val os = Try(NamedAnimationEntry.encode(e.getOldValue).get).fold(_ => s"\"${e.getOldValue}\"", u => u.toString)
-						log.debug(s"changing from {} => {}", os, fae)
-					}
-					case None => {
-						configManager.setConfiguration(FredsPvmHelperConfig.GroupName, e.getKey, decode(NamedAnimationEntry.encode(e.getOldValue).getOrElse(NamedAnimationEntry.empty)))
-					}
-				}
-			})
+//			Option(e.getKey).filter(_.startsWith("animation")).flatMap(_.drop(9).toIntOption.filter(animationConfigEntries.contains)).foreach(animationKey => {
+//				NamedAnimationEntry.roundTrip(e.getNewValue) match {
+//					case Some(fae) => 	{
+//						val os = Try(NamedAnimationEntry.encode(e.getOldValue).get).fold(_ => s"\"${e.getOldValue}\"", u => u.toString)
+//						log.debug(s"changing from {} => {}", os, fae)
+//					}
+//					case None => {
+//						configManager.setConfiguration(FredsPvmHelperConfig.GroupName, e.getKey, decode(NamedAnimationEntry.encode(e.getOldValue).getOrElse(NamedAnimationEntry.empty)))
+//					}
+//				}
+//			})
 		}
 	}
 //				.filter(key => )}
@@ -206,12 +209,13 @@ class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 
 	override def inArea(): Boolean = true
 
-	private val gui: PvmGui = new pvmHelper.PvmGui
+	private val gui: PvmGui = new pvmHelper.PvmGui().tap(_.visible = false)
 	override protected def startUp(): Unit = {
 		resetState()
 		overlayManager.add(panel)
-		gui.listenTo(this)
 		gui.visible = true
+		gui.listenTo(this)
+		Config.getNamedAnimationEntries.zipWithIndex.map(_.swap).foreach(u => log.debug(s"testing[${u._1}] = ${u._2}"))
 	}
 
 

@@ -4,10 +4,10 @@ import scala.util.parsing.combinator.*
 import scala.util.parsing.combinator.Parsers
 import scala.util.chaining.*
 abstract class ConfigParser extends RegexParsers {
-	override val whiteSpace: Regex = raw" 	".r
+	override val whiteSpace: Regex = raw"[ 	]+".r
 
 	val nameParser: Parser[String] = raw"[a-zA-Z][a-zA-Z0-9]*".r
-	val idParser:	 Parser[Int] = raw"(-?[1-9][0-9]*|[0-9]+)".r ^^ {_.toInt}
+	val idParser:	 Parser[Int] = raw"(-[1-9][0-9]*|[0-9]+)".r ^^ {_.toInt}
 
 	val commaParser: Parser[Unit] = (raw",".r ^^^ {()})
 	val idArrayParser: Parser[Seq[Int]] = rep1sep(idParser, commaParser)
