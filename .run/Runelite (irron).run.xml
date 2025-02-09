@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Runelite (irron)" type="JarApplication">
-    <option name="JAR_PATH" value="$PROJECT_DIR$/../runelite/runelite-client/target/client-1.10.49-SNAPSHOT-shaded.jar" />
+    <option name="JAR_PATH" value="$PROJECT_DIR$/runelite-client/target/client-1.10.49-SNAPSHOT-shaded.jar" />
     <option name="VM_PARAMETERS" value="-ea" />
     <option name="PROGRAM_PARAMETERS" value="--profile=&quot;iron&quot;" />
     <option name="WORKING_DIRECTORY" value="C:\Users\natru\Documents\runeliteSandbox" />
@@ -8,7 +8,7 @@
     <option name="ALTERNATIVE_JRE_PATH" value="11" />
     <option name="REDIRECT_INPUT" value="true" />
     <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="packageRunelite" run_configuration_type="BatchConfigurationType" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="package" run_configuration_type="MavenRunConfiguration" />
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="LucidSideloadPlugins [shadowJar]" run_configuration_type="GradleRunConfiguration" />
     </method>
   </configuration>
