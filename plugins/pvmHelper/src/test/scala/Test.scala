@@ -2,7 +2,8 @@
 import scala.util.chaining.scalaUtilChainingOps
 
 object Test extends App {
-
+	import com.fredplugins.pvmHelper2.gauntlet.values
+	println(values.map(v => v.name ->  v.ids).mkString("\n"))
 //	new PvmGui().tap(gui => {
 //		new Thread(() => {
 //			Thread.sleep(20000)

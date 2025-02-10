@@ -15,7 +15,7 @@ import java.time.Instant
 import scala.util.Try
 import scala.util.chaining.scalaUtilChainingOps
 @Singleton
-class FredsPvmHelper2Panel @Inject()(/*val client: Client, */ plugin: FredsPvmHelper2) extends OverlayPanel(plugin) {
+class FredsPvmHelper2Panel @Inject()(/*client: Client,*/ plugin: FredsPvmHelper2) extends OverlayPanel(plugin) {
 	setLayer(OverlayLayer.ABOVE_SCENE)
 	setPosition(OverlayPosition.BOTTOM_LEFT)
 

@@ -1,7 +1,7 @@
 package com.fredplugins.pvmHelper2
 
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
-import com.fredplugins.pvmHelper2.solver.Gauntlet
+import com.fredplugins.pvmHelper2.gauntlet.GauntletSolver
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
@@ -59,6 +59,9 @@ class FredsPvmHelper2() extends Plugin {
 	def getConfig(configManager: ConfigManager): FredsPvmHelperConfig2 = {
 		configManager.getConfig[FredsPvmHelperConfig2](classOf[FredsPvmHelperConfig2])
 	}
+
+	@Inject val gauntletRoom: GauntletSolver = null
+
 //	lazy val animationConfigEntries: Map[Int, () => NamedAnimationEntry] = {
 //		configManager.getConfigDescriptor(config).getItems.asScala.toList.filter(cid => {
 //			cid.getItem.section() == FredsPvmHelperConfig.ANIMATION_NAMES_SECTION
@@ -120,16 +123,25 @@ class FredsPvmHelper2() extends Plugin {
 //			}
 //		}
 //	}
+//	var gauntletSolver: GauntletRoom = GauntletRoom(eventBus, client, clientThread)
+	private val eventSubs = mutable.ListBuffer.empty[EventBus.Subscriber]
 	override protected def startUp(): Unit = {
+		gauntletRoom.startup()
+		log.debug("Staring up plugin")
+
 		overlayManager.add(panel)
-		Gauntlet.init(this)
+//		eventBus.register(gauntletSolver)
+//		gauntletSolver.startup();
+
+//		println(s"\n${sEventBus.getKeys.map(_.toString).map(s => s"\t${s}").mkString("\n")}")
 //		overlayManager.add(overlay)
 	}
 
 
 	override protected def shutDown(): Unit = {
+		gauntletRoom.shutdown()
+		log.debug("Shutting down up plugin")
 		overlayManager.remove(panel)
-		Gauntlet.teardown(this)
 //		overlayManager.remove(overlay)
 	}
 

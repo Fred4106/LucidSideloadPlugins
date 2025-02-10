@@ -108,7 +108,6 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 	}
 
 	case object InGauntletVarbit extends SVarbit(9178)
-
 	case object InHunllefVarbit extends SVarbit(9177)
 
 	//	private inline def isGauntletVarbitSet: Boolean = client.getVarbitValue(InGauntletVarbitId) == 1
