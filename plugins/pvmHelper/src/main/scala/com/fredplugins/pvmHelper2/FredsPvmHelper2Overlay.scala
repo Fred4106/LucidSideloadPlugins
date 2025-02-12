@@ -16,8 +16,6 @@ import scala.util.chaining.*
 class FredsPvmHelper2Overlay @Inject()(/*val client: Client, */ plugin: FredsPvmHelper2) extends Overlay(plugin) {
 	given ModelOutlineRenderer = plugin.getInjector.getInstance(classOf[ModelOutlineRenderer])
 
-	//	given Client = plugin.getInjector.getInstance(classOf[Client])
-
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName + s"[${plugin.getClass.getName}]", "DEBUG")
 	setPosition(OverlayPosition.DYNAMIC);
 	setPriority(Overlay.PRIORITY_HIGH);

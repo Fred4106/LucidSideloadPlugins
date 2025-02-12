@@ -125,9 +125,13 @@ class FredsPvmHelper2() extends Plugin {
 //	}
 //	var gauntletSolver: GauntletRoom = GauntletRoom(eventBus, client, clientThread)
 	private val eventSubs = mutable.ListBuffer.empty[EventBus.Subscriber]
+
+	//runs startup code
+	//sends current scene data as new events
+	//registers with regular event bus3
 	override protected def startUp(): Unit = {
-		gauntletRoom.startup()
 		log.debug("Staring up plugin")
+		gauntletRoom.startup()
 
 		overlayManager.add(panel)
 //		eventBus.register(gauntletSolver)
@@ -139,8 +143,8 @@ class FredsPvmHelper2() extends Plugin {
 
 
 	override protected def shutDown(): Unit = {
-		gauntletRoom.shutdown()
 		log.debug("Shutting down up plugin")
+		gauntletRoom.shutdown()
 		overlayManager.remove(panel)
 //		overlayManager.remove(overlay)
 	}
