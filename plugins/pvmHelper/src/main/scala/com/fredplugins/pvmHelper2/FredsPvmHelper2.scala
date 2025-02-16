@@ -1,14 +1,15 @@
 package com.fredplugins.pvmHelper2
 
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
-import com.fredplugins.pvmHelper2.gauntlet.GauntletSolver
+import com.fredplugins.pvmHelper2.PvmEvent.{NpcEvent, PlayerEvent}
+import com.fredplugins.pvmHelper2.gauntlet.{GauntletSolver, GauntletSolver2}
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{TileObjects, Widgets}
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.*
-import net.runelite.api.events.{AnimationChanged, GameStateChanged, GameTick, NpcChanged, NpcDespawned, NpcSpawned, ProjectileMoved, VarbitChanged}
+import net.runelite.api.events.{ActorDeath, AnimationChanged, GameStateChanged, GameTick, InteractingChanged, NpcChanged, NpcDespawned, NpcSpawned, PlayerDespawned, PlayerSpawned, ProjectileMoved, VarbitChanged}
 import net.runelite.client.Notifier
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.config.{ConfigItem, ConfigManager}
@@ -24,6 +25,7 @@ import java.awt.Font
 import java.util
 import java.util.stream.Collectors
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 import scala.jdk.IntAccumulator
@@ -33,6 +35,121 @@ import scala.swing.Publisher
 import scala.swing.event.Event
 import scala.util.chaining.*
 import scala.util.{Random, Try}
+
+sealed trait PvmEvent extends scala.swing.event.Event with Product {
+
+	//	def prefix: String = this.getClass.getSimpleName
+	//	def elements: List[(String, Any)]
+	def prefix: String
+	def overrides: PartialFunction[Int, (String, String)]
+	override def toString: String = {
+		(for {
+			i <- 0 until productArity
+			(name, value) = overrides.applyOrElse(i, y => (productElementName(y), productElement(y).toString))
+		} yield name -> value).map{
+			case (elemName, elemValue) => s"$elemName: ${elemValue}"
+		}.mkString(s"${prefix}.${this.productPrefix}(", ", ", ")")
+	}
+}
+sealed trait ActorEvent extends PvmEvent {
+	def source: Actor
+}
+object PvmEvent {
+	sealed trait AnimationChangedEvent extends ActorEvent {
+		def old: Int
+		def current: Int
+	}
+	sealed trait SpawnedEvent extends ActorEvent {}
+	sealed trait DespawnedEvent extends ActorEvent {}
+	sealed trait DeathEvent extends ActorEvent {}
+	sealed trait InteractingChangedEvent extends ActorEvent {
+		this: Product =>
+		def old: Actor | Null
+		def current: Actor | Null
+
+		override def overrides: PartialFunction[Int, (String, String)] = {
+			case 0 => productElementName(0) -> (source match {
+				case p: Player => s"Player(${p.getId})"
+				case n: NPC => s"NPC(${n.getIndex})"
+			})
+			case 1 => {
+				productElementName(1) -> (Option(old) match {
+					case Some(player: Player) => s"Player(${player.getId})"
+					case Some(npc: NPC) => s"NPC(${npc.getIndex})"
+					case _ => "None"
+				})
+			}
+			case 2 => {
+				productElementName(2) -> (Option(current) match {
+					case Some(player: Player) => s"Player(${player.getId})"
+					case Some(npc: NPC) => s"NPC(${npc.getIndex})"
+					case _ => "None"
+				})
+			}
+		}
+	}
+
+	sealed trait NpcEvent extends ActorEvent {
+		override def source: NPC
+		override def prefix: String = s"NpcEvent"
+	}
+	sealed trait PlayerEvent extends ActorEvent {
+		self: Product =>
+		override def source: Player
+		override def prefix: String = s"PlayerEvent"
+	}
+	object NpcEvent {
+		case class Spawned(source: NPC) extends NpcEvent with SpawnedEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"NPC(${source.getIndex})")
+			}
+		}
+		case class Despawned(source: NPC) extends NpcEvent with DespawnedEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"NPC(${source.getIndex})")
+			}
+		}
+		case class CompositionChanged(source: NPC, old: NPCComposition, current: NPCComposition) extends NpcEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"NPC(${source.getIndex})")
+			}
+		}
+		case class AnimationChanged(source: NPC, old: Int, current: Int) extends NpcEvent with AnimationChangedEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"NPC(${source.getIndex})")
+			}
+		}
+		case class Death(source: NPC) extends NpcEvent with DeathEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"NPC(${source.getIndex})")
+			}
+		}
+		case class InteractingChanged(source: NPC, old: Actor | Null, current: Actor | Null) extends NpcEvent with InteractingChangedEvent {}
+	}
+	object PlayerEvent {
+		case class Spawned(source: Player) extends PlayerEvent with SpawnedEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"Player(${source.getId})")
+			}
+		}
+		case class Despawned(source: Player) extends PlayerEvent with DespawnedEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"Player(${source.getId})")
+			}
+		}
+		case class AnimationChanged(source: Player, old: Int, current: Int) extends PlayerEvent with AnimationChangedEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"Player(${source.getId})")
+			}
+		}
+		case class Death(source: Player) extends PlayerEvent with DeathEvent {
+			override def overrides: PartialFunction[Int, (String, String)] = {
+				case 0 => (productElementName(0), s"Player(${source.getId})")
+			}
+		}
+		case class InteractingChanged(source: Player, old: Actor | Null, current: Actor | Null) extends PlayerEvent with InteractingChangedEvent {}
+	}
+}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#A1004B\">Freds</font> PVM Helper 2</html>",
@@ -51,7 +168,120 @@ class FredsPvmHelper2() extends Plugin {
 	@Inject private val overlayManager: OverlayManager = null
 	@Inject private val configManager: ConfigManager = null
 	@Inject private val panel: FredsPvmHelper2Panel = null
-//	@Inject private val overlay: FredsPvmHelper2Overlay = null
+
+	private object ActorTracker extends scala.swing.Publisher {
+		private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+		private val actorToCachedAnimationId: mutable.HashMap[Actor, Int] = mutable.HashMap.empty
+		private val actorToCachedInteracting: mutable.HashMap[Actor, Actor | Null] = mutable.HashMap.empty
+
+		//	private val npcToCachedAnimationId: mutable.HashMap[NPC, Int] = mutable.HashMap.empty
+		//	private val playerToCachedAnimationId: mutable.HashMap[Player, Int] = mutable.HashMap.empty
+
+		def onNpcCompositionChanged(n: NPC, old: NPCComposition): Unit = {
+			publish(PvmEvent.NpcEvent.CompositionChanged(n, old, n.getComposition))
+		}
+
+		def onAnimationChanged(a: Actor): Unit = {
+			actorToCachedAnimationId.get(a).map(old => {
+				a match {
+					case npc: NPC => PvmEvent.NpcEvent.AnimationChanged(npc, old, npc.getAnimation)
+					case player: Player => PvmEvent.PlayerEvent.AnimationChanged(player, old, player.getAnimation)
+				}
+			}).filter(e => e.current != e.old).foreach(publish)
+		}
+
+		def onDespawn(a: Actor): Unit = {
+			Option(a).collect {
+				case npc: NPC => PvmEvent.NpcEvent.Despawned(npc)
+				case player: Player => PvmEvent.PlayerEvent.Despawned(player)
+			}.foreach(publish)
+		}
+
+		def onSpawn(a: Actor): Unit = {
+			Option(a).collect {
+				case npc: NPC => PvmEvent.NpcEvent.Spawned(npc)
+				case player: Player => PvmEvent.PlayerEvent.Spawned(player)
+			}.foreach(publish)
+		}
+
+		def onDeath(a: Actor): Unit = {
+			Option(a).collect {
+				case npc: NPC => PvmEvent.NpcEvent.Death(npc)
+				case player: Player => PvmEvent.PlayerEvent.Death(player)
+			}.foreach(publish)
+		}
+
+		def onInteractingChanged(source: Actor, target: Actor): Unit = {
+			val old = actorToCachedInteracting.get(source).orNull
+			Option(source match {
+				case npc: NPC => PvmEvent.NpcEvent.InteractingChanged(npc, old, target)
+				case player: Player => PvmEvent.PlayerEvent.InteractingChanged(player, old, target)
+			}).filter(e => e.old != e.current).foreach(publish)
+		}
+		reactions += {
+			case e: PvmEvent.SpawnedEvent => {
+				actorToCachedAnimationId.put(e.source, e.source.getAnimation)
+				actorToCachedInteracting.put(e.source, null)
+			}
+			case e: PvmEvent.DespawnedEvent => {
+				actorToCachedAnimationId.remove(e.source)
+				actorToCachedInteracting.remove(e.source)
+			}
+			case e: PvmEvent.AnimationChangedEvent => actorToCachedAnimationId.update(e.source, e.current)
+			case e: PvmEvent.InteractingChangedEvent => actorToCachedInteracting.update(e.source, e.current)
+		}
+//		reactions += {
+//			case e: PlayerEvent if e.source == client.getLocalPlayer => log.debug("Published event 1: {}", e)
+//			case e: PlayerEvent =>
+//			case p: PvmEvent => log.debug("Published event 2: {}", p)
+////			case e: NpcEvent if e.source.getId == client.getLocalPlayer => log.debug("Published event {}", e)
+//		}
+	}
+
+	@Subscribe
+	private def onNpcChanged(event: NpcChanged): Unit = {
+		ActorTracker.onNpcCompositionChanged(event.getNpc, event.getOld)
+	}
+	@Subscribe
+	private def onNpcSpawned(event: NpcSpawned): Unit = {
+		ActorTracker.onSpawn(event.getNpc)
+	}
+	@Subscribe
+	private def onNpcDespawned(event: NpcDespawned): Unit = {
+		ActorTracker.onDespawn(event.getNpc)
+	}
+	@Subscribe
+	private def onPlayerSpawned(event: PlayerSpawned): Unit = {
+		ActorTracker.onSpawn(event.getPlayer)
+	}
+	@Subscribe
+	private def  onPlayerDespawned(event: PlayerDespawned): Unit = {
+		ActorTracker.onDespawn(event.getPlayer)
+	}
+	@Subscribe
+	private def onAnimationChanged(event: AnimationChanged): Unit = {
+		ActorTracker.onAnimationChanged(event.getActor)
+	}
+	@Subscribe
+	private def onActorDeath(event: ActorDeath): Unit = {
+		ActorTracker.onDeath(event.getActor)
+	}
+
+	@Subscribe
+	private def onInteractingChanged(event: InteractingChanged): Unit = {
+		ActorTracker.onInteractingChanged(event.getSource, event.getTarget)
+	}
+
+	@Subscribe
+	private def onVarbitChanged(event: VarbitChanged): Unit = {
+		if(event.getVarbitId == 9178) {
+			Option(event.getValue) collect {
+				case 0 => gauntletRoom2.deafTo(ActorTracker)
+				case 1 => gauntletRoom2.listenTo(ActorTracker)
+			}
+		}
+	}
+
 	given Client = client
 	given EventBus = eventBus
 
@@ -60,78 +290,25 @@ class FredsPvmHelper2() extends Plugin {
 		configManager.getConfig[FredsPvmHelperConfig2](classOf[FredsPvmHelperConfig2])
 	}
 
-	@Inject val gauntletRoom: GauntletSolver = null
-
-//	lazy val animationConfigEntries: Map[Int, () => NamedAnimationEntry] = {
-//		configManager.getConfigDescriptor(config).getItems.asScala.toList.filter(cid => {
-//			cid.getItem.section() == FredsPvmHelperConfig.ANIMATION_NAMES_SECTION
-//		}).map(cid => {
-//			cid.name.toInt -> (() => {
-//				configManager.getConfiguration(FredsPvmHelperConfig.GroupName, cid.key).pipe(NamedAnimationEntry.encode(_)).get
-//			})
-//		}).toMap
-//	}
-//	object ConfigObj {
-//		def animation(i: Int): Option[NamedAnimationEntry] = {
-//			animationConfigEntries.get(i).map(_.apply)
-//		}
-//	}
+//	@Inject val gauntletRoom: GauntletSolver = null
+	@Inject val gauntletRoom2: GauntletSolver2 = null
 
 	@Subscribe
 	private def onConfigChanged(e: ConfigChanged): Unit = {
-		//		def withEntry(configItem: ConfigItem)
 		if (e.getGroup == FredsPvmHelperConfig2.GroupName) {
 			log.debug("config[{}] changed from {} to {}", e.getKey, e.getOldValue, e.getNewValue)
-			//			if(e.getKey.startsWith("animation")) {
-//			Option(e.getKey).filter(_.startsWith("animation")).flatMap(_.drop(9).toIntOption.filter(animationConfigEntries.contains)).foreach(animationKey => {
-//				NamedAnimationEntry.roundTrip(e.getNewValue) match {
-//					case Some(fae) => 	{
-//						val os = Try(NamedAnimationEntry.encode(e.getOldValue).get).fold(_ => s"\"${e.getOldValue}\"", u => u.toString)
-//						log.debug(s"changing from {} => {}", os, fae)
-//					}
-//					case None => {
-//						configManager.setConfiguration(FredsPvmHelperConfig.GroupName, e.getKey, decode(NamedAnimationEntry.encode(e.getOldValue).getOrElse(NamedAnimationEntry.empty)))
-//					}
-//				}
-//			})
 		}
 	}
-//				.filter(key => )}
-//					.getKey.stripPrefix("animation")).flatMap(_.toIntOption).find(animationConfigEntries.contains(_)).map(iii =>iii
-//					case i if animationConfigEntries.contains(i) =>  {
-//						NamedAnimationEntry.roundTrip(e.getNewValue) match {
-//							case Some(canRoundTrip) => {
-//		//						val niceNewVal = NamedAnimationEntry.encode().get
-//		//						val niceOldVal = NamedAnimationEntry.encode(e.getOldValue).get
-//								log.debug(s"changing from \"${e.getOldValue}\": {} => \"${NamedAnimationEntry.decode(canRoundTrip)}\": {}", NamedAnimationEntry.encode(e.getOldValue).getOrElse(NamedAnimationEntry.empty), canRoundTrip)
-//							}
-//							case None => {
-//								decode(NamedAnimationEntry.encode(e.getOldValue).getOrElse(NamedAnimationEntry.empty)).pipe(revertValue => configManager.setConfiguration(e.getGroup, e.getKey, revertValue))
-//		//						log.warn(s"cant change from \"${e.getOldValue}\": {} => \"${e.getNewValue}\": {}", NamedAnimationEntry.encode(e.getOldValue).getOrElse(NamedAnimationEntry.empty), canRoundTrip)
-//							}
-//						}
-//					}
-//					//configManager.getConfiguration(e.getGroup, e.getKey).pipe(NamedAnimationEntry.encode(_))
-//				}
-//			}
-//			configManager.getConfigDescriptor(config).getItems.asScala.toList.find(cid => cid.key().equals(e.getKey)).foreach(c => {
-//				//c is animation section
-//			})
-//
-//			e.getKey match {
-//				case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
-//			}
-//		}
-//	}
-//	var gauntletSolver: GauntletRoom = GauntletRoom(eventBus, client, clientThread)
-	private val eventSubs = mutable.ListBuffer.empty[EventBus.Subscriber]
 
 	//runs startup code
 	//sends current scene data as new events
 	//registers with regular event bus3
 	override protected def startUp(): Unit = {
 		log.debug("Staring up plugin")
-		gauntletRoom.startup()
+//		gauntletRoom.startup()
+		if(clientThread.runOnClientThread(() => Option(client.getVarbitValue(9178)).contains(1))) {
+			gauntletRoom2.listenTo(ActorTracker)
+		}
 
 		overlayManager.add(panel)
 //		eventBus.register(gauntletSolver)
@@ -144,16 +321,12 @@ class FredsPvmHelper2() extends Plugin {
 
 	override protected def shutDown(): Unit = {
 		log.debug("Shutting down up plugin")
-		gauntletRoom.shutdown()
+//		gauntletRoom.shutdown()
+		gauntletRoom2.deafTo(ActorTracker)
 		overlayManager.remove(panel)
 //		overlayManager.remove(overlay)
 	}
 
-//	@Subsqcribe
-	private def onNpcChanged(event: NpcChanged): Unit = {
-//		Option(event.getNpc).map(npc => SNpcCompositionChanged(npc.getIndex, npc.getId, npc.getComposition, event.getOld))
-//			.foreach(publish(_))
-	}
 
 //	@Subscribe
 	private def onGameTick(event: GameTick): Unit = {
@@ -174,7 +347,7 @@ class FredsPvmHelper2() extends Plugin {
 	}
 
 //	@Subscribe
-	private def onVarbitChanged(event: VarbitChanged): Unit = {
+//	private def onVarbitChanged(event: VarbitChanged): Unit = {
 //		if(event.getVarbitId == 9178) {
 //			if(event.getValue == 0) {
 //				eventBus.unregister(PvmSolver.Gauntlet)
@@ -187,44 +360,7 @@ class FredsPvmHelper2() extends Plugin {
 //		if(ConfigCache.debugVarps.contains(event.getVarpId) || ConfigCache.debugVarbits.contains(event.getVarbitId)) {
 //			log.debug(s"Varbit {}[{}]={}", event.getVarpId, event.getVarbitId, event.getValue)
 //		}
-	}
-
-//	@Subscribe
-	private def onNpcSpawned(event: NpcSpawned): Unit = {
-/*		if (!inArea() || event.getNpc == null) return
-		log.debug(s"NpcSpawned: id={}, name={}", event.getNpc.getId, event.getNpc.getName)
-		state = state.withNpc(event.getNpc)
-		Option(event.getNpc).map(npc => SNpcSpawned(npc.getIndex, npc.getId, npc.getAnimation, npc.getComposition))
-			.foreach(publish(_))
-		//		eventSource.push(SNpcSpawned(event.getNpc))*/
-	}
-
-//	@Subscribe
-	private def onNpcDespawned(event: NpcDespawned): Unit = {
-/*		log.debug(s"NpcDespawned: id={}, name={}", event.getNpc.getId, event.getNpc.getName)
-		state = state.withoutNpc(event.getNpc)
-		Option(event.getNpc).map(npc => SNpcDespawned(npc.getIndex, npc.getId, npc.getComposition))
-			.foreach(publish(_))*/
-	}
-
-//	@Subscribe
-	private def onAnimationChanged(event: AnimationChanged): Unit = {
-//		event.getActor match {
-//			case npc: NPC if state.npcAnimations.contains(npc) => {
-//				log.debug(s"onAnimationChanged: source=npc[{}], animationId={}", npc.getId, npc.getAnimation)
-//				val old = state.npcAnimations(npc)
-//				state = state.withNpcAnimation(npc, npc.getAnimation)
-//				Option(SNpcAnimationChanged(npc.getIndex, npc.getId, state.npcAnimations(npc), old))
-//					.foreach(publish(_))
-//				//				eventSource.push(SNpcAnimationChanged(npc, old))
-//			}
-//			case player: Player if (client.getLocalPlayer == player) => {
-//				log.debug(s"onAnimationChanged: source={}, animationId={}", "local", player.getAnimation)
-//				state = state.withPlayerAnimation(player.getAnimation)
-//			}
-//			case _ => {}
-//		}
-	}
+//	}
 //
 //	@Subscribe
 //	private def onProjectileMoved(event: ProjectileMoved): Unit = {

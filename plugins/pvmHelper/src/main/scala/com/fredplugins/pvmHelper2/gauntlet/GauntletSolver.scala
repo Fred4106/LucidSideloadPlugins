@@ -1,7 +1,8 @@
 package com.fredplugins.pvmHelper2.gauntlet
 
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.pvmHelper2.{PvmHelperOverlay, TypeName}
+import com.fredplugins.pvmHelper2.PvmEvent.{NpcEvent, PlayerEvent}
+import com.fredplugins.pvmHelper2.{PvmEvent, PvmHelperOverlay, TypeName}
 import com.google.inject.{Inject, Singleton}
 import net.runelite.api.{Actor, Client, NPC, Perspective, Player}
 import net.runelite.client.callback.ClientThread
@@ -15,6 +16,7 @@ import net.runelite.client.util.GameEventManager
 
 import java.awt.{BasicStroke, Color}
 import scala.jdk.CollectionConverters.CollectionHasAsScala
+import scala.swing.event.{Event, UIEvent}
 import scala.swing.{Dimension, Graphics2D}
 
 @Singleton
@@ -47,7 +49,7 @@ class GauntletSolver @Inject()(val eventBus: EventBus, val client: Client, val c
 				overlayManager.add(overlay)
 				gameEventManager.simulateGameEvents(this)
 				eventBus.register(this)
-			}//eventBus.register(Instance)
+			}
 		}
 	}
 
@@ -56,23 +58,10 @@ class GauntletSolver @Inject()(val eventBus: EventBus, val client: Client, val c
 		Option(e.getNpc).flatMap(GauntletNpcType.unapply).foreach((n: GauntletNpcInstance) => {
 			log.debug("Gauntlet - Spawned {}", n)
 		})
-//		val tpeOpt = GauntletNpcType.values.find(_.ids.contains(e.getNpc.getId))
-//		tpeOpt.foreach(tpe => {
-//			log.debug("Gauntlet - Spawned {} {} @ {}", tpe, e.getNpc.getName, e.getNpc.getWorldLocation)
-//		})
 	}
 
 	@Subscribe
 	def onAnimationChanged(e: AnimationChanged): Unit = {
-//		val tpeAndAnimationOpt = Option(e.getActor).collect {
-//			case n: NPC => GauntletNpcType.values.find(_.ids.contains(n.getId)).map(j => j -> n)
-//		}.flatten
-//
-//		tpeAndAnimationOpt.foreach(
-//			(tpe, npc) =>  {
-//				log.debug("Gauntlet - Animation {} {} @ {} changed to {}", tpe, npc.getName, npc.getWorldLocation, npc.getAnimation)
-//			}
-//		)
 		Option(e.getActor).flatMap(GauntletNpcType.unapply).foreach{
 			n => log.debug("Gauntlet - Animation of {} changed to {}", n, n.animation)
 		}
@@ -80,10 +69,6 @@ class GauntletSolver @Inject()(val eventBus: EventBus, val client: Client, val c
 
 	@Subscribe
 	def onNpcDespawned(e: NpcDespawned): Unit = {
-//		val tpeOpt = GauntletNpcType.values.find(_.ids.contains(e.getNpc.getId))
-//		tpeOpt.foreach(tpe => {
-//			log.debug("Gauntlet - Despawned {} {} @ {}", tpe, e.getNpc.getName, e.getNpc.getWorldLocation)
-//		})
 		Option(e.getActor).flatMap(GauntletNpcType.unapply).foreach {
 			n => log.debug("Gauntlet - Despawned {}", n)
 		}
@@ -91,22 +76,6 @@ class GauntletSolver @Inject()(val eventBus: EventBus, val client: Client, val c
 
 	@Subscribe
 	def onInteractingChanged(e: InteractingChanged): Unit = {
-//		val sourceTpeAndNpc = Option(e.getSource).collect {
-//			case n: NPC => GauntletNpcType.values.find(_.ids.contains(n.getId)).map(j => j -> n)
-//		}.flatten
-//
-//		val targetTpeAndNpc = Option(e.getTarget).collect {
-//			case n: NPC => GauntletNpcType.values.find(_.ids.contains(n.getId)).map(j => j -> n)
-//		}.flatten
-//
-//		(sourceTpeAndNpc, targetTpeAndNpc) match {
-//			case (Some((sourceTpe, sourceNpc)), Some((targetTpe, targetNpc))) => log.debug("Gauntlet - InteractingChanged ({} {} @ {}) -> ({} {} @ {})", sourceTpe, sourceNpc.getName, sourceNpc.getWorldLocation,targetTpe, targetNpc.getName, targetNpc.getWorldLocation)
-//			case (None, Some((targetTpe, targetNpc))) =>log.debug("Gauntlet - InteractingChanged (???) -> ({} {} @ {})", targetTpe, targetNpc.getName, targetNpc.getWorldLocation)
-//			case (Some((sourceTpe, sourceNpc)), None) =>log.debug("Gauntlet - InteractingChanged ({} {} @ {}) -> (???)", sourceTpe, sourceNpc.getName, sourceNpc.getWorldLocation)
-//			case (_, _) =>
-//		}
-
-//		inline type unwrapped = GauntletNpcInstance |  NPC | Player
 		type unwrapped = (GauntletNpcType#Instance |  NPC | Player | "None")
 		inline def unwrap(a: Actor): unwrapped = a match{
 			case GauntletNpcType(n) => n
@@ -119,22 +88,10 @@ class GauntletSolver @Inject()(val eventBus: EventBus, val client: Client, val c
 		if(src.isInstanceOf[GauntletNpcInstance] || target.isInstanceOf[GauntletNpcInstance]) {
 			log.debug("Gauntlet - InteractingChanged {} -> {}", src, target)
 		}
-
-//		(, Option(e.getTarget).flatMap(GauntletNpcType.unapply)) match {
-//			case (Some(source), Some(target)) =>
-//		}
-//		e.getSource
 	}
 
 	@Subscribe
 	def onActorDeath(e: ActorDeath): Unit = {
-//		val deadTpeAndNpc = Option(e.getActor).collect {
-//			case n: NPC => GauntletNpcType.values.find(_.ids.contains(n.getId)).map(j => j -> n)
-//		}.flatten
-//
-//		deadTpeAndNpc.foreach{
-//			case (tpe, npc) => log.debug("Gauntlet - ActorDeath {} {} @ {}", tpe, npc.getName, npc.getWorldLocation)
-//		}
 		Option(e.getActor).collect {
 			case GauntletNpcType(n) => n
 		}.foreach(n => {
@@ -161,4 +118,23 @@ class GauntletSolver @Inject()(val eventBus: EventBus, val client: Client, val c
 		monitorSub.invoke(new VarbitChanged().tap(_.setVarbitId(9178)).tap(_.setValue(0)))
 		monitorSub = null
 	}
+}
+
+class GauntletSolver2 @Inject()(val client: Client, val clientThread: ClientThread, val overlayManager: OverlayManager) extends scala.swing.Reactor {
+	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	reactions.+=(
+		new PartialFunction[Event, Unit] {
+			override def isDefinedAt(x: Event): Boolean = {
+				x match {
+					case event: PvmEvent.PlayerEvent if event.source == client.getLocalPlayer => true
+					case event: PvmEvent.NpcEvent if GauntletNpcType.unapply(event.source).isDefined => true
+					case event: PvmEvent.InteractingChangedEvent if event.current == client.getLocalPlayer || event.old == client.getLocalPlayer || GauntletNpcType.unapply(event.current).isDefined || GauntletNpcType.unapply(event.old).isDefined => true
+					case _ => false
+				}
+			}
+			override def apply(v1: Event): Unit = {
+				log.debug("{}", v1)
+			}
+		}
+	)
 }
