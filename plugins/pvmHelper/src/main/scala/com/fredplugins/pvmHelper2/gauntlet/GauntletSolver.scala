@@ -1,10 +1,9 @@
 package com.fredplugins.pvmHelper2.gauntlet
 
-import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.pvmHelper2.PvmEvent.{NpcEvent, PlayerEvent}
-import com.fredplugins.pvmHelper2.{PvmEvent, PvmHelperOverlay, TypeName}
+import com.fredplugins.common.utils.{ShimUtils, WorldPointUtils}
+import com.fredplugins.pvmHelper2.{ClientEvent, NpcEvent, PlayerEvent, PvmEvent, PvmHelperOverlay, TypeName, gauntlet}
 import com.google.inject.{Inject, Singleton}
-import net.runelite.api.{Actor, Client, NPC, Perspective, Player}
+import net.runelite.api.{Actor, Client, NPC, Perspective, Player, Prayer}
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 import org.slf4j.Logger
@@ -12,129 +11,122 @@ import org.slf4j.Logger
 import scala.util.chaining.*
 import net.runelite.api.events.{ActorDeath, AnimationChanged, InteractingChanged, NpcDespawned, NpcSpawned, VarbitChanged}
 import net.runelite.client.ui.overlay.{OverlayManager, OverlayUtil}
-import net.runelite.client.util.GameEventManager
 
-import java.awt.{BasicStroke, Color}
-import scala.jdk.CollectionConverters.CollectionHasAsScala
-import scala.swing.event.{Event, UIEvent}
-import scala.swing.{Dimension, Graphics2D}
+sealed trait HunllefEvent extends scala.swing.event.Event {}
 
-@Singleton
-class GauntletSolver @Inject()(val eventBus: EventBus, val client: Client, val clientThread: ClientThread, val gameEventManager: GameEventManager, val overlayManager: OverlayManager) {
-	private val log: Logger = ShimUtils.getLogger(getClass.getName, "DEBUG")
-	private  var isRunning	= false
+case class TornadoAttack(source: NPC) extends HunllefEvent {}
+case class RegularAttack(source: NPC) extends HunllefEvent {}
+case class SwitchToRange(source: NPC) extends HunllefEvent {}
+case class SwitchToMage(source: NPC) extends HunllefEvent {}
 
-	val overlay: PvmHelperOverlay = PvmHelperOverlay.create("GauntletSolver")(g => {
-		client.getNpcs.asScala.toList.flatMap(GauntletNpcType.unapply).foreach(n =>{
-			val poly = Perspective.getCanvasTilePoly(client, n.wrapped.getLocalLocation, 30)
-			OverlayUtil.renderPolygon(g, poly, GauntletNpcType.color(n.tpe), Color.BLACK, new BasicStroke(4))
-		})
-//		g.drawRoundRect(10, 20, 40, 70, 12, 12)
-
-		null.asInstanceOf[Dimension]
-	})
-
-
-	def onVarbitChanged(v: VarbitChanged): Unit = {
-		Option(v.getVarbitId -> v.getValue).collect {
-			case (9178, 0) if isRunning => {
-				log.debug("Stopping Gauntlet")
-				overlayManager.remove(overlay)
-				eventBus.unregister(this)
-				isRunning = false
-			}
-			case (9178, 1) if !isRunning => {
-				log.debug("Starting gauntlet")
-				isRunning = true
-				overlayManager.add(overlay)
-				gameEventManager.simulateGameEvents(this)
-				eventBus.register(this)
-			}
+object HunllefAnimation {
+	def unapply(event: NpcEvent): Option[HunllefEvent] = {
+		Option(event).collect {
+			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8418) => TornadoAttack(e.source)
+			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8419) => RegularAttack(e.source)
+			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8754) => SwitchToMage(e.source)
+			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8755) => SwitchToRange(e.source)
 		}
-	}
-
-	@Subscribe
-	def onNpcSpawned(e: NpcSpawned): Unit = {
-		Option(e.getNpc).flatMap(GauntletNpcType.unapply).foreach((n: GauntletNpcInstance) => {
-			log.debug("Gauntlet - Spawned {}", n)
-		})
-	}
-
-	@Subscribe
-	def onAnimationChanged(e: AnimationChanged): Unit = {
-		Option(e.getActor).flatMap(GauntletNpcType.unapply).foreach{
-			n => log.debug("Gauntlet - Animation of {} changed to {}", n, n.animation)
-		}
-	}
-
-	@Subscribe
-	def onNpcDespawned(e: NpcDespawned): Unit = {
-		Option(e.getActor).flatMap(GauntletNpcType.unapply).foreach {
-			n => log.debug("Gauntlet - Despawned {}", n)
-		}
-	}
-
-	@Subscribe
-	def onInteractingChanged(e: InteractingChanged): Unit = {
-		type unwrapped = (GauntletNpcType#Instance |  NPC | Player | "None")
-		inline def unwrap(a: Actor): unwrapped = a match{
-			case GauntletNpcType(n) => n
-			case npc: NPC => npc
-			case player: Player => player
-			case null => "None"
-		}
-		val src =unwrap(e.getSource)
-		val target = unwrap(e.getTarget)
-		if(src.isInstanceOf[GauntletNpcInstance] || target.isInstanceOf[GauntletNpcInstance]) {
-			log.debug("Gauntlet - InteractingChanged {} -> {}", src, target)
-		}
-	}
-
-	@Subscribe
-	def onActorDeath(e: ActorDeath): Unit = {
-		Option(e.getActor).collect {
-			case GauntletNpcType(n) => n
-		}.foreach(n => {
-			log.debug("Gauntlet - ActorDeath {}", n)
-		})
-	}
-
-	private var monitorSub: EventBus.Subscriber = _
-
-	def startup(): Unit = {
-		log.debug("Initializing Gauntlet")
-		monitorSub = eventBus.register[VarbitChanged](classOf[VarbitChanged], (e: VarbitChanged) => onVarbitChanged(e), 0.0f)
-
-		clientThread.runOnClientThread(() => {
-			monitorSub.invoke(9178.pipe(id => {
-				new VarbitChanged().tap(_.setVarbitId(id)).tap(_.setValue(client.getVarbitValue(id)))
-			}))
-		})
-	}
-
-	def shutdown(): Unit = {
-		log.debug("Tearing down Gauntlet")
-		eventBus.unregister(monitorSub)
-		monitorSub.invoke(new VarbitChanged().tap(_.setVarbitId(9178)).tap(_.setValue(0)))
-		monitorSub = null
+//			case event: NpcEvent.NpcFragEvent => ???
+//			case NpcEvent.Spawned(source, record) => ???
+//			case NpcEvent.Despawned(source, record) => ???
 	}
 }
 
-class GauntletSolver2 @Inject()(val client: Client, val clientThread: ClientThread, val overlayManager: OverlayManager) extends scala.swing.Reactor {
-	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
-	reactions.+=(
-		new PartialFunction[Event, Unit] {
-			override def isDefinedAt(x: Event): Boolean = {
-				x match {
-					case event: PvmEvent.PlayerEvent if event.source == client.getLocalPlayer => true
-					case event: PvmEvent.NpcEvent if GauntletNpcType.unapply(event.source).isDefined => true
-					case event: PvmEvent.InteractingChangedEvent if event.current == client.getLocalPlayer || event.old == client.getLocalPlayer || GauntletNpcType.unapply(event.current).isDefined || GauntletNpcType.unapply(event.old).isDefined => true
-					case _ => false
-				}
+sealed trait GauntletEvent extends scala.swing.event.Event {}
+case class EnablePrayer(prayer: Prayer) extends GauntletEvent {}
+case class DisablePrayer(prayer: Prayer) extends GauntletEvent {}
+case class EquipWeapon(weaponID: Int) extends GauntletEvent {}
+case class EatPaddleFish() extends GauntletEvent {}
+case class DrinkPotion() extends GauntletEvent {}
+object GauntletEvent {
+	def unapply(event: PvmEvent)(using client: Client): Option[GauntletEvent] = {
+		Option(event).collect {
+			case NpcEvent.InteractingChanged(src, o, LocalPlayer(c)) => {
+				Option(src).collect {
+					case Bear() => Some(EnablePrayer(Prayer.PROTECT_FROM_MELEE))
+					case DarkBeast() => Some(EnablePrayer(Prayer.PROTECT_FROM_MISSILES))
+					case Dragon() => Some(EnablePrayer(Prayer.PROTECT_FROM_MAGIC))
+					case _ => None
+				}.flatten
 			}
-			override def apply(v1: Event): Unit = {
-				log.debug("{}", v1)
+			case NpcEvent.InteractingChanged(src, LocalPlayer(o), c) =>{
+				Option(src).collect {
+					case Bear() => Some(DisablePrayer(Prayer.PROTECT_FROM_MELEE))
+					case DarkBeast() => Some(DisablePrayer(Prayer.PROTECT_FROM_MISSILES))
+					case Dragon() => Some(DisablePrayer(Prayer.PROTECT_FROM_MAGIC))
+					case _ => None
+				}.flatten
 			}
+		}.flatten
+//			case PlayerEvent.InteractingChanged(LocalPlayer(src), o, c)  if(o != c) => {
+//				c match {
+//					case Some(value@Hunllef()) =>
+//					case Spome(value@Bear()) => value
+//					case Some(value@DarkBeast()) => value
+//					case Some(value@Dragon()) => value
+//					case None => ???
+//				}
+//				Option(c).collect {
+//					case 8418 => TornadoAttack(src)
+//					case 8419 => RegularAttack(src)
+//					case 8754 => SwitchToMage(src)
+//					case 8755 => SwitchToRange(src)
+//				}
+//			}
 		}
-	)
+		//			case event: NpcEvent.NpcFragEvent => ???
+		//			case NpcEvent.Spawned(source, record) => ???
+		//			case NpcEvent.Despawned(source, record) => ???
+//	}
+}
+
+object LocalPlayer {
+	def unapply(a: Actor)(using client: Client): Option[Player] = {
+//		val local =
+		a match {
+			case player: Player if(player.equals(client.getLocalPlayer)) => Some(player)
+			case _ => None
+		}
+	}
+	def unapply(a: Option[Actor])(using client: Client): Option[Player] = {
+		//		val local =
+		a match {
+			case Some(player: Player) if (player.equals(client.getLocalPlayer)) => Some(player)
+			case _ => None
+		}
+	}
+}
+
+@Singleton
+class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThread, val overlayManager: OverlayManager) extends scala.swing.Publisher {
+	private val log: Logger = ShimUtils.getLogger(classOf[GauntletSolver].getName, "DEBUG")
+	var inHunllef: Boolean = false
+	var inGauntlet: Boolean = false
+	given Client = client
+
+	reactions += {
+		case HunllefAnimation(a) => publish(a)
+		case GauntletEvent(a) => publish(a)
+	}
+//	reactions += {
+//		case x@NpcEvent.InteractingChanged(Dragon(), o, LocalPlayer(lp)) if inGauntlet && client.getLocalPlayer == lp => publish(GauntletEnablePrayer(Prayer.PROTECT_FROM_MAGIC))
+//		case x@NpcEvent.InteractingChanged(DarkBeast(), o, Some(lp)) if inGauntlet && client.getLocalPlayer == lp => publish(GauntletEnablePrayer(Prayer.PROTECT_FROM_MISSILES))
+//		case x@NpcEvent.InteractingChanged(Bear(), o, Some(lp))  if inGauntlet && client.getLocalPlayer == lp => publish(GauntletEnablePrayer(Prayer.PROTECT_FROM_MELEE))
+//	}
+	reactions += {
+		case v@ClientEvent.VarbitChanged(9178, 1) if !inGauntlet => {inGauntlet = true; log.debug("inGauntlet={}", inGauntlet)}
+		case v@ClientEvent.VarbitChanged(9178, 0) if inGauntlet => {inGauntlet = false; log.debug("inGauntlet={}", inGauntlet)}
+		case v@ClientEvent.VarbitChanged(9177, 1) if !inHunllef  => {inHunllef = true; log.debug("inHunllef={}", inHunllef)}
+		case v@ClientEvent.VarbitChanged(9177, 0) if inHunllef => {inHunllef = false; log.debug("inHunllef={}", inHunllef)}
+	}
+//	reactions += new PartialFunction[GauntletEvent, Unit] {
+//		override def isDefinedAt(x: GauntletEvent): Boolean =
+//		override def apply(v1: GauntletEvent): Unit = ???
+//	}
+	reactions += {
+		case he: HunllefEvent => log.debug("HunllefEvent={}", he)
+		case ge: GauntletEvent => log.debug("GauntletEvent={}", ge)
+		case pvm: PvmEvent => log.debug("PvmEvent={}",pvm)
+	}
 }

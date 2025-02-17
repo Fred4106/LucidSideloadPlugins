@@ -2,6 +2,7 @@ package com.fredplugins.gauntlet;
 
 //import ethanApiPlugin.EthanApiPlugin;
 
+import ch.qos.logback.classic.Level;
 import com.fredplugins.attacktimer.AttackTimerMetronomePlugin;
 import com.fredplugins.common.ProjectileID;
 import com.fredplugins.gauntlet.entity.Missile;
@@ -32,6 +33,8 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -52,8 +55,17 @@ import java.util.stream.Collectors;
 @PluginDependency(EthanApiPlugin.class)
 @PluginDependency(AttackTimerMetronomePlugin.class)
 @Singleton
-@Slf4j
 public class FredGauntletPlugin extends Plugin {
+	private final static Logger log;
+	static {
+//		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(FredGauntletPlugin.class)).setLevel(ch.qos.logback.classic.Level.DEBUG);
+		log = LoggerFactory.getLogger(FredGauntletPlugin.class);
+	}
+	//		try{
+//			 ((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.DEBUG);
+//		} catch (Exception e) {
+//			log.warn("Failed to change logging level", e);
+//		}
 	public static final int ONEHAND_SLASH_AXE_ANIMATION = 395;
 	public static final int ONEHAND_CRUSH_PICKAXE_ANIMATION = 400;
 	public static final int ONEHAND_CRUSH_AXE_ANIMATION = 401;
@@ -377,10 +389,10 @@ public class FredGauntletPlugin extends Plugin {
 			if (attackTimerMetronomePlugin.getTicksUntilNextAttack() == 1 && attackTimerMetronomePlugin.attackState != AttackTimerMetronomePlugin.AttackState.NOT_ATTACKING) {
 				Optional.ofNullable(getPrayerBasedOnWeapon()).filter(x -> !client.isPrayerActive(x)).ifPresent(x -> {
 					int createdTickCount = client.getTickCount();
-					log.info("Enabling prayer {} on tick {}", x, createdTickCount);
+					log.trace("Enabling prayer {} on tick {}", x, createdTickCount);
 					PrayerInteraction.setPrayerState(x, true);
 					newScheduledActions.add(new ScheduledAction(rand.nextInt(2) + 1, () -> {
-						log.info("Disabling prayer {} after {} ticks on tick {}", x, client.getTickCount() - createdTickCount, client.getTickCount());
+						log.trace("Disabling prayer {} after {} ticks on tick {}", x, client.getTickCount() - createdTickCount, client.getTickCount());
 						PrayerInteraction.setPrayerState(x, false);
 					}));
 				});
@@ -489,15 +501,15 @@ public class FredGauntletPlugin extends Plugin {
 		boolean tooCloseToTornados = tooCloseToTornado(client.getLocalPlayer().getWorldLocation(), 3);
 
 		if (!isTileSafe) {
-			log.info("Need to move from unsafe tile!");
+			log.debug("Need to move from unsafe tile!");
 		}
 
 		if (underHunllef) {
-			log.info("Need to get out from under the beast!");
+			log.debug("Need to get out from under the beast!");
 		}
 
 		if (tooCloseToTornados) {
-			log.info("There's a tornado about to fuck us up");
+			log.debug("There's a tornado about to fuck us up");
 		}
 
 		return !isTileSafe || underHunllef || (checkTornados && tooCloseToTornados);
@@ -818,11 +830,11 @@ public class FredGauntletPlugin extends Plugin {
 				Prayer wepPrayer = getPrayerBasedOnWeapon();
 				Prayer defPrayer = getDefensePrayer();
 				if (wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY && defPrayer != null) {
-					log.info("Activating {} and {}", wepPrayer.name(), defPrayer.name());
+					log.trace("Activating {} and {}", wepPrayer.name(), defPrayer.name());
 					CombatUtils.activatePrayer(defPrayer);
 					CombatUtils.activatePrayer(wepPrayer);
 				} else {
-					log.info("Activating {}", wepPrayer.name());
+					log.trace("Activating {}", wepPrayer.name());
 					CombatUtils.activatePrayer(wepPrayer);
 				}
 			}
@@ -892,15 +904,15 @@ public class FredGauntletPlugin extends Plugin {
 				Prayer defPrayer = getDefensePrayer();
 				if (wepPrayer != Prayer.CHIVALRY && wepPrayer != Prayer.PIETY && defPrayer != null) {
 					if(wepPrayer != null) {
-						log.info("Reactivating {} and {}",  wepPrayer.name(), defPrayer.name());
+						log.trace("Reactivating {} and {}",  wepPrayer.name(), defPrayer.name());
 						CombatUtils.togglePrayer(wepPrayer);
 					} else {
-						log.info("Reactivating {}", defPrayer.name());
+						log.trace("Reactivating {}", defPrayer.name());
 					}
 
 					CombatUtils.togglePrayer(defPrayer);
 				} else if(wepPrayer != null) {
-					log.info("Reactivating {}", wepPrayer.name());
+					log.trace("Reactivating {}", wepPrayer.name());
 					CombatUtils.togglePrayer(wepPrayer);
 				}
 			}

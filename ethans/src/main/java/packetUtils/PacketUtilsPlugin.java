@@ -152,15 +152,15 @@ public class PacketUtilsPlugin extends Plugin {
 		toDelete.add(codeSource.resolve("doAction.class"));
 		toDelete.add(codeSource.resolve("decompiled.txt"));
 		for (Path path : toDelete) {
-			//Files.deleteIfExists(path);
+			Files.deleteIfExists(path);
 		}
 	}
 
 	@SneakyThrows
 	public void setupRuneliteUpdateHandling(String version) {
 		Path codeSource = RuneLite.RUNELITE_DIR.toPath().resolve("PacketUtils");
-		if (Files.exists(codeSource.resolve(version + "-" + client.getRevision() + ".txt"))) {
-			Path f = codeSource.resolve(version + "-" + client.getRevision() + ".txt");
+		if (Files.exists(codeSource.resolve(version.replace("-SNAPSHOT", "") + "-" + client.getRevision() + ".txt"))) {
+			Path f = codeSource.resolve(version.replace("-SNAPSHOT", "") + "-" + client.getRevision() + ".txt");
 			List<String> lines = Files.readAllLines(f);
 			loadedConfigName = f.getFileName().toString();
 			System.out.println("config name: " + loadedConfigName);
