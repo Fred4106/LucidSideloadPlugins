@@ -19,7 +19,7 @@ val javaVersion = JavaVersion.VERSION_11
 
 allprojects {
     group = "com.fredplugins"
-    version = "1.0.2"
+    version = "1.1.0"
     repositories {
         mavenLocal()
         gradlePluginPortal()

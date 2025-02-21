@@ -18,21 +18,7 @@ import com.google.inject.Inject;
 import ethanApiPlugin.pathfinding.Node;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.CollisionData;
-import net.runelite.api.CollisionDataFlag;
-import net.runelite.api.GameObject;
-import net.runelite.api.GameState;
-import net.runelite.api.HeadIcon;
-import net.runelite.api.InventoryID;
-import net.runelite.api.Item;
-import net.runelite.api.ItemComposition;
-import net.runelite.api.NPC;
-import net.runelite.api.Point;
-import net.runelite.api.Scene;
-import net.runelite.api.Tile;
-import net.runelite.api.TileObject;
+import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
@@ -311,6 +297,24 @@ public class EthanApiPlugin extends Plugin {
             }
         }
         return null;
+    }
+
+    @SneakyThrows
+    public static int pathLength(NPC npc) {
+        Field pathLength = npc.getClass().getSuperclass().getDeclaredField(ObfuscatedNames.pathLengthFieldName);
+        pathLength.setAccessible(true);
+        int path = pathLength.getInt(npc) * ObfuscatedNames.pathLengthMultiplier;
+        pathLength.setAccessible(false);
+        return path;
+    }
+
+    @SneakyThrows
+    public static int pathLength(Player player) {
+        Field pathLength = player.getClass().getSuperclass().getDeclaredField(ObfuscatedNames.pathLengthFieldName);
+        pathLength.setAccessible(true);
+        int path = pathLength.getInt(player) * ObfuscatedNames.pathLengthMultiplier;
+        pathLength.setAccessible(false);
+        return path;
     }
 
     public static List<WorldPoint> sceneWorldPoints() {
