@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 public class FredGauntletPlugin extends Plugin {
 	private final static Logger log;
 	static {
-//		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(FredGauntletPlugin.class)).setLevel(ch.qos.logback.classic.Level.DEBUG);
+		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(FredGauntletPlugin.class)).setLevel(ch.qos.logback.classic.Level.INFO);
 		log = LoggerFactory.getLogger(FredGauntletPlugin.class);
 	}
 	//		try{
@@ -380,9 +380,6 @@ public class FredGauntletPlugin extends Plugin {
 		if (hun != null && !instanceGrid.isInitialized()) {
 			instanceGrid.initialize();
 		}
-		if (hunllef == null) {
-			return;
-		}
 
 		if (!inHunllef) {
 //            Actor interactingTarget = client.getLocalPlayer().getInteracting();
@@ -397,6 +394,10 @@ public class FredGauntletPlugin extends Plugin {
 					}));
 				});
 			}
+			return;
+		}
+
+		if (hunllef == null) {
 			return;
 		}
 
@@ -458,7 +459,7 @@ public class FredGauntletPlugin extends Plugin {
 		scheduledActions = tempActions.stream().flatMap(a -> tick(a).stream()).collect(Collectors.toUnmodifiableList());
 	}
 
-	@Subscribe
+	@Subscribe(priority = 100)
 	private void onGameTick(final GameTick event) {
 		onGameTick1(event);
 		onGameTick2(event);
