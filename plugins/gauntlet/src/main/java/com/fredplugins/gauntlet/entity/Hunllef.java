@@ -67,7 +67,8 @@ public class Hunllef
 
     public void updatePlayerAttackCount()
     {
-        if (--playerAttackCount <= 0)
+        playerAttackCount -= 1;
+        if (playerAttackCount <= 0)
         {
             playerAttackCount = MAX_PLAYER_ATTACK_COUNT;
         }
@@ -76,10 +77,9 @@ public class Hunllef
     public void updateAttackCount()
     {
         ticksUntilNextAttack = ATTACK_TICK_SPEED;
-
-        if (--attackCount <= 0)
+        attackCount -= 1;
+        if (attackCount <= 0)
         {
-
             attackCount = MAX_ATTACK_COUNT;
         }
     }

@@ -8,6 +8,7 @@ import net.runelite.api.*;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.RuneLite;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
 import java.util.function.Function;
@@ -47,7 +48,10 @@ public class NPCQuery {
         npcs = npcs.stream().filter(npc -> npc.getId() == id).collect(Collectors.toList());
         return this;
     }
-
+    public NPCQuery withId(int ... ids) {
+        npcs = npcs.stream().filter(npc -> ArrayUtils.contains(ids, npc.getId())).collect(Collectors.toList());
+        return this;
+    }
     public NPCQuery withName(String name) {
         npcs = npcs.stream().filter(npcs -> npcs.getName() != null && npcs.getName().equals(name)).collect(Collectors.toList());
         return this;

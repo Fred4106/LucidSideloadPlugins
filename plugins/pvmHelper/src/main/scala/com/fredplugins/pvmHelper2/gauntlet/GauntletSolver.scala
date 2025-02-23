@@ -1,9 +1,18 @@
 package com.fredplugins.pvmHelper2.gauntlet
 
 import com.fredplugins.common.utils.{ShimUtils, WorldPointUtils}
+import com.fredplugins.pvmHelper2.ClientEvent.ServerTick
+import com.fredplugins.pvmHelper2.gauntlet.HunPrayStyle.Melee
+import com.fredplugins.pvmHelper2.gauntlet.{ArmedAttack, HalberdAttack, MageAttack, RangeAttack, UnarmedAttack}
+import com.fredplugins.pvmHelper2.gauntlet.{RegularAttack, SwitchToMage, SwitchToRange, TornadoAttack}
+import com.fredplugins.pvmHelper2.gauntlet.{DisablePrayer, EnablePrayer, EnterGauntlet, EnterHunllef, ExitGauntlet, ExitHunllef, HunllefAnimationEvents, PlayerAnimationEvents, TickHunllef}
 import com.fredplugins.pvmHelper2.{ClientEvent, NpcEvent, PlayerEvent, PvmEvent, PvmHelperOverlay, TypeName, gauntlet}
 import com.google.inject.{Inject, Singleton}
-import net.runelite.api.{Actor, Client, NPC, Perspective, Player, Prayer}
+import com.lucidplugins.api.utils.{CombatUtils, NpcUtils}
+import ethanApiPlugin.EthanApiPlugin
+import ethanApiPlugin.collections.query.NPCQuery
+import interactionApi.PrayerInteraction
+import net.runelite.api.{Actor, Client, HeadIcon, NPC, Perspective, Player, Prayer}
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 import org.slf4j.Logger
@@ -12,75 +21,111 @@ import scala.util.chaining.*
 import net.runelite.api.events.{ActorDeath, AnimationChanged, InteractingChanged, NpcDespawned, NpcSpawned, VarbitChanged}
 import net.runelite.client.ui.overlay.{OverlayManager, OverlayUtil}
 
-sealed trait HunllefEvent extends scala.swing.event.Event {}
+import scala.jdk.CollectionConverters.SeqHasAsJava
+import scala.jdk.OptionConverters.RichOptional
 
-case class TornadoAttack(source: NPC) extends HunllefEvent {}
-case class RegularAttack(source: NPC) extends HunllefEvent {}
-case class SwitchToRange(source: NPC) extends HunllefEvent {}
-case class SwitchToMage(source: NPC) extends HunllefEvent {}
-
-object HunllefAnimation {
-	def unapply(event: NpcEvent): Option[HunllefEvent] = {
-		Option(event).collect {
-			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8418) => TornadoAttack(e.source)
-			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8419) => RegularAttack(e.source)
-			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8754) => SwitchToMage(e.source)
-			case e@NpcEvent.AnimationChanged(Hunllef(), o, 8755) => SwitchToRange(e.source)
-		}
-//			case event: NpcEvent.NpcFragEvent => ???
-//			case NpcEvent.Spawned(source, record) => ???
-//			case NpcEvent.Despawned(source, record) => ???
-	}
+sealed trait GauntletEvent {}
+sealed trait PlayerAnimation extends GauntletEvent {}
+sealed trait HunllefAnimation extends GauntletEvent {}
+sealed trait HunAttackStyle {}
+object HunAttackStyle {
+	case object Mage extends HunAttackStyle
+	case object Range extends HunAttackStyle
 }
 
-sealed trait GauntletEvent extends scala.swing.event.Event {}
+sealed trait HunPrayStyle {}
+object HunPrayStyle {
+	case object None extends HunPrayStyle
+	case object Mage extends HunPrayStyle
+	case object Range extends HunPrayStyle
+	case object Melee extends HunPrayStyle
+}
+
+case class HunllefState(hun: Hunllef.Instance, attackCount: Int, playerAttackCount: Int, ticksTillNextAttack: Int, attackStyle: HunAttackStyle, prayerStyle: HunPrayStyle) {
+	def headIcon(using client: Client): Option[HeadIcon] = {
+		Option(EthanApiPlugin.getHeadIcon(hun.wrapped))
+	}
+}
+object HunllefState {
+	private def prayerStyleForHeadIcon(hi: HeadIcon): HunPrayStyle = {
+		Option(hi).collect({
+			case HeadIcon.MELEE => HunPrayStyle.Melee
+			case HeadIcon.MAGIC => HunPrayStyle.Mage
+			case HeadIcon.RANGED => HunPrayStyle.Range
+		}).getOrElse(HunPrayStyle.None)
+	}
+
+	def apply(npc: Hunllef.Instance)(using client: Client): HunllefState = {
+		HunllefState(npc, 4, 6, 0, HunAttackStyle.Range, prayerStyleForHeadIcon(EthanApiPlugin.getHeadIcon(npc.wrapped)))
+	}
+	def updateAttackCount(in: HunllefState): HunllefState = {
+//		in.copy(attackCount = if (in.attackCount > 1) (in.attackCount - 1) else 4, ticksTillNextAttack = 6)
+		in.copy(attackCount = Option(in.attackCount - 1).filter(_ > 0).getOrElse(4), ticksTillNextAttack = 6)
+	}
+	def tick(in: HunllefState): HunllefState = {
+		in.copy(ticksTillNextAttack = Option(in.ticksTillNextAttack).filter(_ > 0).map(_ - 1).getOrElse(0))
+	}
+
+	def updatePlayerAttackCount(in: HunllefState)(using client: Client): HunllefState = {
+		val newPAttackCount = Option(in.playerAttackCount - 1).filter(_ > 0).getOrElse(6)
+		in.copy(playerAttackCount = newPAttackCount, prayerStyle = if(newPAttackCount < 6) in.prayerStyle else prayerStyleForHeadIcon(in.headIcon.orNull))
+	}
+
+	def changeStyle(in: HunllefState)(s: HunAttackStyle): HunllefState = {
+		in.copy(attackStyle = s, attackCount = 4)
+	}
+}
+case object EnterHunllef extends GauntletEvent
+case object EnterGauntlet extends GauntletEvent
+case object ExitHunllef extends GauntletEvent
+case object ExitGauntlet extends GauntletEvent
 case class EnablePrayer(prayer: Prayer) extends GauntletEvent {}
 case class DisablePrayer(prayer: Prayer) extends GauntletEvent {}
 case class EquipWeapon(weaponID: Int) extends GauntletEvent {}
 case class EatPaddleFish() extends GauntletEvent {}
 case class DrinkPotion() extends GauntletEvent {}
-object GauntletEvent {
-	def unapply(event: PvmEvent)(using client: Client): Option[GauntletEvent] = {
-		Option(event).collect {
-			case NpcEvent.InteractingChanged(src, o, LocalPlayer(c)) => {
-				Option(src).collect {
-					case Bear() => Some(EnablePrayer(Prayer.PROTECT_FROM_MELEE))
-					case DarkBeast() => Some(EnablePrayer(Prayer.PROTECT_FROM_MISSILES))
-					case Dragon() => Some(EnablePrayer(Prayer.PROTECT_FROM_MAGIC))
-					case _ => None
-				}.flatten
-			}
-			case NpcEvent.InteractingChanged(src, LocalPlayer(o), c) =>{
-				Option(src).collect {
-					case Bear() => Some(DisablePrayer(Prayer.PROTECT_FROM_MELEE))
-					case DarkBeast() => Some(DisablePrayer(Prayer.PROTECT_FROM_MISSILES))
-					case Dragon() => Some(DisablePrayer(Prayer.PROTECT_FROM_MAGIC))
-					case _ => None
-				}.flatten
-			}
-		}.flatten
-//			case PlayerEvent.InteractingChanged(LocalPlayer(src), o, c)  if(o != c) => {
-//				c match {
-//					case Some(value@Hunllef()) =>
-//					case Spome(value@Bear()) => value
-//					case Some(value@DarkBeast()) => value
-//					case Some(value@Dragon()) => value
-//					case None => ???
-//				}
-//				Option(c).collect {
-//					case 8418 => TornadoAttack(src)
-//					case 8419 => RegularAttack(src)
-//					case 8754 => SwitchToMage(src)
-//					case 8755 => SwitchToRange(src)
-//				}
-//			}
-		}
-		//			case event: NpcEvent.NpcFragEvent => ???
-		//			case NpcEvent.Spawned(source, record) => ???
-		//			case NpcEvent.Despawned(source, record) => ???
-//	}
-}
 
+case object TickHunllef extends GauntletEvent {}
+//	case class HunllefAnimation(source: Hunllef.Instance, animation: HunllefAnimationTrait) extends GauntletEvent
+//	case class PlayerAnimation(animation: PlayerAnimationTrait) extends GauntletEvent
+
+case object HalberdAttack extends PlayerAnimation {}
+case object UnarmedAttack extends PlayerAnimation {}
+case object RangeAttack extends PlayerAnimation {}
+case object MageAttack extends PlayerAnimation {}
+case object ArmedAttack extends PlayerAnimation {}
+case object TornadoAttack extends HunllefAnimation {}
+case object RegularAttack extends HunllefAnimation {}
+case object SwitchToRange extends HunllefAnimation {}
+case object SwitchToMage extends HunllefAnimation {}
+
+object PlayerAnimationEvents {
+	def unapply(in: Int): Option[PlayerAnimation] = {
+		Option(in).collect {
+			case 386 => ArmedAttack
+			case 390 => ArmedAttack
+			case 395 => ArmedAttack
+			case 400 => ArmedAttack
+			case 401 => ArmedAttack
+			case 428 => HalberdAttack
+			case 440 => HalberdAttack
+			case 423 => UnarmedAttack
+			case 422 => UnarmedAttack
+			case 426 => RangeAttack
+			case 1167 => MageAttack
+		}
+	}
+}
+object HunllefAnimationEvents {
+	def unapply(in: Int): Option[HunllefAnimation] = {
+		Option(in).collect {
+			case 8418 => TornadoAttack
+			case 8419 => RegularAttack
+			case 8754 => SwitchToMage
+			case 8755 => SwitchToRange
+		}
+	}
+}
 object LocalPlayer {
 	def unapply(a: Actor)(using client: Client): Option[Player] = {
 //		val local =
@@ -99,34 +144,65 @@ object LocalPlayer {
 }
 
 @Singleton
-class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThread, val overlayManager: OverlayManager) extends scala.swing.Publisher {
-	private val log: Logger = ShimUtils.getLogger(classOf[GauntletSolver].getName, "DEBUG")
-	var inHunllef: Boolean = false
+class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThread, val overlayManager: OverlayManager) extends scala.swing.Reactor {
+	private val log: Logger = ShimUtils.getLogger(classOf[GauntletSolver].getName, "TRACE")
+//	var inHunllef: Boolean = false
+
+	var hunllef: Option[HunllefState] = Option.empty[HunllefState]
+//	def inHunllef(): Boolean = hunllef.isDefined
 	var inGauntlet: Boolean = false
+
+
 	given Client = client
 
-	reactions += {
-		case HunllefAnimation(a) => publish(a)
-		case GauntletEvent(a) => publish(a)
+	def handle(e: GauntletEvent): Unit = {
+//		case o =>
+		e match {
+			case EnterHunllef => {
+				hunllef = ethanApiPlugin.collections.NPCs.search().withId(Hunllef.ids *).nearestToPlayer().toScala.flatMap(Hunllef.Instance.unapply(_))
+					.map(h => HunllefState.apply(h))
+			}
+			case EnterGauntlet => inGauntlet = true
+			case ExitHunllef => hunllef = None
+			case ExitGauntlet => inGauntlet = false
+			case EnablePrayer(prayer) => PrayerInteraction.setPrayerState(prayer, true)
+			case DisablePrayer(prayer) => PrayerInteraction.setPrayerState(prayer, false)
+			case TornadoAttack if(hunllef.nonEmpty) => hunllef = hunllef.map(HunllefState.updateAttackCount)
+			case RegularAttack if(hunllef.nonEmpty) => hunllef = hunllef.map(HunllefState.updateAttackCount)
+			case SwitchToRange if(hunllef.nonEmpty) => hunllef = hunllef.map(HunllefState.changeStyle(_)(HunAttackStyle.Range))
+			case SwitchToMage  if(hunllef.nonEmpty) => hunllef = hunllef.map(HunllefState.changeStyle(_)(HunAttackStyle.Mage))
+			case UnarmedAttack if(hunllef.map(_.prayerStyle).exists(_ != HunPrayStyle.Melee)) => hunllef = hunllef.map(HunllefState.updatePlayerAttackCount)
+			case ArmedAttack   if(hunllef.map(_.prayerStyle).exists(_ != HunPrayStyle.Melee)) => hunllef = hunllef.map(HunllefState.updatePlayerAttackCount)
+			case HalberdAttack if(hunllef.map(_.prayerStyle).exists(_ != HunPrayStyle.Melee)) => hunllef = hunllef.map(HunllefState.updatePlayerAttackCount)
+			case RangeAttack   if(hunllef.map(_.prayerStyle).exists(_ != HunPrayStyle.Range)) => hunllef = hunllef.map(HunllefState.updatePlayerAttackCount)
+			case MageAttack    if(hunllef.map(_.prayerStyle).exists(_ != HunPrayStyle.Mage )) => hunllef = hunllef.map(HunllefState.updatePlayerAttackCount)
+			case TickHunllef if(hunllef.nonEmpty) => {
+				hunllef = hunllef.map(HunllefState.tick)
+				log.debug("State = {}", hunllef.get)
+			}
+			case u => log.debug("unhandled event {}", u)
+		}
 	}
-//	reactions += {
-//		case x@NpcEvent.InteractingChanged(Dragon(), o, LocalPlayer(lp)) if inGauntlet && client.getLocalPlayer == lp => publish(GauntletEnablePrayer(Prayer.PROTECT_FROM_MAGIC))
-//		case x@NpcEvent.InteractingChanged(DarkBeast(), o, Some(lp)) if inGauntlet && client.getLocalPlayer == lp => publish(GauntletEnablePrayer(Prayer.PROTECT_FROM_MISSILES))
-//		case x@NpcEvent.InteractingChanged(Bear(), o, Some(lp))  if inGauntlet && client.getLocalPlayer == lp => publish(GauntletEnablePrayer(Prayer.PROTECT_FROM_MELEE))
-//	}
 	reactions += {
-		case v@ClientEvent.VarbitChanged(9178, 1) if !inGauntlet => {inGauntlet = true; log.debug("inGauntlet={}", inGauntlet)}
-		case v@ClientEvent.VarbitChanged(9178, 0) if inGauntlet => {inGauntlet = false; log.debug("inGauntlet={}", inGauntlet)}
-		case v@ClientEvent.VarbitChanged(9177, 1) if !inHunllef  => {inHunllef = true; log.debug("inHunllef={}", inHunllef)}
-		case v@ClientEvent.VarbitChanged(9177, 0) if inHunllef => {inHunllef = false; log.debug("inHunllef={}", inHunllef)}
+		case ClientEvent.VarbitChanged(9178, 1) if(!inGauntlet) => handle(EnterGauntlet)
+		case ClientEvent.VarbitChanged(9178, 0) if(inGauntlet) => handle(ExitGauntlet)
+		case ClientEvent.VarbitChanged(9177, 1) if(hunllef.isEmpty) => handle(EnterHunllef)
+		case ClientEvent.VarbitChanged(9177, 0) if(hunllef.nonEmpty) => handle(ExitHunllef)
 	}
-//	reactions += new PartialFunction[GauntletEvent, Unit] {
-//		override def isDefinedAt(x: GauntletEvent): Boolean =
-//		override def apply(v1: GauntletEvent): Unit = ???
-//	}
 	reactions += {
-		case he: HunllefEvent => log.debug("HunllefEvent={}", he)
-		case ge: GauntletEvent => log.debug("GauntletEvent={}", ge)
-		case pvm: PvmEvent => log.debug("PvmEvent={}",pvm)
+		case NpcEvent.InteractingChanged(     Bear(), None, LocalPlayer(_)) if(inGauntlet && hunllef.isEmpty) => handle(EnablePrayer(Prayer.PROTECT_FROM_MELEE))
+		case NpcEvent.InteractingChanged(DarkBeast(), None, LocalPlayer(_)) if(inGauntlet && hunllef.isEmpty) => handle(EnablePrayer(Prayer.PROTECT_FROM_MISSILES))
+		case NpcEvent.InteractingChanged(   Dragon(), None, LocalPlayer(_)) if(inGauntlet && hunllef.isEmpty) => handle(EnablePrayer(Prayer.PROTECT_FROM_MAGIC))
+		case NpcEvent.InteractingChanged(     Bear(), LocalPlayer(_), None) if(inGauntlet && hunllef.isEmpty) => handle(DisablePrayer(Prayer.PROTECT_FROM_MELEE))
+		case NpcEvent.InteractingChanged(DarkBeast(), LocalPlayer(_), None) if(inGauntlet && hunllef.isEmpty) => handle(DisablePrayer(Prayer.PROTECT_FROM_MISSILES))
+		case NpcEvent.InteractingChanged(   Dragon(), LocalPlayer(_), None) if(inGauntlet && hunllef.isEmpty) => handle(DisablePrayer(Prayer.PROTECT_FROM_MAGIC))
+	}
+	reactions += {
+		case NpcEvent.AnimationChanged(Hunllef(), _, HunllefAnimationEvents(ha)) if(hunllef.nonEmpty) => handle(ha)
+		case PlayerEvent.AnimationChanged(LocalPlayer(_), o, PlayerAnimationEvents(pa)) if(inGauntlet) => handle(pa)
+		case ClientEvent.ServerTick(_) if(hunllef.nonEmpty) => {
+			handle(TickHunllef)
+//			log.debug("hunllefState = {}", hunllef.get)
+		}
 	}
 }

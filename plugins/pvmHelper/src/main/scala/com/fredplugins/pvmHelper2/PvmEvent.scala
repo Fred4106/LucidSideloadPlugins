@@ -153,7 +153,7 @@ object ClientEvent {
 			case c: VarbitChanged => Some(c.source -> c.cur)
 		}
 	}
-//	sealed class GameTick (val source: Int) extends ClientEvent {}
+	case class ServerTick (source: Int) extends ClientEvent {type A = Int}
 //	object VarbitChanged {
 //		def apply(id: Int, last: Int)(using client: Client, clientThread: ClientThread): VarbitChanged = {
 //			val cur = clientThread.runOnClientThread(() => {client.getVarbitValue(id)})

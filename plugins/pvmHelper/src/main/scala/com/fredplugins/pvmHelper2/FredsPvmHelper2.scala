@@ -2,6 +2,7 @@ package com.fredplugins.pvmHelper2
 
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
 import com.fredplugins.pvmHelper2.NpcEvent.NpcRecord
+import com.fredplugins.pvmHelper2.PlayerEvent.PlayerRecord
 import com.fredplugins.pvmHelper2.gauntlet.GauntletSolver
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
@@ -241,45 +242,88 @@ class FredsPvmHelper2() extends Plugin with scala.swing.Publisher {
 	}
 
 	private var lastTickNpcRecordOpt: Option[Map[NPC, NpcRecord]] = Option.empty[Map[NPC, NpcRecord]]
-	@Subscribe
+	private var lastTickPlayersRecordOpt: Option[Map[Player, PlayerRecord]] = Option.empty[Map[Player, PlayerRecord]]
+	@Subscribe(priority = 1000)
 	private def onGameTick(event: GameTick): Unit = {
-		val nMap: Map[NPC, NpcRecord] = client.getTopLevelWorldView.npcs().iterator().asScala.toList.map(n => {
-			val key = n
-			val record: NpcRecord = NpcRecord(n)(using client)
-			(key,record)
-		}).toMap
+		def updateNpcs(): Seq[NpcEvent] = {
+			val nMap: Map[NPC, NpcRecord] = client.getTopLevelWorldView.npcs().iterator().asScala.toList.map(n => {
+				val key = n
+				val record: NpcRecord = NpcRecord(n)(using client)
+				(key,record)
+			}).toMap
 
-		val toBuildWith = (lastTickNpcRecordOpt.map(lastTickNpcRecord => {
-			val sameNpcs = nMap.keySet.intersect(lastTickNpcRecord.keySet)
-			val removedNpcs = lastTickNpcRecord.keySet.diff(sameNpcs)
-			val newNpcs = nMap.keySet.diff(sameNpcs)
-			(Option(lastTickNpcRecord), sameNpcs, removedNpcs, newNpcs)
-		}).getOrElse{
-			(Option.empty[Map[NPC, NpcRecord]], Set.empty[NPC], Set.empty[NPC], nMap.keySet)
-		})
+			val toBuildWith = (lastTickNpcRecordOpt.map(lastTickNpcRecord => {
+				val sameNpcs = nMap.keySet.intersect(lastTickNpcRecord.keySet)
+				val removedNpcs = lastTickNpcRecord.keySet.diff(sameNpcs)
+				val newNpcs = nMap.keySet.diff(sameNpcs)
+				(Option(lastTickNpcRecord), sameNpcs, removedNpcs, newNpcs)
+			}).getOrElse{
+				(Option.empty[Map[NPC, NpcRecord]], Set.empty[NPC], Set.empty[NPC], nMap.keySet)
+			})
 
-		val eventsToHandle: List[NpcEvent] = toBuildWith.pipe{
-			case (None, _, _, added: Set[NPC]) => {
-				val x = added.toList.map(n => NpcEvent.Spawned.apply(n, nMap(n)))
-				x
-			}
-			case (Some(lastTickMap: Map[NPC, NpcRecord]), same: Set[NPC], removed: Set[NPC], added: Set[NPC]) => {
-				val buildDelta = (n: NPC) => {
-					NpcRecord.delta(n)(lastTickMap(n), nMap(n)).collect {
-						case event: NpcEvent.NpcFragEvent if event.cur != event.old => event
-					}
+			val eventsToHandle: List[NpcEvent] = toBuildWith.pipe{
+				case (None, _, _, added: Set[NPC]) => {
+					val x = added.toList.map(n => NpcEvent.Spawned.apply(n, nMap(n)))
+					x
 				}
+				case (Some(lastTickMap: Map[NPC, NpcRecord]), same: Set[NPC], removed: Set[NPC], added: Set[NPC]) => {
+					val buildDelta = (n: NPC) => {
+						NpcRecord.delta(n)(lastTickMap(n), nMap(n)).collect {
+							case event: NpcEvent.NpcFragEvent if event.cur != event.old => event
+						}
+					}
 
-				val x = added.toList.map(n =>NpcEvent.Spawned.apply(n, nMap(n)))
-				val y = removed.toList.map(n => NpcEvent.Despawned.apply(n, lastTickMap(n)))
-				val d = same.toList.flatMap(n => buildDelta(n))
-				val toRet = y ++ d ++ x
-				toRet
+					val x = added.toList.map(n =>NpcEvent.Spawned.apply(n, nMap(n)))
+					val y = removed.toList.map(n => NpcEvent.Despawned.apply(n, lastTickMap(n)))
+					val d = same.toList.flatMap(n => buildDelta(n))
+					val toRet = y ++ d ++ x
+					toRet
+				}
 			}
+			lastTickNpcRecordOpt = Option(nMap)
+			eventsToHandle
 		}
-		eventsToHandle.foreach(publish(_))
-		lastTickNpcRecordOpt = Option(nMap)
-//		publish(ClientEvent.GameTick())
+		def updatePlayers(): Seq[PlayerEvent] = {
+			val nMap: Map[Player, PlayerRecord] = client.getTopLevelWorldView.players().iterator().asScala.toList.map(n => {
+				val key = n
+				val record: PlayerRecord = PlayerRecord(n)(using client)
+				(key, record)
+			}).toMap
+
+			val toBuildWith = (lastTickPlayersRecordOpt.map(lastTickPlayerRecord => {
+				val sameNpcs = nMap.keySet.intersect(lastTickPlayerRecord.keySet)
+				val removedNpcs = lastTickPlayerRecord.keySet.diff(sameNpcs)
+				val newNpcs = nMap.keySet.diff(sameNpcs)
+				(Option(lastTickPlayerRecord), sameNpcs, removedNpcs, newNpcs)
+			}).getOrElse {
+				(Option.empty[Map[Player, PlayerRecord]], Set.empty[Player], Set.empty[Player], nMap.keySet)
+			})
+
+			val eventsToHandle: List[PlayerEvent] = toBuildWith.pipe {
+				case (None, _, _, added: Set[Player]) => {
+					val x = added.toList.map(n => PlayerEvent.Spawned.apply(n, nMap(n)))
+					x
+				}
+				case (Some(lastTickMap: Map[Player, PlayerRecord]), same: Set[Player], removed: Set[Player], added: Set[Player]) => {
+					val buildDelta = (n: Player) => {
+						PlayerRecord.delta(n)(lastTickMap(n), nMap(n)).collect {
+							case event: PlayerEvent.PlayerFragEvent if event.cur != event.old => event
+						}
+					}
+
+					val x = added.toList.map(n => PlayerEvent.Spawned.apply(n, nMap(n)))
+					val y = removed.toList.map(n => PlayerEvent.Despawned.apply(n, lastTickMap(n)))
+					val d = same.toList.flatMap(n => buildDelta(n))
+					val toRet = y ++ d ++ x
+					toRet
+				}
+			}
+			lastTickPlayersRecordOpt = Option(nMap)
+			eventsToHandle
+		}
+		val eventsToHandle = updateNpcs() ++ updatePlayers() :+ ClientEvent.ServerTick(client.getTickCount)
+		eventsToHandle.foreach(publish)
+//		publish(ClientEvent.ServerTick(client.getTickCount))
 	}
 
 //	@Subscribe
