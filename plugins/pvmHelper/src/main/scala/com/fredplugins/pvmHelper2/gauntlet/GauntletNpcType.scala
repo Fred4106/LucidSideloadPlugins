@@ -76,14 +76,29 @@ object GauntletNpcType {
 			case _ => Color.PINK
 		}
 	}
+	def color(n: GauntletNpcType#Instance): Color = {
+		n.tpe match {
+			case Bat => Color.YELLOW
+			case Rat => Color.YELLOW
+			case Spider => Color.YELLOW
+			case Scorpion => Color.ORANGE
+			case Unicorn => Color.ORANGE
+			case Wolf => Color.ORANGE
+			case Bear => Color.RED
+			case Dragon => Color.BLUE
+			case DarkBeast => Color.GREEN
+			case Hunllef => Color.WHITE
+			case Tornado => Color.BLUE
+			case _ => Color.PINK
+		}
+	}
 	def unapply(npc: NPC): Boolean = {
 		color(npc) != Color.PINK
 	}
-	//	private val values: Seq[GauntletNpcType] = Seq(Bat, Rat, Spider, Scorpion, Unicorn, Wolf, Bear, DarkBeast, Dragon, Hunllef, Tornado)
-//	def unapply(npc: Actor): Option[GauntletNpcType#Instance] = {
-//		Option(npc).collect{
-//			case n: NPC => values.flatMap(_.unapply(n)).headOption
-//		}.flatten
-////		values.flatMap(_.unapply(npc)).headOption
-//	}
+	object InstanceExtractor {
+		private val values: Seq[GauntletNpcType] = Seq(Bat, Rat, Spider, Scorpion, Unicorn, Wolf, Bear, DarkBeast, Dragon, Hunllef, Tornado)
+		def unapply(npc: NPC): Option[GauntletNpcType#Instance] = {
+			values.flatMap(_.Instance.unapply(npc)).headOption
+		}
+	}
 }

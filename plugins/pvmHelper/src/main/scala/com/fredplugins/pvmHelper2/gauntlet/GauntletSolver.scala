@@ -1,5 +1,6 @@
 package com.fredplugins.pvmHelper2.gauntlet
 
+import com.fredplugins.common.OldOverlayUtil
 import com.fredplugins.common.utils.{ShimUtils, WorldPointUtils}
 import com.fredplugins.pvmHelper2.ClientEvent.ServerTick
 import com.fredplugins.pvmHelper2.gauntlet.HunPrayStyle.Melee
@@ -12,6 +13,7 @@ import com.lucidplugins.api.utils.{CombatUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.query.NPCQuery
 import interactionApi.PrayerInteraction
+import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.api.{Actor, Client, HeadIcon, NPC, Perspective, Player, Prayer}
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.eventbus.{EventBus, Subscribe}
@@ -19,9 +21,11 @@ import org.slf4j.Logger
 
 import scala.util.chaining.*
 import net.runelite.api.events.{ActorDeath, AnimationChanged, InteractingChanged, NpcDespawned, NpcSpawned, VarbitChanged}
-import net.runelite.client.ui.overlay.{OverlayManager, OverlayUtil}
+import net.runelite.client.ui.overlay.{OverlayLayer, OverlayManager, OverlayPosition, OverlayUtil}
+import net.runelite.client.util.ColorUtil
 
-import scala.jdk.CollectionConverters.SeqHasAsJava
+import java.awt.{BasicStroke, Color, Dimension}
+import scala.jdk.CollectionConverters.{CollectionHasAsScala, IterableHasAsScala, IteratorHasAsScala, SeqHasAsJava}
 import scala.jdk.OptionConverters.RichOptional
 
 sealed trait GauntletEvent {}
@@ -151,9 +155,26 @@ class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThrea
 	var hunllef: Option[HunllefState] = Option.empty[HunllefState]
 //	def inHunllef(): Boolean = hunllef.isDefined
 	var inGauntlet: Boolean = false
-
-
 	given Client = client
+
+	val overlay: PvmHelperOverlay = PvmHelperOverlay.create("GauntletSolver")(g => {
+		client.getTopLevelWorldView.npcs().iterator().asScala.flatMap(n => GauntletNpcType.InstanceExtractor.unapply(n)).foreach(n =>{
+//			val y: WorldPoint = n.wrapped.getWorldLocation()
+			val color = GauntletNpcType.color(n)
+			val lp = n.worldLocation.pipe(LocalPoint.fromWorld(client.getTopLevelWorldView, _))
+			val polygon = Perspective.getCanvasTilePoly(client, lp)
+			val str = n.toString
+			OldOverlayUtil.drawOutlineAndFill(g, ColorUtil.colorWithAlpha(color, 192), ColorUtil.colorWithAlpha(color, 128), 2, polygon)
+			OldOverlayUtil.renderTextLocation(g, Perspective.getCanvasTextLocation(client, g, lp, str, 20), str, Color.white)
+			//			val poly2 = n.wrapped.getCanvasTilePoly
+//			OverlayUtil.renderActorOverlay(g, n.wrapped, n.tpe.name, GauntletNpcType.color(n))
+//			val poly = Perspective.getCanvasTilePoly(client, n.wrapped.getLocalLocation, 30)
+//			OverlayUtil.renderPolygon(g, polygon, GauntletNpcType.color(n), Color.BLACK, new BasicStroke(4))
+		})
+//		g.drawRoundRect(10, 20, 40, 70, 12, 12)
+
+		null.asInstanceOf[Dimension]
+	}).tap(_.setPosition(OverlayPosition.DYNAMIC)).tap(_.setLayer(OverlayLayer.ABOVE_SCENE))
 
 	def handle(e: GauntletEvent): Unit = {
 //		case o =>
@@ -162,9 +183,15 @@ class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThrea
 				hunllef = ethanApiPlugin.collections.NPCs.search().withId(Hunllef.ids *).nearestToPlayer().toScala.flatMap(Hunllef.Instance.unapply(_))
 					.map(h => HunllefState.apply(h))
 			}
-			case EnterGauntlet => inGauntlet = true
+			case EnterGauntlet => {
+				overlayManager.add(overlay)
+				inGauntlet = true
+			}
 			case ExitHunllef => hunllef = None
-			case ExitGauntlet => inGauntlet = false
+			case ExitGauntlet => {
+				overlayManager.remove(overlay)
+				inGauntlet = false
+			}
 			case EnablePrayer(prayer) => PrayerInteraction.setPrayerState(prayer, true)
 			case DisablePrayer(prayer) => PrayerInteraction.setPrayerState(prayer, false)
 			case TornadoAttack if(hunllef.nonEmpty) => hunllef = hunllef.map(HunllefState.updateAttackCount)
