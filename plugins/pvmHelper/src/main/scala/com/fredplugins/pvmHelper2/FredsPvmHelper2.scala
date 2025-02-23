@@ -186,6 +186,7 @@ class FredsPvmHelper2() extends Plugin with scala.swing.Publisher {
 			log.debug("config[{}] changed from {} to {}", e.getKey, e.getOldValue, e.getNewValue)
 		}
 	}
+	given FredsPvmHelper2 = this
 
 	//runs startup code
 	//sends current scene data as new events
@@ -193,8 +194,10 @@ class FredsPvmHelper2() extends Plugin with scala.swing.Publisher {
 	override protected def startUp(): Unit = {
 		log.debug("Staring up plugin")
 		cachedVarbitValues.clear
-//		gauntletRoom.startup()
-		gauntletRoom2.listenTo(this)
+		lastTickNpcRecordOpt = Option.empty[Map[NPC, NpcRecord]]
+		lastTickPlayersRecordOpt = Option.empty[Map[Player, PlayerRecord]]
+//		import com.fredplugins.pvmHelper2.PvmModule.{*, given}
+		gauntletRoom2.enable()
 
 //		clientThread.runOnClientThread(() => {
 //			(0 until 5000).flatMap(id => Try(client.getVarbitValue(id)).toOption.filter(_ != 0).map(v => id -> v))
@@ -215,7 +218,7 @@ class FredsPvmHelper2() extends Plugin with scala.swing.Publisher {
 	override protected def shutDown(): Unit = {
 		log.debug("Shutting down up plugin")
 //		gauntletRoom.shutdown()
-		gauntletRoom2.deafTo(this)
+		gauntletRoom2.disable()
 		overlayManager.remove(panel)
 //		overlayManager.remove(overlay)
 	}

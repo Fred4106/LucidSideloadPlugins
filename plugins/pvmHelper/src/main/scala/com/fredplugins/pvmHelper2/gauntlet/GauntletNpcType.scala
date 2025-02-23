@@ -31,10 +31,6 @@ sealed abstract class GauntletNpcType(val ids: Int *) {
 	object Instance {
 		def unapply(in: NPC): Option[Instance] = Option.when(ids.contains(in.getId))(new Instance(in))
 	}
-
-//	def unapply(in: NPC): Option[Instance] = {
-//		Option.when(ids.contains(in.getId))(new Instance(in))
-//	}
 }
 
 sealed trait WeakType {

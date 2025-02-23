@@ -26,7 +26,6 @@ sealed trait PvmEvent extends scala.swing.event.Event {
 
 transparent trait ActorEvent {
 	self: PvmEvent =>
-//	override def source: A
 }
 sealed trait NpcEvent extends PvmEvent with ActorEvent {
 	type A = NPC
@@ -144,30 +143,10 @@ object PlayerEvent {
 }
 sealed trait ClientEvent extends PvmEvent {}
 object ClientEvent {
-	class VarbitChanged(val source: Int, val old: Int, val cur: Int) extends ClientEvent with DeltaEvent {
+	case class VarbitChanged(source: Int, old: Int, cur: Int) extends ClientEvent with DeltaEvent {
 		type A = Int
 		type T = Int
 	}
-	object VarbitChanged {
-		def unapply(changed: VarbitChanged): Option[(Int, Int)] = changed match {
-			case c: VarbitChanged => Some(c.source -> c.cur)
-		}
-	}
 	case class ServerTick (source: Int) extends ClientEvent {type A = Int}
-//	object VarbitChanged {
-//		def apply(id: Int, last: Int)(using client: Client, clientThread: ClientThread): VarbitChanged = {
-//			val cur = clientThread.runOnClientThread(() => {client.getVarbitValue(id)})
-//			new VarbitChanged(id)(last, cur)
-//		}
-//		def unapply(vb: VarbitChanged): Option[(Int, Int)] ={
-//			if(vb.source != -1 && vb.old != vb.cur) Some(vb.source -> vb.cur)
-//			else None
-//		}
-//	}
-
-//	object GameTick {
-//		def apply()(using client: Client, clientThread: ClientThread): GameTick = new GameTick(clientThread.runOnClientThread(() => client.getTickCount))
-//		def unapply(gt: GameTick): Option[Int] = Option(gt).map(_.source)
-//	}
 }
 
