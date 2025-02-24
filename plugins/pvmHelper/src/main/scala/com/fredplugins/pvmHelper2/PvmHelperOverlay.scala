@@ -21,14 +21,6 @@ sealed abstract class PvmHelperOverlay() extends Overlay() {
 }
 
 object PvmHelperOverlay {
-//	abstract class PvmHelperOverlay(inline val ownerName: String) extends Overlay with PvmHelperOverlay {}
-
-//	transparent class PvmHelperOverlayInstance[S <: String & Singleton: ValueOf](renderOp: Graphics2D => Dimension) extends Overlay() with PvmHelperOverlay {
-//		inline def finalName = s"com.fredplugins.pvmHelper2.PvmHelperOverlay[${valueOf[S]}]"
-//		override val log: Logger = ShimUtils.getLogger( finalName, "DEBUG")
-//		override def getName: String = finalName
-//		override def render(graphics: Graphics2D): Dimension = renderOp(graphics)
-//2	}
 	inline def drawOutlineAndFill(outlineColor: Color, fillColor: Color, strokeWidth: Float, shape: Shape)(g: Graphics2D): Unit = {
 		val originalColor = g.getColor
 		val originalStroke = g.getStroke

@@ -6,7 +6,7 @@ import com.fredplugins.pvmHelper2.ClientEvent.ServerTick
 import com.fredplugins.pvmHelper2.gauntlet.{ArmedAttack, HalberdAttack, MageAttack, RangeAttack, UnarmedAttack}
 import com.fredplugins.pvmHelper2.gauntlet.{RegularAttack, SwitchToMage, SwitchToRange, TornadoAttack}
 import com.fredplugins.pvmHelper2.gauntlet.{EnterGauntlet, EnterHunllef, ExitGauntlet, ExitHunllef, HunllefAnimationEvents, TickHunllef}
-import com.fredplugins.pvmHelper2.{ClientEvent, Extractors, NpcEvent, PlayerEvent, PvmEvent, PvmHelperOverlay, PvmModule, gauntlet}
+import com.fredplugins.pvmHelper2.{ClientEvent, Extractors, NpcEvent, PlayerEvent, PvmEvent, PvmHelperOverlay, PvmHelperPanel, PvmModule, gauntlet}
 import com.google.inject.{Inject, Singleton}
 import com.lucidplugins.api.utils.{CombatUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
@@ -20,6 +20,7 @@ import org.slf4j.Logger
 
 import scala.util.chaining.*
 import net.runelite.api.events.{ActorDeath, AnimationChanged, InteractingChanged, NpcDespawned, NpcSpawned, VarbitChanged}
+import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
 import net.runelite.client.ui.overlay.{OverlayLayer, OverlayManager, OverlayPosition, OverlayUtil}
 import net.runelite.client.util.ColorUtil
 
@@ -236,6 +237,32 @@ class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThrea
 	}).tap(_.setPosition(OverlayPosition.DYNAMIC)).tap(_.setLayer(OverlayLayer.ABOVE_SCENE))
 
 
+	val panel: PvmHelperPanel = PvmHelperPanel.create("GauntletSolver"){
+		Option.when(inGauntlet) {
+			val seg1 = hunllef match {
+				case Some(hs@HunllefState(hun, attackCount, playerAttackCount, ticksTillNextAttack, attackStyle, prayerStyle)) => {
+					hs.productElementNames.zip(hs.productIterator).toSeq
+						.map(d => LineComponent.builder.left(d._1).right(Option(d._2).map(_.toString).getOrElse("----")).build()).prepended(TitleComponent.builder.text("In Hunleff").build())
+				}
+				case None => {
+					val titleElement = TitleComponent.builder.text("Npcs").build()
+					val npcsElements = client.getTopLevelWorldView.npcs().iterator().asScala.flatMap(n => GauntletNpcType.InstanceExtractor.unapply(n))
+						.map(n => {
+							LineComponent.builder.left(n.tpe.name).leftColor(GauntletNpcType.color(n)).right(n.toString).build()
+						}).toSeq
+
+					Option.when(npcsElements.nonEmpty)(npcsElements.prepended(titleElement)).getOrElse(Seq.empty)
+				}
+			}
+
+			val ticksTillNextElement = LineComponent.builder.left("Ticks Till Attack").right(s"${ticksTillNextAttack}").build()
+			Seq(ticksTillNextElement) ++ seg1
+		}.fold(Seq.empty[LayoutableRenderableEntity])(u => u)
+	}.tap(p => {
+//		p.setLayer(OverlayLayer.ABOVE_SCENE)
+//		p.setPosition(OverlayPosition.BOTTOM_LEFT)
+	})
+
 	reactions += {
 		case EnterGauntlet() if !inGauntlet => {
 			inGauntlet = true
@@ -304,6 +331,7 @@ class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThrea
 
 	override def onStart(): Unit = {
 		overlayManager.add(overlay)
+		overlayManager.add(panel)
 
 		clientThread.runOnClientThread(() => {
 			Seq(EnterGauntlet, EnterHunllef).flatMap(vid=> {
@@ -315,6 +343,7 @@ class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThrea
 	}
 	override def onStop(): Unit = {
 		overlayManager.remove(overlay)
+		overlayManager.remove(panel)
 		this.reactions.apply(ExitHunllef.pvmEvent)
 		this.reactions.apply(ExitGauntlet.pvmEvent)
 	}
