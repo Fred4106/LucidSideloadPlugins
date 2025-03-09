@@ -1,6 +1,6 @@
 package com.fredplugins.kroovy;
 
-import com.fredplugins.kroovy.managers.InventoryManager;
+import com.fredplugins.kroovy.api.InventoryManager;
 import lombok.Data;
 import static net.runelite.api.ItemID.*;
 

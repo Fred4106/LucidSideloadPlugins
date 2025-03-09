@@ -1,6 +1,6 @@
 package com.fredplugins.kroovy;
 
-import com.fredplugins.kroovy.managers.InventoryManager;
+import com.fredplugins.kroovy.api.InventoryManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

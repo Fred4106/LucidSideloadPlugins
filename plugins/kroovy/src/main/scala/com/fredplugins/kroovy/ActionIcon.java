@@ -1,5 +1,8 @@
-package com.fredplugins.kroovy.ui;
+package com.fredplugins.kroovy;
 
+import com.fredplugins.kroovy.ui.IconSource;
+import com.fredplugins.kroovy.ui.ItemIconSource;
+import com.fredplugins.kroovy.ui.SpriteIconSource;
 import net.runelite.api.ItemID;
 import net.runelite.api.SpriteID;
 

@@ -1,6 +1,5 @@
 package com.fredplugins.kroovy;
 
-import com.fredplugins.kroovy.ui.ActionIcon;
 import com.fredplugins.kroovy.ui.IconSource;
 import lombok.Getter;
 

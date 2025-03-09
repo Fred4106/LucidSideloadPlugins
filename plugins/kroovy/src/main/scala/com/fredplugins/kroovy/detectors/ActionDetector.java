@@ -1,7 +1,7 @@
 package com.fredplugins.kroovy.detectors;
 
 import com.fredplugins.kroovy.ActionEnum;
-import com.fredplugins.kroovy.managers.ActionManager;
+import com.fredplugins.kroovy.api.ActionManager;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.game.ItemManager;

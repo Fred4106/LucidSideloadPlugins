@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy.managers;
+package com.fredplugins.kroovy.api;
 
 import com.fredplugins.kroovy.events.ItemSelectionChanged;
 import com.google.inject.Inject;

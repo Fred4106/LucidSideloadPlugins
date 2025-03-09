@@ -1,11 +1,14 @@
 package com.fredplugins.kroovy;
 
+import com.fredplugins.kroovy.api.ActionManager;
+import com.fredplugins.kroovy.api.FredsTickManager;
+import com.fredplugins.kroovy.api.InterruptManager;
+import com.fredplugins.kroovy.api.InventoryManager;
 import com.fredplugins.kroovy.detectors.ActionDetector;
 import com.fredplugins.kroovy.detectors.ChatboxDetector;
 import com.fredplugins.kroovy.events.ActionStartedEvent;
 import com.fredplugins.kroovy.events.ActionStoppedEvent;
 import com.fredplugins.kroovy.events.LocalPlayerManager;
-import com.fredplugins.kroovy.managers.*;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
