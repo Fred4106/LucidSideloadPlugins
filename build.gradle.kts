@@ -31,6 +31,7 @@ allprojects {
         apply<MavenPublishPlugin>()
 
         dependencies {
+            this.add("implementation", "net.runelite:runelite-api:${Dependencies.rlVersion}")
             this.add("compileOnly", "org.pf4j:pf4j:3.10.0")
             this.add("compileOnly", "net.runelite:client:${Dependencies.rlVersion}")
             this.add("testImplementation", "junit:junit:4.13.1")

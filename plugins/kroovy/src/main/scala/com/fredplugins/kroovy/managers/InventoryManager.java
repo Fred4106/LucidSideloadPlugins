@@ -1,5 +1,6 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.managers;
 
+import com.fredplugins.kroovy.events.ItemSelectionChanged;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.runelite.api.*;

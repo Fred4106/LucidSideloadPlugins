@@ -24,9 +24,6 @@ public class IDs
 	}
 
 	public static IDs empty = IDs.of();
-//	public static IDs fromStream(IntStream stream) {
-//		return new IDs(stream);
-//	}
 
 	public static IDs of(Object... args) {
 		int[] temp =  Arrays.stream(args).flatMapToInt(c -> {
@@ -43,36 +40,6 @@ public class IDs
 		}).toArray();
 		return new IDs(temp);
 	}
-//	public IDs(int[] ids)
-//	{
-//		Collections.unmodifiableSet(Set.of(
-//		this.ids =  Collections.unmodifiableSet(Set.of(ids));
-//	}
-//	// map various types to a single set of integers
-//	// handles int/int[]/IDs
-//	public IDs(Object... of)
-//	{
-//		this(Stream.of(of).map(IDs::objectToInts).flatMapToInt(IntStream::of).boxed().collect(Collectors.toSet()));
-//	}
-
-	@SuppressWarnings("ChainOfInstanceofChecks")
-//	private static int[] objectToInts(Object o)
-//	{
-//		if (o instanceof int[]) {
-//			return (int[]) o;
-//		}
-//		if (o instanceof Integer) {
-//			return new int[]{(int) o};
-//		}
-//		if (o instanceof Int) {
-//			return new int[]{((Int) o).toInt()};
-//		}
-//		if (o instanceof IDs) {
-//			return ((IDs) o).build();
-//		}
-//		System.out.println("unsupported type + " + o.getClass());
-//		throw new IllegalArgumentException(String.format("Unsupported type: %s", o.getClass()));
-//	}
 
 	public boolean contains(int id)
 	{

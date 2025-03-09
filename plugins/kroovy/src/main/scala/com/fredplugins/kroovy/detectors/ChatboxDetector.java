@@ -1,8 +1,11 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.detectors;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import com.fredplugins.kroovy.*;
 import com.fredplugins.kroovy.data.*;
+import com.fredplugins.kroovy.managers.ActionManager;
+import com.fredplugins.kroovy.managers.InventoryManager;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;

@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.managers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

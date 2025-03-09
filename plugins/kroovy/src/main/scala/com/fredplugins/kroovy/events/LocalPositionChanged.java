@@ -1,10 +1,10 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.events;
 
 import lombok.Data;
 import net.runelite.api.coords.LocalPoint;
 
 @Data
-public class DestinationChanged
+public class LocalPositionChanged
 {
 
 	private final LocalPoint from;

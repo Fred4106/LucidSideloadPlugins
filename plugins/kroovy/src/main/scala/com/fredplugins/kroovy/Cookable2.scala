@@ -1,4 +1,6 @@
 package com.fredplugins.kroovy
+import com.fredplugins.kroovy.managers.InventoryManager
+
 import scala.collection.convert.StreamExtensions
 import scala.collection.immutable.ListSet
 import scala.jdk.OptionConverters.*
