@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":plugins:dt2"))
     implementation(project(":plugins:gauntlet"))
     implementation(project(":plugins:giantsFoundry"))
+    implementation(project(":plugins:kroovy"))
     implementation(project(":plugins:layoutHelper"))
     implementation(project(":plugins:mixology"))
     implementation(project(":plugins:mta"))

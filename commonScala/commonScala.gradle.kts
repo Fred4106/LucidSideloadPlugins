@@ -1,3 +1,4 @@
+
 description = "Common Scala API"
 plugins {
     scala
@@ -5,7 +6,7 @@ plugins {
 dependencies {
     implementation(project(":ethans"))
     implementation(project(":common"))
-    api("org.scala-lang:scala3-library_3:3.6.3")
+    api("org.scala-lang:scala3-library_3:${Dependencies.scalaVersion}")
 
     api("net.codingwell:scala-guice_3:7.0.0") {
         exclude("com.google.inject", "guice")
