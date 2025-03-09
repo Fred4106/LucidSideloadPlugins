@@ -1,14 +1,13 @@
 package com.fredplugins.kroovy;
 
-import com.fredplugins.kroovy.api.ActionManager;
-import com.fredplugins.kroovy.api.FredsTickManager;
-import com.fredplugins.kroovy.api.InterruptManager;
-import com.fredplugins.kroovy.api.InventoryManager;
-import com.fredplugins.kroovy.detectors.ActionDetector;
-import com.fredplugins.kroovy.detectors.ChatboxDetector;
+import com.fredplugins.kroovy.managers.ActionManager;
+import com.fredplugins.kroovy.managers.FredsTickManager;
+import com.fredplugins.kroovy.managers.InterruptManager;
+import com.fredplugins.kroovy.managers.InventoryManager;
+import com.fredplugins.kroovy.detectors.*;
 import com.fredplugins.kroovy.events.ActionStartedEvent;
 import com.fredplugins.kroovy.events.ActionStoppedEvent;
-import com.fredplugins.kroovy.events.LocalPlayerManager;
+import com.fredplugins.kroovy.managers.LocalPlayerManager;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -51,12 +50,16 @@ public class FredsActionProgressPlugin extends Plugin
 
 
 	private static final Class<?>[] DETECTORS = new Class[]{
-			ChatboxDetector.class
+			ChatboxDetector.class, UseItemOnItemDetector.class, EnchantSpellDetector.class, PlankMakeSpellDetector.class,
+			FurnaceCastingDetector.class, LecternDetector.class, SandpitDetector.class, SmithingDetector.class,
+			TemporossDetector.class, TemporossRewardPoolDetector.class, ItemClickDetector.class, GuardianOfTheRift.class, StringJewellerySpellDetector.class
+			// WintertodtDetector.class
+	};
 //		UseItemOnItemDetector.class, EnchantSpellDetector.class, PlankMakeSpellDetector.class,
 //			FurnaceCastingDetector.class, LecternDetector.class, SandpitDetector.class, SmithingDetector.class,
 //			TemporossDetector.class, TemporossRewardPoolDetector.class, ItemClickDetector.class, GuardianOfTheRift.class, StringJewellerySpellDetector.class
 			// WintertodtDetector.class
-	};
+
 
 	private final Collection<Object> eventHandlers = new LinkedList<>();
 
@@ -85,17 +88,16 @@ public class FredsActionProgressPlugin extends Plugin
 	@Getter private Image currentProductImage;
 
 	@Override
-	protected void startUp() throws Exception
-	{
+	protected void startUp() throws Exception {
 		log.debug("starting up");
 		this.overlay.setResizable(true);
 		this.currentProductImage = this.itemManager.getImage(1050); //Santa hat
 		this.overlayManager.add(this.overlay);
 		Collections.addAll(this.eventHandlers, this.injector.getInstance(FredsTickManager.class),
-				this.injector.getInstance(InterruptManager.class),
-				this.injector.getInstance(InventoryManager.class),
-				this.injector.getInstance(ActionManager.class),
-				this.injector.getInstance(LocalPlayerManager.class)
+			this.injector.getInstance(InterruptManager.class),
+			this.injector.getInstance(InventoryManager.class),
+			this.injector.getInstance(ActionManager.class),
+			this.injector.getInstance(LocalPlayerManager.class)
 		);
 		for (Class<?> detector : DETECTORS) {
 			log.debug("initializing detector {}", detector);
@@ -104,7 +106,6 @@ public class FredsActionProgressPlugin extends Plugin
 			this.clientThread.invoke(instance::setup);
 		}
 		this.eventHandlers.forEach(this.eventBus::register);
-//		CoalBag.setUnknownAmount();
 	}
 
 	@Override
@@ -120,27 +121,6 @@ public class FredsActionProgressPlugin extends Plugin
 			this.clientThread.invoke(instance::shutDown);
 		}
 		this.eventHandlers.clear();
-	}
-
-	@Subscribe
-	public void onChatMessage(ChatMessage event)
-	{
-		if (event.getType() == ChatMessageType.GAMEMESSAGE)
-		{
-			CoalBag.updateAmount(event.getMessage());
-		}
-	}
-
-	@Subscribe
-	public void onClientTick(ClientTick clientTick)
-	{
-		// running this under onClientTick as it is possible to close the widget on the same tick that it opens.
-		// because the coal bag sometimes displays the emptied amount message as a widget, we need to check for that here.
-		Widget coalBagWidget = client.getWidget(12648450);
-		if (coalBagWidget != null)
-		{
-//			CoalBag.updateAmount(coalBagWidget.getText());
-		}
 	}
 
 	@Subscribe

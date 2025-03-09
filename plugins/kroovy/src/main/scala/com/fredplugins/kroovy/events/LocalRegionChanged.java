@@ -1,5 +1,4 @@
 package com.fredplugins.kroovy.events;
-
 import lombok.Data;
 
 @Data

@@ -1,5 +1,4 @@
 package com.fredplugins.kroovy.events;
-
 import lombok.Data;
 import lombok.NonNull;
 import net.runelite.api.Actor;

@@ -1,5 +1,10 @@
-package com.fredplugins.kroovy.events;
+package com.fredplugins.kroovy.managers;
 
+import com.fredplugins.kroovy.events.LocalAnimationChanged;
+import com.fredplugins.kroovy.events.LocalInteractingChanged;
+import com.fredplugins.kroovy.events.LocalPositionChanged;
+import com.fredplugins.kroovy.events.LocalRegionChanged;
+import com.fredplugins.kroovy.events.DestinationChanged;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.runelite.api.Client;

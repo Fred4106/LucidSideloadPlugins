@@ -1,8 +1,5 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.ui;
 
-import com.fredplugins.kroovy.ui.IconSource;
-import com.fredplugins.kroovy.ui.ItemIconSource;
-import com.fredplugins.kroovy.ui.SpriteIconSource;
 import net.runelite.api.ItemID;
 import net.runelite.api.SpriteID;
 
@@ -23,5 +20,7 @@ public interface ActionIcon
 	IconSource SPRITE_GUARDIAN_OF_THE_RIFT_REWARD = new ItemIconSource(ItemID.ABYSSAL_PROTECTOR);
 	IconSource SPRITE_FARMING = new SpriteIconSource(SpriteID.SKILL_FARMING, 0);
 	IconSource SPRITE_BUCKET = new ItemIconSource(ItemID.BUCKET);
+	IconSource SPRITE_SMELT_GOLD = new ItemIconSource(ItemID.GOLD_BAR);
+	IconSource SPRITE_SMELT_SILVER = new ItemIconSource(ItemID.SILVER_BAR);
 
 }

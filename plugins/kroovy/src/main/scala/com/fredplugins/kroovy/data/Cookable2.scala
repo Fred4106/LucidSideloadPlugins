@@ -1,15 +1,12 @@
-package com.fredplugins.kroovy
+package com.fredplugins.kroovy.data
 
-import com.fredplugins.kroovy.api.InventoryManager
-import scala.collection.convert.StreamExtensions
-import scala.collection.immutable.ListSet
-import scala.jdk.OptionConverters.*
+import com.fredplugins.kroovy.ActionEnum
+import com.fredplugins.kroovy.api.IDs
+import com.fredplugins.kroovy.managers.InventoryManager
+
 import scala.jdk.StreamConverters.*
 import scala.jdk.javaapi.StreamConverters
 import scala.util.chaining.*
-import scala.util.{Random, Sorting, Try}
-import scala.compiletime.uninitialized
-import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava, SetHasAsJava}
 case class InternalData(cooked: Int, raw: Int, timings: Seq[Int]) {}
 object InternalData {
 	def unapply(arg: InternalData): ((Int, Int), Seq[Int]) = (arg.cooked, arg.raw) -> arg.timings
@@ -39,7 +36,7 @@ object InternalData {
 	}
 }
 object Cookable2 {
-	import net.runelite.api.{ItemID as Items}
+	import net.runelite.api.ItemID as Items
 	private type IntOrIdsTpe = Int | IDs
 	private object IDsPair {
 		inline transparent def helper(inline in: IntOrIdsTpe *) = {
@@ -163,6 +160,6 @@ object Cookable2 {
 		result2.filter(_._1 == p).groupMap(e => (e._1 -> e._2))(_._3).map{
 			case ((productId, tickTiming), raw) => ((productId, tickTiming), raw.sum)
 		}.toList.find(_._1._1 == p).map(e => e._2 -> e._1._2)
-			.getOrElse((-1, Seq.empty[Int]))
+			.orNull
 	}
 }

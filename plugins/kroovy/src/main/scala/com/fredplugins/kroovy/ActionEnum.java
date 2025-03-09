@@ -1,6 +1,8 @@
 package com.fredplugins.kroovy;
 
+import com.fredplugins.kroovy.ui.ActionIcon;
 import com.fredplugins.kroovy.ui.IconSource;
+import com.fredplugins.kroovy.ui.SpriteIconSource;
 import lombok.Getter;
 
 import java.util.function.Function;
@@ -19,7 +21,8 @@ public enum ActionEnum
 	COOKING_TOP_PIZZA("Combining", FredsActionProgressConfig::cookingTopPizza, ActionIcon.SPRITE_COOKING, 2),
 	CRAFT_BATTLESTAVES("Combining", FredsActionProgressConfig::craftBattlestaves, ActionIcon.SPRITE_CRAFTING, 3, 2),
 	CRAFT_BLOW_GLASS("Glassblowing", FredsActionProgressConfig::craftGlassblowing, ActionIcon.SPRITE_CRAFTING, 3),
-	CRAFT_CAST_GOLD_AND_SILVER("Casting", FredsActionProgressConfig::craftCastGoldAndSilver, ActionIcon.SPRITE_CRAFTING, 3),
+	CRAFT_CAST_GOLD("Casting", FredsActionProgressConfig::craftCastGoldAndSilver, ActionIcon.SPRITE_SMELT_GOLD, 3),
+	CRAFT_CAST_SILVER("Casting", FredsActionProgressConfig::craftCastGoldAndSilver, ActionIcon.SPRITE_SMELT_SILVER, 3),
 	CRAFT_CUT_GEMS("Cutting", FredsActionProgressConfig::craftCutGems, ActionIcon.SPRITE_CRAFTING, 2),
 	CRAFT_HARD_LEATHER("Leather-working", FredsActionProgressConfig::craftLeatherWorking, ActionIcon.SPRITE_CRAFTING, 2),
 	CRAFT_LEATHER("Leather-working", FredsActionProgressConfig::craftLeatherWorking, ActionIcon.SPRITE_CRAFTING, 3),

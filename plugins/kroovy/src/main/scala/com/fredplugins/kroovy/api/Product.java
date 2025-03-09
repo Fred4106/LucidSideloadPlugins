@@ -1,5 +1,6 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.api;
 
+import com.fredplugins.kroovy.ActionEnum;
 import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.api.Item;

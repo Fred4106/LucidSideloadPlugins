@@ -1,5 +1,4 @@
 package com.fredplugins.kroovy.ui;
-
 import lombok.experimental.UtilityClass;
 import net.runelite.client.ui.overlay.RenderableEntity;
 

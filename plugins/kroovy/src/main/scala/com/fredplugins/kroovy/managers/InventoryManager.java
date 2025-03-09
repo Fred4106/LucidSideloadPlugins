@@ -1,10 +1,14 @@
-package com.fredplugins.kroovy.api;
+package com.fredplugins.kroovy.managers;
 
+import com.fredplugins.kroovy.CoalBag;
 import com.fredplugins.kroovy.events.ItemSelectionChanged;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.runelite.api.*;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 
@@ -71,6 +75,16 @@ public class InventoryManager
 		int[] copy = ids.clone();
 		Arrays.sort(copy);
 		return this.getItemCount(id -> Arrays.binarySearch(copy, id) >= 0);
+	}
+
+	public int getActionsUntilFull(int nCreatePerAction, int nDestroyPerAction)
+	{
+		int freeSlots = getFreeSpaces();
+		int diffPerAction = (nCreatePerAction - nDestroyPerAction);
+		if (diffPerAction <= 0) {
+			return Integer.MAX_VALUE;
+		}
+		return (freeSlots / diffPerAction) + (freeSlots % nCreatePerAction == 0 ? 0 : 1);
 	}
 
 }

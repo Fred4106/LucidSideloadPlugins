@@ -68,7 +68,7 @@ public class PrayerInteraction {
                 y = (int) (center.y + r.nextInt((int) bounds.getHeight()) - (bounds.getHeight() / 2));
                 timeout--;
             }
-            System.out.println(bounds);
+//            System.out.println(bounds);
             if(timeout > 0) {
                 MousePackets.queueClickPacket(x, y);
             } else {

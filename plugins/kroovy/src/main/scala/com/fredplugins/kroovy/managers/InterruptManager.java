@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy.api;
+package com.fredplugins.kroovy.managers;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -16,7 +16,6 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.MenuAction;
 import net.runelite.api.events.*;
-//import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.InterfaceID;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;

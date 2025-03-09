@@ -1,6 +1,6 @@
 package com.fredplugins.kroovy;
 
-import com.fredplugins.kroovy.api.ActionManager;
+import com.fredplugins.kroovy.managers.ActionManager;
 import com.fredplugins.kroovy.ui.Alignment;
 import com.fredplugins.kroovy.ui.Rendering;
 import com.google.inject.Inject;

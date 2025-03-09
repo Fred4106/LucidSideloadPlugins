@@ -1,6 +1,6 @@
 package com.fredplugins.kroovy.data;
 
-import com.fredplugins.kroovy.IDs;
+import com.fredplugins.kroovy.api.IDs;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -3,9 +3,10 @@ package com.fredplugins.kroovy.detectors;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.fredplugins.kroovy.*;
+import com.fredplugins.kroovy.api.*;
 import com.fredplugins.kroovy.data.*;
-import com.fredplugins.kroovy.api.ActionManager;
-import com.fredplugins.kroovy.api.InventoryManager;
+import com.fredplugins.kroovy.managers.ActionManager;
+import com.fredplugins.kroovy.managers.InventoryManager;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -16,11 +17,17 @@ import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
+import scala.Tuple2;
+import scala.collection.immutable.Seq;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static net.runelite.api.ItemID.*;
 
@@ -250,6 +257,26 @@ public class ChatboxDetector extends ActionDetector {
 			// @formatter:on
 	};
 
+	private final HashMap<Integer, ActionEnum> itemActions = new HashMap<Integer, ActionEnum>();
+	private void registerAction(ActionEnum action, int... itemIds)
+	{
+		for (int id : itemIds) {
+			this.itemActions.put(id, action);
+			log.debug("Registered action {} for item: {}", action, id);
+		}
+	}
+	private void setActionByItemId(int itemId, int amount)
+	{
+		log.debug("looking for action by item id: {}", itemId);
+		ActionEnum action = this.itemActions.get(itemId);
+		if (action == null) {
+			this.unhandled(itemId);
+		} else {
+			this.actionManager.setAction(action, amount, itemId);
+			log.debug("set action {} {} {}", action, amount, itemId);
+		}
+	}
+
 	private final int[] widgetProductIds = new int[WIDGET_MAKE_SLOT_COUNT];
 
 	@Inject
@@ -257,9 +284,9 @@ public class ChatboxDetector extends ActionDetector {
 
 	@Inject
 	private InventoryManager inventoryManager;
-
-	@Inject
-	private ActionUtils actionUtils;
+//
+//	@Inject
+//	private ActionUtils actionUtils;
 
 	@Inject
 	private ActionManager actionManager;
@@ -342,10 +369,6 @@ public class ChatboxDetector extends ActionDetector {
 				this.registerAction(ActionEnum.MAKING_FORESTERS_RATION, ItemID.FORESTERS_RATION, leaveItem, foodItem);
 			}
 		}
-		/*
-		 * Magic
-		 */
-//		this.registerAction(ActionEnum.MAGIC_ENCHANT_BOLTS, Fletching.);
 	}
 
 	@Override
@@ -365,7 +388,7 @@ public class ChatboxDetector extends ActionDetector {
 				break;
 			case "How would you like to cut the pineapple?":
 				if (currentProductId == PINEAPPLE_RING) {
-					amount = Math.min(amount, this.actionUtils.getActionsUntilFull(4, 1));
+					amount = Math.min(amount, inventoryManager.getActionsUntilFull(4, 1));
 				}
 				this.actionManager.setAction(ActionEnum.COOKING_CUT_FRUIT, amount, currentProductId);
 				break;
@@ -445,13 +468,18 @@ public class ChatboxDetector extends ActionDetector {
 	private int getActionCount(int productId)
 	{
 		int n = this.client.getVarcIntValue(VAR_MAKE_AMOUNT);
-//		for (Smithing.Bar bar : Smithing.Bar.values()) {
-//			if (productId == bar.getItemId()) {
-//				return Math.min(n, bar.countAvailableOres(this.client));
-//			}
-//		}
+		for (Smithing.Bar bar : Smithing.Bar.values()) {
+			if (productId == bar.getItemId()) {
+				return Math.min(n, bar.countAvailableOres(this.client));
+			}
+		}
+		Tuple2<Object, Seq<Object>> found = Cookable2.findMakeAmount(productId, inventoryManager);
+		if(found != null) {
+			log.debug("foundMakeAmount {}", found);
+			int fishQty = ((Integer)found._1()).intValue();
+			if(fishQty > 0) return Math.min(n, fishQty);
+		}
 //		Tuple2<Object, Seq<Object>> found = Cookable2.findMakeAmount(productId, inventoryManager);
-//		log.debug("foundMakeAmount {}", found);
 //		int fishQty = Int.unbox(found._1());
 //		if(fishQty > 0) return Math.min(n, fishQty);
 //		else return n;

@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy.api;
+package com.fredplugins.kroovy.managers;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
