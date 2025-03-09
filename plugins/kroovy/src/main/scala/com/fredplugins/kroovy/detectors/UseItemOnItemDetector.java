@@ -5,6 +5,7 @@ import com.fredplugins.kroovy.api.Ingredient;
 import com.fredplugins.kroovy.api.Product;
 import com.fredplugins.kroovy.managers.InventoryManager;
 import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.Widget;
@@ -16,8 +17,12 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import static net.runelite.api.ItemID.*;
 
+@Slf4j
 public class UseItemOnItemDetector extends ActionDetector
 {
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.INFO);
+	}
 
 	private static final Ingredient PESTLE_AND_MORTAR = new Ingredient(ItemID.PESTLE_AND_MORTAR, 1, false);
 	private static final Ingredient CHISEL = new Ingredient(ItemID.CHISEL, 1, false);

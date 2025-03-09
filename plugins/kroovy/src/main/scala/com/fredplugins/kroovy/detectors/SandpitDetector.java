@@ -4,17 +4,19 @@ import com.fredplugins.kroovy.ActionEnum;
 import com.fredplugins.kroovy.events.LocalAnimationChanged;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.client.eventbus.Subscribe;
 
 @Singleton
+@Slf4j
 public class SandpitDetector extends ActionDetector {
 	@Inject private Client client;
 
 	@Subscribe
 	public void onLocalAnimationChanged(LocalAnimationChanged evt)
 	{
-		Player me = evt.getLocalPlayer();
+		Player me = evt.player();
 		if (me.getAnimation() != AnimationID.SAND_COLLECTION) {
 			return;
 		}

@@ -27,7 +27,7 @@ import java.util.Arrays;
 @Singleton
 public class InterruptManager
 {
-		static {
+	static {
 		((Logger) log).setLevel(Level.DEBUG);
 	}
 
@@ -138,7 +138,7 @@ public class InterruptManager
 	@Subscribe
 	public void onDestinationChanged(DestinationChanged evt)
 	{
-		if (evt.getTo() != null) {
+		if (evt.to() != null) {
 			ActionEnum action = this.actionManager.getCurrentAction();
 
 			if (action != null && ( action == ActionEnum.FLETCH_ATTACH

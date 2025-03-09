@@ -1,5 +1,7 @@
 package com.fredplugins.kroovy.managers;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.fredplugins.kroovy.events.LocalAnimationChanged;
 import com.fredplugins.kroovy.events.LocalInteractingChanged;
 import com.fredplugins.kroovy.events.LocalPositionChanged;
@@ -7,6 +9,7 @@ import com.fredplugins.kroovy.events.LocalRegionChanged;
 import com.fredplugins.kroovy.events.DestinationChanged;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
 import net.runelite.api.coords.LocalPoint;
@@ -18,8 +21,12 @@ import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 
 @Singleton
+@Slf4j
 public class LocalPlayerManager
 {
+	static {
+		((Logger) log).setLevel(Level.DEBUG);
+	}
 
 	@Inject private Client client;
 	@Inject private EventBus eventBus;
@@ -44,17 +51,21 @@ public class LocalPlayerManager
 		}
 		int regionId = (pos == null) ? -1 : WorldPoint.fromLocal(this.client, pos).getRegionID();
 		if (regionId != this.pRegionId) {
-			this.eventBus.post(new LocalRegionChanged(this.pRegionId, this.pRegionId));
+			this.eventBus.post(new LocalRegionChanged(this.pRegionId, regionId));
 			this.pRegionId = regionId;
 		}
 	}
 
+
+	private int oldLocalAnimation = -1;
 	@Subscribe
 	public void onAnimationChanged(AnimationChanged evt)
 	{
 		Player me = this.client.getLocalPlayer();
 		if (me != null && evt.getActor() == me) {
-			this.eventBus.post(new LocalAnimationChanged(me));
+			int old = oldLocalAnimation;
+			oldLocalAnimation = evt.getActor().getAnimation();
+			this.eventBus.post(new LocalAnimationChanged(oldLocalAnimation, (oldLocalAnimation = me.getAnimation()), me));
 		}
 	}
 

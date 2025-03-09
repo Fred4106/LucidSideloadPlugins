@@ -1,7 +1,6 @@
 package com.fredplugins.kroovy.data
 
 import com.fredplugins.kroovy.ActionEnum
-import com.fredplugins.kroovy.api.IDs
 import com.fredplugins.kroovy.managers.InventoryManager
 
 import scala.jdk.StreamConverters.*
@@ -37,22 +36,20 @@ object InternalData {
 }
 object Cookable2 {
 	import net.runelite.api.ItemID as Items
-	private type IntOrIdsTpe = Int | IDs
+	private type IntOrIdsTpe = Int | Array[Int]
 	private object IDsPair {
 		inline transparent def helper(inline in: IntOrIdsTpe *) = {
 			in.map {
-				case i: Int => Set(i)//Set(i)
-				case i: IDs => i.build().toSet//java.util.stream.Stream.of(i.build() *)
-			}.reduce((a, b) => a ++ b)
-				.pipe(a => StreamConverters.asJavaSeqStream(a).asJavaPrimitiveStream)
-				.pipe(j => IDs.of(j).build().toSet)
+				case i: Int => Array(i)//Set(i)
+				case i: Array[Int] => i//java.util.stream.Stream.of(i.build() *)
+			}.reduce((a, b) => a ++ b).pipe(j => j)
 		}
 //		def apply(raw: IntOrIdsTpe)(cooked: IntOrIdsTpe): (Set[Int], Set[Int]) = {
 ////			val cv = helper(raw *), helper(cooked *)
 ////			val  = helper(cooked *)
 //			(helper(Seq(cooked)), helper(Seq(raw)))
 //		}
-		def apply(raw: IntOrIdsTpe *)(cooked: IntOrIdsTpe *): (Set[Int], Set[Int]) = {
+		def apply(raw: IntOrIdsTpe *)(cooked: IntOrIdsTpe *): (Array[Int], Array[Int]) = {
 //			val cv = helper(raw *), helper(cooked *)
 //			val  = helper(cooked *)
 			(helper(cooked *), helper(raw *))
@@ -61,7 +58,7 @@ object Cookable2 {
 	}
 
 	object IDsSet {
-		def apply(pairs: Seq[(Set[Int], Set[Int])])(action: ActionEnum): Seq[InternalData] = {
+		def apply(pairs: (Array[Int], Array[Int]) *)(action: ActionEnum): Seq[InternalData] = {
 //			val t: Seq[Int] = action.getTickTimes.toSeq
 			val data = for {
 				p <- pairs
@@ -73,7 +70,7 @@ object Cookable2 {
 		}
 	}
 
-	val fishIdSet: Seq[InternalData] =  IDsSet(Seq(
+	val fishIdSet: Seq[InternalData] =  IDsSet(
 		IDsPair(Items.RAW_SARDINE)(Items.SARDINE),
 		IDsPair(Items.RAW_SALMON)(Items.SALMON),
 		IDsPair(Items.RAW_TROUT)(Items.TROUT),
@@ -94,8 +91,8 @@ object Cookable2 {
 		IDsPair(Items.RAW_KARAMBWAN)(Items.COOKED_KARAMBWAN, Items.POISON_KARAMBWAN),
 		IDsPair(Items.RAW_SLIMY_EEL)(Items.COOKED_SLIMY_EEL),
 		IDsPair(Items.RAW_RAINBOW_FISH)(Items.RAINBOW_FISH)
-	))(ActionEnum.COOKING_14)
-	val pieIdSet =  IDsSet(Seq(
+	)(ActionEnum.COOKING_14)
+	val pieIdSet =  IDsSet(
 		IDsPair(Items.UNCOOKED_APPLE_PIE)(Items.APPLE_PIE),
 		IDsPair(Items.UNCOOKED_BERRY_PIE)(Items.REDBERRY_PIE),
 		IDsPair(Items.UNCOOKED_MEAT_PIE)(Items.MEAT_PIE),
@@ -107,8 +104,8 @@ object Cookable2 {
 		IDsPair(Items.RAW_GARDEN_PIE)(Items.GARDEN_PIE),
 		IDsPair(Items.RAW_SUMMER_PIE)(Items.SUMMER_PIE),
 		IDsPair(Items.RAW_WILD_PIE)(Items.WILD_PIE)
-	))(ActionEnum.COOKING_14)
-	val oddballSet = IDsSet(Seq(
+	)(ActionEnum.COOKING_14)
+	val oddballSet = IDsSet(
 		IDsPair(Items.THIN_SNAIL)(Items.THIN_SNAIL_MEAT),
 		IDsPair(Items.LEAN_SNAIL)(Items.LEAN_SNAIL_MEAT),
 		IDsPair(Items.FAT_SNAIL)(Items.FAT_SNAIL_MEAT),
@@ -117,18 +114,18 @@ object Cookable2 {
 		IDsPair(Items.RAW_RABBIT)(Items.COOKED_RABBIT),
 		IDsPair(Items.UNCOOKED_PIZZA)(Items.PLAIN_PIZZA),
 		IDsPair(Items.RAW_HARPOONFISH)(Items.HARPOONFISH)
-	))(ActionEnum.COOKING_14)
-	val cooking_134Map = IDsSet(Seq(
+	)(ActionEnum.COOKING_14)
+	val cooking_134Map = IDsSet(
 		IDsPair(Items.POTATO)(Items.BAKED_POTATO),
 		IDsPair(Items.SWEETCORN)(Items.COOKED_SWEETCORN),
 		IDsPair(Items.RAW_BEEF, Items.RAW_BEEF_4287, Items.RAW_RAT_MEAT, Items.RAW_BEAR_MEAT, Items.RAW_YAK_MEAT)(Items.COOKED_MEAT),
-	))(ActionEnum.COOKING_134)
+	)(ActionEnum.COOKING_134)
 
-	val skewerMap = IDsSet(Seq(
+	val skewerMap = IDsSet(
 		IDsPair(Items.SKEWERED_BIRD_MEAT)(Items.ROAST_BIRD_MEAT),
 		IDsPair(Items.SKEWERED_BEAST)(Items.ROAST_BEAST_MEAT),
 		IDsPair(Items.SKEWERED_CHOMPY)(Items.COOKED_CHOMPY),
-		IDsPair(Items.SKEWERED_RABBIT)(Items.ROAST_RABBIT))
+		IDsPair(Items.SKEWERED_RABBIT)(Items.ROAST_RABBIT)
 	).apply(ActionEnum.COOKING_3)
 
 

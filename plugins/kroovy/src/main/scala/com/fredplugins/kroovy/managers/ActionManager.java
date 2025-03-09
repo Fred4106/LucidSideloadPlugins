@@ -102,18 +102,16 @@ public class ActionManager
 		log.debug("Started action: {} x {} ({} -> {})", this.actionCount, action.name(), this.actionStartTick,
 				this.actionEndTick
 		);
-		this.eventBus.post(
-				new ActionStartedEvent(action, itemId, actionCount, this.actionStartTick, this.actionEndTick));
+		this.eventBus.post(ActionStartedEvent.apply(action, itemId, actionCount, this.actionStartTick, this.actionEndTick));
 	}
 
 	private void resetAction()
 	{
 		log.debug("resetting action");
 		if (this.currentAction != null) {
-			this.eventBus.post(new ActionStoppedEvent(this.currentAction, this.currentProductId, this.actionCount,
-					this.actionStartTick, this.actionEndTick,
-					this.client.getTickCount() < this.actionEndTick
-			));
+			this.eventBus.post(
+				new ActionStoppedEvent(this.currentAction, this.currentProductId, this.actionCount, this.actionStartTick, this.actionEndTick, this.client.getTickCount() < this.actionEndTick)
+			);
 		}
 		this.currentAction = null;
 		this.currentProductId = this.actionStartTick = this.actionEndTick = this.actionCount = -1;

@@ -23,7 +23,9 @@ import java.util.regex.Pattern;
 @Slf4j
 public class SmithingDetector extends ActionDetector implements KeyListener
 {
-
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.INFO);
+	}
 	@Inject private Client client;
 
 	@Inject private ClientThread clientThread;

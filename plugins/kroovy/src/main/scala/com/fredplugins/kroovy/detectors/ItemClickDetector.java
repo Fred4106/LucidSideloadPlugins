@@ -6,6 +6,7 @@ import com.fredplugins.kroovy.data.Herblore;
 import com.fredplugins.kroovy.ActionEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.client.eventbus.Subscribe;
@@ -16,9 +17,12 @@ import java.util.Arrays;
 import static com.fredplugins.kroovy.ActionEnum.HERB_CLEAN;
 
 @Singleton
+@Slf4j
 public class ItemClickDetector extends ActionDetector
 {
-
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.INFO);
+	}
 	@Inject private Client client;
 
 	@Inject private InventoryManager inventoryManager;

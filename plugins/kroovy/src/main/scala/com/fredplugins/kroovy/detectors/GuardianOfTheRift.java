@@ -28,6 +28,9 @@ import net.runelite.client.eventbus.Subscribe;
 @Singleton
 public class GuardianOfTheRift extends ActionDetector
 {
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.INFO);
+	}
 	private static final int REWARD_GUARDIAN_ID = 43695;
 	private static final int WORKBENCH_ID = 43754;
 	private static final int GUARDIAN_FRAGMENTS_ITEM_ID = 26878;

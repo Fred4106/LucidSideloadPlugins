@@ -1,9 +1,13 @@
 package com.fredplugins.kroovy.managers;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.fredplugins.kroovy.CoalBag;
 import com.fredplugins.kroovy.events.ItemSelectionChanged;
+import com.fredplugins.kroovy.events.ItemSelectionChanged$;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ClientTick;
@@ -16,13 +20,19 @@ import java.util.Arrays;
 import java.util.function.IntPredicate;
 import java.util.stream.Stream;
 
+@Slf4j
 @Singleton
 public class InventoryManager
 {
+	static {
+		((Logger) log).setLevel(Level.DEBUG);
+	}
 
 	@Inject private Client client;
 
 	@Inject private EventBus eventBus;
+
+	private Item previousSelectedItem = null;
 
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked evt)
@@ -35,7 +45,8 @@ public class InventoryManager
 			return;
 		}
 		Item item = inventory.getItem(evt.getParam0());
-		this.eventBus.post(new ItemSelectionChanged(item));
+		this.eventBus.post(new ItemSelectionChanged(previousSelectedItem, item));
+		this.previousSelectedItem =  item;
 	}
 
 	public Stream<Item> getItems()

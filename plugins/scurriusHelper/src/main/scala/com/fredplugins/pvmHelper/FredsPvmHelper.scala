@@ -120,7 +120,7 @@ class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 //	}
 	object Config {
 		def getNamedAnimationEntries: List[NamedAnimationEntry] = {
-			config.namedAnimationEntries().lines().iterator().asScala.toList.flatMap(NamedAnimationEntry.encode)
+			config.namedAnimationEntries().lines().	iterator().asScala.toList.flatMap(NamedAnimationEntry.encode)
 		}
 		def getNamedAnimationEntry(i: Int): NamedAnimationEntry = {
 			getNamedAnimationEntries.apply(i)

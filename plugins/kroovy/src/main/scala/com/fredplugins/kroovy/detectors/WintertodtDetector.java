@@ -4,6 +4,7 @@ import com.fredplugins.kroovy.managers.InterruptManager;
 import com.fredplugins.kroovy.managers.InventoryManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
@@ -20,8 +21,12 @@ import java.util.stream.Stream;
  * Not ready for release
  */
 @Singleton
+@Slf4j
 public class WintertodtDetector extends ActionDetector
 {
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.INFO);
+	}
 
 	public static final int[] WOODCUTTING_ANIMATIONS = {
 			AnimationID.WOODCUTTING_DRAGON_OR, AnimationID.WOODCUTTING_RUNE, AnimationID.WOODCUTTING_ADAMANT,

@@ -87,9 +87,14 @@ public class FredsActionProgressPlugin extends Plugin
 
 	@Getter private Image currentProductImage;
 
+	@Inject private DebugHandler debugHandler;
+
+
 	@Override
 	protected void startUp() throws Exception {
 		log.debug("starting up");
+		eventBus.register(debugHandler);
+
 		this.overlay.setResizable(true);
 		this.currentProductImage = this.itemManager.getImage(1050); //Santa hat
 		this.overlayManager.add(this.overlay);
@@ -121,18 +126,19 @@ public class FredsActionProgressPlugin extends Plugin
 			this.clientThread.invoke(instance::shutDown);
 		}
 		this.eventHandlers.clear();
+		eventBus.unregister(debugHandler);
 	}
 
 	@Subscribe
 	public void onActionStartedEvent(ActionStartedEvent evt)
 	{
-		this.currentActionName = evt.getAction().getDescription();
-		if (this.config.showProductIcons() && evt.getProductId() != -1) {
+		this.currentActionName = evt.action().getDescription();
+		if (this.config.showProductIcons() && evt.productId() != -1) {
 			log.debug("fetching item sprite");
-			this.currentProductImage = this.itemManager.getImage(evt.getProductId());
+			this.currentProductImage = this.itemManager.getImage(evt.productId());
 		} else {
 			log.debug("fetching action sprite");
-			this.currentProductImage = evt.getAction()
+			this.currentProductImage = evt.action()
 										  .getIconSource()
 										  .toBufferedImage(this.itemManager, this.spriteManager);
 		}
@@ -141,11 +147,11 @@ public class FredsActionProgressPlugin extends Plugin
 	@Subscribe
 	public void onActionStoppedEvent(ActionStoppedEvent evt)
 	{
-		if (this.client.getTickCount() <= evt.getStartTick() + 1) {
+		if (this.client.getTickCount() <= evt.startTick() + 1) {
 			log.debug("ignoring fast failure");
 			return;
 		}
-		if (this.config.notifyWhenFinished().isEnabled() && !evt.isInterrupted()) {
+		if (this.config.notifyWhenFinished().isEnabled() && !evt.interrupted()) {
 			this.notifier.notify(config.notifyWhenFinished(), "All of your items have been processed!");
 		}
 	}

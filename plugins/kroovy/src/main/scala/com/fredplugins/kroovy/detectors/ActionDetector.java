@@ -1,13 +1,16 @@
 package com.fredplugins.kroovy.detectors;
 
 import com.fredplugins.kroovy.ActionEnum;
+import com.fredplugins.kroovy.FredsActionProgressPlugin;
 import com.fredplugins.kroovy.managers.ActionManager;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.game.ItemManager;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 
-@Slf4j
 public abstract class ActionDetector
 {
 //	protected final HashMap<Integer, ActionEnum> itemActions = new HashMap<Integer, ActionEnum>();

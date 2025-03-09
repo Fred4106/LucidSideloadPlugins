@@ -1,6 +1,6 @@
 package com.fredplugins.kroovy.data;
 
-import com.fredplugins.kroovy.api.IDs;
+import com.fredplugins.kroovy.api.int[];
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -653,7 +653,6 @@ public interface Magic
 			this.cost = cost;
 		}
 	}
-
 	@Getter
 	enum StringJewellerySpell
 	{
@@ -707,27 +706,27 @@ public interface Magic
 	}
 
 	enum Rune {
-		AIR("Air", RuneIDs.AIR, StaveIDs.AIR),
-		WATER("Water", RuneIDs.WATER, IDs.of(StaveIDs.WATER, ItemID.TOME_OF_WATER)),
-		EARTH("Earth", RuneIDs.EARTH, IDs.of(StaveIDs.EARTH, ItemID.TOME_OF_EARTH)),
-		FIRE("Fire", RuneIDs.FIRE, IDs.of(StaveIDs.FIRE, ItemID.TOME_OF_FIRE)),
-		MIND("Mind", RuneIDs.MIND),
-		BODY("Body", RuneIDs.BODY),
-		COSMIC("Cosmic", RuneIDs.COSMIC),
-		CHAOS("Chaos", RuneIDs.CHAOS),
-		ASTRAL("Astral", RuneIDs.ASTRAL),
-		NATURE("Nature", RuneIDs.NATURE),
-		LAW("Law", RuneIDs.LAW),
-		DEATH("Death", RuneIDs.DEATH),
-		BLOOD("Blood", RuneIDs.BLOOD),
-		SOUL("Soul", RuneIDs.SOUL),
-		WRATH("Wrath", RuneIDs.WRATH);
+		AIR("Air", Runeint[].AIR, Staveint[].AIR),
+		WATER("Water", Runeint[].WATER, int[].of(Staveint[].WATER, ItemID.TOME_OF_WATER)),
+		EARTH("Earth", Runeint[].EARTH, int[].of(Staveint[].EARTH, ItemID.TOME_OF_EARTH)),
+		FIRE("Fire", Runeint[].FIRE, int[].of(Staveint[].FIRE, ItemID.TOME_OF_FIRE)),
+		MIND("Mind", Runeint[].MIND),
+		BODY("Body", Runeint[].BODY),
+		COSMIC("Cosmic", Runeint[].COSMIC),
+		CHAOS("Chaos", Runeint[].CHAOS),
+		ASTRAL("Astral", Runeint[].ASTRAL),
+		NATURE("Nature", Runeint[].NATURE),
+		LAW("Law", Runeint[].LAW),
+		DEATH("Death", Runeint[].DEATH),
+		BLOOD("Blood", Runeint[].BLOOD),
+		SOUL("Soul", Runeint[].SOUL),
+		WRATH("Wrath", Runeint[].WRATH);
 
 		private final String name;
 
-		private final IDs runeIds;
+		private final int[] runeint[];
 
-		private final IDs unlimitedSources;
+		private final int[] unlimitedSources;
 
 		private static final int RUNE_POUCH_NUM_SLOTS = 4;
 
@@ -740,13 +739,13 @@ public interface Magic
 				Varbits.RUNE_POUCH_RUNE1, Varbits.RUNE_POUCH_RUNE2, Varbits.RUNE_POUCH_RUNE3, Varbits.RUNE_POUCH_RUNE4
 			};
 
-		Rune(String name, IDs runeId) {
-			this(name, runeId, IDs.empty);
+		Rune(String name, int[] runeId) {
+			this(name, runeId, int[].empty);
 		}
 
-		private Rune(String name, IDs runeIds, IDs unlimitedSources) {
+		private Rune(String name, int[] runeint[], int[] unlimitedSources) {
 			this.name = name;
-			this.runeIds = runeIds;
+			this.runeint[] = runeint[];
 			this.unlimitedSources = unlimitedSources;
 		}
 
@@ -761,7 +760,7 @@ public interface Magic
 			EnumComposition runepouchEnum = client.getEnum(EnumID.RUNEPOUCH_RUNE);
 			int count = 0;
 
-			for (int itemId : this.runeIds.build()) {
+			for (int itemId : this.runeint[].build()) {
 				for (int i = 0; i < RUNE_POUCH_NUM_SLOTS; i++) {
 					@Varbit int runeVarbit = RUNE_VARBITS[i];
 					int runepouchRuneId = client.getVarbitValue(runeVarbit);
@@ -881,38 +880,38 @@ public interface Magic
 		}
 	}
 
-	interface StaveIDs
+	interface Staveint[]
 	{
 
-		IDs SMOKE = IDs.of(
+		int[] SMOKE = int[].of(
 				ItemID.SMOKE_BATTLESTAFF,
 				ItemID.MYSTIC_SMOKE_STAFF
 		);
-		IDs DUST = IDs.of(
+		int[] DUST = int[].of(
 				ItemID.DUST_BATTLESTAFF,
 				ItemID.MYSTIC_DUST_STAFF
 		);
-		IDs MIST = IDs.of(
+		int[] MIST = int[].of(
 				ItemID.MIST_BATTLESTAFF,
 				ItemID.MYSTIC_MIST_STAFF
 		);
-		IDs MUD = IDs.of(
+		int[] MUD = int[].of(
 				ItemID.MUD_BATTLESTAFF,
 				ItemID.MYSTIC_MUD_STAFF
 		);
-		IDs LAVA = IDs.of(
+		int[] LAVA = int[].of(
 				ItemID.LAVA_BATTLESTAFF,
 				ItemID.LAVA_BATTLESTAFF_21198,
 				ItemID.MYSTIC_LAVA_STAFF,
 				ItemID.MYSTIC_LAVA_STAFF_21200
 		);
-		IDs STEAM = IDs.of(
+		int[] STEAM = int[].of(
 				ItemID.STEAM_BATTLESTAFF,
 				ItemID.STEAM_BATTLESTAFF_12795,
 				ItemID.MYSTIC_STEAM_STAFF,
 				ItemID.MYSTIC_STEAM_STAFF_12796
 		);
-		IDs AIR = IDs.of(
+		int[] AIR = int[].of(
 				SMOKE,
 				DUST,
 				MIST,
@@ -921,7 +920,7 @@ public interface Magic
 				ItemID.AIR_BATTLESTAFF,
 				ItemID.MYSTIC_AIR_STAFF
 		);
-		IDs WATER = IDs.of(
+		int[] WATER = int[].of(
 				MUD,
 				MIST,
 				STEAM,
@@ -929,7 +928,7 @@ public interface Magic
 				ItemID.WATER_BATTLESTAFF,
 				ItemID.MYSTIC_WATER_STAFF
 		);
-		IDs EARTH = IDs.of(
+		int[] EARTH = int[].of(
 				DUST,
 				MUD,
 				LAVA,
@@ -937,27 +936,27 @@ public interface Magic
 				ItemID.EARTH_BATTLESTAFF,
 				ItemID.MYSTIC_EARTH_STAFF
 		);
-		IDs FIRE = IDs.of(
-				SMOKE, 
-				STEAM, 
-				LAVA, 
-				ItemID.STAFF_OF_FIRE, 
+		int[] FIRE = int[].of(
+				SMOKE,
+				STEAM,
+				LAVA,
+				ItemID.STAFF_OF_FIRE,
 				ItemID.FIRE_BATTLESTAFF,
 				ItemID.MYSTIC_FIRE_STAFF
 		);
 
 	}
 
-	interface RuneIDs
+	interface RuneIds
 	{
 
-		IDs SMOKE = IDs.of(ItemID.SMOKE_RUNE);
-		IDs DUST = IDs.of(ItemID.DUST_RUNE);
-		IDs LAVA = IDs.of(ItemID.LAVA_RUNE);
-		IDs MIST = IDs.of(ItemID.MIST_RUNE);
-		IDs MUD = IDs.of(ItemID.MUD_RUNE);
-		IDs STEAM = IDs.of(ItemID.STEAM_RUNE);
-		IDs AIR = IDs.of(
+		int[] SMOKE = new int[] {ItemID.SMOKE_RUNE};
+		int[] DUST = new int[] {ItemID.DUST_RUNE};
+		int[] LAVA = new int[] {ItemID.LAVA_RUNE};
+		int[] MIST = new int[] {ItemID.MIST_RUNE};
+		int[] MUD = new int[] {ItemID.MUD_RUNE};
+		int[] STEAM = new int[] {ItemID.STEAM_RUNE};
+		int[] AIR = new int[] {
 				SMOKE,
 				DUST,
 				MIST,
@@ -967,8 +966,8 @@ public interface Magic
 				ItemID.AIR_RUNE_7558,
 				ItemID.AIR_RUNE_9693,
 				ItemID.AIR_RUNE_11688
-		);
-		IDs WATER = IDs.of(
+		};
+		int[] WATER = int[].of(
 				MIST,
 				MUD,
 				STEAM,
@@ -979,7 +978,7 @@ public interface Magic
 				ItemID.WATER_RUNE_9691,
 				ItemID.WATER_RUNE_11687
 		);
-		IDs EARTH = IDs.of(
+		int[] EARTH = new int[] {
 				DUST,
 				LAVA,
 				MUD,
@@ -988,8 +987,8 @@ public interface Magic
 				ItemID.EARTH_RUNE_6426,
 				ItemID.EARTH_RUNE_9695,
 				ItemID.EARTH_RUNE_11689
-		);
-		IDs FIRE = IDs.of(
+	};
+		int[] FIRE = int[].of(
 				SMOKE,
 				LAVA,
 				STEAM,
@@ -1000,57 +999,57 @@ public interface Magic
 				ItemID.FIRE_RUNE_9699,
 				ItemID.FIRE_RUNE_11686
 		);
-		IDs MIND = IDs.of(
+		int[] MIND = int[].of(
 				ItemID.MIND_RUNE,
 				ItemID.MIND_RUNE_6436,
 				ItemID.MIND_RUNE_9697,
 				ItemID.MIND_RUNE_11690
 		);
-		IDs BODY = IDs.of(
+		int[] BODY = int[].of(
 				ItemID.BODY_RUNE,
 				ItemID.BODY_RUNE_6438,
 				ItemID.BODY_RUNE_11691
 		);
-		IDs COSMIC = IDs.of(
+		int[] COSMIC = int[].of(
 				ItemID.COSMIC_RUNE,
 				ItemID.COSMIC_RUNE_11696
 		);
-		IDs CHAOS = IDs.of(
+		int[] CHAOS = int[].of(
 				ItemID.CHAOS_RUNE,
 				ItemID.CHAOS_RUNE_NZ,
 				ItemID.CHAOS_RUNE_6430,
 				ItemID.CHAOS_RUNE_7560,
 				ItemID.CHAOS_RUNE_11694
 		);
-		IDs ASTRAL = IDs.of(
+		int[] ASTRAL = int[].of(
 				ItemID.ASTRAL_RUNE,
 				ItemID.ASTRAL_RUNE_11699
 		);
-		IDs NATURE = IDs.of(
-				ItemID.NATURE_RUNE,
-				ItemID.NATURE_RUNE_11693
+		int[] NATURE = int[].of(
+			ItemID.NATURE_RUNE,
+			ItemID.NATURE_RUNE_11693
 		);
-		IDs LAW = IDs.of(
+		int[] LAW = int[].of(
 				ItemID.LAW_RUNE,
 				ItemID.LAW_RUNE_6434,
 				ItemID.LAW_RUNE_11695
 		);
-		IDs DEATH = IDs.of(
+		int[] DEATH = int[].of(
 				ItemID.DEATH_RUNE,
 				ItemID.DEATH_RUNE_NZ,
 				ItemID.DEATH_RUNE_6432,
 				ItemID.DEATH_RUNE_11692
 		);
-		IDs BLOOD = IDs.of(
+		int[] BLOOD = int[].of(
 				ItemID.BLOOD_RUNE,
 				ItemID.BLOOD_RUNE_NZ,
 				ItemID.BLOOD_RUNE_11697
 		);
-		IDs SOUL = IDs.of(
+		int[] SOUL = int[].of(
 				ItemID.SOUL_RUNE,
 				ItemID.SOUL_RUNE_11698
 		);
-		IDs WRATH = IDs.of(
+		int[] WRATH = int[].of(
 				ItemID.WRATH_RUNE,
 				ItemID.WRATH_RUNE_22208
 		);

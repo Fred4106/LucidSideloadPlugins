@@ -262,18 +262,17 @@ public class ChatboxDetector extends ActionDetector {
 	{
 		for (int id : itemIds) {
 			this.itemActions.put(id, action);
-			log.debug("Registered action {} for item: {}", action, id);
 		}
+		log.trace("Registered action {} for items: {}", action, itemIds);
 	}
 	private void setActionByItemId(int itemId, int amount)
 	{
-		log.debug("looking for action by item id: {}", itemId);
+		log.debug("looking for action by item id: {}, qty: {}", itemId, amount);
 		ActionEnum action = this.itemActions.get(itemId);
 		if (action == null) {
-			this.unhandled(itemId);
+			log.warn("Unhandled chatbox: \"{}\", {}", question, itemId);
 		} else {
 			this.actionManager.setAction(action, amount, itemId);
-			log.debug("set action {} {} {}", action, amount, itemId);
 		}
 	}
 
@@ -324,11 +323,11 @@ public class ChatboxDetector extends ActionDetector {
 		}
 	}
 
-	protected void unhandled(int itemId) {
-		log.warn("[*] Unhandled chatbox action");
-		log.warn(" |-> Question: {}", this.question);
-		log.warn(" |-> Item ID: {}", itemId);
-	}
+//	protected void unhandled(int itemId) {
+//		log.warn("[*] Unhandled chatbox action");
+//		log.warn(" |-> Question: {}", this.question);
+//		log.warn(" |-> Item ID: {}", itemId);
+//	}
 
 	@Override
 	public void setup() {
@@ -392,23 +391,23 @@ public class ChatboxDetector extends ActionDetector {
 				}
 				this.actionManager.setAction(ActionEnum.COOKING_CUT_FRUIT, amount, currentProductId);
 				break;
-			case "How many would you like to charge?":
-				Magic.ChargeOrbSpell spell = Magic.ChargeOrbSpell.byProduct(currentProductId);
-				Objects.requireNonNull(spell, "No charge orb spell found for product: " + currentProductId);
-				this.actionManager.setAction(
-						ActionEnum.MAGIC_CHARGE_ORB,
-						Math.min(amount, spell.getSpell().getAvailableCasts(this.client)),
-						currentProductId
-				);
-				break;
-			case "How many sets of bolts to enchant?":
-				int enchantCrossbolBoltAmount = Magic.EnchantCrossbowBoltSpell.getAvailableCasts(client, currentProductId);
-				this.actionManager.setAction(
-						ActionEnum.MAGIC_ENCHANT_BOLTS,
-						Math.min(amount, enchantCrossbolBoltAmount),
-						currentProductId
-				);
-				break;
+//			case "How many would you like to charge?":
+//				Magic.ChargeOrbSpell spell = Magic.ChargeOrbSpell.byProduct(currentProductId);
+//				Objects.requireNonNull(spell, "No charge orb spell found for product: " + currentProductId);
+//				this.actionManager.setAction(
+//						ActionEnum.MAGIC_CHARGE_ORB,
+//						Math.min(amount, spell.getSpell().getAvailableCasts(this.client)),
+//						currentProductId
+//				);
+//				break;
+//			case "How many sets of bolts to enchant?":
+//				int enchantCrossbolBoltAmount = Magic.EnchantCrossbowBoltSpell.getAvailableCasts(client, currentProductId);
+//				this.actionManager.setAction(
+//						ActionEnum.MAGIC_ENCHANT_BOLTS,
+//						Math.min(amount, enchantCrossbolBoltAmount),
+//						currentProductId
+//				);
+//				break;
 			case "What would you like to smelt?": // Smelting bars
 				Product smithingProduct = Recipe.forProduct(MULTI_MATERIAL_PRODUCTS, currentProductId, this.inventoryManager);
 				if (smithingProduct != null) {

@@ -15,7 +15,9 @@ import java.util.Arrays;
 @Singleton
 public class TemporossDetector extends ActionDetector
 {
-
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.INFO);
+	}
 	private static final int TEMPOROSS_REGION = 12078;
 
 	private static final int[] TEMPOROSS_AMMUNITION_CRATE = {
@@ -40,7 +42,7 @@ public class TemporossDetector extends ActionDetector
 	public void onLocalAnimationChanged(LocalAnimationChanged evt)
 	{
 		ActionEnum action = this.actionManager.getCurrentAction();
-		Player me = evt.getLocalPlayer();
+		Player me = evt.player();
 		int region = WorldPoint.fromLocalInstance(this.client, me.getLocalLocation()).getRegionID();
 		if (region != TEMPOROSS_REGION) {
 			log.debug("not in tempoross region");

@@ -1,17 +1,23 @@
 package com.fredplugins.kroovy.detectors;
 
 import com.fredplugins.kroovy.ActionEnum;
-import com.fredplugins.kroovy.data.Magic;
+//import com.fredplugins.kroovy.data.Magic;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
+
 @Singleton
+@Slf4j
 public class LecternDetector extends ActionDetector
 {
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(ch.qos.logback.classic.Level.INFO);
+	}
 
 	private static final int VAR_MAKE_AMOUNT = 2224;
 
@@ -30,12 +36,12 @@ public class LecternDetector extends ActionDetector
 			return;
 		}
 		int amount = this.client.getVarpValue(VAR_MAKE_AMOUNT);
-		for (Magic.LecternSpell item : Magic.LecternSpell.values()) {
-			if (evt.getMenuOption().toLowerCase().contains(item.getItemText().toLowerCase())) {
-				this.actionManager.setAction(ActionEnum.MAGIC_CREATE_TABLET, amount, item.getProduct());
-				break;
-			}
-		}
+//		for (Magic.LecternSpell item : Magic.LecternSpell.values()) {
+//			if (evt.getMenuOption().toLowerCase().contains(item.getItemText().toLowerCase())) {
+//				this.actionManager.setAction(ActionEnum.MAGIC_CREATE_TABLET, amount, item.getProduct());
+//				break;
+//			}
+//		}
 	}
 
 	@Override

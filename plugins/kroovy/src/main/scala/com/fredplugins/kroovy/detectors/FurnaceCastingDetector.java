@@ -7,6 +7,7 @@ import com.fredplugins.kroovy.data.Crafting;
 import com.fredplugins.kroovy.managers.ActionManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.widgets.Widget;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 /**
  * Detects actions initiated from the furnace casting interface (Gold/Silver products)
  */
+@Slf4j
 public class FurnaceCastingDetector extends ActionDetector
 {
 
