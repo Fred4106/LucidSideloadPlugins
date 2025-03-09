@@ -1,5 +1,7 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.data;
 
+import com.fredplugins.kroovy.Ingredient;
+import com.fredplugins.kroovy.Recipe;
 import net.runelite.api.ItemID;
 
 /**

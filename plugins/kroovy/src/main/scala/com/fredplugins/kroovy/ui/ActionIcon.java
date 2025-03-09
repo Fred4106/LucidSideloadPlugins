@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.ui;
 
 import net.runelite.api.ItemID;
 import net.runelite.api.SpriteID;

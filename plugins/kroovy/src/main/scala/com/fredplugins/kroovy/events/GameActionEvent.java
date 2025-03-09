@@ -1,5 +1,6 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.events;
 
+import com.fredplugins.kroovy.ActionEnum;
 import lombok.Data;
 
 @Data

@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.ui;
 
 import lombok.RequiredArgsConstructor;
 import net.runelite.client.game.ItemManager;

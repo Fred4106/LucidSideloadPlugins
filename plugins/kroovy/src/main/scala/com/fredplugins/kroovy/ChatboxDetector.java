@@ -2,6 +2,7 @@ package com.fredplugins.kroovy;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import com.fredplugins.kroovy.data.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -12,9 +13,6 @@ import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
-import scala.Int;
-import scala.Tuple2;
-import scala.collection.immutable.Seq;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

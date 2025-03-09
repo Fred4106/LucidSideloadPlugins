@@ -1,5 +1,7 @@
 package com.fredplugins.kroovy;
 
+import com.fredplugins.kroovy.ui.Alignment;
+import com.fredplugins.kroovy.ui.Rendering;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.runelite.api.Client;

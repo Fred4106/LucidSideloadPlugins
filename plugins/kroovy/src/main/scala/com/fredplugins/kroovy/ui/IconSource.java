@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.ui;
 
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;

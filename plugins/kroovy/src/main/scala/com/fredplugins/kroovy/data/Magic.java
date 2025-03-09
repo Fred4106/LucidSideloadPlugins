@@ -1,11 +1,11 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.data;
 
+import com.fredplugins.kroovy.IDs;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.runelite.api.*;
 import net.runelite.api.annotations.Varbit;
-import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.Objects;

@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.ui;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

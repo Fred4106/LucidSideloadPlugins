@@ -1,10 +1,12 @@
 package com.fredplugins.kroovy;
 
+import com.fredplugins.kroovy.ui.ActionIcon;
+import com.fredplugins.kroovy.ui.IconSource;
 import lombok.Getter;
 
 import java.util.function.Function;
 
-enum ActionEnum
+public enum ActionEnum
 {
 	COLLECT_SAND("Collecting", FredsActionProgressConfig::collectSand, ActionIcon.SPRITE_BUCKET, 1, 2),
 	COOKING_UNKNOWN("Cooking ???", FredsActionProgressConfig::cookingCooking, ActionIcon.SPRITE_COOKING, 2, 3, 4),

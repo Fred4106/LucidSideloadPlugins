@@ -1,57 +1,27 @@
+import org.gradle.internal.impldep.com.google.api.services.storage.Storage
+
 rootProject.name = "FredPlugins"
 plugins {
     id("com.gradle.enterprise").version("3.0")
 }
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 include(":ethans")
 include(":common")
 include(":commonScala")
-include(":plugins:recolorCG")
-include(":plugins:zulrahHelper")
-include(":plugins:attackTimer")
-include(":plugins:customPrayers")
-include(":plugins:demonicGorilla")
-include(":plugins:dt2")
-include(":plugins:gauntlet")
-include(":plugins:giantsFoundry")
-include(":plugins:kroovy")
-include(":plugins:layoutHelper")
-include(":plugins:mixology")
-include(":plugins:mta")
-include(":plugins:pvmDebugger")
-include(":plugins:pvmHelper")
-include(":plugins:scurriusHelper")
-include(":plugins:teleportMaps")
-include(":plugins:tempoross")
-include(":plugins:titheFarm")
-include(":plugins:titheFarm2")
-include(":plugins:superClickHelper")
 
-//include(":runelite-api")
-//include(":runescape-api")
-//include(":runescape-client")
-//include(":deobfuscator")
-//include(":runelite-script-assembler-plugin")
-//include(":runelite-client")
-//include(":runelite-mixins")
-//include(":injected-client")
-//include("injection-annotations")
-//include(":runelite-plugin-archetype")
-//include(":wiki-scraper")
+//def plugins
+val x = listOf("recolorCG", "zulrahHelper","attackTimer", "customPrayers","demonicGorilla","dt2","gauntlet","giantsFoundry", "kroovy", "layoutHelper", "mixology", "mta", "pvmDebugger", "pvmHelper", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm", "titheFarm2", "superClickHelper")
+x.forEach {xm->
+    include(xm)
+}
 
 for (project in rootProject.children) {
+//    if(project.name.equals("plugins")) continue;
     project.apply {
         println(name)
-        projectDir = file(name)//(if(file(name).exists()) file(name) else null)//file("plugins/${name}"))
-        require(projectDir.isDirectory) { "Project '${project.path} must have a $projectDir directory" }
-        buildFileName = "$name.gradle.kts"
-        require(buildFile.isFile) { "Project '${project.path} must have a $buildFile build script" }
-    }
-}
-for (project in project(":plugins").children) {
-    project.apply {
-        println(name)
-        projectDir = file("plugins/${name}")//(if(file(name).exists()) file(name) else null)//file("plugins/${name}"))
+        projectDir = file((if(file(name).exists()) name else "plugins/${name}"))
         require(projectDir.isDirectory) { "Project '${project.path} must have a $projectDir directory" }
         buildFileName = "$name.gradle.kts"
         require(buildFile.isFile) { "Project '${project.path} must have a $buildFile build script" }

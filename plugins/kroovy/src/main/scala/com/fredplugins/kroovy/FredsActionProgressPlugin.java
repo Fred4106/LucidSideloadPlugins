@@ -1,5 +1,7 @@
 package com.fredplugins.kroovy;
 
+import com.fredplugins.kroovy.events.ActionStartedEvent;
+import com.fredplugins.kroovy.events.ActionStoppedEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;

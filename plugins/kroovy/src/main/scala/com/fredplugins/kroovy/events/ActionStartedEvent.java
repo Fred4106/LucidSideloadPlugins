@@ -1,4 +1,6 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.events;
+
+import com.fredplugins.kroovy.ActionEnum;
 
 public class ActionStartedEvent extends GameActionEvent
 {

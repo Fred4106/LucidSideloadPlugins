@@ -1,4 +1,4 @@
-package com.fredplugins.kroovy;
+package com.fredplugins.kroovy.data;
 import net.runelite.api.ItemID;
 public interface Woodcutting
 {
