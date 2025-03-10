@@ -1,10 +1,7 @@
 package com.fredplugins.kroovy.detectors;
 
-//import com.github.calebwhiting.runelite.data.Crafting;
-//import com.github.calebwhiting.runelite.plugins.actionprogress.Action;
 import com.fredplugins.kroovy.ActionEnum;
-import com.fredplugins.kroovy.data.Crafting;
-import com.fredplugins.kroovy.managers.ActionManager;
+import com.fredplugins.kroovy.data.Crafting2;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -69,13 +66,13 @@ public class FurnaceCastingDetector extends ActionDetector
 		ActionEnum action = null;
 		if (Arrays.binarySearch(FURNACE_SILVER_PARENTS, widget.getParentId()) >= 0) {
 			Widget itemContainer = widget.getChild(0);
-			if (itemContainer != null && ArrayUtils.contains(Crafting.SILVER_AND_GOLD_ITEMS, itemContainer.getItemId())) {
+			if (itemContainer != null && ArrayUtils.contains(Crafting2.SILVER_AND_GOLD_ITEMS(), itemContainer.getItemId())) {
 				actionManager.setAction(ActionEnum.CRAFT_CAST_SILVER, actionCount,  itemContainer.getItemId());
 			}
 		}
 		else if (Arrays.binarySearch(FURNACE_GOLD_PARENTS, widget.getParentId()) >= 0) {
 			Widget itemContainer = widget.getChild(0);
-			if (itemContainer != null && ArrayUtils.contains(Crafting.SILVER_AND_GOLD_ITEMS, itemContainer.getItemId())) {
+			if (itemContainer != null && ArrayUtils.contains(Crafting2.SILVER_AND_GOLD_ITEMS(), itemContainer.getItemId())) {
 				actionManager.setAction(ActionEnum.CRAFT_CAST_GOLD, actionCount,  itemContainer.getItemId());
 			}
 		}

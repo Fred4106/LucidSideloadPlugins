@@ -34,6 +34,7 @@ public class LocalPlayerManager
 	private LocalPoint pDest;
 	private LocalPoint pPos;
 	private int pRegionId = -1;
+	private int oldLocalAnimation = -1;
 
 	@Subscribe
 	public void onClientTick(ClientTick evt)
@@ -56,16 +57,19 @@ public class LocalPlayerManager
 		}
 	}
 
-
-	private int oldLocalAnimation = -1;
 	@Subscribe
 	public void onAnimationChanged(AnimationChanged evt)
 	{
 		Player me = this.client.getLocalPlayer();
 		if (me != null && evt.getActor() == me) {
-			int old = oldLocalAnimation;
-			oldLocalAnimation = evt.getActor().getAnimation();
-			this.eventBus.post(new LocalAnimationChanged(oldLocalAnimation, (oldLocalAnimation = me.getAnimation()), me));
+			int n = me.getAnimation();
+			if(n != oldLocalAnimation) {
+				LocalAnimationChanged e = new LocalAnimationChanged(oldLocalAnimation, n, me);
+				oldLocalAnimation = n;
+				eventBus.post(e);
+			}
+//			int old = oldLocalAnimation;
+//			oldLocalAnimation = evt.getActor().getAnimation();
 		}
 	}
 

@@ -55,7 +55,7 @@ public class LayoutHelper extends Plugin {
         );
         overlays.foreach(o -> {
             o.snappable_$eq(false);
-            log.info("{}", o);
+            log.debug("{}", o);
             return -1;
         });
     }

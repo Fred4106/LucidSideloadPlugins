@@ -5,12 +5,16 @@ import ch.qos.logback.classic.Logger;
 import com.fredplugins.kroovy.CoalBag;
 import com.fredplugins.kroovy.events.ItemSelectionChanged;
 import com.fredplugins.kroovy.events.ItemSelectionChanged$;
+import com.fredplugins.kroovy.events.SlottedItem;
+import com.fredplugins.kroovy.events.SlottedItem$;
+import com.fredplugins.kroovy.events.SlottedItem.Empty$;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ClientTick;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.EventBus;
@@ -32,7 +36,16 @@ public class InventoryManager
 
 	@Inject private EventBus eventBus;
 
-	private Item previousSelectedItem = null;
+	private SlottedItem previousSelectedItem = SlottedItem$.MODULE$.apply(null, -1);
+
+	@Subscribe
+	public void onGameTick(GameTick evt)  {
+		if(previousSelectedItem != Empty$.MODULE$ && !client.isWidgetSelected()) {
+			this.eventBus.post(new ItemSelectionChanged(previousSelectedItem,  Empty$.MODULE$));
+			previousSelectedItem = Empty$.MODULE$;
+		}
+		//client.getSelectedWidget()
+	}
 
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked evt)
@@ -44,8 +57,11 @@ public class InventoryManager
 		if (inventory == null) {
 			return;
 		}
-		Item item = inventory.getItem(evt.getParam0());
-		this.eventBus.post(new ItemSelectionChanged(previousSelectedItem, item));
+		int idx = evt.getParam0();
+		SlottedItem item = SlottedItem.apply(inventory, idx);
+		if(item != previousSelectedItem) {
+			this.eventBus.post(new ItemSelectionChanged(previousSelectedItem, item));
+		}
 		this.previousSelectedItem =  item;
 	}
 

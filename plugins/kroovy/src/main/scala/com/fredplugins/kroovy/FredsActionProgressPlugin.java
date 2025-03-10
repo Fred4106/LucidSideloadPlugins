@@ -50,7 +50,7 @@ public class FredsActionProgressPlugin extends Plugin
 
 
 	private static final Class<?>[] DETECTORS = new Class[]{
-			ChatboxDetector.class, UseItemOnItemDetector.class, EnchantSpellDetector.class, PlankMakeSpellDetector.class,
+		ChatboxDetector.class, UseItemOnItemDetector.class, EnchantSpellDetector.class, PlankMakeSpellDetector.class,
 			FurnaceCastingDetector.class, LecternDetector.class, SandpitDetector.class, SmithingDetector.class,
 			TemporossDetector.class, TemporossRewardPoolDetector.class, ItemClickDetector.class, GuardianOfTheRift.class, StringJewellerySpellDetector.class
 			// WintertodtDetector.class

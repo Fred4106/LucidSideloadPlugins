@@ -9,6 +9,6 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
-	case class LocalAnimationChanged(from: Int, to: Int)(val player: Player) {
+case class LocalAnimationChanged(from: Int, to: Int)(val player: Player) {
 
 }
