@@ -320,7 +320,7 @@ class GauntletSolver @Inject()(val client: Client, val clientThread: ClientThrea
 			case ClientEvent.ServerTick(_) => {
 				(a: HunllefState) => {
 					HunllefState.tick(a).tap(s => {
-							log.debug("State = {}", s)
+//							log.debug("State = {}", s)
 					})
 				}
 			}

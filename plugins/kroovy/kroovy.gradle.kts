@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":ethans"))
     implementation(project(":common"))
     implementation(project(":commonScala"))
+    implementation("org.scala-lang.modules:scala-collection-contrib_3:0.4.0")
 }
 
 //var fxOsName = System.getProperty("os.name")

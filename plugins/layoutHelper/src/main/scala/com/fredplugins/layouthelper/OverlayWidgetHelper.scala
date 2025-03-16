@@ -65,13 +65,13 @@ object OverlayWidgetHelper {
     overlays.find(o => o.moved) match {
       case Some(m) => {
 
-        log.info("{} moved", m.name(false))
+        log.trace("{} moved", m.name(false))
         val toMove = overlays.filterNot(_ == m)
         update(m, toMove*)
         overlays.foreach(o => o.cache())
         overlays.foreach(_.wo.revalidate())
         overlays.foreach(o => {
-          log.info("{}", o)
+          log.trace("{}", o)
         })
       }
       case None => {}

@@ -293,12 +293,14 @@ class KroovyPlugin extends Plugin {
 		import Locatable.{*, given}
 
 		val npcClickedOpt = menuOptionClicked.getMenuEntry.pipe(me => Option.when(me.isNpcAction)(me)).filter(me => me.getNpcOpt.filter(_.getId == 9020).filter(_.distanceTo(client.getLocalPlayer) < 5).isDefined)
-		npcClickedOpt.map(me => me.getType -> me.getNpc) match {
-			case Some((MenuAction.NPC_FIRST_OPTION, npc)) => sBus.unregisterAll[NpcSpawned](npcService)
-			case Some((MenuAction.NPC_SECOND_OPTION, npc)) => sBus.unregisterAll[GameTick](npcService)
-			case Some((MenuAction.EXAMINE_NPC, npc)) => sBus.debug()
-			case None =>
+		npcClickedOpt.map(me => me.getType -> me.getNpc).collect{
+			case (MenuAction.NPC_FIRST_OPTION, npc) => (_: SEventBus).unregisterAll[NpcSpawned](npcService)
+//			case (MenuAction.NPC_SECOND_OPTION, npc) => (_: SEventBus).unregisterAll[GameTick](npcService)
+			case (MenuAction.EXAMINE_NPC, npc) => (_: SEventBus).unregisterAll[GameTick](npcService)//(_: SEventBus).debug()
 		}
+
+		val examineClickedOpt = menuOptionClicked.getMenuEntry.pipe(me => Option.when(me.isExamineAction)(me))
+		examineClickedOpt.foreach(me => sBus.debug())
 	}
 
 	override protected def startUp(): Unit = {

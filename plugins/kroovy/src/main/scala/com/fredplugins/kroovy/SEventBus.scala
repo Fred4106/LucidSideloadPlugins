@@ -1,12 +1,11 @@
 package com.fredplugins.kroovy
 
 import com.fredplugins.common.utils.ShimUtils
-import com.google.common.eventbus.EventBus
 import com.google.inject.{Inject, Singleton}
 import net.runelite.client.callback.ClientThread
 import org.slf4j.Logger
 
-import java.util.Comparator
+import java.util.{Comparator, Objects}
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
@@ -15,21 +14,16 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 import scala.reflect.{ClassTag, TypeTest, Typeable, classTag}
-import scala.reflect._
+import scala.reflect.*
+
+
 abstract class SSubDef{
-	//summon[TypeTest[AnyRef, ET]]
 	type ET
-	def tag: ClassTag[ET]/* = classTag[ET]*/
-	//using tag: ClassTag[ET]
+	def tag: ClassTag[ET]
 	def owner: AnyRef
 	def priority: Int
 	def handle: ET => Unit
 }
-
-//case class SSubDef[E](owner: AnyRef, eType: ClassTag[E], priority: Int, handler: E => Unit) {
-//
-//}
-
 @Singleton
 class SEventBus @Inject()(val clientThread: ClientThread) {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
@@ -40,13 +34,20 @@ class SEventBus @Inject()(val clientThread: ClientThread) {
 //		handlers = nVals
 //	}
 
+	private def sort(in: Seq[SSubDef]): Seq[SSubDef] = {
+		val out = in.sortWith(comparator.compare(_, _) < 0)
+		if(in != out) {
+			debug()
+		}
+		out
+	}
 	private def addHandlers(toAdd: SSubDef *): Unit = {
-		handlers = (handlers ++ toAdd).sortWith(comparator.compare(_, _) < 0)
+		handlers = sort(handlers ++ toAdd)
 	}
 	private def removeHandlers(toRemove: SSubDef *): Unit = {
-		handlers = handlers.collect{
+		handlers = sort(handlers.collect{
 			case h if !toRemove.contains(h) => h
-		}.sortWith(comparator.compare(_, _) < 0)
+		})
 	}
 
 	def getAll: Seq[SSubDef] = handlers
@@ -94,6 +95,8 @@ class SEventBus @Inject()(val clientThread: ClientThread) {
 			override def owner: AnyRef = o
 			override def priority: Int = p
 			override def handle: E => Unit = h
+
+			override def toString: String = s"SSubDef[${tag.runtimeClass.getSimpleName}](owner=\"${owner.toString}\", priority=${priority})[${Integer.toHexString(hashCode)}]"
 		}
 		addHandlers(toRegister)
 		toRegister
@@ -135,11 +138,11 @@ class SEventBus @Inject()(val clientThread: ClientThread) {
 
 	def debug(): Unit = {
 		events().foreach(eClazz => {
-			println(eClazz.runtimeClass.getName)
+			log.debug(s"event: ${eClazz.runtimeClass.getSimpleName}")
 			owners(eClazz).foreach(o => {
-				println(s"\t${o.toString}")
+				log.debug(s"\towner: ${o.toString}")
 				getAll.filter(h => h.tag == eClazz && h.owner == o).foreach(h => {
-					println(s"\t\t${h.toString}")
+					log.debug(s"\t\t${h.toString}")
 				})
 //				getHandler(o, e.runtimeClass).foreach(h => {
 //
