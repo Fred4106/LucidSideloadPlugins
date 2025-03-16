@@ -4,11 +4,11 @@ plugins {
     scala
 }
 dependencies {
-    api(project(":ethans"))
-    api(project(":common"))
+    implementation(project(":ethans"))
+    implementation(project(":common"))
     api("org.scala-lang:scala3-library_3:${Dependencies.scalaVersion}")
 
-    api("net.codingwell:scala-guice_3:7.0.0") {
+    implementation("net.codingwell:scala-guice_3:7.0.0") {
         exclude("com.google.inject", "guice")
     }
     api("com.beachape:enumeratum_3:1.7.4")

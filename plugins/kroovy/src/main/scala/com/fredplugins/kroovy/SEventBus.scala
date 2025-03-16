@@ -16,142 +16,130 @@ import scala.compiletime.uninitialized
 import scala.reflect.{ClassTag, TypeTest, Typeable, classTag}
 import scala.reflect.*
 
-
-abstract class SSubDef{
-	type ET
-	def tag: ClassTag[ET]
-	def owner: AnyRef
-	def priority: Int
-	def handle: ET => Unit
-}
 @Singleton
 class SEventBus @Inject()(val clientThread: ClientThread) {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
+	type OwnerType = AnyRef
 
-	private var handlers: Seq[SSubDef] = Seq.empty[SSubDef]
-//	private def setHandlers(nVals: SSubDef[?] *): Unit = {
-//		handlers = nVals
-//	}
+	abstract class SubscriberType[ET: ClassTag as ct, Priority <:Int & scala.Singleton : ValueOf as pVal, Group <: String  & scala.Singleton : ValueOf as gVal](val owner: OwnerType) {
+		val valueOfParams: (ValueOf[Priority], ValueOf[Group]) = pVal -> gVal
 
-	private def sort(in: Seq[SSubDef]): Seq[SSubDef] = {
-		val out = in.sortWith(comparator.compare(_, _) < 0)
-		if(in != out) {
-			debug()
+		val priority: Int = pVal.value
+		val group: String = gVal.value
+
+		val ownerAndGroupStr: String = owner.getClass.getName + "." + Integer.toHexString(owner.hashCode()) + "." + group
+		val eTag: ClassTag[ET] = ct
+		val eClazz: Class[ET] = eTag.runtimeClass.asInstanceOf[Class[ET]]
+
+		def handle(e: ET): Unit
+
+		override def toString: String = s"SubscriberType[${eClazz.getSimpleName}, ${priority}, ${group}](owner=\"${owner.toString}\", priority=${priority})[${Integer.toHexString(hashCode)}]"
+	}
+
+	private var internal: Seq[SubscriberType[?, ?, ?]] = Seq.empty
+
+	def events(): Set[Class[?]] = internal.map(_.eClazz).distinct.sortBy(_.getName).toSet
+	def owners(): Set[OwnerType] = internal.map(_.owner).distinct.sortBy(_.getClass.getName).toSet
+	def groups(a: OwnerType): Set[String] = internal.filter(_.owner == a).map(_.group).distinct.sorted.toSet
+
+	private def updateInternal(in: Seq[SubscriberType[?, ?,? ]]): Unit = {
+		val comparator: Comparator[SubscriberType[?, ?, ?]] = Comparator.comparingInt[SubscriberType[?, ?, ?]](_.priority).thenComparing[String](_.owner.getClass.getName)
+			.thenComparing(s => s.ownerAndGroupStr)
+		internal = in.sortWith((s1, s2) => {				comparator.compare(s1, s2) < 0			})
+	}
+
+	def register[ET: ClassTag as ct, Priority <: Int & scala.Singleton : ValueOf as pVal, Group <: String & scala.Singleton : ValueOf as gVal](owner: OwnerType)(op: ET => Unit): SubscriberType[ET, Priority, Group] = {
+		val toAdd = new SubscriberType[ET, Priority, Group](owner) {
+			override def handle(e: ET): Unit = op(e)
 		}
-		out
-	}
-	private def addHandlers(toAdd: SSubDef *): Unit = {
-		handlers = sort(handlers ++ toAdd)
-	}
-	private def removeHandlers(toRemove: SSubDef *): Unit = {
-		handlers = sort(handlers.collect{
-			case h if !toRemove.contains(h) => h
-		})
+		updateInternal(internal.appended(toAdd))
+		toAdd
 	}
 
-	def getAll: Seq[SSubDef] = handlers
-//	def getHandlers(owner: AnyRef): Seq[SSubDef[?]] = getAll.collect {
-//		case h@SSubDef(o, eType, priority, handler) if(o ==  owner) => h
-////		case h: SSubDef[E] if (h.owner == owner && h.eType.runtimeClass == eType) => h
-//	} //.filter(_.owner == owner).filter(_.eType == eType)//.sortWith(comparator.compare(_, _) < 0)
-//	def getHandlers[E: ClassTag](owner: AnyRef)(using eType: ClassTag[E]): Seq[SSubDef[E]] = getAll.collect {
-//		case h: SSubDef[E] if (h.owner == owner && h.eType == eType) => h
-//	} //.filter(_.owner == owner).filter(_.eType == eType)//.sortWith(comparator.compare(_, _) < 0)
-//	def getHandlers[E: ClassTag]()(using eType: ClassTag[E]): Seq[SSubDef[E]] = getAll.collect {
-//		case h: SSubDef[E] if(h.eType == eType) => h
-//	}//.filter(_.owner == owner).filter(_.eType == eType)//.sortWith(comparator.compare(_, _) < 0)
-
-	def owners(): Seq[AnyRef] = getAll.map(e => e.owner).distinct
-	def events(): Seq[ClassTag[?]] = getAll.map(x => x.tag).distinct
-
-//	def events(owner: AnyRef): Seq[ClassTag[?]] = getAll.filter(_.owner == owner).map(_.eType).distinct
-
-	def owners[E](tag: ClassTag[E]): Seq[AnyRef] = {
-		getAll.filter(h => h.tag == tag).map(e => e.owner).distinct
+	def unregisterByOwner(owner: OwnerType): Boolean = {
+		val (toRemove, toKeep) = internal.partition(h => h.owner == owner)
+		log.debug(s"unregisterByOwner(${owner}) => toRemove: ${toRemove}, toKeep: ${toKeep}")
+		updateInternal(toKeep)
+		toRemove.nonEmpty
 	}
-
-//	def getHandlers(ownerFilter: Option[AnyRef] = None): Seq[SSubDef[?]] = {
-//		val f1 = ownerFilter match {
-//			case Some(ownerMatch) => ((_: SSubDef[_]).owner == ownerMatch)
-//			case None => ((_: SSubDef[_]) => true)
-//		}
-//		handlers.filter(f1)
-//	}
-//
-//	def getHandlers[E: ClassTag](using classTag: ClassTag[E]): Seq[SSubDef[E]] = {
-//		handlers.collect {
-//			case s: SSubDef[E] if s.eType == classTag => s
-//		}
-//	}
-
-	private val comparator: Comparator[SSubDef] = Comparator.comparingInt[SSubDef](_.priority).reversed()
-		.thenComparing(s => s.owner.getClass.getName).thenComparing(s => s.tag.runtimeClass.getName)
-
-	def register[E: ClassTag](o: AnyRef, p: Int = 0)(h: E => Unit)(using classTag:ClassTag[E]): SSubDef = {
-		val toRegister = new SSubDef {
-			override type ET = E
-			override def tag: ClassTag[E] = classTag
-			override def owner: AnyRef = o
-			override def priority: Int = p
-			override def handle: E => Unit = h
-
-			override def toString: String = s"SSubDef[${tag.runtimeClass.getSimpleName}](owner=\"${owner.toString}\", priority=${priority})[${Integer.toHexString(hashCode)}]"
-		}
-		addHandlers(toRegister)
-		toRegister
+	def unregisterByEvent[ET: ClassTag as ct](): Boolean = {
+		val (toRemove, toKeep) = internal.partition(h => h.eClazz == ct.runtimeClass)
+		updateInternal(toKeep)
+		toRemove.nonEmpty
+	}
+	def unregisterByOwnerAndGroup[Group <:String & scala.Singleton: ValueOf as gVal](owner: OwnerType): Boolean = {
+		val (toRemove, toKeep) = internal.partition(h => h.owner == owner && h.group .equals(gVal.value))
+		updateInternal(toKeep)
+		toRemove.nonEmpty
+	}
+	def unregisterByOwnerAndEvent[ET: ClassTag as ct](owner: OwnerType): Boolean = {
+		val (toRemove, toKeep) = internal.partition(h => h.owner == owner && h.eClazz == ct.runtimeClass)
+		updateInternal(toKeep)
+		toRemove.nonEmpty
+	}
+	def unregisterByOwnerGroupAndEvent[ET: ClassTag as ct, Group <: String & scala.Singleton : ValueOf as gVal](owner: OwnerType): Boolean = {
+		val (toRemove, toKeep) = internal.partition(h => h.owner == owner && h.group.equals(gVal.value) && h.eClazz == ct.runtimeClass)
+		updateInternal(toKeep)
+		toRemove.nonEmpty
 	}
 	def unregisterAll(): Boolean = {
-		val toRemove = getAll
-		removeHandlers(toRemove *)
+		val (toRemove, toKeep) = internal.partition(h => true)
+		updateInternal(toKeep)
 		toRemove.nonEmpty
 	}
 
-	def unregisterAll(owner: AnyRef): Boolean = {
-		val toRemove = getAll.filter(_.owner == owner)
-		removeHandlers(toRemove*)
-		toRemove.nonEmpty
-	}
-	def unregisterAll[E: ClassTag](using classTag: ClassTag[E]): Boolean = {
-		val toRemove = getAll.filter(_.tag == classTag)
-		removeHandlers(toRemove*)
+	def unregister(subscriber: SubscriberType[?, ?, ?]): Boolean = {
+		val (toRemove, toKeep) = internal.partition(h => h == subscriber)
+		updateInternal(toKeep)
 		toRemove.nonEmpty
 	}
 
-	def unregisterAll[E: ClassTag](owner: AnyRef)(using classTag: ClassTag[E]): Boolean = {
-		val toRemove = getAll.filter(i => i.tag == classTag && i.owner == owner)
-		removeHandlers(toRemove*)
-		toRemove.nonEmpty
-	}
-
-	def unregister(remove: SSubDef): Boolean = {
-		val toRemove = getAll.filter(_ == remove)
-		removeHandlers(toRemove *)
-		toRemove.nonEmpty
-	}
-
-	def post[E: ClassTag](e: E)(using classTag: ClassTag[E]): Unit = {
-		getAll.filter(_.tag == classTag).sortBy(_.priority).reverse.foreach(h => {
-			h.tag.unapply(e).foreach(h.handle(_))
+	def post[ET: ClassTag as classTag](e: ET): Unit = {
+		internal.foreach(h => {
+			if(h.eClazz == classTag.runtimeClass) {
+				log.debug(s"Dispatching event ${e} to ${h.toString}")
+				h.asInstanceOf[SubscriberType[ET, ?, ?]].handle(e)
+			}
 		})
 	}
 
 	def debug(): Unit = {
-		events().foreach(eClazz => {
-			log.debug(s"event: ${eClazz.runtimeClass.getSimpleName}")
-			owners(eClazz).foreach(o => {
-				log.debug(s"\towner: ${o.toString}")
-				getAll.filter(h => h.tag == eClazz && h.owner == o).foreach(h => {
-					log.debug(s"\t\t${h.toString}")
-				})
-//				getHandler(o, e.runtimeClass).foreach(h => {
-//
-//				})
-			})
+		internal.zipWithIndex.foreach(h => {
+			log.debug(s"internal[${h._2}] = ${h._1}")
 		})
-//		val map: Map[(AnyRef, ClassTag[?]), Seq[(Int, Function[?, Unit])]] = getAll.groupMap(i =>(i.owner, i.eType))(i => (i.priority, i.handler))
 
-//		val eventsSeq = getAll.groupMap(_.eType)(a => a)
-//		val ownerSeq = getAll.groupMap(_.owner)(a=>a).toMap.get
+		val z: Set[(OwnerType, String, Seq[SubscriberType[?, ?, ?]])] = for{
+			owner <- owners()
+			group <- groups(owner)
+		} yield {
+			val seq = internal.filter(h => {
+				h.owner == owner &&
+				h.group == group
+			})
+			(owner, group, seq)
+		}
+
+		val zMap = z.groupMap(_._1)(y => y._2 -> y._3).map{
+			case (a, b) => a -> b.toMap
+		}.toMap
+		zMap.foreach{
+			case (owner, remainder) => {
+				log.debug(s"owner: ${owner.getClass.getSimpleName}")
+				remainder.foreach {
+					case (g, remainder) => {
+						log.debug(s"\tgroup: ${g}")
+						remainder.groupBy(_.eClazz).foreach {
+							case (eClass, seq) => {
+								log.debug(s"\t\tevent: ${eClass.getSimpleName}")
+								seq.foreach{ h =>
+									log.debug(s"\t\t\tsubscriber[${h.priority}] = ${h}")
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
