@@ -126,7 +126,7 @@ public class TableComponent implements LayoutableRenderableEntity
 
 	/**
 	 * Returns the width that each column should take up
-	 * Based on https://stackoverflow.com/questions/22206825/algorithm-for-calculating-variable-column-widths-for-set-table-width
+	 * Based on <a href="https://stackoverflow.com/questions/22206825/algorithm-for-calculating-variable-column-widths-for-set-table-width">...</a>
 	 *
 	 * @param metrics
 	 * @return int[] of column width

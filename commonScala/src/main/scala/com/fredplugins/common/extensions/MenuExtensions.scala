@@ -14,6 +14,7 @@ object MenuExtensions {
 	extension (e: MenuEntry) {
 		def isTileObjectAction: Boolean = tileObjectActions.contains(e.getType)
 		def isNpcAction: Boolean = npcActions.contains(e.getType)
+		def isExamineAction: Boolean = Seq(EXAMINE_ITEM_GROUND, EXAMINE_OBJECT, EXAMINE_NPC, EXAMINE_ITEM).contains(e.getType)
 		def isPlayerAction: Boolean = playerActions.contains(e.getType)
 		def isWidgetTargetOnAction: Boolean = widgetTargetOnActions.contains(e.getType)
 		def isRuneliteAction: Boolean = e.getType.getId >= RUNELITE.getId

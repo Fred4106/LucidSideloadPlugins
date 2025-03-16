@@ -4,10 +4,9 @@ import net.runelite.client.config.*;
 
 import java.awt.Color;
 
-@ConfigGroup("fredsactionprogress")
-public interface FredsActionProgressConfig extends Config
+@ConfigGroup("fredskroovy")
+public interface KroovyConfig extends Config
 {
-
 	@ConfigSection(
 			name = "Cooking actions",
 			description = "Enable/Disable cooking specific actions.",
@@ -107,8 +106,7 @@ public interface FredsActionProgressConfig extends Config
 	@ConfigItem(
 			name = "Product icons",
 			keyName = "show-product-icons",
-			description = "When enabled, show the product icon in the infobox where available. " +
-						  "Otherwise fallback to skill icons.",
+			description = "When enabled, show the product icon in the infobox where available. Otherwise fallback to skill icons.",
 			position = 3
 	)
 	default boolean showProductIcons()

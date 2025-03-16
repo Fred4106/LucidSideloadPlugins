@@ -149,7 +149,7 @@ package object hunllef {
 
 	object Action {
 		transparent trait ProductActionMixin {
-			this: Action with Product =>
+			self: Action =>
 			override val name: String = this.asInstanceOf[Product].toString
 		}
 

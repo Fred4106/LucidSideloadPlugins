@@ -8,12 +8,9 @@ import java.awt.image.BufferedImage
 import scala.swing.ListView.Renderer.Wrapped
 import scala.util.chaining.*
 
-//trait Locatable {
-//	def worldPoint: WorldPoint
-//}
-
 object Locatable {
 	type LocatableType = Actor | TileObject | Projectile
+
 	extension (n: LocatableType)(using client: Client) {
 		def findWorldView: Option[WorldView] = {
 			Option(n).collect {
@@ -60,7 +57,4 @@ object Locatable {
 			}.getOrElse(-1)
 		}
 	}
-//	given Conversion[Actor, Locatable] = (a: Actor) => new Locatable(() => a.getWorldView, () => a.getLocalLocation)
-//	given Conversion[TileObject, Locatable] = (to: TileObject) => new Locatable(() => to.getWorldView, () => to.getLocalLocation)
-//	given Conversion[Projectile, Locatable] = (to:Projectile) => new Locatable(() => to.getWorldView, () => to.getLocalLocation)
 }
