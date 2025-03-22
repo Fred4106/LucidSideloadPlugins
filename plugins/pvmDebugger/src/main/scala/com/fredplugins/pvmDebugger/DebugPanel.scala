@@ -1,10 +1,11 @@
 package com.fredplugins.pvmDebugger
 
-import com.fredplugins.pvmDebugger.DebugPanel.{ClearEvent, DebugEventListModel, FreezeEvent, UnFreezeEvent}
+import com.fredplugins.pvmDebugger.DebugPanel.{ClearEvent, DebugEventListModel, FreezeEvent, TableColumnHeaderSelected, UnFreezeEvent}
 import net.runelite.api.{Client, GameState}
 
 import java.awt.Color
 import javax.swing.event.ListDataListener
+import javax.swing.table.JTableHeader
 import javax.swing.{AbstractListModel, BorderFactory, ComboBoxModel, DefaultListModel, ListModel}
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.*
@@ -15,8 +16,8 @@ import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 import scala.swing.BorderPanel.Position
 import scala.swing.Swing.{Embossing, Raised}
-import scala.swing.event.Event
-import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Component, Label, ListView, Orientation, ScrollPane, Swing, TextArea, ToggleButton, event}
+import swing.event.{ButtonClicked, Event, TableColumnsSelected, TableEvent, TableRowsSelected}
+import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Component, Label, ListView, Orientation, ScrollPane, SplitPane, Swing, Table, TextArea, ToggleButton, event}
 
 object DebugPanel {
 	sealed trait ControlEvent extends SEvent {}
@@ -24,7 +25,7 @@ object DebugPanel {
 	case object FreezeEvent extends ControlEvent
 	case object UnFreezeEvent extends ControlEvent
 
-
+	case class TableColumnHeaderSelected(override val source: Table, column: Int) extends TableEvent(source)
 	private class DebugEventListModel() extends ListModel[DebugEvent] {
 		private val delegate = new DefaultListModel[DebugEvent] {}
 		def appendElement(element: DebugEvent): Unit = {
@@ -153,6 +154,54 @@ class DebugPanel extends BorderPanel {
 			eventsList.publish(if(selected) FreezeEvent else UnFreezeEvent)
 		}
 	}
+
+	val headers: Seq[String]       = Array.tabulate(10) {"Col-" + _}.toSeq
+	val rowData: Array[Array[Any]] = Array.tabulate[Any](10, 10) {"" + _ + ":" + _}
+
+	val ui                         = new BoxPanel(Orientation.Vertical) {
+		val output: TextArea = new TextArea(6, 40) { editable = false }
+		val table : Table    = new Table(rowData, headers) {
+			selection.elementMode = Table.ElementMode.Row
+//			selection.intervalMode = Table.IntervalMode.
+
+			val header: JTableHeader = {
+				import java.awt.event.{MouseEvent, MouseAdapter}
+
+				val makeHeaderEvent = TableColumnHeaderSelected(this, _:Int)
+				val tableHeader = peer.getTableHeader
+				tableHeader.addMouseListener(new MouseAdapter() {
+					override def mouseClicked(e: MouseEvent): Unit = {
+						selection.publish(makeHeaderEvent(tableHeader.columnAtPoint(e.getPoint)))
+					}
+				})
+				tableHeader
+			}
+		}
+
+		listenTo(table.selection)
+
+		reactions += {
+			case TableRowsSelected(source, range, false) =>
+				outputSelection(source, "Rows selected, changes: %s" format range)
+			case TableColumnsSelected(source, range, false) =>
+				outputSelection(source, "Columns selected, changes: %s" format range)
+			case TableColumnHeaderSelected(source, column) =>
+				outputSelection(source, "Column header %s selected" format column)
+			case e => println("%s => %s" format(e.getClass.getSimpleName, e.toString))
+		}
+
+		contents += new ScrollPane(table)
+		contents += new ScrollPane(output)
+
+		def outputSelection(table: Table, msg: String): Unit = {
+			val rowId = table.selection.rows.leadIndex
+			val colId = table.selection.columns.leadIndex
+			val rows = table.selection.rows.mkString(", ")
+			val cols = table.selection.columns.mkString(", ")
+			output.append("%s\n  Lead: %s, %s; Rows: %s; Columns: %s\n" format (msg, rowId, colId, rows, cols))
+		}
+	}
+
 	add(
 		new BoxPanel(Orientation.Horizontal) {
 	//		val panelSelf = this
@@ -160,7 +209,8 @@ class DebugPanel extends BorderPanel {
 			contents += freezeBtn
 		}, Position.North
 	)//header panel
-	add(new ScrollPane(eventsList), Position.Center)
+	add(new SplitPane(Orientation.Vertical, ui, new ScrollPane(eventsList)), Position.Center)
+//	add(, Position.Center)
 
 
 	eventsList.listenTo(this)

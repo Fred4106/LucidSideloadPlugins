@@ -1,9 +1,10 @@
-package com.fredplugins.kroovy.jfx
+package com.fredplugins.kroovy
 
 import javafx.application.Platform
 import javafx.event.EventHandler
 import javafx.scene.{Parent, Scene}
 import javafx.stage.{Stage, WindowEvent}
+
 import javax.swing.SwingUtilities
 
 trait DemoJfxWindow {

@@ -8,7 +8,6 @@ import scala.util.{Random, Try}
 
 import scala.compiletime.uninitialized
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.ui.{ImageElement, ItemIconSource, LayoutRenderElement, LineElement, SplitElement, TextElement}
 import com.google.inject.{Inject, Singleton}
 import ethanApiPlugin.collections.TileObjects
 import net.runelite.api.Client
@@ -24,9 +23,10 @@ import scala.util.chaining.*
 import scala.jdk.CollectionConverters.*
 
 @Singleton
-class NpcService @Inject()(plugin: KroovyPlugin) {
+class NpcService {
 	@Inject val client: Client = null
 	@Inject val clientThread: ClientThread = null
 	@Inject val config: KroovyConfig = null
 	@Inject val itemManager: ItemManager = null
+	@Inject val plugin: KroovyPlugin = null
 }
