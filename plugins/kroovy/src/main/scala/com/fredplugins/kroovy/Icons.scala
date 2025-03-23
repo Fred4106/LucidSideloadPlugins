@@ -12,6 +12,7 @@ import scala.compiletime.uninitialized
 
 object Icons {
 	val ADD_ICON         : KIcon = KIcon.fromKroovy("add_icon")
+	val MINUS_ICON         : KIcon = KIcon.fromKroovy("minus_icon")
 	val CHECKBOX_ICON    : KIcon = KIcon.fromKroovy("checkbox_icon")
 	val CHECKBOX_SELECTED: KIcon = KIcon.fromKroovy("checkbox_selected_icon")
 	val CONSOLE_ICON     : KIcon = KIcon.fromKroovy("console_icon")

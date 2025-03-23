@@ -15,7 +15,7 @@ plugins {
 //    throw Exception("Unknown platform!")
 //}
 //
-//val fxVersion = "17.0.14"
+val fxVersion = "17.0.14"
 //
 //val fxModules = setOf("base", "controls", "fxml", "graphics", "media", "swing", "web")
 //val osNames = setOf("linux", "mac", "win")
@@ -28,6 +28,11 @@ dependencies {
     implementation(project(":ethans"))
     implementation(project(":common"))
     implementation(project(":commonScala"))
+//    implementation(group = "org.openjfx", name = "javafx-base", version = fxVersion, classifier = "win")
+//    implementation ("dev.zio:izumi-reflect_3:3.0.2")
+//    implementation("co.blocke:scala-reflection_3:2.0.11")
+    implementation("io.github.gaeljw:typetrees_3:0.5.0")
+    implementation("io.bullet:spliff_3:0.8.0")
 //    fxModules.forEach { k ->
 ////        implementation(group = "org.openjfx", name = "javafx-$k", version = "14.0.1")
 //        compileOnly(group = "org.openjfx", name = "javafx-$k", version = fxVersion, classifier = "win")

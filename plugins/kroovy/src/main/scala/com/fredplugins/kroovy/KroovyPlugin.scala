@@ -16,15 +16,16 @@ import net.runelite.client.ui.overlay.OverlayManager
 
 import java.awt.image.BufferedImage
 import java.util.concurrent.{Executors, ScheduledExecutorService}
-import javax.swing.{ImageIcon, JPanel}
+import javax.swing.{ImageIcon, JFrame, JPanel, SwingUtilities, WindowConstants}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.language.existentials
 import scala.reflect.{TypeTest, Typeable}
 import scala.util.chaining.given
 import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction}
-import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerChanged, MenuOptionClicked, VarbitChanged}
+import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerChanged, MenuOptionClicked, NpcSpawned, VarbitChanged}
 
+import scala.swing.Frame
 
 @PluginDescriptor(
 	name = "<html><font color=\"#20CD00\">Freds</font> Kroovy</html>",
@@ -52,13 +53,29 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	@Inject private val npcService: NpcService = null
 	@Inject private val worldService: WorldService = null
 	@Inject private val clientToolbar: ClientToolbar= null
-
-//	@Inject private val panel: KroovyPanel = null
+//
+//	@Provides
+//	def getKroovyEventBusFrame(sBus: SEventBus): KroovyEventBusFrame = {
+//		val debugPanel = SEventBusPanell(sBus)
+//		val kroovyEventBusFrame = {
+//			new KroovyEventBusFrame () {
+//				contents = debugPanel
+//			}.tap(mf => {
+//				mf.peer.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
+//				mf.pack()
+//				mf.centerOnScreen()
+//				mf.open()
+//			})
+//		}
+//		kroovyEventBusFrame
+//	}
 
 	given Client = RuneLite.getInjector.getInstance(classOf[Client])
 	given ClientThread = RuneLite.getInjector.getInstance(classOf[ClientThread])
 	given SpriteManager = RuneLite.getInjector.getInstance(classOf[SpriteManager])
 	given ItemManager = RuneLite.getInjector.getInstance(classOf[ItemManager])
+	given SEventBus = RuneLite.getInjector.getInstance(classOf[SEventBus])
+//	val kFrame = RuneLite.getInjector.getInstance(classOf[KroovyEventBusFrame])
 
 	var inventorySnapshot: List[(Int, Int, Int)] = List.empty
 
@@ -66,7 +83,6 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	def getConfig(configManager: ConfigManager): KroovyConfig = {
 		configManager.getConfig[KroovyConfig](classOf[KroovyConfig])
 	}
-
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		//		if (!event.getGroup.equals(FredsMixologyConfig.GroupName)) return
@@ -298,41 +314,42 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 		val examineClickedOpt = menuOptionClicked.getMenuEntry.pipe(me => Option.when(me.isExamineAction && !me.isNpcAction)(me))
 		examineClickedOpt.foreach(me => sBus.debug())
 	}
-
-//	val window = new JfxWindow("normal")(KroovySceneProvider)
-
-	private val navButton = NavigationButton.builder()
-			.icon(Icons.LOGO_ICON)
-			.priority(-100)
-			.tooltip("Kroovy")
-			.onClick(() => {
-				log.debug("toggling window ")
-//				log.debug(s"before click: Window is ${if (window.isVisible) "visible" else "hidden"}")
-//				if(window.isVisible) window.hide()
-//				else window.show()
+	//
+//	private val navButton = NavigationButton.builder()
+//			.icon(Icons.LOGO_ICON)
+//			.priority(-100)
+//			.tooltip("Kroovy")
+//			.onClick(() => {
+//				log.debug(s"toggling window ${if (debugFrame.visible) "visible" else "hidden"}")
+//				debugFrame.visible = (!debugFrame.visible)
 //				Thread.sleep(120)
-//				log.debug(s"after click: Window is ${if (window.isVisible) "visible" else "hidden"}")
-			}).build()
+//				log.debug(s"after click: Window is ${if (debugFrame.visible) "visible" else "hidden"}")
+//			}).build()
 
 
 
 //	private var fxButton: Option[NavigationButton] = None
 
+//	private var frame: Option[Frame] = Option.empty
+
+	SEventBusFrame.get.open()
 	override protected def startUp(): Unit = {
-//		val r1 = sBus.register[GameTick, 0, "TestGroup1"](this)((t: GameTick) => log.debug(s"This - Gametick: ${client.getTickCount}"))
-//		val r2 = sBus.register[GameTick, 4, "Other"](npcService)((t: GameTick) => log.debug(s"This is also a gametick: ${client.getTickCount}"))
-//		val r3 = sBus.register[NpcSpawned, 1, "Self"](npcService)((t: NpcSpawned) => log.debug(s"NpcService - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
-//		val r4 = sBus.register[NpcSpawned, 0, "Root"](this)((t: NpcSpawned) => log.debug(s"This - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
+		val r1 = sBus.register[GameTick, 0, "TestGroup1"](this)((t: GameTick) => log.trace(s"This - Gametick: ${client.getTickCount}"))
+		val r2 = sBus.register[GameTick, 4, "Other"](npcService)((t: GameTick) => log.trace(s"This is also a gametick: ${client.getTickCount}"))
+		val r3 = sBus.register[NpcSpawned, 1, "Self"](npcService)((t: NpcSpawned) => log.trace(s"NpcService - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
+		val r4 = sBus.register[NpcSpawned, 0, "Root"](this)((t: NpcSpawned) => log.trace(s"This - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
 //		_kPanel = Option(injector.getInstance[KPanel](classOf[KPanel]))
-		clientToolbar.addNavigation(navButton)
+//		clientToolbar.addNavigation(navButton)
 //		overlayManager.add(panel)
+//		debugFrame.open()
 	}
 
 	override protected def shutDown(): Unit = {
 		sBus.unregisterAll()
-//		window.hide()
+//		sBus.publisher = null
+//		debugFrame.close()
 
-		clientToolbar.removeNavigation(navButton)
+//		clientToolbar.removeNavigation(navButton)
 //		overlayManager.remove(panel)
 	}
 }

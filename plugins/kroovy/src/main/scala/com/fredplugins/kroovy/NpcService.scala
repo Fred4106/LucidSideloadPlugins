@@ -28,5 +28,4 @@ class NpcService {
 	@Inject val clientThread: ClientThread = null
 	@Inject val config: KroovyConfig = null
 	@Inject val itemManager: ItemManager = null
-	@Inject val plugin: KroovyPlugin = null
 }

@@ -187,7 +187,7 @@ class DebugPanel extends BorderPanel {
 				outputSelection(source, "Columns selected, changes: %s" format range)
 			case TableColumnHeaderSelected(source, column) =>
 				outputSelection(source, "Column header %s selected" format column)
-			case e => println("%s => %s" format(e.getClass.getSimpleName, e.toString))
+//			case e => println("%s => %s" format(e.getClass.getSimpleName, e.toString))
 		}
 
 		contents += new ScrollPane(table)
