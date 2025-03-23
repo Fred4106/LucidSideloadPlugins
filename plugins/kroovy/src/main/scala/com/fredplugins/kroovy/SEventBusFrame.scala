@@ -1,30 +1,15 @@
 package com.fredplugins.kroovy
 
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.SEventBus.{Refresh, SEventBusEvent, SubscriberType}
-import com.fredplugins.kroovy.swing.{MField, MTableModel}
-import com.google.inject.Inject
-import net.runelite.api.events.{NpcDespawned, NpcSpawned}
-import net.runelite.api.{Client, GameState, NPC, Player}
+import com.fredplugins.kroovy.swing.MTableModel
+import net.runelite.api.Client
 
 import java.awt.Color
-import java.util
-import javax.inject.Singleton
-import javax.swing.{DefaultListModel, WindowConstants}
-import javax.swing.table.JTableHeader
-import scala.collection.mutable.ArrayBuffer
-import scala.compiletime.uninitialized
-import scala.jdk.CollectionConverters.*
-import scala.jdk.OptionConverters.*
-import scala.jdk.StreamConverters.*
-import scala.reflect.ClassTag
 import scala.swing.BorderPanel.Position
-import scala.swing.Swing.{Embossing, Raised}
 import scala.swing.Table.{ElementMode, IntervalMode}
-import scala.swing.event.{ButtonClicked, Event, TableColumnsSelected, TableEvent, TableRowsSelected}
-import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Component, Frame, Label, ListView, Orientation, ScrollPane, SplitPane, Swing, Table, TextArea, ToggleButton, event}
+import scala.swing.event.{ButtonClicked, TableChange, TableChanged, TableEvent}
+import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, ScrollPane, Table}
 import scala.util.chaining.*
-import scala.util.{Random, Try}
 
 object SEventBusFrame extends ShimUtils.Logging("Debug") {
 	private var _frame: Frame = _
@@ -34,8 +19,8 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 	type RowType = SEventBus.SubscriberType[?, ?, ?]
 	import MTableModel.{getter2, setter2}
 	val eventsTableModel = MTableModel[RowType]{
-		getter2["Priority", Int, RowType].apply(_.priority)
-		setter2["Enabled", Boolean, RowType].apply(_.getEnabled, (r, v) => r.setEnabled_=(v))
+		getter2["Priority", java.lang.Integer, RowType].apply(_.priority)
+		setter2["Enabled", java.lang.Boolean, RowType].apply(_.getEnabled, (r, v) => r.setEnabled_=(v))
 		getter2["Event", Class[?], RowType].apply(_.eClazz)
 		getter2["Owner", SEventBus.OwnerType, RowType].apply(_.owner)
 		getter2["Group", String, RowType].apply(_.group)
@@ -43,42 +28,31 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 	}
 
 	def get(using client: Client, bus: SEventBus): Frame = {
+		import com.fredplugins.kroovy.swing.ButtonFactory.*
+		import com.fredplugins.kroovy.swing.PanelFactory.*
 
-		object ButtonBar extends BoxPanel(Orientation.Horizontal) {
-			val clearBtn   : Button = new Button("Clear")
-			val addDummyBtn: Button = new Button("AddDummy")
-			val refreshBtn : Button = new Button("Refresh")
 
-			contents += clearBtn
-			contents += addDummyBtn
-			contents += refreshBtn
+
+
+		object ButtonBar extends BoxPanel(Orientation.Horizontal) {bar =>
+			val clearBtn   : Button = TextButton( "Clear", tTip = "Clear all events from SEventBus")
+			val addDummyBtn: Button = TextButton("AddDummy", tTip =  "Add a dummy event to SEventBus")
+			val refreshBtn: Button      = IconButton(Icons.REFRESH_ICON, tTip = "Refresh")
+
+			val all       : Seq[Button] = Seq(clearBtn,addDummyBtn, refreshBtn)
+			contents ++= all
 		}
 		object SideButtonBar extends BoxPanel(Orientation.Vertical) {
-			val unregisterBtn   : Button = new Button().tap(b => {
-				b.tooltip = "unregister"
-				b.icon = Icons.DELETE_ICON.icon
-				b.rolloverIcon = Icons.DELETE_ICON.icon_selected
-			})
-			val priorityPlusBtn : Button = new Button().tap(b => {
-				b.tooltip = "priority +"
-				b.icon = Icons.ADD_ICON.icon
-				b.rolloverIcon = Icons.ADD_ICON.icon_selected
-			})
-			val priorityMinusBtn: Button = new Button().tap(b => {
-				b.tooltip = "priority -"
-				b.icon = Icons.MINUS_ICON.icon
-				b.rolloverIcon = Icons.MINUS_ICON.icon_selected
-			})
+			val unregisterBtn   : Button = IconButton(Icons.DELETE_ICON, tTip = "unregister")
+			val priorityPlusBtn : Button = IconButton(Icons.ADD_ICON, tTip = "priority +")
+			val priorityMinusBtn: Button = IconButton(Icons.MINUS_ICON, tTip = "priority -")
 
-			contents += unregisterBtn
-			contents += priorityPlusBtn
-			contents += priorityMinusBtn
+			val all: Seq[Button] = Seq(unregisterBtn, priorityPlusBtn, priorityMinusBtn)
+			contents ++= all
 		}
-
 		object EventsTable extends Table(eventsTableModel) {
 			selection.elementMode = ElementMode.Row
 			selection.intervalMode = IntervalMode.Single
-
 		}
 
 		def createPanel(): scala.swing.Panel = {
@@ -86,22 +60,26 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 				add(ButtonBar, Position.North)
 				add(SideButtonBar, Position.West)
 				add(ScrollPane(EventsTable), Position.Center)
-				//		new BoxPanel(Orientation.Horizontal) {
-				//	//		val panelSelf = this
-				//			contents += clearBtn
-				//			contents += freezeBtn
-				//			contents += addDummy
-				//		}, Position.North
-				//	)//header panel
-				//	add(new ScrollPane(eventsList), Position.Center)
-				listenTo(bus)
-				listenTo(ButtonBar)
-				listenTo(SideButtonBar)
+
+				listenTo((ButtonBar.all ++ SideButtonBar.all) *)
 				listenTo(EventsTable)
+				listenTo(bus)
 
 				reactions += {
-					case r@Refresh() => eventsTableModel.setData(bus.all())
-					case x => log.debug(s"panel reaction has value ${x}")
+					case ButtonClicked(ButtonBar.clearBtn) => log.debug("clear")
+					case ButtonClicked(ButtonBar.refreshBtn) => bus.debug()
+					case ButtonClicked(ButtonBar.addDummyBtn) =>log.debug("addDummmy")
+					case ButtonClicked(SideButtonBar.priorityPlusBtn) =>log.debug("priority +")
+					case ButtonClicked(SideButtonBar.priorityMinusBtn) =>log.debug("priority - ")
+					case ButtonClicked(SideButtonBar.unregisterBtn) =>log.debug("unregister")
+					case r@SEventBus.AddedSubs(added, allHandlers) => {
+						eventsTableModel.setData(allHandlers)
+					}
+					case r@SEventBus.DeletedSubs(removed, allHandlers) => {
+						eventsTableModel.setData(allHandlers)
+					}
+					case te: TableEvent if te.source == EventsTable => //log.debug("TableEvent {}", te)
+					case x => log.debug(s"panel reaction has value ${x.getClass}")
 				}
 			}
 		}
