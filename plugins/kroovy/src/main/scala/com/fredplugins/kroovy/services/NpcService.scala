@@ -1,8 +1,9 @@
 package com.fredplugins.kroovy.services
 
 import com.fredplugins.kroovy.KroovyConfig
+import com.fredplugins.kroovy.api.{LazyPublisher, Publisher}
 import com.fredplugins.kroovy.services.NpcEventFilter
-import com.fredplugins.kroovy.swing.ObservableSortedSet
+import com.fredplugins.kroovy.swing.{ObservableSetEvent, ObservableSortedSet}
 import com.google.inject.{Inject, Singleton}
 import net.runelite.api.{Client, NPC}
 import net.runelite.api.events.{ActorDeath, AnimationChanged, NpcChanged, NpcDespawned, NpcSpawned}
@@ -14,8 +15,8 @@ import net.runelite.client.game.ItemManager
 import scala.Ordering
 import scala.util.chaining.*
 import scala.collection.mutable
-import scala.swing.Publisher
 import scala.swing.event.ListChanged
+import scala.util.Try
 //
 //trait NpcFilter[Instance](val ids: Int*) extends PartialFunction[NPC, Instance] {
 //	sealed trait NpcFilterEvent extends scala.swing.event.Event
@@ -33,7 +34,7 @@ import scala.swing.event.ListChanged
 
 trait NpcServiceApi extends ServiceBase {
 	given Ordering[NpcEventFilter] = Ordering.by((i: NpcEventFilter) => i.ids.min)
-	protected val observableSortedSet: ObservableSortedSet[NpcEventFilter] = ObservableSortedSet.apply[NpcEventFilter](this)()
+	protected val observableSortedSet: ObservableSortedSet[NpcEventFilter] = ObservableSortedSet.apply[NpcEventFilter]()
 
 	def register(filter: NpcEventFilter): Unit = {
 		observableSortedSet.addOne(filter)
@@ -48,13 +49,30 @@ trait NpcServiceApi extends ServiceBase {
 
 @Singleton
 class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clientThread: ClientThread, val config: KroovyConfig) extends NpcServiceApi {
-	private object NpcEventListener {
+
+	val publisher: Publisher[ObservableSetEvent | FilterEvent] = new Publisher[ObservableSetEvent | FilterEvent]{
+		reactions += {
+			case e => log.debug("npcServiceReaction {}", e)
+		}
+	}
+//	def publish(e: AnyRef): Unit = {
+//		e match {
+//			case a: (ObservableSetEvent | FilterEvent) =>  publisher.publish(a)
+//			case x => log.error("Cant handle {}", x)
+//		}
+//	}
+
+//	observableSortedSet.reactions += {
+//		case u => publisher.publish(u)
+//	}
+
+	private object NpcEventListener extends Publisher[FilterEvent]{
 		@Subscribe
 		def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
 			val idToFind = npcSpawned.getNpc.getId
 			val matched = observableSortedSet.all().filter(_.ids.contains(idToFind))
 			matched.flatMap(m => {
-				m.Instance.unapply(npcSpawned.getNpc).map(mi => m.Spawned(m, mi))
+				m.Instance.unapply(npcSpawned.getNpc).map(mi => Spawned(m, mi))
 			}).foreach(spawned => publish(spawned))
 		}
 		@Subscribe
@@ -62,7 +80,7 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 			val idToFind = npcDespawned.getNpc.getId
 			val matched = observableSortedSet.all().filter(_.ids.contains(idToFind))
 			matched.flatMap(m => {
-				m.Instance.unapply(npcDespawned.getNpc).map(m1 => m.Despawned(m, m1))
+				m.Instance.unapply(npcDespawned.getNpc).map(m1 => Despawned(m, m1))
 			}).foreach(despawned => publish(despawned))
 		}
 		//		@Subscribe
@@ -73,11 +91,8 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 		//		def onActorDeath(actorDeath: ActorDeath): Unit = {}
 	}
 
-	reactions += {
-		case e: NpcEventFilter#FilterEvent => log.debug("spawned/despawned: {}", e)
-		case e: observableSortedSet.ObservableSetEvent => log.debug("ObservableSetEvent: {}", e)
-		case e => log.debug("{}, {}", e.getClass.getSimpleName, e)
-	}
+	publisher.listenTo(observableSortedSet)
+	publisher.listenTo(NpcEventListener)
 
 	override def init(): Unit = {
 		eventBus.register(NpcEventListener)

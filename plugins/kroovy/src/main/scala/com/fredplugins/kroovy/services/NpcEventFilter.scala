@@ -17,21 +17,17 @@ trait RootNpcInstance {
 	def animation: Int = wrapped.getAnimation
 	def name: String = wrapped.getName
 }
-
-
-//case class Despawned(instance: NpcEventFilter#Instance) extends NpcFilterEvent
+sealed trait FilterEvent {
+	def source: NpcEventFilter
+	def element: RootNpcInstance
+}
+case class Spawned(source: NpcEventFilter, element: RootNpcInstance) extends FilterEvent {}
+case class Despawned(source: NpcEventFilter, element: RootNpcInstance) extends FilterEvent {}
 
 abstract class NpcEventFilter(val ids: Int *) {filter =>
 	type Instance <: RootNpcInstance
 	def transform(npc: NPC): Instance
 //	sealed class Instance(override val wrapped: NPC) extends RootNpcInstance {}
-
-	sealed trait FilterEvent extends scala.swing.event.Event {
-		def source: NpcEventFilter
-		def element: filter.Instance
-	}
-	case class Spawned(source: NpcEventFilter, element: Instance) extends FilterEvent {}
-	case class Despawned(source: NpcEventFilter, element: Instance) extends FilterEvent {}
 
 	def unapply(in: NPC): Boolean = {
 		ids.contains(in.getId)

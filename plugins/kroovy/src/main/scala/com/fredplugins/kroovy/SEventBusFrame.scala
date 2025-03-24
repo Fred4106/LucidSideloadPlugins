@@ -8,8 +8,8 @@ import java.awt.Color
 import scala.compiletime.uninitialized
 import scala.swing.BorderPanel.Position
 import scala.swing.Table.{ElementMode, IntervalMode}
-import scala.swing.event.{ButtonClicked, TableChange, TableChanged, TableEvent}
-import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, RichWindow, ScrollPane, Table}
+import scala.swing.event.{ButtonClicked, FocusEvent, TableChange, TableChanged, TableEvent, UIEvent}
+import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, RichWindow, ScrollPane, Table, UIElement}
 import scala.util.chaining.*
 
 object SEventBusFrame extends ShimUtils.Logging("Debug") {
@@ -62,6 +62,7 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 				listenTo(bus)
 
 				reactions += {
+					case e: UIEvent => //ignored
 					case ButtonClicked(ButtonBar.clearBtn) => log.debug("clear")
 					case ButtonClicked(ButtonBar.refreshBtn) =>  bus.debug()
 					case ButtonClicked(ButtonBar.addDummyBtn) =>log.debug("addDummmy")

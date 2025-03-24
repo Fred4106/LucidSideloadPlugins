@@ -16,7 +16,7 @@ import scala.compiletime.uninitialized
 import scala.reflect.ClassTag
 import scala.swing.Publisher
 
-trait ServiceBase extends Publisher{
+trait ServiceBase {
 	protected val log = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	def init(): Unit
 	def teardown(): Unit
