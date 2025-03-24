@@ -5,16 +5,15 @@ import com.fredplugins.kroovy.swing.MTableModel
 import net.runelite.api.Client
 
 import java.awt.Color
+import scala.compiletime.uninitialized
 import scala.swing.BorderPanel.Position
 import scala.swing.Table.{ElementMode, IntervalMode}
 import scala.swing.event.{ButtonClicked, TableChange, TableChanged, TableEvent}
-import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, ScrollPane, Table}
+import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, RichWindow, ScrollPane, Table}
 import scala.util.chaining.*
 
 object SEventBusFrame extends ShimUtils.Logging("Debug") {
-	private var _frame: Frame = _
-
-//	val rt: RType[SubscriberType[NpcSpawned, 3, "root"]] =  RType.of[SEventBus.SubscriberType[NpcSpawned, 3, "root"]]
+	private var _frame: Frame = uninitialized
 
 	type RowType = SEventBus.SubscriberType[?, ?, ?]
 	import MTableModel.{getter2, setter2}
@@ -27,12 +26,9 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 		getter2["Callback", String, RowType].apply(_.hashCode().pipe(Integer.toHexString(_)))
 	}
 
-	def get(using client: Client, bus: SEventBus): Frame = {
+	def get(using bus: SEventBus): Frame = {
 		import com.fredplugins.kroovy.swing.ButtonFactory.*
 		import com.fredplugins.kroovy.swing.PanelFactory.*
-
-
-
 
 		object ButtonBar extends BoxPanel(Orientation.Horizontal) {bar =>
 			val clearBtn   : Button = TextButton( "Clear", tTip = "Clear all events from SEventBus")
@@ -67,7 +63,7 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 
 				reactions += {
 					case ButtonClicked(ButtonBar.clearBtn) => log.debug("clear")
-					case ButtonClicked(ButtonBar.refreshBtn) => bus.debug()
+					case ButtonClicked(ButtonBar.refreshBtn) =>  bus.debug()
 					case ButtonClicked(ButtonBar.addDummyBtn) =>log.debug("addDummmy")
 					case ButtonClicked(SideButtonBar.priorityPlusBtn) =>log.debug("priority +")
 					case ButtonClicked(SideButtonBar.priorityMinusBtn) =>log.debug("priority - ")
@@ -85,7 +81,7 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 		}
 
 		if(_frame == null) {
-			_frame = new Frame() {
+			_frame = new Frame()/* with RichWindow.Undecorated*/{
 				contents = createPanel()
 			}.tap(mf => {
 				mf.pack()

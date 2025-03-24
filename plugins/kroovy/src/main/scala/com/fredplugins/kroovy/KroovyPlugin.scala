@@ -2,6 +2,7 @@ package com.fredplugins.kroovy
 
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.kroovy.services.{NpcFilter, NpcService}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.client.{Notifier, RuneLite}
@@ -22,10 +23,33 @@ import scala.collection.mutable.ListBuffer
 import scala.language.existentials
 import scala.reflect.{TypeTest, Typeable}
 import scala.util.chaining.given
-import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction}
+import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction, NPC, NpcID}
 import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerChanged, MenuOptionClicked, NpcSpawned, VarbitChanged}
 
 import scala.swing.Frame
+
+
+case class GauntletNpc(npcType: String)(private val _wrapped: NPC) extends NpcFilter.NpcInstance {
+	override def wrapped: NPC = _wrapped
+}
+//		class GauntletNpc(val wrapped: NPC) extends NpcFilter.NpcInstance {}
+val gauntletNpcIds = Seq(
+	("BAT", NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT),
+	("RAT", NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT),
+	("SPIDER", NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER),
+	("SCORPION", NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION),
+	("UNICORN", NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN),
+	("WOLF", NpcID.CRYSTALLINE_WOLF, NpcID.CORRUPTED_WOLF),
+	("BEAR", NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR),
+	("DARK_BEAST", NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST),
+	("DRAGON", NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON),
+)
+object GauntletNpcFilter extends NpcFilter[GauntletNpc](gauntletNpcIds.flatMap(a => Seq(a._2, a._3)) *) {
+	override def transform(npc: NPC): GauntletNpc = {
+		val npcType = gauntletNpcIds.find(gni => Seq(gni._2, gni._3).contains(npc.getId)).map(_._1).get
+		GauntletNpc(npcType)(npc)
+	}
+}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#20CD00\">Freds</font> Kroovy</html>",
@@ -50,25 +74,9 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	@Inject private val overlayManager: OverlayManager = null
 
 	@Inject private val sBus: SEventBus = null
-	@Inject private val npcService: NpcService = null
 	@Inject private val worldService: WorldService = null
 	@Inject private val clientToolbar: ClientToolbar= null
-//
-//	@Provides
-//	def getKroovyEventBusFrame(sBus: SEventBus): KroovyEventBusFrame = {
-//		val debugPanel = SEventBusPanell(sBus)
-//		val kroovyEventBusFrame = {
-//			new KroovyEventBusFrame () {
-//				contents = debugPanel
-//			}.tap(mf => {
-//				mf.peer.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
-//				mf.pack()
-//				mf.centerOnScreen()
-//				mf.open()
-//			})
-//		}
-//		kroovyEventBusFrame
-//	}
+	@Inject private val npcService: NpcService= null
 
 	given Client = RuneLite.getInjector.getInstance(classOf[Client])
 	given ClientThread = RuneLite.getInjector.getInstance(classOf[ClientThread])
@@ -85,16 +93,6 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	}
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
-		//		if (!event.getGroup.equals(FredsMixologyConfig.GroupName)) return
-		//		if (!config.highlightStations) log.warn("unHighlightAllStations"); //unHighlightAllStations
-		//		if (!config.highlightDigWeed) {
-		//			log.warn("unHighlightObject(DIGWEED_NORTH_EAST)")
-		//			log.warn("unHighlightObject(DIGWEED_SOUTH_EAST)")
-		//			log.warn("unHighlightObject(DIGWEED_SOUTH_WEST)")
-		//			log.warn("unHighlightObject(DIGWEED_NORTH_WEST)")
-		//		}
-		//		if (config.highlightLevers) log.warn("highlightLevers");
-		//		else log.warn("unHighlightLevers")
 	}
 
 	@Subscribe
@@ -129,174 +127,28 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 				}
 			}
 
-			val str = List(
-				"qtyChanged" -> qtyElements,
-				"added" -> addedElements,
-				"removed" -> removedElements,
-			)
-				.filter(_._2.nonEmpty)
-				.map(u => s"${u._1}=${u._2}")
-				.mkString("\n\t", "\n\t", "\n")
-
-			log.debug(s"logStr: ${str}")
+//			val str = List(
+//				"qtyChanged" -> qtyElements,
+//				"added" -> addedElements,
+//				"removed" -> removedElements,
+//			)
+//				.filter(_._2.nonEmpty)
+//				.map(u => s"${u._1}=${u._2}")
+//				.mkString("\n\t", "\n\t", "\n")
+//
+//			log.debug(s"logStr: ${str}")
 		}
-		//		// Do not update the highlight if there's a potion in a station
-		//		if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) return
-		//		val inventory = event.getItemContainer
-		//		// Find the first potion item and highlight its station
-		//		import scala.collection.JavaConversions._
-		//		for (item <- inventory.getItems) {
-		//			val potionType = PotionType.fromItemId(item.getId)
-		//			if (potionType == null) {
-		//				continue
-		//				//todo: continue is not supported
-		//			}
-		//			import scala.collection.JavaConversions._
-		//			for (order <- potionOrders) {
-		//				if ((order.potionType == potionType) && !order.fulfilled) {
-		//					unHighlightAllStations
-		//					highlightObject(order.potionModifier.alchemyObject, config.stationHighlightColor)
-		//					return
-		//				}
-		//			}
-		//		}
 	}
 
 	@Subscribe
 	def onVarbitChanged(event: VarbitChanged): Unit = {
 		val varbitId = event.getVarbitId
 		val value = event.getValue
-		// Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
-		// set to the new values. We can use this to clear all the stations.
-		//		if (VARBIT_POTION_ORDER.contains(varbitId) || VARBIT_POTION_MODIFIER.contains(varbitId)) {
-		//			potionOrders = this.potionOrders match {
-		//				case ((p1,o1), (p2,o2), (p3,o3)) => {
-		//					Option((varbitId, (if(VARBIT_POTION_ORDER.contains(varbitId)) fromIdx(value).orNull else
-		//					fromOrderValue(value).orNull))).asInstanceOf[Option[(Int, SBrew | SProcessType |  Null)]].collect {
-		//						case (VARBIT_POTION_ORDER_1, b: SBrew) => ((p1, b), (p2, o2), (p3,o3))
-		//						case (VARBIT_POTION_ORDER_2, b: SBrew) => ((p1, o1), (p2, b), (p3,o3))
-		//						case (VARBIT_POTION_ORDER_3, b: SBrew) => ((p1, o1), (p2, o2), (p3, b))
-		//						case (VARBIT_POTION_MODIFIER_1, b:SProcessType) => ((b, o1), (p2, o2), (p3,o3))
-		//						case (VARBIT_POTION_MODIFIER_2, b:SProcessType) => ((p1, o1), (b, o2), (p3,o3))
-		//						case (VARBIT_POTION_MODIFIER_3, b:SProcessType) => ((p1, o1), (p2, o2), (b, o3))
-		//					}.getOrElse(((null, null), (null, null), (null,null)))
-		//				}
-		//			}
-		//		} else if (varbitId == VARBIT_ALEMBIC_POTION) {
-		//			if (value == 0) {
-		//				// Finished crystalising
-		//				//unHighlightObject(AlchemyObject.ALEMBIC)
-		//				//				tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED)
-		//				//				tryHighlightNextStation
-		//				log.debug("Finished crystalising {}", alembicPotionType)
-		//				alembicPotionType = Option.empty
-		//			} else {
-		//				alembicPotionType = SBrew.fromIdx(value)
-		//				log.debug("Alembic potion type: {}", alembicPotionType)
-		//			}
-		//		} else if (varbitId == VARBIT_AGITATOR_POTION) {
-		//			if (value == 0) {
-		////				unHighlightObject(AlchemyObject.AGITATOR)
-		////				tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS)
-		////				tryHighlightNextStation
-		//				log.debug("Finished homogenising {}", agitatorPotionType)
-		//				agitatorPotionType = Option.empty
-		//			} else {
-		//				agitatorPotionType = SBrew.fromIdx(value)
-		//				log.debug("Agitator potion type: {}", agitatorPotionType)
-		//			}
-		//		} else if (varbitId == VARBIT_RETORT_POTION) {
-		//			if (value == 0) {
-		////							unHighlightObject(AlchemyObject.RETORT)
-		////							tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED)
-		////							tryHighlightNextStation
-		//				log.debug("Finished concentrating {}", retortPotionType)
-		//				retortPotionType = Option.empty
-		//			} else {
-		//				retortPotionType = SBrew.fromIdx(value)
-		//				log.debug("Retort potion type: {}", retortPotionType)
-		//			}
-		//		} else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
-		//			if (value == 1) {
-		////				if (config.highlightDigWeed) highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config
-		// .digweedHighlightColor)
-		//				notifier.notify(config.notifyDigWeed, "A digweed has spawned north east.")
-		//			} //else unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST)
-		//		} else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
-		//			if (value == 1) {
-		////				if (config.highlightDigWeed) highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config
-		// .digweedHighlightColor)
-		//				notifier.notify(config.notifyDigWeed, "A digweed has spawned south east.")
-		//			}
-		////			else unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST)
-		//		} else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
-		//			if (value == 1) {
-		////				if (config.highlightDigWeed) highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config
-		// .digweedHighlightColor)
-		//				notifier.notify(config.notifyDigWeed, "A digweed has spawned south west.")
-		//			}
-		////			else unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST)
-		//		} else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
-		//			if (value == 1) {
-		////				if (config.highlightDigWeed) highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config
-		// .digweedHighlightColor)
-		//				notifier.notify(config.notifyDigWeed, "A digweed has spawned north west.")
-		//			}
-		////			else unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST)
-		//		} else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
-		//			if (agitatorQuickActionTicks == 2) {
-		//				// quick action was triggered two ticks ago, so it's now too late
-		////				resetDefaultHighlight(AlchemyObject.AGITATOR)
-		//				agitatorQuickActionTicks = 0
-		//			}
-		//			if (agitatorQuickActionTicks == 1) agitatorQuickActionTicks = 2
-		//			if (value < previousAgitatorProgess) {
-		//				// progress was set back due to a quick action failure
-		////				resetDefaultHighlight(AlchemyObject.AGITATOR)
-		//			}
-		//			previousAgitatorProgess = value
-		//		} else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
-		//			if (alembicQuickActionTicks == 1) {
-		//				// quick action was triggered last tick, so it's now too late
-		////					resetDefaultHighlight(AlchemyObject.ALEMBIC)
-		//				alembicQuickActionTicks = 0
-		//			}
-		//			if (value < previousAlembicProgress) {
-		//			// progress was set back due to a quick action failure
-		////					resetDefaultHighlight(AlchemyObject.ALEMBIC)
-		//			}
-		//			previousAlembicProgress = value
-		//		} else if (varbitId == VARBIT_RETORT_PROGRESS) {
-		//			if (value < previousRetortProgess) {
-		//				// progress was set back due to a quick action failure
-		////				resetDefaultHighlight(AlchemyObject.AGITATOR)
-		//			}
-		//			previousRetortProgess = value
-		//		} else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
-		//				// agitator quick action was just successfully popped
-		////				resetDefaultHighlight(AlchemyObject.AGITATOR)
-		//		} else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
-		//			// alembic quick action was just successfully popped
-		////			resetDefaultHighlight(AlchemyObject.ALEMBIC)
-		//		}
 	}
 
 	@Subscribe
 	def onGraphicsObjectCreated(event: GraphicsObjectCreated): Unit = {
 		val spotAnimId = event.getGraphicsObject.getId
-		////		if (!config.highlightQuickActionEvents) return
-		//		if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
-		////			highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor)
-		//			// start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
-		//			// note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
-		//			alembicQuickActionTicks = 1
-		//		}
-		//		if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
-		////			highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor)
-		//			// start counting ticks for agitator so we know to un-highlight on the next agitator varbit update
-		//			// note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
-		//			agitatorQuickActionTicks = 1
-		//		}
 	}
 
 	@Subscribe
@@ -334,6 +186,8 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 	SEventBusFrame.get.open()
 	override protected def startUp(): Unit = {
+		npcService.init()
+		npcService.register(GauntletNpcFilter)
 		val r1 = sBus.register[GameTick, 0, "TestGroup1"](this)((t: GameTick) => log.trace(s"This - Gametick: ${client.getTickCount}"))
 		val r2 = sBus.register[GameTick, 4, "Other"](npcService)((t: GameTick) => log.trace(s"This is also a gametick: ${client.getTickCount}"))
 		val r3 = sBus.register[NpcSpawned, 1, "Self"](npcService)((t: NpcSpawned) => log.trace(s"NpcService - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
@@ -345,6 +199,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	}
 
 	override protected def shutDown(): Unit = {
+		npcService.teardown()
 		sBus.unregisterAll()
 //		sBus.publisher = null
 //		debugFrame.close()

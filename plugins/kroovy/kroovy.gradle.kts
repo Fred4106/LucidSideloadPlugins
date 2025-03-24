@@ -33,6 +33,10 @@ dependencies {
 //    implementation("co.blocke:scala-reflection_3:2.0.11")
     implementation("io.github.gaeljw:typetrees_3:0.5.0")
     implementation("io.bullet:spliff_3:0.8.0")
+//    testImplementation("org.pf4j:pf4j:3.10.0")
+//    testImplementation("org.slf4j:slf4j-api:2.0.6")
+    testImplementation("ch.qos.logback:logback-classic:1.4.12")
+//    testImplementation("ch.qos.logback:logback-core:1.2.9")
 //    fxModules.forEach { k ->
 ////        implementation(group = "org.openjfx", name = "javafx-$k", version = "14.0.1")
 //        compileOnly(group = "org.openjfx", name = "javafx-$k", version = fxVersion, classifier = "win")

@@ -48,23 +48,18 @@ object SEventBus {
 	case class AddedSubs(added: Set[SubscriberType[?, ?, ?]], all: scala.collection.immutable.SortedSet[SubscriberType[?, ?, ?]]) extends SEventBusEvent
 	case class DeletedSubs(deleted: Set[SubscriberType[?, ?, ?]], all: scala.collection.immutable.SortedSet[SubscriberType[?, ?, ?]]) extends SEventBusEvent
 
-//	case class Add(added: Set[SubscriberType[?, ?, ?]]) extends scala.swing.event.Event {}
-//	case class Delete(deleted: Set[SubscriberType[?, ?, ?]]) extends scala.swing.event.Event {}
-//	inline def Add(s: SubscriberType[?, ?, ?] *): Add = Add(s.toSet)
-//	inline def Delete(d: SubscriberType[?, ?, ?] *): Delete = Delete(d.toSet)
-
-//	val comparator: Comparator[SubscriberType[?, ?, ?]] =
 	given Ordering[SubscriberType[?, ?, ?]] = Ordering.comparatorToOrdering[SubscriberType[?, ?,  ?]](
 		Comparator.comparingInt[SubscriberType[?, ?, ?]](_.priority).thenComparing[String](_.owner.getClass.getName).thenComparing(s => s.ownerAndGroupStr)
 	)
-}
 
+
+}
 @Singleton
-class SEventBus @Inject()(val clientThread: ClientThread) extends Publisher {
+class SEventBus() extends Publisher {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
 //	private var internal: List[SubscriberType[?, ?, ?]] = List.empty
-	private val internal2 = mutable.SortedSet.empty[SubscriberType[?, ?, ?]]
+	private val internal2 = mutable.SortedSet.apply[SubscriberType[?, ?, ?]]()
 
 	def all(): Seq[SubscriberType[?, ?, ?]] = internal2.toSeq
 	def events(): Set[Class[?]] = all().map(_.eClazz).distinct.sortBy(_.getName).toSet
