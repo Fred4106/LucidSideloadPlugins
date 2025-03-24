@@ -2,9 +2,10 @@ package com.fredplugins.kroovy
 
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.services.{NpcFilter, NpcService}
+import com.fredplugins.kroovy.services.{NpcEventFilter, NpcService, RootNpcInstance}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
+import net.runelite.api.coords.WorldPoint
 import net.runelite.client.{Notifier, RuneLite}
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.config.ConfigManager
@@ -29,9 +30,9 @@ import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerCh
 import scala.swing.Frame
 
 
-case class GauntletNpc(npcType: String)(private val _wrapped: NPC) extends NpcFilter.NpcInstance {
-	override def wrapped: NPC = _wrapped
-}
+//case class GauntletNpc(npcType: String)(private val _wrapped: NPC) extends NpcFilter.NpcInstance {
+//	override def wrapped: NPC = _wrapped
+//}
 //		class GauntletNpc(val wrapped: NPC) extends NpcFilter.NpcInstance {}
 val gauntletNpcIds = Seq(
 	("BAT", NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT),
@@ -44,10 +45,14 @@ val gauntletNpcIds = Seq(
 	("DARK_BEAST", NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST),
 	("DRAGON", NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON),
 )
-object GauntletNpcFilter extends NpcFilter[GauntletNpc](gauntletNpcIds.flatMap(a => Seq(a._2, a._3)) *) {
-	override def transform(npc: NPC): GauntletNpc = {
-		val npcType = gauntletNpcIds.find(gni => Seq(gni._2, gni._3).contains(npc.getId)).map(_._1).get
-		GauntletNpc(npcType)(npc)
+object GauntletNpcFilter extends NpcEventFilter(gauntletNpcIds.flatMap(a => Seq(a._2, a._3)) *) {
+	case class GauntletInstance(tpe: String,  wrapped: NPC) extends RootNpcInstance {}
+
+	override type Instance = GauntletInstance
+	override def transform(npc: NPC): Instance = {
+		gauntletNpcIds.collectFirst{
+			case (str, i1, i2) if i1 == npc.getId || i2 == npc.getId => GauntletInstance(str, npc)
+		}.get
 	}
 }
 

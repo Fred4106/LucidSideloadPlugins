@@ -14,8 +14,9 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 import scala.reflect.ClassTag
+import scala.swing.Publisher
 
-trait ServiceBase {
+trait ServiceBase extends Publisher{
 	protected val log = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	def init(): Unit
 	def teardown(): Unit
