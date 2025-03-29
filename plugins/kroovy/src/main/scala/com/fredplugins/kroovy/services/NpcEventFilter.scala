@@ -1,5 +1,6 @@
 package com.fredplugins.kroovy.services
 
+import enumeratum.EnumEntry
 import net.runelite.api.NPC
 import net.runelite.api.coords.WorldPoint
 
@@ -9,31 +10,31 @@ import scala.jdk.StreamConverters.*
 import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
+import scala.language.reflectiveCalls
 
-trait RootNpcInstance {
-	val wrapped: NPC
+abstract class TaggedNpc[T <: EnumEntry with {def ids: Set[Int]}](val tag: T, wrapped: NPC, val source: enumeratum.Enum[_ <: T]) {
+	def group: enumeratum.Enum[_ <: T] = source
 	def worldLocation: WorldPoint = wrapped.getWorldLocation
 	def index: Int = wrapped.getIndex
 	def animation: Int = wrapped.getAnimation
 	def name: String = wrapped.getName
-}
-sealed trait FilterEvent {
-	def source: NpcEventFilter
-	def element: RootNpcInstance
-}
-case class Spawned(source: NpcEventFilter, element: RootNpcInstance) extends FilterEvent {}
-case class Despawned(source: NpcEventFilter, element: RootNpcInstance) extends FilterEvent {}
 
-abstract class NpcEventFilter(val ids: Int *) {filter =>
-	type Instance <: RootNpcInstance
-	def transform(npc: NPC): Instance
-//	sealed class Instance(override val wrapped: NPC) extends RootNpcInstance {}
-
-	def unapply(in: NPC): Boolean = {
-		ids.contains(in.getId)
+	override def toString(): String = {
+		s"TaggedNpc[${tag.entryName}](wrapped = ${Integer.toHexString(wrapped.hashCode())})"
 	}
+}
 
-	object Instance {
-		def unapply(in: NPC): Option[Instance] = Option.when(ids.contains(in.getId))(transform(in))
+
+abstract class NpcEventFilter[T <: EnumEntry with {def ids: Set[Int]}](val source: enumeratum.Enum[_<:T]) {
+	def getTag(in: Int): Option[EnumEntry with {def ids: Set[Int]}] = source.values.find(_.ids.contains(in))
+//	source.values.find(_.ids.contains(
+
+	//	def IdToTag =
+	val allIds: Seq[Int] = source.values.flatMap(_.ids).sorted.distinct
+
+	def transform(npc: NPC): Option[TaggedNpc[_ <: EnumEntry with {def ids: Set[Int]}]] = {
+		getTag(npc.getId).map(e => new TaggedNpc(e, npc, source) {
+
+		})
 	}
 }

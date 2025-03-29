@@ -2,7 +2,7 @@ package com.fredplugins.kroovy
 
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.services.{NpcEventFilter, NpcService, RootNpcInstance}
+import com.fredplugins.kroovy.services.{NpcEventFilter, NpcService}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.coords.WorldPoint
@@ -30,31 +30,25 @@ import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerCh
 import scala.swing.Frame
 
 
-//case class GauntletNpc(npcType: String)(private val _wrapped: NPC) extends NpcFilter.NpcInstance {
-//	override def wrapped: NPC = _wrapped
-//}
-//		class GauntletNpc(val wrapped: NPC) extends NpcFilter.NpcInstance {}
-val gauntletNpcIds = Seq(
-	("BAT", NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT),
-	("RAT", NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT),
-	("SPIDER", NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER),
-	("SCORPION", NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION),
-	("UNICORN", NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN),
-	("WOLF", NpcID.CRYSTALLINE_WOLF, NpcID.CORRUPTED_WOLF),
-	("BEAR", NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR),
-	("DARK_BEAST", NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST),
-	("DRAGON", NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON),
-)
-object GauntletNpcFilter extends NpcEventFilter(gauntletNpcIds.flatMap(a => Seq(a._2, a._3)) *) {
-	case class GauntletInstance(tpe: String,  wrapped: NPC) extends RootNpcInstance {}
-
-	override type Instance = GauntletInstance
-	override def transform(npc: NPC): Instance = {
-		gauntletNpcIds.collectFirst{
-			case (str, i1, i2) if i1 == npc.getId || i2 == npc.getId => GauntletInstance(str, npc)
-		}.get
-	}
+import enumeratum._
+sealed trait GauntletTag(validIds: Int  *) extends EnumEntry {
+	val ids: Set[Int] = validIds.toSet
 }
+
+object GauntletTags extends Enum[GauntletTag] {
+	case object Bat extends GauntletTag(NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT)
+	case object Rat extends GauntletTag(NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT)
+	case object Spider extends GauntletTag(NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER)
+	case object Scorpion extends GauntletTag(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION)
+	case object Unicorn extends GauntletTag(NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN)
+	case object Wolf extends GauntletTag(NpcID.CRYSTALLINE_WOLF, NpcID.CORRUPTED_WOLF)
+	case object Bear extends GauntletTag(NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR)
+	case object Dark_beast extends GauntletTag(NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST)
+	case object Dragon extends GauntletTag(NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON)
+
+	override def values: IndexedSeq[GauntletTag] = findValues
+}
+object GauntletNpcFilter extends NpcEventFilter(GauntletTags){}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#20CD00\">Freds</font> Kroovy</html>",

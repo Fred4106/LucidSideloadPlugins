@@ -1,10 +1,11 @@
 package com.fredplugins.kroovy.services
 
 import com.fredplugins.kroovy.KroovyConfig
-import com.fredplugins.kroovy.api.{LazyPublisher, Publisher}
+import com.fredplugins.kroovy.api.{LazyPublisher, Publisher, Reactor}
 import com.fredplugins.kroovy.services.NpcEventFilter
 import com.fredplugins.kroovy.swing.{ObservableSetEvent, ObservableSortedSet}
 import com.google.inject.{Inject, Singleton}
+import enumeratum.EnumEntry
 import net.runelite.api.{Client, NPC}
 import net.runelite.api.events.{ActorDeath, AnimationChanged, NpcChanged, NpcDespawned, NpcSpawned}
 import net.runelite.client.RuneLite
@@ -15,6 +16,7 @@ import net.runelite.client.game.ItemManager
 import scala.Ordering
 import scala.util.chaining.*
 import scala.collection.mutable
+import scala.language.reflectiveCalls
 import scala.swing.event.ListChanged
 import scala.util.Try
 //
@@ -33,13 +35,14 @@ import scala.util.Try
 //}
 
 trait NpcServiceApi extends ServiceBase {
-	given Ordering[NpcEventFilter] = Ordering.by((i: NpcEventFilter) => i.ids.min)
-	protected val observableSortedSet: ObservableSortedSet[NpcEventFilter] = ObservableSortedSet.apply[NpcEventFilter]()
+	given Ordering[NpcEventFilter[? <: EnumEntry & {def ids: Set[Int]}]] = Ordering.by((i: NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]) => i.source.values.minBy(_.ids.min).ids.min)
+	protected val observableSortedSet: ObservableSortedSet[NpcEventFilter[? <: EnumEntry & {def ids: Set[Int]}]] = ObservableSortedSet.apply[NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]]()
 
-	def register(filter: NpcEventFilter): Unit = {
+
+	def register(filter: NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]): Unit = {
 		observableSortedSet.addOne(filter)
 	}
-	def forget(filter: NpcEventFilter): Unit = {
+	def forget(filter: NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]): Unit = {
 		observableSortedSet.remove(filter)
 	}
 	override def teardown(): Unit = {
@@ -49,6 +52,11 @@ trait NpcServiceApi extends ServiceBase {
 
 @Singleton
 class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clientThread: ClientThread, val config: KroovyConfig) extends NpcServiceApi {
+
+	sealed trait FilterEvent {}
+	case class DespawnTagged(despawned: TaggedNpc[?]) extends FilterEvent {}
+	case class SpawnTagged(spawned: TaggedNpc[?]) extends FilterEvent {}
+
 
 	val publisher: Publisher[ObservableSetEvent | FilterEvent] = new Publisher[ObservableSetEvent | FilterEvent]{
 		reactions += {
@@ -64,24 +72,24 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 
 //	observableSortedSet.reactions += {
 //		case u => publisher.publish(u)
-//	}
+//}
 
 	private object NpcEventListener extends Publisher[FilterEvent]{
 		@Subscribe
 		def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
 			val idToFind = npcSpawned.getNpc.getId
-			val matched = observableSortedSet.all().filter(_.ids.contains(idToFind))
+			val matched = observableSortedSet.all().find(_.allIds.contains(idToFind))
 			matched.flatMap(m => {
-				m.Instance.unapply(npcSpawned.getNpc).map(mi => Spawned(m, mi))
-			}).foreach(spawned => publish(spawned))
+				m.transform(npcSpawned.getNpc)
+			}).foreach(spawned => publish(SpawnTagged(spawned)))
 		}
 		@Subscribe
 		def onNpcDespawned(npcDespawned: NpcDespawned): Unit = {
 			val idToFind = npcDespawned.getNpc.getId
-			val matched = observableSortedSet.all().filter(_.ids.contains(idToFind))
+			val matched = observableSortedSet.all().find(_.allIds.contains(idToFind))
 			matched.flatMap(m => {
-				m.Instance.unapply(npcDespawned.getNpc).map(m1 => Despawned(m, m1))
-			}).foreach(despawned => publish(despawned))
+				m.transform(npcDespawned.getNpc)
+			}).foreach(despawned => publish(DespawnTagged(despawned)))
 		}
 		//		@Subscribe
 		//		def onNpcChanged(npcChanged: NpcChanged): Unit = {}
