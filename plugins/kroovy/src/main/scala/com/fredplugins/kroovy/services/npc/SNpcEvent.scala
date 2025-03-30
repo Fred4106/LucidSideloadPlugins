@@ -1,5 +1,6 @@
 package com.fredplugins.kroovy.services.npc
 
+import net.runelite.api.coords.WorldPoint
 import net.runelite.api.{Client, NPC, NPCComposition}
 import net.runelite.client.callback.ClientThread
 
@@ -26,5 +27,10 @@ object SNpcEvent {
 	}
 	class CompositionChanged(val npc: NPC, val old: Int)(using clientThread: ClientThread) extends SNpcEvent {
 		val cur: Int = clientThread.runOnClientThread(() => npc.getComposition.getId)
+	}
+
+	class Moved(val npc: NPC, val old: WorldPoint)(using clientThread: ClientThread) extends SNpcEvent {
+		val cur: WorldPoint = clientThread.runOnClientThread(() => npc.getWorldLocation)
+		val delta: (Int, Int) = (cur.getX - old.getX) -> (cur.getY - old.getY)
 	}
 }

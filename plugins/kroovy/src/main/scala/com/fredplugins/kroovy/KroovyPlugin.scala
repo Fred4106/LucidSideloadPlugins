@@ -3,7 +3,7 @@ package com.fredplugins.kroovy
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
-import com.fredplugins.kroovy.services.npc.{NpcService, SNpcEvent}
+import com.fredplugins.kroovy.services.npc.{NpcService, NpcServiceApi, NpcServicesFrame, SNpcEvent}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.coords.WorldPoint
@@ -214,8 +214,10 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 //	private var frame: Option[Frame] = Option.empty
 
 //	SEventBusFrame.get.open()
+	NpcServicesFrame.get
 	override protected def startUp(): Unit = {
 		npcService.init()
+		NpcServicesFrame.get.open()
 //		val r1 = sBus.register[GameTick, 0, "Self"](this)((t: GameTick) => SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"Gametick: ${client.getTickCount}"))}))
 //		val r3 = sBus.register[NpcSpawned, 1, "Self"](this)((t: NpcSpawned) => (t.getNpc.getId, t.getNpc.getName).tap{
 //			case (npcId, npcStr) =>  SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"NpcService - NpcSpawned: ${npcId}, ${npcStr}"))})
@@ -223,40 +225,43 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 		def report(npc: NPC)(msg: String): Unit = {
 			val tag     = GauntletTags.find(npc).map(_.entryName).getOrElse("None")
 			val toPrint = s"Npc[${tag}](${Integer.toHexString(npc.hashCode())})" + " " + msg
-			log.debug(s"${toPrint}")
+			SwingUtilities.invokeLater(() => {npcService.publish(NpcServiceApi.Log(toPrint))})
+//			log.debug(s"${toPrint}")
 			//					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
 		}
 
 		val weakAndStrongNpcIds = Set(GauntletTags.Weak, GauntletTags.Strong).flatMap(_.values).flatMap(_.ids)
-		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.Spawned) => {
+		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.Spawned) => {
 			report(e.npc)(s"Spawned @ ${e.npc.getWorldLocation}")
 		})
-		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.Despawned) => {
+		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.Despawned) => {
 			report(e.npc)(s"Despawned")
 		})
-		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.Died) => {
+		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.Died) => {
 			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
 		})
-		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.CompositionChanged) => {
+		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.CompositionChanged) => {
 			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
 		})
-		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.AnimationChanged) => {
+		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.AnimationChanged) => {
 			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
 		})
-
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.Spawned) => {
+		npcService.register(GauntletTags.Strong.values.flatMap(_.ids), (e: SNpcEvent.Moved) => {
+			report(e.npc)(s"Location Changed ${e.delta} from ${e.old} => ${e.cur}")
+		})
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Spawned) => {
 			report(e.npc)(s"Spawned @ ${e.npc.getWorldLocation}")
 		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.Despawned) => {
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Despawned) => {
 			report(e.npc)(s"Despawned")
 		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.Died) => {
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Died) => {
 			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
 		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.CompositionChanged) => {
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.CompositionChanged) => {
 			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
 		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.AnimationChanged) => {
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.AnimationChanged) => {
 			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
 		})
 //		(new NpcListener {
@@ -284,6 +289,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 	override protected def shutDown(): Unit = {
 		npcService.teardown()
+		NpcServicesFrame.get.close()
 //		sBus.unregisterAll()
 //		sBus.publisher = null
 //		debugFrame.close()
