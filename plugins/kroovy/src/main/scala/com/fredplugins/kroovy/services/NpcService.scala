@@ -2,8 +2,9 @@ package com.fredplugins.kroovy.services
 
 import com.fredplugins.kroovy.KroovyConfig
 import com.fredplugins.kroovy.api.{LazyPublisher, Publisher, Reactor}
-import com.fredplugins.kroovy.services.NpcEventFilter
-import com.fredplugins.kroovy.swing.{ObservableSetEvent, ObservableSortedSet}
+import net.runelite.api.{NPCComposition, Player}
+//import com.fredplugins.kroovy.services.NpcEventFilter
+import com.fredplugins.kroovy.swing.{ObservableSetEvent, ObservableSortedMap, ObservableSortedSet}
 import com.google.inject.{Inject, Singleton}
 import enumeratum.EnumEntry
 import net.runelite.api.{Client, NPC}
@@ -19,33 +20,52 @@ import scala.collection.mutable
 import scala.language.reflectiveCalls
 import scala.swing.event.ListChanged
 import scala.util.Try
-//
-//trait NpcFilter[Instance](val ids: Int*) extends PartialFunction[NPC, Instance] {
-//	sealed trait NpcFilterEvent extends scala.swing.event.Event
-//	case class Spawned(result: Instance) extends NpcFilterEvent
-//	case class Despawned(result: Instance) extends NpcFilterEvent
-//
-//	override def isDefinedAt(x: NPC): Boolean = Option(x).exists(n => ids.contains(n.getId))
-//	override def apply(v1: NPC): Instance = Option(v1).filter(isDefinedAt).map(transform).get
-//
-//	def transform(npc: NPC): Instance
-//
-//	def apply(v1: NpcSpawned): this.Spawned = Spawned(apply(v1.getNpc))
-//	def apply(v1: NpcDespawned): this.Despawned = Despawned(apply(v1.getNpc))
-//}
+type NpcEventFilterType = Set[Int]/*NpcEventFilter[? <: EnumEntry & {def ids: Set[Int]}]*/
+
+trait NpcListener {
+	def onSpawned(npc: NPC): Unit = {}
+	def onDespawned(npc: NPC): Unit = {}
+	def onAnimationChanged(npc: NPC, old: Int, cur: Int): Unit = {}
+	def onCompositionChanged(npc: NPC, old: NPCComposition, cur: NPCComposition): Unit = {}
+	def onDeath(npc: NPC): Unit = {}
+}
 
 trait NpcServiceApi extends ServiceBase {
-	given Ordering[NpcEventFilter[? <: EnumEntry & {def ids: Set[Int]}]] = Ordering.by((i: NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]) => i.source.values.minBy(_.ids.min).ids.min)
-	protected val observableSortedSet: ObservableSortedSet[NpcEventFilter[? <: EnumEntry & {def ids: Set[Int]}]] = ObservableSortedSet.apply[NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]]()
+//	case class NpcFilteredListener(ids: Set[Int], listener: NpcListener) {
+//
+//	}
+	given Ordering[(Set[Int], NpcListener)] = Ordering.by((i: (Set[Int], NpcListener)) => i._1.min)
+	protected val observableSortedSet: ObservableSortedSet[(Set[Int], NpcListener)] = ObservableSortedSet[(Set[Int], NpcListener)]()
 
+	private var lookupMap: Map[Int, Set[NpcListener]] = Map.empty
 
-	def register(filter: NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]): Unit = {
-		observableSortedSet.addOne(filter)
+	observableSortedSet.reactions += {
+		case e: ObservableSetEvent => {
+			log.debug("NpcServiceApi {}", e)
+			lookupMap = observableSortedSet.toSet.groupBy(_._1).flatMap {
+				case (npcs, listeners) => npcs.map(i => (i, listeners.map(_._2)))
+			}
+		}
 	}
-	def forget(filter: NpcEventFilter[_ <: EnumEntry with {def ids: Set[Int]}]): Unit = {
-		observableSortedSet.remove(filter)
+
+	protected def get(npc: NPC): Set[NpcListener] = lookupMap.getOrElse(npc.getId, Set.empty[NpcListener])
+
+	def register(ids: Set[Int])(listener: NpcListener): NpcListener = {
+		assert(!observableSortedSet.exists(_._2 == listener))
+		observableSortedSet.addOne(ids -> listener)
+		listener
 	}
+
+	def forget(listener: NpcListener): Boolean = {
+//		assert(observableSortedSet.count(_._2 == listener) == 1)
+		val toRemove = observableSortedSet.toSet.filter(_._2 == listener)
+		toRemove.forall(tr => observableSortedSet.remove(tr))
+		toRemove.nonEmpty
+//		observableSortedSet.remove(listener)
+	}
+
 	override def teardown(): Unit = {
+//		observableSortedSet.clear()
 		observableSortedSet.clear()
 	}
 }
@@ -53,54 +73,64 @@ trait NpcServiceApi extends ServiceBase {
 @Singleton
 class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clientThread: ClientThread, val config: KroovyConfig) extends NpcServiceApi {
 
-	sealed trait FilterEvent {}
-	case class DespawnTagged(despawned: TaggedNpc[?]) extends FilterEvent {}
-	case class SpawnTagged(spawned: TaggedNpc[?]) extends FilterEvent {}
-
-
-	val publisher: Publisher[ObservableSetEvent | FilterEvent] = new Publisher[ObservableSetEvent | FilterEvent]{
-		reactions += {
-			case e => log.debug("npcServiceReaction {}", e)
-		}
-	}
-//	def publish(e: AnyRef): Unit = {
-//		e match {
-//			case a: (ObservableSetEvent | FilterEvent) =>  publisher.publish(a)
-//			case x => log.error("Cant handle {}", x)
+//	val publisher: Publisher[ObservableSetEvent] = new Publisher[ObservableSetEvent]{
+//		reactions += {
+//			case e => log.debug("npcServiceReaction {}", e)
 //		}
 //	}
 
-//	observableSortedSet.reactions += {
-//		case u => publisher.publish(u)
-//}
-
-	private object NpcEventListener extends Publisher[FilterEvent]{
+	private object NpcEventListener {
+		private var npcToAnimationId: Map[NPC, Int] = Map.empty
 		@Subscribe
 		def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
-			val idToFind = npcSpawned.getNpc.getId
-			val matched = observableSortedSet.all().find(_.allIds.contains(idToFind))
-			matched.flatMap(m => {
-				m.transform(npcSpawned.getNpc)
-			}).foreach(spawned => publish(SpawnTagged(spawned)))
+			val matched = get(npcSpawned.getNpc)
+			if(matched.nonEmpty) {
+				npcToAnimationId = npcToAnimationId.toSeq.appended(npcSpawned.getNpc -> npcSpawned.getNpc.getAnimation).toMap
+			}
+			matched.foreach(l => l.onSpawned(npcSpawned.getNpc))
 		}
 		@Subscribe
 		def onNpcDespawned(npcDespawned: NpcDespawned): Unit = {
-			val idToFind = npcDespawned.getNpc.getId
-			val matched = observableSortedSet.all().find(_.allIds.contains(idToFind))
-			matched.flatMap(m => {
-				m.transform(npcDespawned.getNpc)
-			}).foreach(despawned => publish(DespawnTagged(despawned)))
+			val matched = get(npcDespawned.getNpc)
+			if (matched.nonEmpty) {
+				npcToAnimationId = npcToAnimationId.removed(npcDespawned.getNpc)
+			}
+			matched.foreach(l => l.onDespawned(npcDespawned.getNpc))
 		}
-		//		@Subscribe
-		//		def onNpcChanged(npcChanged: NpcChanged): Unit = {}
-		//		@Subscribe
-		//		def onAnimationChanged(animationChanged: AnimationChanged): Unit = {}
-		//		@Subscribe
-		//		def onActorDeath(actorDeath: ActorDeath): Unit = {}
+			@Subscribe
+			def onNpcChanged(npcChanged: NpcChanged): Unit = {
+				val matched = get(npcChanged.getNpc)
+				if(matched.nonEmpty) {
+					val old = npcChanged.getOld
+					val cur = npcChanged.getNpc.getComposition
+					if(old != cur) {
+						matched.foreach(l => l.onCompositionChanged(npcChanged.getNpc, old, cur))
+					}
+				}
+			}
+			@Subscribe
+			def onAnimationChanged(animationChanged: AnimationChanged): Unit = {
+				animationChanged.getActor match {
+					case npc: NPC => {
+						val matched = get(npc)
+						val oldAnimation = npcToAnimationId.getOrElse(npc, -1)
+						val newAnimation = npc.getAnimation
+						npcToAnimationId = npcToAnimationId.updated(npc, newAnimation)
+						if(oldAnimation != newAnimation) {
+							matched.foreach(l => l.onAnimationChanged(npc, oldAnimation, newAnimation))
+						}
+					}
+					case _ =>
+				}
+			}
+			@Subscribe
+			def onActorDeath(actorDeath: ActorDeath): Unit = {
+				actorDeath.getActor match {
+					case npc: NPC => get(npc).foreach(l => {l.onDeath(npc)})
+					case _ =>
+				}
+			}
 	}
-
-	publisher.listenTo(observableSortedSet)
-	publisher.listenTo(NpcEventListener)
 
 	override def init(): Unit = {
 		eventBus.register(NpcEventListener)

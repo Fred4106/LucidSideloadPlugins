@@ -20,7 +20,6 @@ object EventDebugTest extends SwingApplication with ShimUtils.Logging {
 	val ss            : ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 	given bus: SEventBus = new SEventBus()
 
-	bus.debug()
 	val r1 = bus.register[GameTick, 0, "TestGroup1"](this)((t: GameTick) => println(s"This - Gametick"))
 	val r2 = bus.register[GameTick, 4, "Other"](OtherOwner)((t: GameTick) => println(s"This is also a Gametick"))
 	val r3 = bus.register[NpcSpawned, 1, "Self"](OtherOwner)((t: NpcSpawned) => println(s"NpcService - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))

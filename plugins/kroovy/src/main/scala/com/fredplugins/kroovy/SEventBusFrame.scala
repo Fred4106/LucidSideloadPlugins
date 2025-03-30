@@ -9,7 +9,7 @@ import scala.compiletime.uninitialized
 import scala.swing.BorderPanel.Position
 import scala.swing.Table.{ElementMode, IntervalMode}
 import scala.swing.event.{ButtonClicked, FocusEvent, TableChange, TableChanged, TableEvent, UIEvent}
-import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, RichWindow, ScrollPane, Table, UIElement}
+import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, RichWindow, ScrollPane, Table, TextArea, UIElement}
 import scala.util.chaining.*
 
 object SEventBusFrame extends ShimUtils.Logging("Debug") {
@@ -51,32 +51,45 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 			selection.intervalMode = IntervalMode.Single
 		}
 
+		object OutputPanel extends TextArea(8, 200) {
+			editable = false
+		}
+		val outputScroll = ScrollPane(OutputPanel)
+
+		def record(str: String): Unit = {
+			OutputPanel.text = OutputPanel.text.pipe(t => s"$t".appendedAll((if(t.isEmpty) "" else "\n")).appendedAll(s"${str}"))
+		}
+
 		def createPanel(): scala.swing.Panel = {
 			new BorderPanel() {
 				add(ButtonBar, Position.North)
 				add(SideButtonBar, Position.West)
 				add(ScrollPane(EventsTable), Position.Center)
+				add(outputScroll, Position.South)
 
 				listenTo((ButtonBar.all ++ SideButtonBar.all) *)
 				listenTo(EventsTable)
 				listenTo(bus)
 
 				reactions += {
-					case e: UIEvent => //ignored
-					case ButtonClicked(ButtonBar.clearBtn) => log.debug("clear")
-					case ButtonClicked(ButtonBar.refreshBtn) =>  bus.debug()
-					case ButtonClicked(ButtonBar.addDummyBtn) =>log.debug("addDummmy")
-					case ButtonClicked(SideButtonBar.priorityPlusBtn) =>log.debug("priority +")
-					case ButtonClicked(SideButtonBar.priorityMinusBtn) =>log.debug("priority - ")
-					case ButtonClicked(SideButtonBar.unregisterBtn) =>log.debug("unregister")
+					case ButtonClicked(ButtonBar.`clearBtn`) => record("clear")
+					case ButtonClicked(ButtonBar.`refreshBtn`) =>  bus.debug(record)
+					case ButtonClicked(ButtonBar.`addDummyBtn`) =>record("addDummmy")
+					case ButtonClicked(SideButtonBar.`priorityPlusBtn`) =>record("priority +")
+					case ButtonClicked(SideButtonBar.`priorityMinusBtn`) =>record("priority - ")
+					case ButtonClicked(SideButtonBar.`unregisterBtn`) =>record("unregister")
 					case r@SEventBus.AddedSubs(added, allHandlers) => {
+						record(r.toString)
 						eventsTableModel.setData(allHandlers)
 					}
 					case r@SEventBus.DeletedSubs(removed, allHandlers) => {
+						record(r.toString)
 						eventsTableModel.setData(allHandlers)
 					}
-					case te: TableEvent if te.source == EventsTable => //log.debug("TableEvent {}", te)
-					case x => log.debug(s"panel reaction has value ${x.getClass}")
+					case r@SEventBus.Record(str) => record(str)
+					case te: TableEvent if te.source == EventsTable => record(s"TableEvent ${te}")
+					case e: UIEvent => //ignored
+					case x => record(s"panel reaction has value ${x.getClass}")
 				}
 			}
 		}

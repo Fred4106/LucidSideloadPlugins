@@ -47,6 +47,7 @@ object SEventBus {
 	sealed trait SEventBusEvent extends scala.swing.event.Event with Product {	}
 	case class AddedSubs(added: Set[SubscriberType[?, ?, ?]], all: scala.collection.immutable.SortedSet[SubscriberType[?, ?, ?]]) extends SEventBusEvent
 	case class DeletedSubs(deleted: Set[SubscriberType[?, ?, ?]], all: scala.collection.immutable.SortedSet[SubscriberType[?, ?, ?]]) extends SEventBusEvent
+	case class Record(str: String) extends SEventBusEvent
 
 	given Ordering[SubscriberType[?, ?, ?]] = Ordering.comparatorToOrdering[SubscriberType[?, ?,  ?]](
 		Comparator.comparingInt[SubscriberType[?, ?, ?]](_.priority).thenComparing[String](_.owner.getClass.getName).thenComparing(s => s.ownerAndGroupStr)
@@ -73,7 +74,6 @@ class SEventBus() extends Publisher {
 	private def delete(removed: Set[SubscriberType[?, ?, ?]]): Unit = {
 		internal2.subtractAll(removed)
 		publish(DeletedSubs(removed, immutable.SortedSet.from(internal2)))
-
 	}
 
 //	private def updateInternal(in: List[SubscriberType[?, ?,? ]]): Unit = {
@@ -219,9 +219,9 @@ class SEventBus() extends Publisher {
 		})
 	}
 
-	def debug(): Unit = {
+	def debug(op: String => Unit): Unit = {
 		all().zipWithIndex.foreach(h => {
-			log.debug(s"internal[${h._2}] = ${h._1}")
+			op(s"internal[${h._2}] = ${h._1}")
 		})
 
 		val z: Set[(OwnerType, String, Seq[SubscriberType[?, ?, ?]])] = for{
@@ -240,15 +240,15 @@ class SEventBus() extends Publisher {
 		}.toMap
 		zMap.foreach{
 			case (owner, remainder) => {
-				log.debug(s"owner: ${owner.getClass.getSimpleName}")
+				op(s"owner: ${owner.getClass.getSimpleName}")
 				remainder.foreach {
 					case (g, remainder) => {
-						log.debug(s"\tgroup: ${g}")
+						op(s"\tgroup: ${g}")
 						remainder.groupBy(_.eClazz).foreach {
 							case (eClass, seq) => {
-								log.debug(s"\t\tevent: ${eClass.getSimpleName}")
+								op(s"\t\tevent: ${eClass.getSimpleName}")
 								seq.foreach{ h =>
-									log.debug(s"\t\t\tsubscriber[${h.priority}] = ${h}")
+									op(s"\t\t\tsubscriber[${h.priority}] = ${h}")
 								}
 							}
 						}

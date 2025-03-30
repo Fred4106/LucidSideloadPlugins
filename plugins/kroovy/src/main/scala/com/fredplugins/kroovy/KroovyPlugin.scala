@@ -2,7 +2,7 @@ package com.fredplugins.kroovy
 
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.services.{NpcEventFilter, NpcService}
+import com.fredplugins.kroovy.services.{NpcListener, NpcService}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.coords.WorldPoint
@@ -24,31 +24,52 @@ import scala.collection.mutable.ListBuffer
 import scala.language.existentials
 import scala.reflect.{TypeTest, Typeable}
 import scala.util.chaining.given
-import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction, NPC, NpcID}
+import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction, NPC, NPCComposition, NpcID, NullNpcID}
 import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerChanged, MenuOptionClicked, NpcSpawned, VarbitChanged}
 
 import scala.swing.Frame
-
-
-import enumeratum._
-sealed trait GauntletTag(validIds: Int  *) extends EnumEntry {
+import enumeratum.*
+sealed trait GauntletTag(val validIds: Int *) extends EnumEntry {
 	val ids: Set[Int] = validIds.toSet
+	def debugString: String
 }
+object GauntletTags extends Enum[GauntletTag] {parent =>
+	sealed trait TagsSet {
+		def productPrefix: String
+		def values: Set[GauntletTag] = parent.values.filter(_.entryName.startsWith(productPrefix)).toSet
 
-object GauntletTags extends Enum[GauntletTag] {
-	case object Bat extends GauntletTag(NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT)
-	case object Rat extends GauntletTag(NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT)
-	case object Spider extends GauntletTag(NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER)
-	case object Scorpion extends GauntletTag(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION)
-	case object Unicorn extends GauntletTag(NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN)
-	case object Wolf extends GauntletTag(NpcID.CRYSTALLINE_WOLF, NpcID.CORRUPTED_WOLF)
-	case object Bear extends GauntletTag(NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR)
-	case object Dark_beast extends GauntletTag(NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST)
-	case object Dragon extends GauntletTag(NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON)
+		sealed class GTag(vid: Int *)  extends GauntletTag(vid *) {tag=>
+			override def entryName: String = productPrefix + "." + super.entryName
+			override def debugString: String = s"${entryName} extends GTag${tag.validIds.mkString("(", ", ", ")")}"
+		}
+	}
 
+	case object Weak extends TagsSet {
+		case object Bat extends GTag(NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT)
+		case object Rat extends GTag(NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT)
+		case object Spider extends GTag(NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER)
+	}
+	case object Strong extends TagsSet  {
+		case object Scorpion extends GTag(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION)
+		case object Unicorn extends GTag(NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN)
+	}
+	case object Demiboss extends TagsSet {
+		case object Bear extends GTag(NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR)
+		case object Dark_beast extends GTag(NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST)
+		case object Dragon extends GTag(NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON)
+	}
+	case object Boss extends TagsSet {
+		case object Hunllef extends GTag(NpcID.CRYSTALLINE_HUNLLEF, NpcID.CRYSTALLINE_HUNLLEF_9022, NpcID.CRYSTALLINE_HUNLLEF_9023, NpcID.CRYSTALLINE_HUNLLEF_9024, NpcID.CORRUPTED_HUNLLEF, NpcID.CORRUPTED_HUNLLEF_9036, NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038)
+		case object Tornado extends GTag(NullNpcID.NULL_9025, NullNpcID.NULL_9039, NullNpcID.NULL_14142)
+	}
+
+	def ids: Set[Int] = values.flatMap(_.ids).toSet
+	def find(npc: NPC): Option[GauntletTag] = values.find(_.ids.contains(npc.getId))
 	override def values: IndexedSeq[GauntletTag] = findValues
+
 }
-object GauntletNpcFilter extends NpcEventFilter(GauntletTags){}
+
+//object GauntletNpcFilter extends NpcEventFilter(GauntletTags){}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#20CD00\">Freds</font> Kroovy</html>",
@@ -82,6 +103,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	given SpriteManager = RuneLite.getInjector.getInstance(classOf[SpriteManager])
 	given ItemManager = RuneLite.getInjector.getInstance(classOf[ItemManager])
 	given SEventBus = RuneLite.getInjector.getInstance(classOf[SEventBus])
+	given NpcService = RuneLite.getInjector.getInstance(classOf[NpcService])
 //	val kFrame = RuneLite.getInjector.getInstance(classOf[KroovyEventBusFrame])
 
 	var inventorySnapshot: List[(Int, Int, Int)] = List.empty
@@ -98,7 +120,10 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	def onGameTick(event: GameTick): Unit = {
 		sBus.post(event)
 	}
-
+	@Subscribe
+	def onNpcSpawned(event: NpcSpawned): Unit = {
+		sBus.post(event)
+	}
 	@Subscribe
 	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
 		def parseInventory(container: ItemContainer): List[(Int, Int, Int)] = {
@@ -156,14 +181,18 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 		import Locatable.{*, given}
 
 		val npcClickedOpt = menuOptionClicked.getMenuEntry.pipe(me => Option.when(me.isNpcAction)(me)).filter(me => me.getNpcOpt.exists(_.distanceTo(client.getLocalPlayer) < 5))
-		npcClickedOpt.map(me => me.getType -> me.getNpc).collect{
-			case (MenuAction.NPC_FIRST_OPTION, npc) => (_: SEventBus).unregisterByOwner(npcService)
+		npcClickedOpt.map(me => me.getType -> me.getNpc).foreach {
+			case (MenuAction.NPC_FIRST_OPTION, npc) => sBus.unregisterByOwner(npcService)
 //			case (MenuAction.NPC_SECOND_OPTION, npc) => (_: SEventBus).unregisterAll[GameTick](npcService)
-			case (MenuAction.EXAMINE_NPC, npc) => (_: SEventBus).unregisterByEvent[GameTick]()//(_: SEventBus).debug()
-		}.foreach(in =>in(sBus))
+			case (MenuAction.EXAMINE_NPC, npc) => {
+//				gauntletNpcListener = if(npcService.forget(gauntletNpcListener)) null else gauntletNpcListener
+				sBus.unregisterByEvent[GameTick]()
+			}
+			case (a, npc) =>
+		}
 
 		val examineClickedOpt = menuOptionClicked.getMenuEntry.pipe(me => Option.when(me.isExamineAction && !me.isNpcAction)(me))
-		examineClickedOpt.foreach(me => sBus.debug())
+		examineClickedOpt.foreach(me => sBus.debug(s => log.debug("{}", s)))
 	}
 	//
 //	private val navButton = NavigationButton.builder()
@@ -186,11 +215,50 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	SEventBusFrame.get.open()
 	override protected def startUp(): Unit = {
 		npcService.init()
-		npcService.register(GauntletNpcFilter)
-		val r1 = sBus.register[GameTick, 0, "TestGroup1"](this)((t: GameTick) => log.trace(s"This - Gametick: ${client.getTickCount}"))
-		val r2 = sBus.register[GameTick, 4, "Other"](npcService)((t: GameTick) => log.trace(s"This is also a gametick: ${client.getTickCount}"))
-		val r3 = sBus.register[NpcSpawned, 1, "Self"](npcService)((t: NpcSpawned) => log.trace(s"NpcService - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
-		val r4 = sBus.register[NpcSpawned, 0, "Root"](this)((t: NpcSpawned) => log.trace(s"This - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
+//		val r1 = sBus.register[GameTick, 0, "Self"](this)((t: GameTick) => SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"Gametick: ${client.getTickCount}"))}))
+//		val r3 = sBus.register[NpcSpawned, 1, "Self"](this)((t: NpcSpawned) => (t.getNpc.getId, t.getNpc.getName).tap{
+//			case (npcId, npcStr) =>  SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"NpcService - NpcSpawned: ${npcId}, ${npcStr}"))})
+//		})
+		npcService.register(Set(GauntletTags.Weak, GauntletTags.Strong).flatMap(_.values).flatMap(_.ids))(new NpcListener {
+				private def report(npc: NPC)(msg: String): Unit = {
+					val tag     = GauntletTags.find(npc).map(_.entryName).getOrElse("None")
+					val toPrint = s"Npc[${tag}](${Integer.toHexString(npc.hashCode())})" + " " + msg
+
+					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
+				}
+				override def onSpawned(npc: NPC): Unit = {
+					report(npc)(s"Spawned @ ${npc.getWorldLocation}")
+				}
+				override def onDespawned(npc: NPC): Unit = {
+					report(npc)(s"Despawned")
+				}
+				override def onDeath(npc: NPC): Unit = {
+					report(npc)(s"Died")
+				}
+			})
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))(new NpcListener {
+				private def report(npc: NPC)(msg: String): Unit = {
+					val tag     = GauntletTags.find(npc).map(_.entryName).getOrElse("None")
+					val toPrint = s"Npc[${tag}](${Integer.toHexString(npc.hashCode())})" + " " + msg
+
+					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
+				}
+				override def onSpawned(npc: NPC): Unit = {
+					report(npc)(s"Spawned @ ${npc.getWorldLocation}")
+				}
+				override def onDespawned(npc: NPC): Unit = {
+					report(npc)(s"Despawned")
+				}
+				override def onDeath(npc: NPC): Unit = {
+					report(npc)(s"Died")
+				}
+				override def onCompositionChanged(npc: NPC, old: NPCComposition, cur: NPCComposition): Unit = {
+					report(npc)(s"Composition Changed from ${old.getId} to ${cur.getId}")
+				}
+				override def onAnimationChanged(npc: NPC, old: Int, cur: Int): Unit = {
+					report(npc)(s"Animation Changed from $old to $cur")
+				}
+			})
 //		_kPanel = Option(injector.getInstance[KPanel](classOf[KPanel]))
 //		clientToolbar.addNavigation(navButton)
 //		overlayManager.add(panel)
