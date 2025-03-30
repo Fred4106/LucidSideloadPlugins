@@ -1,6 +1,7 @@
 package com.fredplugins.kroovy
 
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
 import net.runelite.api.events.{GameTick, NpcSpawned}
 
 import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, ScheduledThreadPoolExecutor, TimeUnit}

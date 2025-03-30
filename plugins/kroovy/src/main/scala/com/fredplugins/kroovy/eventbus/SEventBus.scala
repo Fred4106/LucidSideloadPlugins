@@ -1,24 +1,14 @@
-package com.fredplugins.kroovy
+package com.fredplugins.kroovy.eventbus
 
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.SEventBus.{AddedSubs, DeletedSubs, OwnerType, SubscriberType}
-import com.google.inject.{Inject, Singleton}
-import io.bullet.spliff.Diff.{Chunk, Op, Patch}
-import net.runelite.client.callback.ClientThread
+import com.fredplugins.kroovy.eventbus.SEventBus.{AddedSubs, DeletedSubs, OwnerType, SubscriberType}
+import com.google.inject.Singleton
 import org.slf4j.Logger
 
-import java.util
 import java.util.Comparator
 import scala.collection.{immutable, mutable}
-import scala.jdk.CollectionConverters.*
-import scala.jdk.OptionConverters.*
-import scala.jdk.StreamConverters.*
-import scala.util.chaining.*
-import scala.util.{Random, Try}
-import scala.compiletime.uninitialized
-import scala.reflect.{ClassTag, TypeTest, Typeable, classTag}
-import scala.reflect.*
-import scala.swing.{Publisher, Reactor}
+import scala.reflect.ClassTag
+import scala.swing.Publisher
 
 object SEventBus {
 	type OwnerType = AnyRef

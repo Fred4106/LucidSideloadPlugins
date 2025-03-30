@@ -1,15 +1,14 @@
-package com.fredplugins.kroovy
+package com.fredplugins.kroovy.eventbus
 
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.kroovy.Icons
 import com.fredplugins.kroovy.swing.MTableModel
-import net.runelite.api.Client
 
-import java.awt.Color
 import scala.compiletime.uninitialized
 import scala.swing.BorderPanel.Position
 import scala.swing.Table.{ElementMode, IntervalMode}
-import scala.swing.event.{ButtonClicked, FocusEvent, TableChange, TableChanged, TableEvent, UIEvent}
-import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Frame, Orientation, RichWindow, ScrollPane, Table, TextArea, UIElement}
+import scala.swing.event.{ButtonClicked, TableEvent, UIEvent}
+import scala.swing.{BorderPanel, BoxPanel, Button, Frame, Orientation, ScrollPane, Table, TextArea}
 import scala.util.chaining.*
 
 object SEventBusFrame extends ShimUtils.Logging("Debug") {
@@ -28,7 +27,6 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 
 	def get(using bus: SEventBus): Frame = {
 		import com.fredplugins.kroovy.swing.ButtonFactory.*
-		import com.fredplugins.kroovy.swing.PanelFactory.*
 
 		object ButtonBar extends BoxPanel(Orientation.Horizontal) {bar =>
 			val clearBtn   : Button = TextButton( "Clear", tTip = "Clear all events from SEventBus")
@@ -104,89 +102,4 @@ object SEventBusFrame extends ShimUtils.Logging("Debug") {
 		}
 		_frame
 	}
-//
-//	def open(): Unit = {
-//		assert(_frame != null)
-//		_frame.open()
-//	}
-//	def close(): Unit = {
-//		assert(_frame != null)
-//		_frame.close()
-//	}
 }
-
-//class SEventBusPanel(using client: Client, bus: SEventBus) extends BorderPanel {
-//	private val eventsList: ListView[SEventBus.SubscriberType[?, ?, ?]] = new ListView[SEventBus.SubscriberType[?, ?, ?]]() {
-//		renderer = new ListView.Renderer[SEventBus.SubscriberType[?, ?, ?]] {
-
-//			override def componentFor(list: ListView[_ <: SEventBus.SubscriberType[?, ?, ?]], isSelected: Boolean, focused: Boolean, a: SEventBus.SubscriberType[?, ?, ?], index: Int): Component = {
-//				val aa = CellComponent(a.eClazz.getSimpleName, a.priority, a.group, a.owner)
-//				(for {
-//					(idx, eName, eValue) <- {
-//						(0 until aa.productArity).flatMap(idx => Try { (idx, aa.productElementName(idx), aa.productElement(idx)) }.toOption)
-//					}
-//				} yield {
-//					new BoxPanel(swing.Orientation.Horizontal) {
-//						background = Color.DARK_GRAY
-//						this.contents += Label(eName).tap(_.foreground = Color.WHITE)
-//						this.contents += Label(": ").tap(_.foreground = Color.LIGHT_GRAY)
-//						this.contents += Label(s"${idx}").tap(_.foreground = Color.GREEN)
-//						this.contents += Label(" = ").tap(_.foreground = Color.LIGHT_GRAY)
-//						this.contents += Label(eValue.toString).tap(_.foreground = Color.ORANGE)//componentFor(eValue)
-//						border = Swing.BeveledBorder(Swing.Lowered)
-//					}
-//				}).pipe(elementsComponenets =>
-//					elementsComponenets.flatMap(e => if (elementsComponenets.last == e) Seq(e) else Seq(e, Label(", ").tap(_.foreground = Color.LIGHT_GRAY)))
-//						.prependedAll(Seq(
-//							Label(aa.productPrefix).tap(_.foreground = Color.BLUE), Label("(").tap(_.foreground = Color.LIGHT_GRAY)
-//						))
-//						.appended(Label(")").tap(_.foreground = Color.LIGHT_GRAY))
-//				).pipe(lineContents => {
-//					new BoxPanel(swing.Orientation.Horizontal) {
-//						contents.addAll(lineContents)
-//						border = Swing.BeveledBorder(Swing.Lowered)
-//						if (isSelected) {
-//							background = Color.BLUE
-//						}
-//					}
-//				})
-//			}
-//		}
-//	}
-//
-//	private val clearBtn: AbstractButton = Button("Clear"){
-//		eventsList.listData = Seq.empty[SubscriberType[?, ?, ?]]
-//	}
-//	private val addDummy: AbstractButton = Button("addDummy") {
-//		bus.register[NpcDespawned, 3, "Self"](SEventBusFrame.get){event =>
-//			Option(event.getActor).collect{
-//				case p: NPC => s"NPC(\"${p.getName}\", ${p.getId}, ${p.getIndex})"
-//			}.map(s => s"${s} despawned")
-//		}
-//	}
-//	private val freezeBtn: AbstractButton = Button("Refresh") {
-//		this.publish(Refresh())
-////		action = Action("Refresh") {
-//			eventsList.listData = bus.all()
-////		}
-//	}
-//	reactions += {
-//		case event: Refresh => eventsList.listData = bus.all()
-//	}
-//
-//	add(
-//		new BoxPanel(Orientation.Horizontal) {
-//	//		val panelSelf = this
-//			contents += clearBtn
-//			contents += freezeBtn
-//			contents += addDummy
-//		}, Position.North
-//	)//header panel
-//	add(new ScrollPane(eventsList), Position.Center)
-//	//	add(, Position.Center)
-//
-//
-//	eventsList.listenTo(this)
-//
-//	listenTo(bus)
-//}

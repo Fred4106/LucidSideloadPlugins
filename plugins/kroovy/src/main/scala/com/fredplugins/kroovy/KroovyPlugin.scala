@@ -2,7 +2,8 @@ package com.fredplugins.kroovy
 
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.services.{NpcListener, NpcService}
+import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
+import com.fredplugins.kroovy.services.npc.{NpcService, SNpcEvent}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.coords.WorldPoint
@@ -93,7 +94,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	@Inject private val itemManager: ItemManager = null
 	@Inject private val overlayManager: OverlayManager = null
 
-	@Inject private val sBus: SEventBus = null
+//	@Inject private val sBus: SEventBus = null
 	@Inject private val worldService: WorldService = null
 	@Inject private val clientToolbar: ClientToolbar= null
 	@Inject private val npcService: NpcService= null
@@ -102,7 +103,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	given ClientThread = RuneLite.getInjector.getInstance(classOf[ClientThread])
 	given SpriteManager = RuneLite.getInjector.getInstance(classOf[SpriteManager])
 	given ItemManager = RuneLite.getInjector.getInstance(classOf[ItemManager])
-	given SEventBus = RuneLite.getInjector.getInstance(classOf[SEventBus])
+//	given SEventBus = RuneLite.getInjector.getInstance(classOf[SEventBus])
 	given NpcService = RuneLite.getInjector.getInstance(classOf[NpcService])
 //	val kFrame = RuneLite.getInjector.getInstance(classOf[KroovyEventBusFrame])
 
@@ -118,11 +119,11 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 	@Subscribe
 	def onGameTick(event: GameTick): Unit = {
-		sBus.post(event)
+//		sBus.post(event)
 	}
 	@Subscribe
 	def onNpcSpawned(event: NpcSpawned): Unit = {
-		sBus.post(event)
+//		sBus.post(event)
 	}
 	@Subscribe
 	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
@@ -182,17 +183,17 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 		val npcClickedOpt = menuOptionClicked.getMenuEntry.pipe(me => Option.when(me.isNpcAction)(me)).filter(me => me.getNpcOpt.exists(_.distanceTo(client.getLocalPlayer) < 5))
 		npcClickedOpt.map(me => me.getType -> me.getNpc).foreach {
-			case (MenuAction.NPC_FIRST_OPTION, npc) => sBus.unregisterByOwner(npcService)
+//			case (MenuAction.NPC_FIRST_OPTION, npc) => sBus.unregisterByOwner(npcService)
 //			case (MenuAction.NPC_SECOND_OPTION, npc) => (_: SEventBus).unregisterAll[GameTick](npcService)
-			case (MenuAction.EXAMINE_NPC, npc) => {
+//			case (MenuAction.EXAMINE_NPC, npc) => {
 //				gauntletNpcListener = if(npcService.forget(gauntletNpcListener)) null else gauntletNpcListener
-				sBus.unregisterByEvent[GameTick]()
-			}
+//				sBus.unregisterByEvent[GameTick]()
+//			}
 			case (a, npc) =>
 		}
 
 		val examineClickedOpt = menuOptionClicked.getMenuEntry.pipe(me => Option.when(me.isExamineAction && !me.isNpcAction)(me))
-		examineClickedOpt.foreach(me => sBus.debug(s => log.debug("{}", s)))
+//		examineClickedOpt.foreach(me => sBus.debug(s => log.debug("{}", s)))
 	}
 	//
 //	private val navButton = NavigationButton.builder()
@@ -212,53 +213,69 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 //	private var frame: Option[Frame] = Option.empty
 
-	SEventBusFrame.get.open()
+//	SEventBusFrame.get.open()
 	override protected def startUp(): Unit = {
 		npcService.init()
 //		val r1 = sBus.register[GameTick, 0, "Self"](this)((t: GameTick) => SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"Gametick: ${client.getTickCount}"))}))
 //		val r3 = sBus.register[NpcSpawned, 1, "Self"](this)((t: NpcSpawned) => (t.getNpc.getId, t.getNpc.getName).tap{
 //			case (npcId, npcStr) =>  SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"NpcService - NpcSpawned: ${npcId}, ${npcStr}"))})
 //		})
-		npcService.register(Set(GauntletTags.Weak, GauntletTags.Strong).flatMap(_.values).flatMap(_.ids))(new NpcListener {
-				private def report(npc: NPC)(msg: String): Unit = {
-					val tag     = GauntletTags.find(npc).map(_.entryName).getOrElse("None")
-					val toPrint = s"Npc[${tag}](${Integer.toHexString(npc.hashCode())})" + " " + msg
+		def report(npc: NPC)(msg: String): Unit = {
+			val tag     = GauntletTags.find(npc).map(_.entryName).getOrElse("None")
+			val toPrint = s"Npc[${tag}](${Integer.toHexString(npc.hashCode())})" + " " + msg
+			log.debug(s"${toPrint}")
+			//					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
+		}
 
-					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
-				}
-				override def onSpawned(npc: NPC): Unit = {
-					report(npc)(s"Spawned @ ${npc.getWorldLocation}")
-				}
-				override def onDespawned(npc: NPC): Unit = {
-					report(npc)(s"Despawned")
-				}
-				override def onDeath(npc: NPC): Unit = {
-					report(npc)(s"Died")
-				}
-			})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))(new NpcListener {
-				private def report(npc: NPC)(msg: String): Unit = {
-					val tag     = GauntletTags.find(npc).map(_.entryName).getOrElse("None")
-					val toPrint = s"Npc[${tag}](${Integer.toHexString(npc.hashCode())})" + " " + msg
+		val weakAndStrongNpcIds = Set(GauntletTags.Weak, GauntletTags.Strong).flatMap(_.values).flatMap(_.ids)
+		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.Spawned) => {
+			report(e.npc)(s"Spawned @ ${e.npc.getWorldLocation}")
+		})
+		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.Despawned) => {
+			report(e.npc)(s"Despawned")
+		})
+		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.Died) => {
+			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
+		})
+		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.CompositionChanged) => {
+			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
+		})
+		npcService.register(weakAndStrongNpcIds)((e: SNpcEvent.AnimationChanged) => {
+			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
+		})
 
-					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
-				}
-				override def onSpawned(npc: NPC): Unit = {
-					report(npc)(s"Spawned @ ${npc.getWorldLocation}")
-				}
-				override def onDespawned(npc: NPC): Unit = {
-					report(npc)(s"Despawned")
-				}
-				override def onDeath(npc: NPC): Unit = {
-					report(npc)(s"Died")
-				}
-				override def onCompositionChanged(npc: NPC, old: NPCComposition, cur: NPCComposition): Unit = {
-					report(npc)(s"Composition Changed from ${old.getId} to ${cur.getId}")
-				}
-				override def onAnimationChanged(npc: NPC, old: Int, cur: Int): Unit = {
-					report(npc)(s"Animation Changed from $old to $cur")
-				}
-			})
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.Spawned) => {
+			report(e.npc)(s"Spawned @ ${e.npc.getWorldLocation}")
+		})
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.Despawned) => {
+			report(e.npc)(s"Despawned")
+		})
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.Died) => {
+			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
+		})
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.CompositionChanged) => {
+			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
+		})
+		npcService.register(GauntletTags.Boss.values.flatMap(_.ids))((e: SNpcEvent.AnimationChanged) => {
+			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
+		})
+//		(new NpcListener {
+//				override def onSpawned(npc: NPC): Unit = {
+//					report(npc)(s"Spawned @ ${npc.getWorldLocation}")
+//				}
+//				override def onDespawned(npc: NPC): Unit = {
+//					report(npc)(s"Despawned")
+//				}
+//				override def onDeath(npc: NPC): Unit = {
+//					report(npc)(s"Died")
+//				}
+//				override def onCompositionChanged(npc: NPC, old: NPCComposition, cur: NPCComposition): Unit = {
+//					report(npc)(s"Composition Changed from ${old.getId} to ${cur.getId}")
+//				}
+//				override def onAnimationChanged(npc: NPC, old: Int, cur: Int): Unit = {
+//					report(npc)(s"Animation Changed from $old to $cur")
+//				}
+//			})
 //		_kPanel = Option(injector.getInstance[KPanel](classOf[KPanel]))
 //		clientToolbar.addNavigation(navButton)
 //		overlayManager.add(panel)
@@ -267,7 +284,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 	override protected def shutDown(): Unit = {
 		npcService.teardown()
-		sBus.unregisterAll()
+//		sBus.unregisterAll()
 //		sBus.publisher = null
 //		debugFrame.close()
 
