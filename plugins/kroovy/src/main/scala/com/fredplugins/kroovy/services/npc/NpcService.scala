@@ -12,11 +12,11 @@ import javax.swing.SwingUtilities
 import scala.reflect.ClassTag
 //import com.fredplugins.kroovy.services.NpcEventFilter
 import com.fredplugins.kroovy.swing.{ObservableSetEvent, ObservableSortedMap, ObservableSortedSet}
-import com.google.inject.{Inject, Singleton}
 import enumeratum.EnumEntry
+import net.runelite.client.RuneLite
+import com.google.inject.{Inject, Singleton}
 import net.runelite.api.{Client, NPC}
 import net.runelite.api.events.{ActorDeath, AnimationChanged, NpcChanged, NpcDespawned, NpcSpawned}
-import net.runelite.client.RuneLite
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 import net.runelite.client.game.ItemManager
@@ -126,6 +126,7 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 			val matched = get[SNpcEvent.Spawned](npcSpawned.getNpc)
 			if(matched.nonEmpty) {
 				val e = SNpcEvent.Spawned(npcSpawned.getNpc)
+				publish(NpcServiceApi.Log(s"$e"))
 				matched.foreach(l => l.op(e))
 			}
 		}
@@ -136,6 +137,7 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 			npcToWorldPoint = npcToWorldPoint.removed(npcDespawned.getNpc)
 			if (matched.nonEmpty) {
 				val e = SNpcEvent.Despawned(npcDespawned.getNpc)
+				publish(NpcServiceApi.Log(s"$e"))
 				matched.foreach(l => l.op.apply(e))
 			}
 		}
@@ -146,6 +148,7 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 			if(matched.nonEmpty) {
 				val old = npcChanged.getOld.getId
 				val e = SNpcEvent.CompositionChanged(n, old)
+				publish(NpcServiceApi.Log(s"$e"))
 				matched.foreach(_.op(e))
 			}
 		}
@@ -159,6 +162,7 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 						npcToAnimationId = npcToAnimationId.updated(npc, newAnimation)
 						if(oldAnimation != newAnimation) {
 							val e = SNpcEvent.AnimationChanged(npc, oldAnimation)
+							publish(NpcServiceApi.Log(s"$e"))
 							matched.foreach(l => l.op(e))
 						}
 					}
@@ -172,6 +176,7 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 						val matched = get[SNpcEvent.Died](npc)
 						if(matched.nonEmpty) {
 							val e = SNpcEvent.Died(npc)
+							publish(NpcServiceApi.Log(s"$e"))
 							matched.foreach(_.op(e))
 						}
 					}
@@ -181,11 +186,18 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 			@Subscribe
 			def onGameTick(gt: GameTick): Unit = {
 //				val updatedNpcToWorldPoint = this.npcToWorldPoint.keys.map(k => k -> (npcToWorldPoint(k), k.getWorldLocation))
-				val matched = npcToWorldPoint.toSeq.collect {
-					case (npc, oldWorldPoint) if oldWorldPoint != npc.getWorldLocation => SNpcEvent.Moved(npc, oldWorldPoint)
+				val matchedToEventSeq = npcToWorldPoint.toSeq.collect {
+					case (npc, oldWorldPoint) if oldWorldPoint != npc.getWorldLocation => get[SNpcEvent.Moved](npc) -> SNpcEvent.Moved(npc, oldWorldPoint)
+				}.filter(_._1.nonEmpty)
+//				publish(NpcServiceApi.Log(s"$e"))
+				matchedToEventSeq.foreach {
+					case (matched, e) => {
+						publish(NpcServiceApi.Log(s"$e"))
+						matched.foreach(_.op(e))
+					}
 				}
-				matched.foreach(m => get[SNpcEvent.Moved](m.npc).foreach(l => l.op(m)))
-				npcToWorldPoint = matched.foldLeft(npcToWorldPoint)((a, b) => a.updated(b.npc, b.cur))
+//				matched.foreach(m => get[SNpcEvent.Moved](m.npc).foreach(l => l.op(m)))
+				npcToWorldPoint = matchedToEventSeq.map(_._2).foldLeft(npcToWorldPoint)((a, b) => a.updated(b.npc, b.cur))
 			}
 	}
 

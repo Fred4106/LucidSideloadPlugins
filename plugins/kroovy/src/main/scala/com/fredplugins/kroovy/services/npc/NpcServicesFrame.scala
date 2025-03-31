@@ -103,10 +103,9 @@ object NpcServicesFrame extends ShimUtils.Logging("Debug") {
 					case ButtonClicked(SideButtonBar.`priorityMinusBtn`) =>record("priority - ")
 					case ButtonClicked(SideButtonBar.`unregisterBtn`) =>record("unregister")
 					case NpcServiceApi.ListChanged => {
-						record("ListChanged")
 						SwingUtilities.invokeLater(() => NpcFiltersPanel.listData = service.all)
 					}
-					case NpcServiceApi.Log(msg) => record(s"Log: \"${msg}\"")
+					case NpcServiceApi.Log(msg) => record(msg)
 
 //					case r@SEventBus.AddedSubs(added, allHandlers) => {
 //						record(r.toString)

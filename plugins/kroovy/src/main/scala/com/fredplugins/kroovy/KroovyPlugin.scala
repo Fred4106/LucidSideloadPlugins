@@ -1,10 +1,11 @@
 package com.fredplugins.kroovy
 
-import com.fredplugins.common.Locatable
+import com.fredplugins.common.{Locatable, PrayerExtended}
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
 import com.fredplugins.kroovy.services.npc.{NpcService, NpcServiceApi, NpcServicesFrame, SNpcEvent}
 import com.google.inject.{Inject, Provides, Singleton}
+import com.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.coords.WorldPoint
 import net.runelite.client.{Notifier, RuneLite}
@@ -25,7 +26,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.existentials
 import scala.reflect.{TypeTest, Typeable}
 import scala.util.chaining.given
-import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction, NPC, NPCComposition, NpcID, NullNpcID}
+import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction, NPC, NPCComposition, NpcID, NullNpcID, Prayer}
 import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerChanged, MenuOptionClicked, NpcSpawned, VarbitChanged}
 
 import scala.swing.Frame
@@ -214,6 +215,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 //	private var frame: Option[Frame] = Option.empty
 
 //	SEventBusFrame.get.open()
+	private val StrongNpcs = Set(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION, NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN)
 	NpcServicesFrame.get
 	override protected def startUp(): Unit = {
 		npcService.init()
@@ -230,39 +232,26 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 			//					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
 		}
 
-		val weakAndStrongNpcIds = Set(GauntletTags.Weak, GauntletTags.Strong).flatMap(_.values).flatMap(_.ids)
-		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.Spawned) => {
-			report(e.npc)(s"Spawned @ ${e.npc.getWorldLocation}")
+//		val weakAndStrongNpcIds = Set(GauntletTags.Weak, GauntletTags.Strong).flatMap(_.values).flatMap(_.ids)
+		npcService.register(StrongNpcs, (e: SNpcEvent.Moved) => {
+			if(e.cur.distanceTo(client.getLocalPlayer.getWorldLocation) < 3 && !client.isPrayerActive(Prayer.PROTECT_FROM_MELEE)) {
+				CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE)
+			}
 		})
-		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.Despawned) => {
-			report(e.npc)(s"Despawned")
+		npcService.register(StrongNpcs, (e: SNpcEvent.Died) => {
+			if (client.isPrayerActive(Prayer.PROTECT_FROM_MELEE)) {
+				CombatUtils.deactivatePrayer(Prayer.PROTECT_FROM_MELEE)
+			}
 		})
-		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.Died) => {
-			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
-		})
-		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.CompositionChanged) => {
-			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
-		})
-		npcService.register(weakAndStrongNpcIds, (e: SNpcEvent.AnimationChanged) => {
-			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
-		})
-		npcService.register(GauntletTags.Strong.values.flatMap(_.ids), (e: SNpcEvent.Moved) => {
-			report(e.npc)(s"Location Changed ${e.delta} from ${e.old} => ${e.cur}")
-		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Spawned) => {
-			report(e.npc)(s"Spawned @ ${e.npc.getWorldLocation}")
-		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Despawned) => {
-			report(e.npc)(s"Despawned")
-		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Died) => {
-			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
-		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.CompositionChanged) => {
-			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
-		})
+//		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Died) => {
+//			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
+//		})
+//		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.CompositionChanged) => {
+//			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
+//		})
 		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.AnimationChanged) => {
-			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
+//			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
+			log.debug(s"Animation Changed from ${e.old} to ${e.cur}\n${e}")
 		})
 //		(new NpcListener {
 //				override def onSpawned(npc: NPC): Unit = {
