@@ -3,6 +3,7 @@ package com.fredplugins.kroovy
 import com.fredplugins.common.{Locatable, PrayerExtended}
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
+import com.fredplugins.kroovy.events.EventManager
 import com.fredplugins.kroovy.services.npc.{NpcService, NpcServiceApi, NpcServicesFrame, SNpcEvent}
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.CombatUtils
@@ -90,7 +91,8 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	@Inject val config: KroovyConfig = null
 	@Inject val notifier: Notifier = null
 	@Inject val configManager: ConfigManager = null
-	@Inject private val eventBus: EventBus = null
+	@Inject private val eventBus: EventBus           = null
+	@Inject private val eventManager: EventManager       = null
 	@Inject private val spriteManager: SpriteManager = null
 	@Inject private val itemManager: ItemManager = null
 	@Inject private val overlayManager: OverlayManager = null
@@ -102,10 +104,12 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 	given Client = RuneLite.getInjector.getInstance(classOf[Client])
 	given ClientThread = RuneLite.getInjector.getInstance(classOf[ClientThread])
+	given EventBus = RuneLite.getInjector.getInstance(classOf[EventBus])
 	given SpriteManager = RuneLite.getInjector.getInstance(classOf[SpriteManager])
 	given ItemManager = RuneLite.getInjector.getInstance(classOf[ItemManager])
 //	given SEventBus = RuneLite.getInjector.getInstance(classOf[SEventBus])
 	given NpcService = RuneLite.getInjector.getInstance(classOf[NpcService])
+	given EventManager = RuneLite.getInjector.getInstance(classOf[EventManager])
 //	val kFrame = RuneLite.getInjector.getInstance(classOf[KroovyEventBusFrame])
 
 	var inventorySnapshot: List[(Int, Int, Int)] = List.empty
@@ -218,6 +222,7 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	private val StrongNpcs = Set(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION, NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN)
 	NpcServicesFrame.get
 	override protected def startUp(): Unit = {
+		eventManager.start()
 		npcService.init()
 		NpcServicesFrame.get.open()
 //		val r1 = sBus.register[GameTick, 0, "Self"](this)((t: GameTick) => SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"Gametick: ${client.getTickCount}"))}))
@@ -274,9 +279,11 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 //		clientToolbar.addNavigation(navButton)
 //		overlayManager.add(panel)
 //		debugFrame.open()
+		eventManager.register(KGauntlet)
 	}
 
 	override protected def shutDown(): Unit = {
+		eventManager.stop()
 		npcService.teardown()
 		NpcServicesFrame.get.close()
 //		sBus.unregisterAll()

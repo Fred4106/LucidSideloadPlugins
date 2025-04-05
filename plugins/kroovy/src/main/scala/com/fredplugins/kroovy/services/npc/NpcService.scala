@@ -160,7 +160,7 @@ class NpcService @Inject()(val client: Client, val eventBus: EventBus, val clien
 						val oldAnimation = npcToAnimationId.getOrElse(npc, -1)
 						val newAnimation = npc.getAnimation
 						npcToAnimationId = npcToAnimationId.updated(npc, newAnimation)
-						if(oldAnimation != newAnimation) {
+						if(oldAnimation != newAnimation && matched.nonEmpty) {
 							val e = SNpcEvent.AnimationChanged(npc, oldAnimation)
 							publish(NpcServiceApi.Log(s"$e"))
 							matched.foreach(l => l.op(e))
