@@ -2,6 +2,7 @@ package com.fredplugins.kroovy
 
 import com.fredplugins.common.{Locatable, PrayerExtended}
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.kroovy.GauntletTags.TagsSet
 import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
 import com.fredplugins.kroovy.events.EventManager
 import com.fredplugins.kroovy.services.npc.{NpcService, NpcServiceApi, NpcServicesFrame, SNpcEvent}
@@ -27,43 +28,53 @@ import scala.collection.mutable.ListBuffer
 import scala.language.existentials
 import scala.reflect.{TypeTest, Typeable}
 import scala.util.chaining.given
-import net.runelite.api.{Client, InventoryID, Item, ItemContainer, MenuAction, NPC, NPCComposition, NpcID, NullNpcID, Prayer}
+import net.runelite.api.{ChatMessageType, Client, InventoryID, Item, ItemContainer, MenuAction, NPC, NPCComposition, NpcID, NullNpcID, Prayer}
 import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerChanged, MenuOptionClicked, NpcSpawned, VarbitChanged}
 
 import scala.swing.Frame
 import enumeratum.*
-sealed trait GauntletTag(val validIds: Int *) extends EnumEntry {
+sealed abstract class GauntletTag(val validIds: Int *)(using val set: TagsSet) extends EnumEntry with Product {
+	override def entryName: String = set.productPrefix + "." + productPrefix
 	val ids: Set[Int] = validIds.toSet
 	def debugString: String
+	override def toString: String = entryName
 }
 object GauntletTags extends Enum[GauntletTag] {parent =>
-	sealed trait TagsSet {
+	sealed trait TagsSet {tagset =>
+		given TagsSet = tagset
 		def productPrefix: String
-		def values: Set[GauntletTag] = parent.values.filter(_.entryName.startsWith(productPrefix)).toSet
+		def values: Set[GauntletTag] = {
+			parent.values.filter(_.set == tagset).toSet/*.tap(ts => {ts.foreach(println(_)); println()})*/
+		}
 
-		sealed class GTag(vid: Int *)  extends GauntletTag(vid *) {tag=>
-			override def entryName: String = productPrefix + "." + super.entryName
-			override def debugString: String = s"${entryName} extends GTag${tag.validIds.mkString("(", ", ", ")")}"
+		trait GTag {
+			self: GauntletTag =>
+//				tag: EnumEntry =>
+//			override protected lazy val stableName: String = tagset.productPrefix + "." + super.entryName
+			//			override lazy val  s: String = tagset.productPrefix + "." + super.entryName
+//			override lazy val stableEntryName
+//			override def entryName: String = productPrefix + "." + super.entryName
+			override def debugString: String = s"${entryName} extends GTag${validIds.mkString("(", ", ", ")")}"
 		}
 	}
 
 	case object Weak extends TagsSet {
-		case object Bat extends GTag(NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT)
-		case object Rat extends GTag(NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT)
-		case object Spider extends GTag(NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER)
+		case object Bat extends GauntletTag(NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT) with GTag
+		case object Rat extends GauntletTag(NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT) with GTag
+		case object Spider extends GauntletTag(NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER) with GTag
 	}
 	case object Strong extends TagsSet  {
-		case object Scorpion extends GTag(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION)
-		case object Unicorn extends GTag(NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN)
+		case object Scorpion extends GauntletTag(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION) with GTag
+		case object Unicorn extends GauntletTag(NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN) with GTag
 	}
 	case object Demiboss extends TagsSet {
-		case object Bear extends GTag(NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR)
-		case object Dark_beast extends GTag(NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST)
-		case object Dragon extends GTag(NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON)
+		case object Bear extends GauntletTag(NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR) with GTag
+		case object Dark_beast extends GauntletTag(NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST) with GTag
+		case object Dragon extends GauntletTag(NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON) with GTag
 	}
 	case object Boss extends TagsSet {
-		case object Hunllef extends GTag(NpcID.CRYSTALLINE_HUNLLEF, NpcID.CRYSTALLINE_HUNLLEF_9022, NpcID.CRYSTALLINE_HUNLLEF_9023, NpcID.CRYSTALLINE_HUNLLEF_9024, NpcID.CORRUPTED_HUNLLEF, NpcID.CORRUPTED_HUNLLEF_9036, NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038)
-		case object Tornado extends GTag(NullNpcID.NULL_9025, NullNpcID.NULL_9039, NullNpcID.NULL_14142)
+		case object Hunllef extends GauntletTag(NpcID.CRYSTALLINE_HUNLLEF, NpcID.CRYSTALLINE_HUNLLEF_9022, NpcID.CRYSTALLINE_HUNLLEF_9023, NpcID.CRYSTALLINE_HUNLLEF_9024, NpcID.CORRUPTED_HUNLLEF, NpcID.CORRUPTED_HUNLLEF_9036, NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038) with GTag
+		case object Tornado extends GauntletTag(NullNpcID.NULL_9025, NullNpcID.NULL_9039, NullNpcID.NULL_14142) with GTag
 	}
 
 	def ids: Set[Int] = values.flatMap(_.ids).toSet
@@ -256,7 +267,11 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 //		})
 		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.AnimationChanged) => {
 //			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
-			log.debug(s"Animation Changed from ${e.old} to ${e.cur}\n${e}")
+			clientThread.invokeLater(() => {
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "KroovyGauntlet", s"Animation Changed from ${e.old} to ${e.cur}", "")
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "KroovyGauntlet", s"    ${e}", "")
+				()
+			})
 		})
 //		(new NpcListener {
 //				override def onSpawned(npc: NPC): Unit = {

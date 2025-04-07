@@ -130,7 +130,7 @@ class FredsTemporossPlugin() extends Plugin {
 			case (opt, targ, tpe, ident, (x, y)) if(me.isNpcAction) => s"NPC(opt=\"$opt\", targ=\"$targ\", index=$ident, id=${me.getNpc.getId}, sLoc=${(x, y)}, tpe=${tpe})"
 			case (opt, targ, tpe, ident, (x, y)) => s"opt=\"$opt\", targ=\"$targ\", ident=$ident, param=${(x, y)}, tpe=${tpe}"
 		}.get
-		log.debug("Clicked: ({})",toLog)
+//		log.debug("Clicked: ({})",toLog)
 	}
 }
 

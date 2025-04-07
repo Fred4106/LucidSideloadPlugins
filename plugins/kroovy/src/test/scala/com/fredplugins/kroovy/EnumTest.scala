@@ -18,7 +18,7 @@ object EnumTest extends App {
 		GauntletTags.Boss).foreach(gts => {
 		println(gts.productPrefix)
 		gts.values.foreach(gtsV => {
-			println(s"  ${gtsV.debugString}")
+			println(s"  ${gtsV}")
 		})
 	})
 }

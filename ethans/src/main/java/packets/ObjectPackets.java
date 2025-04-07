@@ -70,8 +70,8 @@ public class ObjectPackets {
         } else {
             p = new Point(object.getLocalLocation().getSceneX(), object.getLocalLocation().getSceneY());
         }
-        LocalPoint lp = new LocalPoint(p.getX(), p.getY());
-        WorldPoint wp = WorldPoint.fromScene(PacketReflection.getClient(), lp.getX(), lp.getY(), object.getPlane());
+//        LocalPoint lp = new LocalPoint(p.getX(), p.getY());
+        WorldPoint wp = WorldPoint.fromScene(PacketReflection.getClient(), p.getX(), p.getY(), object.getPlane());
         int num = -1;
         for (String action : actions) {
             for (String action2 : actionlist) {

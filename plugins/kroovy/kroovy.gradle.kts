@@ -50,7 +50,7 @@ tasks {
             println("\tIn: " + f)
         }
     }
-    jar {
-        duplicatesStrategy = DuplicatesStrategy.WARN
-    }
+//    jar {
+//        duplicatesStrategy = DuplicatesStrategy.WARN
+//    }
 }

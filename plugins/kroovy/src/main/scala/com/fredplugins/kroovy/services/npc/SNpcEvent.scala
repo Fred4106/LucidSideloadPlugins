@@ -15,9 +15,9 @@ import scala.reflect.ClassTag
 
 sealed trait SNpcEvent {
 	def npc: NPC
-	private val eventName: String = this.getClass.getName.stripPrefix("com.fredplugins.kroovy.services.npc")
+	private val eventName: String = this.getClass.getName.stripPrefix("com.fredplugins.kroovy.services.npc.").replace('$', '.')
 	protected def toStringSuffix: String = ""
-	override def toString: String = s"${eventName}[${Integer.toHexString(npc.hashCode())}]${toStringSuffix}"
+	override def toString: String = s"${eventName}[id=${npc.getId}, index=${npc.getIndex}][${Integer.toHexString(npc.hashCode())}]${toStringSuffix}"
 }
 object SNpcEvent {
 	class Spawned(val npc: NPC) extends SNpcEvent

@@ -240,6 +240,9 @@ object FredsTemporossLogic {
 		if (inMinigame && event.getContainerId == InventoryID.INVENTORY.getId) {
 			val inventory = event.getItemContainer
 			updateFishCount(inventory.count(ItemID.RAW_HARPOONFISH), inventory.count(ItemID.HARPOONFISH), inventory.count(ItemID.CRYSTALLISED_HARPOONFISH))
+			if(uncookedFish + cookedFish + crystalFish == 0 && inventory.size()-inventory.count() > 4) {
+				canAutoFishDouble = true
+			}
 		}
 	}
 }

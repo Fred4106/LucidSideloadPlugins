@@ -36,6 +36,7 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
+import org.slf4j.*;
 import packetUtils.ObfuscatedNames;
 
 import javax.swing.*;
@@ -1180,6 +1181,12 @@ public class EthanApiPlugin extends Plugin {
 
     @Override
     public void startUp() throws Exception {
+        Logger actionProgressLog = LoggerFactory.getLogger("com.github.calebwhiting.runelite.plugins.actionprogress.detect.ChatboxDetector");
+        try{
+            ((ch.qos.logback.classic.Logger) actionProgressLog).setLevel(ch.qos.logback.classic.Level.DEBUG);
+        } catch (Exception e) {
+            actionProgressLog.warn("Failed to change logging level", e);
+        }
 //        eventBus.register(RuneLite.getInjector().getInstance(TileObjects.class));
 //        eventBus.register(RuneLite.getInjector().getInstance(Players.class));
 //        eventBus.register(RuneLite.getInjector().getInstance(Equipment.class));

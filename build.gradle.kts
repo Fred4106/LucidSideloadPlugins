@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.invoke
 import org.gradle.tooling.internal.protocol.ProjectVersion3
 
 buildscript {
@@ -41,6 +42,11 @@ allprojects {
         configure<JavaPluginExtension> {
             sourceCompatibility = javaVersion
             targetCompatibility = javaVersion
+        }
+        tasks {
+            jar {
+                duplicatesStrategy = DuplicatesStrategy.WARN
+            }
         }
     }
 }
