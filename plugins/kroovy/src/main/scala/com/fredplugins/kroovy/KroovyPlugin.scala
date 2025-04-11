@@ -2,10 +2,7 @@ package com.fredplugins.kroovy
 
 import com.fredplugins.common.{Locatable, PrayerExtended}
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.GauntletTags.TagsSet
-import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
 import com.fredplugins.kroovy.events.EventManager
-import com.fredplugins.kroovy.services.npc.{NpcService, NpcServiceApi, NpcServicesFrame, SNpcEvent}
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.EthanApiPlugin
@@ -32,58 +29,6 @@ import net.runelite.api.{ChatMessageType, Client, InventoryID, Item, ItemContain
 import net.runelite.api.events.{GameTick, GraphicsObjectCreated, ItemContainerChanged, MenuOptionClicked, NpcSpawned, VarbitChanged}
 
 import scala.swing.Frame
-import enumeratum.*
-sealed abstract class GauntletTag(val validIds: Int *)(using val set: TagsSet) extends EnumEntry with Product {
-	override def entryName: String = set.productPrefix + "." + productPrefix
-	val ids: Set[Int] = validIds.toSet
-	def debugString: String
-	override def toString: String = entryName
-}
-object GauntletTags extends Enum[GauntletTag] {parent =>
-	sealed trait TagsSet {tagset =>
-		given TagsSet = tagset
-		def productPrefix: String
-		def values: Set[GauntletTag] = {
-			parent.values.filter(_.set == tagset).toSet/*.tap(ts => {ts.foreach(println(_)); println()})*/
-		}
-
-		trait GTag {
-			self: GauntletTag =>
-//				tag: EnumEntry =>
-//			override protected lazy val stableName: String = tagset.productPrefix + "." + super.entryName
-			//			override lazy val  s: String = tagset.productPrefix + "." + super.entryName
-//			override lazy val stableEntryName
-//			override def entryName: String = productPrefix + "." + super.entryName
-			override def debugString: String = s"${entryName} extends GTag${validIds.mkString("(", ", ", ")")}"
-		}
-	}
-
-	case object Weak extends TagsSet {
-		case object Bat extends GauntletTag(NpcID.CRYSTALLINE_BAT, NpcID.CORRUPTED_BAT) with GTag
-		case object Rat extends GauntletTag(NpcID.CRYSTALLINE_RAT, NpcID.CORRUPTED_RAT) with GTag
-		case object Spider extends GauntletTag(NpcID.CRYSTALLINE_SPIDER, NpcID.CORRUPTED_SPIDER) with GTag
-	}
-	case object Strong extends TagsSet  {
-		case object Scorpion extends GauntletTag(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION) with GTag
-		case object Unicorn extends GauntletTag(NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN) with GTag
-	}
-	case object Demiboss extends TagsSet {
-		case object Bear extends GauntletTag(NpcID.CRYSTALLINE_BEAR, NpcID.CORRUPTED_BEAR) with GTag
-		case object Dark_beast extends GauntletTag(NpcID.CRYSTALLINE_DARK_BEAST, NpcID.CORRUPTED_DARK_BEAST) with GTag
-		case object Dragon extends GauntletTag(NpcID.CRYSTALLINE_DRAGON, NpcID.CORRUPTED_DRAGON) with GTag
-	}
-	case object Boss extends TagsSet {
-		case object Hunllef extends GauntletTag(NpcID.CRYSTALLINE_HUNLLEF, NpcID.CRYSTALLINE_HUNLLEF_9022, NpcID.CRYSTALLINE_HUNLLEF_9023, NpcID.CRYSTALLINE_HUNLLEF_9024, NpcID.CORRUPTED_HUNLLEF, NpcID.CORRUPTED_HUNLLEF_9036, NpcID.CORRUPTED_HUNLLEF_9037, NpcID.CORRUPTED_HUNLLEF_9038) with GTag
-		case object Tornado extends GauntletTag(NullNpcID.NULL_9025, NullNpcID.NULL_9039, NullNpcID.NULL_14142) with GTag
-	}
-
-	def ids: Set[Int] = values.flatMap(_.ids).toSet
-	def find(npc: NPC): Option[GauntletTag] = values.find(_.ids.contains(npc.getId))
-	override def values: IndexedSeq[GauntletTag] = findValues
-
-}
-
-//object GauntletNpcFilter extends NpcEventFilter(GauntletTags){}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#20CD00\">Freds</font> Kroovy</html>",
@@ -111,7 +56,6 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 //	@Inject private val sBus: SEventBus = null
 	@Inject private val worldService: WorldService = null
 	@Inject private val clientToolbar: ClientToolbar= null
-	@Inject private val npcService: NpcService= null
 
 	given Client = RuneLite.getInjector.getInstance(classOf[Client])
 	given ClientThread = RuneLite.getInjector.getInstance(classOf[ClientThread])
@@ -119,7 +63,6 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	given SpriteManager = RuneLite.getInjector.getInstance(classOf[SpriteManager])
 	given ItemManager = RuneLite.getInjector.getInstance(classOf[ItemManager])
 //	given SEventBus = RuneLite.getInjector.getInstance(classOf[SEventBus])
-	given NpcService = RuneLite.getInjector.getInstance(classOf[NpcService])
 	given EventManager = RuneLite.getInjector.getInstance(classOf[EventManager])
 //	val kFrame = RuneLite.getInjector.getInstance(classOf[KroovyEventBusFrame])
 
@@ -231,81 +174,11 @@ class KroovyPlugin extends Plugin with ShimUtils.Logging("DEBUG") {
 
 //	SEventBusFrame.get.open()
 	private val StrongNpcs = Set(NpcID.CRYSTALLINE_SCORPION, NpcID.CORRUPTED_SCORPION, NpcID.CRYSTALLINE_UNICORN, NpcID.CORRUPTED_UNICORN)
-	NpcServicesFrame.get
 	override protected def startUp(): Unit = {
-		eventManager.start()
-		npcService.init()
-		NpcServicesFrame.get.open()
-//		val r1 = sBus.register[GameTick, 0, "Self"](this)((t: GameTick) => SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"Gametick: ${client.getTickCount}"))}))
-//		val r3 = sBus.register[NpcSpawned, 1, "Self"](this)((t: NpcSpawned) => (t.getNpc.getId, t.getNpc.getName).tap{
-//			case (npcId, npcStr) =>  SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(s"NpcService - NpcSpawned: ${npcId}, ${npcStr}"))})
-//		})
-		def report(npc: NPC)(msg: String): Unit = {
-			val tag     = GauntletTags.find(npc).map(_.entryName).getOrElse("None")
-			val toPrint = s"Npc[${tag}](${Integer.toHexString(npc.hashCode())})" + " " + msg
-			SwingUtilities.invokeLater(() => {npcService.publish(NpcServiceApi.Log(toPrint))})
-//			log.debug(s"${toPrint}")
-			//					SwingUtilities.invokeLater(() => {sBus.publish(SEventBus.Record(toPrint))})
-		}
-
-//		val weakAndStrongNpcIds = Set(GauntletTags.Weak, GauntletTags.Strong).flatMap(_.values).flatMap(_.ids)
-		npcService.register(StrongNpcs, (e: SNpcEvent.Moved) => {
-			if(e.cur.distanceTo(client.getLocalPlayer.getWorldLocation) < 3 && !client.isPrayerActive(Prayer.PROTECT_FROM_MELEE)) {
-				CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE)
-			}
-		})
-		npcService.register(StrongNpcs, (e: SNpcEvent.Died) => {
-			if (client.isPrayerActive(Prayer.PROTECT_FROM_MELEE)) {
-				CombatUtils.deactivatePrayer(Prayer.PROTECT_FROM_MELEE)
-			}
-		})
-//		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.Died) => {
-//			report(e.npc)(s"Died @ ${e.npc.getWorldLocation}")
-//		})
-//		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.CompositionChanged) => {
-//			report(e.npc)(s"Composition Changed from ${e.old} to ${e.cur}")
-//		})
-		npcService.register(GauntletTags.Boss.values.flatMap(_.ids), (e: SNpcEvent.AnimationChanged) => {
-//			report(e.npc)(s"Animation Changed from ${e.old} to ${e.cur}")
-			clientThread.invokeLater(() => {
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "KroovyGauntlet", s"Animation Changed from ${e.old} to ${e.cur}", "")
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "KroovyGauntlet", s"    ${e}", "")
-				()
-			})
-		})
-//		(new NpcListener {
-//				override def onSpawned(npc: NPC): Unit = {
-//					report(npc)(s"Spawned @ ${npc.getWorldLocation}")
-//				}
-//				override def onDespawned(npc: NPC): Unit = {
-//					report(npc)(s"Despawned")
-//				}
-//				override def onDeath(npc: NPC): Unit = {
-//					report(npc)(s"Died")
-//				}
-//				override def onCompositionChanged(npc: NPC, old: NPCComposition, cur: NPCComposition): Unit = {
-//					report(npc)(s"Composition Changed from ${old.getId} to ${cur.getId}")
-//				}
-//				override def onAnimationChanged(npc: NPC, old: Int, cur: Int): Unit = {
-//					report(npc)(s"Animation Changed from $old to $cur")
-//				}
-//			})
-//		_kPanel = Option(injector.getInstance[KPanel](classOf[KPanel]))
-//		clientToolbar.addNavigation(navButton)
-//		overlayManager.add(panel)
-//		debugFrame.open()
 		eventManager.register(KGauntlet)
 	}
 
 	override protected def shutDown(): Unit = {
-		eventManager.stop()
-		npcService.teardown()
-		NpcServicesFrame.get.close()
-//		sBus.unregisterAll()
-//		sBus.publisher = null
-//		debugFrame.close()
-
-//		clientToolbar.removeNavigation(navButton)
-//		overlayManager.remove(panel)
+		eventManager.unregister(KGauntlet)
 	}
 }

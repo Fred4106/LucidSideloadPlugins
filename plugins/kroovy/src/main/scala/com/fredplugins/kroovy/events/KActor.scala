@@ -31,13 +31,13 @@ object KActor {
 	private val actorToKActorMap: scala.collection.mutable.HashMap[RlActor, KActor] = mutable.HashMap.empty[RlActor, KActor]
 
 	sealed case class KNpc(wrapped: RlNpc) extends KActor {
-		override type Wrapped = RlNpc
+		override type Wrapped = RlNpc & Matchable
 		def index: Int = wrapped.getIndex
 
 		override def toString: String = s"Npc[${index -> id}](name=${name})"
 	}
 	sealed case class KPlayer(wrapped: RlPlayer) extends KActor {
-		override type Wrapped = RlPlayer
+		override type Wrapped = RlPlayer & Matchable
 		def team: Int = wrapped.getTeam
 
 		override def toString: String = s"Player[${id}](name=\"${name}\", team=${team})"

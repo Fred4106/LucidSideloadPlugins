@@ -1,8 +1,8 @@
 package com.fredplugins.kroovy.events
 
 import com.fredplugins.common.utils.{SceneUtils, WorldPointUtils}
-import com.fredplugins.kroovy.api.Orientation
-import com.fredplugins.kroovy.events.KTileObject.KTileItem.KOwnershipEntry
+import com.fredplugins.kroovy.api.KOrientation
+import com.fredplugins.kroovy.api.KOwnership
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.coords.{Angle, LocalPoint}
@@ -18,7 +18,6 @@ import scala.collection.mutable
 import scala.compiletime.uninitialized
 import scala.reflect.{TypeTest, Typeable}
 //import com.fredplugins.kroovy.api.Orientation
-import com.fredplugins.kroovy.events.KTileObject.KTileItem.KOwnership
 import scala.reflect.Selectable.reflectiveSelectable
 
 sealed trait KTileObject {
@@ -49,7 +48,7 @@ sealed trait KTileObject {
 }
 
 object KTileObject {
-	case class KGameObject(wrapped: RlGameObject) extends KTileObject {
+	sealed case class KGameObject(wrapped: RlGameObject) extends KTileObject {
 		override type Wrapped = RlGameObject & Matchable
 		def animation: Option[Int] = {
 			Option(wrapped.getRenderable).collect {
@@ -79,35 +78,23 @@ object KTileObject {
 			}.getOrElse("")
 		})"
 	}
-	case class KGroundObject(wrapped: RlGroundObject) extends KTileObject {
+	sealed case class KGroundObject(wrapped: RlGroundObject) extends KTileObject {
 		override type Wrapped = RlGroundObject & Matchable
 		override def toString: String = s"GroundObject(id=${id}, loc=${position}, size=${size})"
 	}
-	case class KWallObject(wrapped: RlWallObject) extends KTileObject {
+	sealed case class KWallObject(wrapped: RlWallObject) extends KTileObject {
 		override type Wrapped = RlWallObject & Matchable
-		def orientationA: Orientation = Orientation.fromEncoded(wrapped.getOrientationA)
-		def orientationB: Orientation = Orientation.fromEncoded(wrapped.getOrientationB)
+		def orientationA: KOrientation = KOrientation.fromEncoded(wrapped.getOrientationA)
+		def orientationB: KOrientation = KOrientation.fromEncoded(wrapped.getOrientationB)
 		override def toString: String = s"WallObject(id=${id}, loc=${position}, size=${size}, orientation=${(orientationA -> orientationB)})"
 	}
-	case class KDecorativeObject(wrapped: RlDecorativeObject) extends KTileObject {
+	sealed case class KDecorativeObject(wrapped: RlDecorativeObject) extends KTileObject {
 		override type Wrapped = RlDecorativeObject & Matchable
 		def offset: (Int, Int) = (wrapped.getXOffset, wrapped.getYOffset)
 		override def toString: String = s"DecorativeObject(id=${id}, loc=${position}, size=${size}, offset=${offset})"
 	}
 
-	object KTileItem {
-		sealed trait KOwnershipEntry extends enumeratum.EnumEntry {}
-
-		object KOwnership extends enumeratum.Enum[KOwnershipEntry] {
-			case object None extends KOwnershipEntry()
-			case object Self extends KOwnershipEntry()
-			case object Other extends KOwnershipEntry()
-			case object Group extends KOwnershipEntry()
-			val values: IndexedSeq[KOwnershipEntry] = findValues
-			def get(in: Int): KOwnershipEntry = values.apply(in)
-		}
-	}
-	case class KTileItem(id: Int, qty: Int, ticksTillVisible: Int, ticksTillDespawn: Int, ownership: KOwnershipEntry) {}
+	case class KTileItem(id: Int, qty: Int, ticksTillVisible: Int, ticksTillDespawn: Int, ownership: KOwnership) {}
 
 	case class KItemLayer(wrapped: RlItemLayer) extends KTileObject {
 		override type Wrapped = RlItemLayer & Matchable

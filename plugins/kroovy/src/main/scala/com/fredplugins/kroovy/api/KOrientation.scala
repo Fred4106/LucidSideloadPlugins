@@ -6,7 +6,7 @@ import scala.jdk.StreamConverters.*
 import scala.util.chaining.*
 import scala.util.{Random, Try}
 
-enum Orientation {
+enum KOrientation {
 	case None
 	case West
 	case North
@@ -17,8 +17,8 @@ enum Orientation {
 	case SouthEast
 	case SouthWest
 }
-object Orientation {
-	inline def fromEncoded(in: Int): Orientation = {
+object KOrientation {
+	inline def fromEncoded(in: Int): KOrientation = {
 		Option(in).collect {
 			case 1 => West
 			case 2 => North

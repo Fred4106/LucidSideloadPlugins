@@ -15,89 +15,59 @@ import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
 object KGauntlet extends EventManager.EventsOpImpl with ShimUtils.Logging() {
+
+
 	given client: Client = RuneLite.getInjector.getInstance(classOf[Client])
 	given clientThread: ClientThread = RuneLite.getInjector.getInstance(classOf[ClientThread])
-
-//	case class GauntletNpcMoved(knpc: KEvent.KNpcMoved, tag: GauntletTag)
-
 	val stongNpcs: scala.collection.mutable.ListBuffer[net.runelite.api.NPC] = mutable.ListBuffer.empty[net.runelite.api.NPC]
-	override def handle(events: List[KEvent]): Unit = {
-//		GauntletTags.Strong.values.foreach(report(_))
-		val reactedEvents = mutable.ListBuffer.empty[KEvent]
-
-		def report(e: KEvent): Unit = {
-			reactedEvents.addOne(e)
-		}
-
-		if(events.nonEmpty) {
-			log.debug(s"tick: ${client.getTickCount}")
-
-//		events.zipWithIndex.foreach{
-//			case (event, i) => log.debug(s"Event[${i}] = $event")
-//		}
-			events.collect {
-//				case me@KEvent.KNpcSpawned(wrapped) if wrapped.id == 7371 || wrapped.id == 7372 => report(me)
-//				case me@KEvent.KNpcDespawned(wrapped) if wrapped.id == 7371 || wrapped.id == 7372 => report(me)
-//				case me@KEvent.KNpcMoved(wrapped, delta, cur) if wrapped.id == 7371 || wrapped.id == 7372 => report(me)
-//				case me@KEvent.KNpcAnimationChanged(wrapped, old, cur)if wrapped.id == 7371 || wrapped.id == 7372  => report(me)
-//				case me@KEvent.KNpcChanged(wrapped, old, cur) if wrapped.id == 7371 || wrapped.id == 7372 => report(me)
-//
-					case me@KEvent.KNpcDied(wrapped) if(GauntletTags.values.exists(_.ids.contains(wrapped.id))) => {
-						report(me)
-//					stongNpcs.addOne(wrapped.wrapped)
-				}
-//				case me@KEvent.KNpcDespawned(wrapped) if(stongNpcs.contains(wrapped.wrapped)) => {
-//					report(me)
-//					stongNpcs.subtractOne(wrapped.wrapped)
-//				}
-//				case me@KEvent.KNpcMoved(wrapped, delta, cur) if(stongNpcs.contains(wrapped.wrapped)) => report(me)//(_.refString.equals(wrapped.refString))) => report(me -> cur.distanceTo(client.getLocalPlayer.getWorldLocation))
-//				case me@KEvent.KNpcAnimationChanged(wrapped, old, cur) if(stongNpcs.contains(wrapped.wrapped)) => report(me)//_.refString.equals(wrapped.refString))) => report(me)
-//				case me@KEvent.KLocalPlayerMoved(delta, cur) => report(me)
-//				case me@KEvent.KLocalPlayerAnimationChanged(old, cur) => report(me)
-//				case me => report(me)
-		}
-			var finalReacted = reactedEvents.toList.zipWithIndex
-//		finalReacted.foreach{
-//			case (evt, i) => log.warn(s"Reacted[${i.toString.padTo(3, ' ')}] = ${evt}")
-//		}
-			events.filter {
-				case KEvent.KNpcSpawned(wrapped) => true
-				case KEvent.KNpcDespawned(wrapped) => true
-				case KEvent.KNpcAnimationChanged(wrapped, old, cur) => true
-				case KEvent.KNpcChanged(wrapped, old, cur) => true
-				case KEvent.KNpcDied(wrapped) => true
-				case KEvent.KGameObjectSpawned(go) => true
-				case KEvent.KGameObjectDespawned(go) => true
-				case KEvent.KGroundObjectSpawned(go) => true
-				case KEvent.KGroundObjectDespawned(go) => true
-				case KEvent.KDecorativeObjectSpawned(go) => true
-				case KEvent.KDecorativeObjectDespawned(go) => true
-				case KEvent.KWallObjectSpawned(go) => true
-				case KEvent.KWallObjectDespawned(go) => true
-				case KEvent.KItemLayerSpawned(go) => true
-				case KEvent.KItemLayerDespawned(go) => true
-				case _ => false
-			}.zipWithIndex.foreach {
-				case (evt, i) => {
-						val reactedHead = finalReacted.headOption
-						(if(reactedHead.exists(_._1 == evt)){
-								finalReacted = finalReacted.drop(1)
-								(s: String) => {
-		//							finalReacted = finalReacted.take(1)
-									log.debug(s"Reacted[${reactedHead.get._2.toString.padTo(5, ' ')}] ${s}")
-								}
-							} else {
-								(s: String) => {
-									log.info(s"Skipped        ${s}")
-								}
-							}
-						)
-						.apply(s"[${i.toString.padTo(5, ' ')}] = ${evt.toString}")
-				}
-			}
-			println()
-		}
-//		val currentNpcs = client.getNpcs.asScala.toList
-//		stongNpcs.filterInPlace(sn => currentNpcs.contains(sn))
+	override def reaction: PartialFunction[KEvent, Unit] = {
+		case me@KEvent.KNpcSpawned(wrapped) => log.debug(s"result: ${me}")
+		case me@KEvent.KNpcDespawned(wrapped) => log.debug(s"result: ${me}")
+		case me@KEvent.KNpcAnimationChanged(wrapped, old, cur) => log.debug(s"result: ${me}")
+		case me@KEvent.KNpcChanged(wrapped, old, cur) => log.debug(s"result: ${me}")
+		case me@KEvent.KNpcDied(wrapped) => log.debug(s"result: ${me}")
+		case me@KEvent.KGameObjectSpawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KGameObjectDespawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KGroundObjectSpawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KGroundObjectDespawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KDecorativeObjectSpawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KDecorativeObjectDespawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KWallObjectSpawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KWallObjectDespawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KItemLayerSpawned(go) => log.debug(s"result: ${me}")
+		case me@KEvent.KItemLayerDespawned(go) => log.debug(s"result: ${me}")
 	}
+
+//	override def handle(events: List[KEvent]): Unit = {
+////		if(events.nonEmpty) {
+////			log.debug(s"tick: ${client.getTickCount}")
+////			events.filter {
+////				case _ => true
+////				case KEvent.KNpcSpawned(wrapped) => true
+////				case KEvent.KNpcDespawned(wrapped) => true
+////				case KEvent.KNpcAnimationChanged(wrapped, old, cur) => true
+////				case KEvent.KNpcChanged(wrapped, old, cur) => true
+////				case KEvent.KNpcDied(wrapped) => true
+////				case KEvent.KGameObjectSpawned(go) => true
+////				case KEvent.KGameObjectDespawned(go) => true
+////				case KEvent.KGroundObjectSpawned(go) => true
+////				case KEvent.KGroundObjectDespawned(go) => true
+////				case KEvent.KDecorativeObjectSpawned(go) => true
+////				case KEvent.KDecorativeObjectDespawned(go) => true
+////				case KEvent.KWallObjectSpawned(go) => true
+////				case KEvent.KWallObjectDespawned(go) => true
+////				case KEvent.KItemLayerSpawned(go) => true
+////				case KEvent.KItemLayerDespawned(go) => true
+////				case _ => false
+////			}.zipWithIndex.foreach {
+////				case (evt, i) => {
+////					log.info(s"event[${i}] = $evt")
+////				}
+////			}
+////			println()
+////		}
+////		val currentNpcs = client.getNpcs.asScala.toList
+////		stongNpcs.filterInPlace(sn => currentNpcs.contains(sn))
+//	}
+
 }
