@@ -9,6 +9,7 @@ import com.fredplugins.mixology.SMixType.{Aga, Lye, Mox}
 import net.runelite.api.ItemID.{ALCOAUGMENTATOR, ANTILEECH_LOTION, AQUALUX_AMALGAM, AZURE_AURA_MIX, LIPLACK_LIQUOR, MAMMOTHMIGHT_MIX, MARLEYS_MOONLIGHT, MEGALITE_LIQUID, MIXALOT, MYSTIC_MANA_AMALGAM}
 import org.slf4j.Logger
 
+import java.awt.Color
 import scala.util.chaining.*
 package object mixology {
 	private val log: Logger = ShimUtils.getLogger("com.fredsplugins.mixology", "DEBUG")
@@ -69,14 +70,19 @@ package object mixology {
 			Option.when( 1 to 3 contains i){List(Agitator, Retort, Alembic)(i-1)}
 		}
 	}
-	sealed trait SMixType {
+	sealed trait SMixType(val color: Color) extends enumeratum.EnumEntry {
 		this: Product =>
 		def letter: Char = productPrefix.head
 	}
-	object SMixType {
-		case object Mox extends SMixType
-		case object Lye extends SMixType
-		case object Aga extends SMixType
+	object SMixType extends enumeratum.Enum[SMixType] {
+		override def values: IndexedSeq[SMixType] = findValues
+		case object Mox extends SMixType(Color.decode("#03a9f4"))
+		case object Aga extends SMixType(Color.decode("#00e676"))
+		case object Lye extends SMixType(Color.decode("#e91e63"))
+
+		def fromLetter(letter: Char): Option[SMixType] = {
+			values.find(_.letter == letter)
+		}
 
 		def fromPedestal(to: TileObject)(using client: Client): Option[SMixType] =
 			Option.when(to.morphId != -1 && (55392 to 55394).contains(to.getId)) {
@@ -93,7 +99,7 @@ package object mixology {
 	}
 
 
-	sealed trait SBrew(val unprocessedId: Int, val xp: Int) {
+	sealed trait SBrew(val unprocessedId: Int, val xp: Int) extends enumeratum.EnumEntry {
 		this: Product =>
 		val recipe: Map[SMixType, Int] = {
 			this.productPrefix.collect[SMixType] {
@@ -113,7 +119,8 @@ package object mixology {
 		def totalWorth: Int = worth.values.sum
 		inline def processedId: Int = unprocessedId + 10
 	}
-	object SBrew {
+	object SBrew extends enumeratum.Enum[SBrew] {
+		override def values: IndexedSeq[SBrew] = findValues
 		case object MMM extends SBrew(MAMMOTHMIGHT_MIX, 190) {}
 		case object MMA extends SBrew(MYSTIC_MANA_AMALGAM, 215) {}
 		case object MML extends SBrew(MARLEYS_MOONLIGHT, 240) {}
@@ -124,7 +131,8 @@ package object mixology {
 		case object ALL extends SBrew(ANTILEECH_LOTION, 340) {}
 		case object MLL extends SBrew(MEGALITE_LIQUID, 315) {}
 		case object MAL extends SBrew(MIXALOT, 365) {}
-		inline def values: List[SBrew] = List(MMM, MMA, MML, AAA, ALA, AAM, LLL, ALL, MLL, MAL)
+//		inline def values: List[SBrew] = List(MMM, MMA, MML, AAA, ALA, AAM, LLL, ALL, MLL, MAL)
+		def fromItemId(id: Int): Option[SBrew] = values.find(b => b.processedId == id || b.unprocessedId == id)
 		def fromToolBench(to: TileObject)(using client: Client): Option[SBrew] = {
 			Option(to).filter(_.morphId != -1).map(to =>
 				to.morphId - (to.getId match {

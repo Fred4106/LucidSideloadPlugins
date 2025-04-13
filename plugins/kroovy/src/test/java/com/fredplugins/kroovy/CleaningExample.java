@@ -15,9 +15,9 @@ public class CleaningExample implements AutoCloseable {
         }
     };
     private final State state;
-    private final Cleaner.Cleanable cleanable
+    private final Cleaner.Cleanable cleanable;
     public CleaningExample() {
-        this.state = new State(...);
+        this.state = new State(11l);
         this.cleanable = cleaner.register(this, state);
     }
     public void close() {

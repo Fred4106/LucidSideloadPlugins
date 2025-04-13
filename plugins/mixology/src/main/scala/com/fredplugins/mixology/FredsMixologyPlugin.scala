@@ -50,6 +50,8 @@ class FredsMixologyPlugin() extends Plugin {
 	@Inject private val eventBus      : EventBus           = null
 	@Inject private val overlayManager: OverlayManager     = null
 	@Inject private val panel         : FredsMixologyPanel = null
+	@Inject private val inventoryOverlay         : InventoryPotionOverlay = null
+	@Inject private val goalPanel         : GoalPanel = null
 
 
 	var potionOrders: AllOrdersType = ((null, null), (null, null), (null,null))
@@ -81,6 +83,15 @@ class FredsMixologyPlugin() extends Plugin {
 		if ((event.getGameState == GameState.LOGIN_SCREEN) || (event.getGameState == GameState.HOPPING)) log.debug("highlightedObjects.clear"); //highlightedObjects.clear
 	}
 
+	def getResin(smix: SMixType): Int = {
+		val varpId = smix match {
+			case SMixType.Mox => VARP_MOX_RESIN
+			case SMixType.Aga => VARP_AGA_RESIN
+			case SMixType.Lye => VARP_LYE_RESIN
+		}
+		clientThread.runOnClientThread(() => {client.getVarpValue(varpId)});
+	}
+
 	@Subscribe
 	def onWidgetLoaded(event: WidgetLoaded): Unit = {
 		if (event.getGroupId != COMPONENT_POTION_ORDERS_GROUP_ID) return
@@ -105,7 +116,7 @@ class FredsMixologyPlugin() extends Plugin {
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
-		if (!event.getGroup.equals(FredsMixologyConfig.GroupName)) return
+		if (!event.getGroup.equals("freds-mixology")) return
 		if (!config.highlightStations) log.warn("unHighlightAllStations"); //unHighlightAllStations
 		if (!config.highlightDigWeed) {
 			log.warn("unHighlightObject(DIGWEED_NORTH_EAST)")
@@ -284,6 +295,8 @@ class FredsMixologyPlugin() extends Plugin {
 		} else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
 			// alembic quick action was just successfully popped
 //			resetDefaultHighlight(AlchemyObject.ALEMBIC)
+		} else {
+			log.debug(s"varchanged ${event.getVarbitId} ${event.getVarpId}, ${event.getValue}");
 		}
 	}
 
@@ -315,9 +328,13 @@ class FredsMixologyPlugin() extends Plugin {
 			}
 		})
 		overlayManager.add(panel)
+		overlayManager.add(goalPanel)
+		overlayManager.add(inventoryOverlay)
 	}
 
 	override protected def shutDown(): Unit = {
+		overlayManager.remove(inventoryOverlay)
+		overlayManager.remove(goalPanel)
 		overlayManager.remove(panel)
 		//		overlayManager.remove(overlay)
 		//		eventBus.unregister(FredsTemporossLogic)
