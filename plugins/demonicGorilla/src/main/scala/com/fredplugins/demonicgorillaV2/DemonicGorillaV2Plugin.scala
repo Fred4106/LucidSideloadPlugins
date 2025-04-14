@@ -199,7 +199,11 @@ class DemonicGorillaV2Plugin extends Plugin {
 	@Subscribe
 	private def onNpcDespawned(event: NpcDespawned): Unit = {
 		if (atGorillas) {
-			if (gorillas.removed(event.getNpc).isEmpty) clear()
+			if(currentTarget.exists(_.npc == event.getNpc)) {
+				currentTarget = Option.empty
+			}
+			gorillas = gorillas.removed(event.getNpc)
+			if (gorillas.isEmpty) clear()
 		}
 	}
 
@@ -217,22 +221,20 @@ class DemonicGorillaV2Plugin extends Plugin {
 			clearProjectileArray()
 		}
 	}
+	private var currentTarget: Option[DemonicGorilla] = Option.empty[DemonicGorilla]
 
 	@Subscribe
 	private def onInteractingChanged(interactingChanged: InteractingChanged): Unit = {
 		if(client.getLocalPlayer == interactingChanged.getTarget && IsNpcGorilla.unapply(interactingChanged.getSource)) {
-			gorillas.get(interactingChanged.getSource.asInstanceOf[NPC])
-							.foreach(dg => {
-								println(dg.toString)
-							})
+			currentTarget = gorillas.get(interactingChanged.getSource.asInstanceOf[NPC])
 		}
 	}
 
 	@Subscribe(priority = 0)
 	private def onGameTick2(event: GameTick): Unit = {
 		if (atGorillas) {
-			gorillas.values.find(_.getInteracting == client.getLocalPlayer).foreach(g => {
-				println(s"Interacting with ${g}")
+			currentTarget.foreach(target => {
+					println(target.toString)
 			})
 		}
 	}

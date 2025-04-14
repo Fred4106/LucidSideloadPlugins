@@ -13,23 +13,49 @@ import scala.util.chaining.*
 import scala.util.{Try}
 import scala.compiletime.uninitialized
 
-case class GorillaFrame(animation: Int, interacting: Player, worldArea: WorldArea, overheadIcon: HeadIcon)
-case class DemonicGorillaData(possibleAttackStyles: Seq[AttackStyle & RegularAttack],
-															nextAttackTick: Int,
-															recentProjectileId: Int,
-															attacksUntilSwitch: Int,
+//case class GorillaFrame(animation: Int, interacting: Player, worldArea: WorldArea, overheadIcon: HeadIcon)
+//case class DemonicGorillaData(possibleAttackStyles: Seq[AttackStyle & RegularAttack],
+//															nextAttackTick: Int,
+//															recentProjectileId: Int,
+//															attacksUntilSwitch: Int,
+//
+//															currentAnimation: Int,
+//															lastAnimation: Int,
+//															currentWorldArea:WorldArea,
+//															lastWorldArea: WorldArea,
+//															currentInteracting: Player,
+//															lastInteracting: Player,
+//
+//														 ) {
+//
+//															 }
+class DemonicGorilla(val npc: NPC)(using client: Client) {
 
-															currentAnimation: Int,
-															lastAnimation: Int,
-															currentWorldArea:WorldArea,
-															lastWorldArea: WorldArea,
-															currentInteracting: Player,
-															lastInteracting: Player,
-
-														 ) {
-
-															 }
-class DemonicGorilla(npc: NPC)(using client: Client) {
+	override def toString: String = {
+		s"""DemonicGorilla(${npc}) {
+			 |  index = ${index}
+			 |  nextPossibleAttackStyles = ${nextPossibleAttackStyles}
+			 |  nextAttackTick = ${nextAttackTick}
+			 |  attacksUntilSwitch = ${attacksUntilSwitch}
+			 |  recentProjectileId = ${recentProjectileId}
+			 |  takenDamageRecently = ${takenDamageRecently}
+			 |  disabledMeleeMovementForTicks = ${disabledMeleeMovementForTicks}
+			 |  changedPrayer = ${changedPrayerThisTick}
+			 |  thisTick = {
+			 |    changedAttackStyle = ${changedAttackStyleThisTick}
+			 |    animation = ${getAnimation}
+			 |    overhead = ${getOverheadIcon}
+			 |    interacting = ${getInteracting}
+			 |  }
+			 |  lastTick = {
+			 |    changedAttackStyle = ${changedAttackStyleLastTick}
+			 |    animation = ${lastTickAnimation}
+			 |    overhead = ${lastTickOverheadIcon}
+			 |    interacting = ${lastTickInteracting}
+			 |  }
+			 |}
+			 |""".stripMargin
+	}
 	private var nextPossibleAttackStyles: Seq[AttackStyle & RegularAttack] = AttackStyle.RegularAttacks.toList
 	private var nextAttackTick   : Int                              = -100
 	def getNextAttackTick: Int = nextAttackTick
@@ -41,11 +67,13 @@ class DemonicGorilla(npc: NPC)(using client: Client) {
 	private var recentProjectileId      : Int                               =  -1
 
 	private var takenDamageRecently          : Boolean         = false
+	private var disabledMeleeMovementForTicks: Int = 0
+
 	private var changedPrayerThisTick        : Boolean         = false
 	private var changedAttackStyleThisTick   : Boolean         = false
+
 	private var changedAttackStyleLastTick   : Boolean         = false
 	private var lastTickOverheadIcon         : HeadIcon | Null = null
-	private var disabledMeleeMovementForTicks: Int             = 0
 
 
 	private var lastTickAnimation: Int     = 0
