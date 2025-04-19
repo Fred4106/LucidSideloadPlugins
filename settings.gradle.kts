@@ -12,7 +12,7 @@ include(":common")
 include(":commonScala")
 
 //def plugins
-val x = listOf("recolorCG", "zulrahHelper","attackTimer", "customPrayers","demonicGorilla","dt2","gauntlet","giantsFoundry", "kroovy", "layoutHelper", "mixology", "mta", "pvmDebugger", "pvmHelper", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm", "titheFarm2", "superClickHelper")
+val x = listOf("recolorCG", "zulrahHelper", "attackTimer", "customPrayers", "demonicGorilla", "dt2", "gearSwapper", "gauntlet", "giantsFoundry", "kroovy", "layoutHelper", "mixology", "mta", "pvmDebugger", "pvmHelper", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm", "titheFarm2", "superClickHelper")
 x.forEach {xm->
     include(xm)
 }

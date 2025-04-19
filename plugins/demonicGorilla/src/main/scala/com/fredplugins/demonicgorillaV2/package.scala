@@ -410,7 +410,7 @@ package object demonicgorillaV2 {
 	def checkGorillaAttackStyleSwitch(gorilla: DemonicGorilla, protectedStyles: AttackStyle*): Unit = {
 		if (gorilla.getAttacksUntilSwitch <= 0 || gorilla.getNextPosibleAttackStyles.isEmpty) {
 			gorilla.setNextPosibleAttackStyles(
-				AttackStyle.RegularAttacks.filter(x => protectedStyles.contains(x))
+				AttackStyle.RegularAttacks.filterNot(x => protectedStyles.contains(x))
 				)
 			gorilla.setAttacksUntilSwitch(Attacks_per_Switch)
 			gorilla.setChangedAttackStyleThisTick(true)

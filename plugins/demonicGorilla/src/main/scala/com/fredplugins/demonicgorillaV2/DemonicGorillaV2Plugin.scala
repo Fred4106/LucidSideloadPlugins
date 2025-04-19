@@ -117,7 +117,8 @@ class DemonicGorillaV2Plugin extends Plugin {
 	}
 
 
-	@Subscribe private def onProjectileMoved(event: ProjectileMoved): Unit = {
+	@Subscribe
+	private def onProjectileMoved(event: ProjectileMoved): Unit = {
 		if (!atGorillas) return
 		val projectile   = event.getProjectile
 		val projectileId = projectile.getId
