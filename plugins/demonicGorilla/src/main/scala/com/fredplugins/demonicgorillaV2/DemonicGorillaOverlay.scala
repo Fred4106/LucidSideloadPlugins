@@ -94,14 +94,14 @@ class DemonicGorillaOverlay @Inject()(val plugin: DemonicGorillaV2Plugin, val cl
 
 	override def render(graphics: Graphics2D): Dimension = {
 		val s1 = for {
-			gorilla <- plugin.getGorillas.filter(_.getInteracting != null)
+			(gorilla, gorillaData) <- plugin.getGorillas.filter(_._1.getInteracting != null)
 			lp <- Option(gorilla.getLocalLocation)
 			rlPoint <- Option(Perspective.localToCanvas(client, lp, client.getTopLevelWorldView.getPlane, -48))
-		} yield (gorilla, rlPoint)
+		} yield (gorilla, gorillaData, rlPoint)
 
 		s1.foreach {
-			case (gorilla, rlPoint) => {
-				val attackStyles = gorilla.getNextPosibleAttackStyles
+			case (gorilla, gorillaData, rlPoint) => {
+				val attackStyles = gorillaData.attackStyle
 				val icons        = attackStyles.map(getIcon(_))
 				val totalWidth   = (attackStyles.size - 1) * OVERLAY_ICON_MARGIN + icons.map(_.getWidth).sum
 
@@ -122,8 +122,8 @@ class DemonicGorillaOverlay @Inject()(val plugin: DemonicGorillaV2Plugin, val cl
 																		 icon.getWidth + bgPadding * 2,
 																		 icon.getHeight + bgPadding * 2,
 																		 90.0,
-																		 -360.0 * (Attacks_per_Switch - gorilla.getAttacksUntilSwitch) /
-																			 Attacks_per_Switch,
+																		 -360.0 * ((Attacks_per_Switch - gorillaData.attacksUntilSwitch) /
+																			 Attacks_per_Switch),
 																		 Arc2D.OPEN)
 					graphics.draw(arc)
 

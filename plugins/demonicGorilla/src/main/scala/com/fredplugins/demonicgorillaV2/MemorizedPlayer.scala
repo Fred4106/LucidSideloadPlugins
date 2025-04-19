@@ -1,5 +1,6 @@
 package com.fredplugins.demonicgorillaV2
 
+import net.runelite.api.Client
 import net.runelite.api.Hitsplat
 import net.runelite.api.Player
 import net.runelite.api.coords.WorldArea
@@ -11,7 +12,7 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
-class MemorizedPlayer(val player:Player) {
+class MemorizedPlayer(val player:Player)(using client: Client) {
 	private var lastWorldArea: Option[WorldArea] = Option.empty
 	private var recentHitsplats = List.empty[Hitsplat]
 	def hit(splat: Hitsplat): Unit = {
