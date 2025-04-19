@@ -208,7 +208,6 @@ package object demonicgorillaV2 {
 							onGorillaAttack(gorilla, AttackStyle.Bolder)
 						} else {
 							if (tickCounter >= gorilla.getNextAttackTick) {
-								gorilla.setChangedPrayerThisTick(true)
 								// This part is more complicated because the gorilla may have
 								// used an attack, but the prayer switch animation takes
 								// priority over normal attack animations.
@@ -235,7 +234,6 @@ package object demonicgorillaV2 {
 							// The next attack tick is always delayed if the
 							// gorilla switched prayer
 							gorilla.setNextAttackTick(tickCounter + Attack_Rate)
-							gorilla.setChangedPrayerThisTick(true)
 						}
 					}
 
@@ -398,7 +396,6 @@ package object demonicgorillaV2 {
 			gorilla.setLastWorldArea(gorilla.getWorldArea)
 			gorilla.setLastTickInteracting(gorilla.getInteracting)
 			gorilla.setTakenDamageRecently(false)
-			gorilla.setChangedPrayerThisTick(false)
 			gorilla.setChangedAttackStyleLastTick(gorilla.isChangedAttackStyleThisTick)
 			gorilla.setChangedAttackStyleThisTick(false)
 			gorilla.setLastTickOverheadIcon(gorilla.getOverheadIcon)

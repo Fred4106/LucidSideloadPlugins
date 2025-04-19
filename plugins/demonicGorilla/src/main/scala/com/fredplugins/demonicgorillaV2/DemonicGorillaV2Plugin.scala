@@ -45,18 +45,18 @@ import scala.compiletime.uninitialized
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class DemonicGorillaV2Plugin extends Plugin {
-	@Inject() private val client        : Client                     = null
-	@Inject() private val clientThread  : ClientThread               = null
-	@Inject() private val overlayManager: OverlayManager             = null
-	@Inject() private val overlay:        DemonicGorillaOverlay = null
+	@Inject() private val client        : Client                = null
+	@Inject() private val clientThread  : ClientThread          = null
+	@Inject() private val overlayManager: OverlayManager        = null
+	@Inject() private val overlay       : DemonicGorillaOverlay = null
 
-	private var gorillas                : Map[NPC, DemonicGorilla]   = Map.empty
-	private var recentBoulders          : List[WorldPoint]           = List.empty[WorldPoint]
-	private var pendingAttacks          : List[PendingGorillaAttack] = List.empty
+	private var gorillas          : Map[NPC, DemonicGorilla]     = Map.empty
+	private var recentBoulders    : List[WorldPoint]             = List.empty[WorldPoint]
+	private var pendingAttacks    : List[PendingGorillaAttack]   = List.empty
 	private var memorizedPlayers  : Map[Player, MemorizedPlayer] = Map.empty
 	private var gorillaProjectiles: List[Projectile]             = scala.collection.immutable.List.empty[Projectile]
 
-	private var atGorillas        : Boolean                      = false
+	private var atGorillas: Boolean = false
 
 	def getGorillas: List[DemonicGorilla] = {
 		gorillas.values.toList
@@ -71,7 +71,7 @@ class DemonicGorillaV2Plugin extends Plugin {
 	}
 	override protected def shutDown(): Unit = {
 		atGorillas = false
-				overlayManager.remove(overlay)
+		overlayManager.remove(overlay)
 		gorillas = Map.empty[NPC, DemonicGorilla]
 		recentBoulders = List.empty[WorldPoint]
 		pendingAttacks = List.empty
@@ -81,7 +81,7 @@ class DemonicGorillaV2Plugin extends Plugin {
 
 	private def init(): Unit = {
 		atGorillas = true
-				overlayManager.add(overlay)
+		overlayManager.add(overlay)
 		gorillas = Map.empty[NPC, DemonicGorilla]
 		recentBoulders = List.empty[WorldPoint]
 		pendingAttacks = List.empty[PendingGorillaAttack]
@@ -108,14 +108,15 @@ class DemonicGorillaV2Plugin extends Plugin {
 	private def resetGorillas(): Map[NPC, DemonicGorilla] = {
 		Option(client.getTopLevelWorldView).map(_.npcs().asScala.toList.collect {
 			case g@IsNpcGorilla() => g -> DemonicGorilla(g)(using client)
-		}).map(_.toMap).getOrElse(Map.empty[NPC, DemonicGorilla])
+		}
+																						).map(_.toMap).getOrElse(Map.empty[NPC, DemonicGorilla])
 	}
 	private def resetPlayers(): Map[Player, MemorizedPlayer] = {
 		Option(client.getTopLevelWorldView).map(_.players().asScala.toList.collect {
 			case p => p -> MemorizedPlayer(p)
-		}).map(_.toMap).getOrElse(Map.empty[Player, MemorizedPlayer])
+		}
+																						).map(_.toMap).getOrElse(Map.empty[Player, MemorizedPlayer])
 	}
-
 
 	@Subscribe
 	private def onProjectileMoved(event: ProjectileMoved): Unit = {
@@ -127,51 +128,59 @@ class DemonicGorillaV2Plugin extends Plugin {
 		gorillaProjectiles = gorillaProjectiles :+ projectile
 		val loc = WorldPoint.fromLocal(
 			client.getTopLevelWorldView, projectile.getX1, projectile.getY1,
-			client.getTopLevelWorldView.getPlane)
+			client.getTopLevelWorldView.getPlane
+			)
 		if (projectileId == DEMONIC_GORILLA_BOULDER) {
 			recentBoulders = recentBoulders :+ loc
 		} else {
 			gorillas.values.foreach(gorilla => {
 				if (gorilla.getWorldLocation.distanceTo(loc) == 0) gorilla.setRecentProjectileId(projectile.getId)
-			})
+			}
+															)
 		}
 	}
-	@Subscribe private def onHitsplatApplied(event: HitsplatApplied): Unit = {
+	@Subscribe
+	private def onHitsplatApplied(event: HitsplatApplied): Unit = {
 		if (!atGorillas || gorillas.isEmpty) return
-		if (event.getActor.isInstanceOf[Player]) {
-			val player = event.getActor.asInstanceOf[Player]
-			memorizedPlayers.get(player).foreach(mp => {
-				mp.hit(event.getHitsplat)
-			})
-		}
-		else if (event.getActor.isInstanceOf[NPC]) {
-			def hitsplatType = event.getHitsplat.getHitsplatType
+		event.getActor match {
+			case player: Player => {
+				memorizedPlayers.get(player).foreach(mp => {
+					mp.hit(event.getHitsplat)
+				}
+																						 )
+			}
+			case npc: NPC => {
+				def hitsplatType = event.getHitsplat.getHitsplatType
 
-			gorillas
-				.get(event.getActor.asInstanceOf[NPC])
-				.filter(_ => {
-					(hitsplatType == HitsplatID.BLOCK_ME || hitsplatType == HitsplatID.DAMAGE_ME)
-				})
-				.foreach(gorilla => {
-					gorilla.setTakenDamageRecently(true)
-				})
+				gorillas
+					.get(npc)
+					.filter(_ => {
+						(hitsplatType == HitsplatID.BLOCK_ME || hitsplatType == HitsplatID.DAMAGE_ME)
+					}
+									)
+					.foreach(gorilla => {
+						gorilla.setTakenDamageRecently(true)
+					}
+									 )
+			}
 		}
 	}
 
 	@Subscribe private def onGameStateChanged(event: GameStateChanged): Unit = {
 		event.getGameState match {
-			case GameState.LOGGED_IN =>
+			case GameState.LOGGED_IN => {
 				if (atDemonicGorillas) {
 					if (!atGorillas) {
 						init()
 					} else if (atGorillas) shutDown
 				}
+			}
 			case GameState.HOPPING =>
 			case GameState.LOGGING_IN =>
 			case GameState.CONNECTION_LOST =>
-			case GameState.LOGIN_SCREEN =>
+			case GameState.LOGIN_SCREEN => {
 				if (atGorillas) shutDown
-
+			}
 			case _ =>
 		}
 	}
@@ -194,13 +203,14 @@ class DemonicGorillaV2Plugin extends Plugin {
 			case npc@IsNpcGorilla() => npc
 		}.foreach(npc => {
 			gorillas = gorillas.tap(g => if (g.isEmpty) resetPlayers()).updated(npc, new DemonicGorilla(npc)(using client))
-		})
+		}
+							)
 	}
 
 	@Subscribe
 	private def onNpcDespawned(event: NpcDespawned): Unit = {
 		if (atGorillas) {
-			val (toKeep, toRemove) = gorillas.partition(_._1 != event.getNpc).pipe{
+			val (toKeep, toRemove) = gorillas.partition(_._1 != event.getNpc).pipe {
 				case (keep, remove) => keep -> remove.values.headOption
 			}
 			currentTarget = currentTarget.zip(toRemove).collect {
@@ -215,9 +225,11 @@ class DemonicGorillaV2Plugin extends Plugin {
 	private def onGameTick(event: GameTick): Unit = {
 
 		if (atGorillas) {
-			pendingAttacks = checkGorillaAttacks(gorillas.values.toList,
-																					 memorizedPlayers.values.toList,
-																					 recentBoulders)(using client).prependedAll(pendingAttacks)
+			pendingAttacks = checkGorillaAttacks(
+				gorillas.values.toList,
+				memorizedPlayers.values.toList,
+				recentBoulders
+				)(using client).prependedAll(pendingAttacks)
 
 			pendingAttacks = checkPendingAttacks(pendingAttacks, memorizedPlayers.values.toList)(using client)
 			memorizedPlayers.values.foreach(_.update()) //			updatePlayers
@@ -229,7 +241,7 @@ class DemonicGorillaV2Plugin extends Plugin {
 
 	@Subscribe
 	private def onInteractingChanged(interactingChanged: InteractingChanged): Unit = {
-		if(client.getLocalPlayer == interactingChanged.getTarget && IsNpcGorilla.unapply(interactingChanged.getSource)) {
+		if (client.getLocalPlayer == interactingChanged.getTarget && IsNpcGorilla.unapply(interactingChanged.getSource)) {
 			currentTarget = gorillas.get(interactingChanged.getSource.asInstanceOf[NPC])
 		}
 	}
@@ -240,8 +252,9 @@ class DemonicGorillaV2Plugin extends Plugin {
 			gorillas.foreach(_._2.gameTick())
 
 			currentTarget.foreach(target => {
-					println(target.toString)
-			})
+				println(target.toString)
+			}
+														)
 		}
 	}
 

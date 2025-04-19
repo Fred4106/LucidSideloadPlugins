@@ -49,7 +49,6 @@ case class MemorizedStateData(
 	initiatedCombat: Boolean          = false,
 	takenDamageRecently          : Boolean = false,
 	disabledMeleeMovementForTicks: Int     = 0,
-	changedPrayerThisTick     : Boolean = false,
 	changedAttackStyleThisTick: Boolean = false,
 	changedAttackStyleLastTick: Boolean         = false,
 	lastTickOverheadIcon      : HeadIcon | Null = null,
@@ -59,9 +58,9 @@ case class MemorizedStateData(
 )
 class DemonicGorilla(npc: NPC)(using client: Client) {
 
-	private var npcData: MemorizedNpcData = MemorizedNpcData(-1, -1, -1, Option(npc.getInteracting).collect {
+	private var npcData: MemorizedNpcData = MemorizedNpcData(npc.getIndex, npc.getId, npc.getAnimation, Option(npc.getInteracting).collect {
 		case n: Player => n
-	}.orNull, null, null, null)
+	}.orNull, EthanApiPlugin.getHeadIcon(npc), npc.getWorldLocation, npc.getLocalLocation)
 
 	private var stateData = MemorizedStateData()
 
@@ -76,35 +75,8 @@ class DemonicGorilla(npc: NPC)(using client: Client) {
 			 |}
 			 |""".stripMargin
 	}
-	//	override def toString: String = {
-	//		s"""DemonicGorilla(${npc}) {
-	//			 |  index = ${index}
-	//			 |  nextPossibleAttackStyles = ${nextPossibleAttackStyles}
-	//			 |  nextAttackTick = ${nextAttackTick}
-	//			 |  attacksUntilSwitch = ${attacksUntilSwitch}
-	//			 |  recentProjectileId = ${recentProjectileId}
-	//			 |  takenDamageRecently = ${takenDamageRecently}
-	//			 |  disabledMeleeMovementForTicks = ${disabledMeleeMovementForTicks}
-	//			 |  changedPrayer = ${changedPrayerThisTick}
-	//			 |  thisTick = {
-	//			 |    changedAttackStyle = ${changedAttackStyleThisTick}
-	//			 |    animation = ${getAnimation}
-	//			 |    overhead = ${getOverheadIcon}
-	//			 |    interacting = ${getInteracting}
-	//			 |  }
-	//			 |  lastTick = {
-	//			 |    changedAttackStyle = ${changedAttackStyleLastTick}
-	//			 |    animation = ${lastTickAnimation}
-	//			 |    overhead = ${lastTickOverheadIcon}
-	//			 |    interacting = ${lastTickInteracting}
-	//			 |  }
-	//			 |}
-	//			 |""".stripMargin
-	//	}
-	//	private var nextPossibleAttackStyles: Seq[AttackStyle & RegularAttack] = AttackStyle.RegularAttacks
-	//	private var nextAttackTick          : Int                              = -100
-		def getNextAttackTick: Int = stateData.nextAttackTick
-		def setNextAttackTick(value: Int): Unit = stateData = stateData.copy(nextAttackTick = value)
+	def getNextAttackTick: Int = stateData.nextAttackTick
+	def setNextAttackTick(value: Int): Unit = stateData = stateData.copy(nextAttackTick = value)
 
 	//	def index: Int = npc.getIndex
 	//	def localLocation: LocalPoint = npc.getLocalLocation
@@ -173,13 +145,6 @@ class DemonicGorilla(npc: NPC)(using client: Client) {
 		npcData.interactingWith
 	}
 
-	def isMatching(actor: Actor): Boolean = {
-		actor match {
-			case n: NPC => (n == this.npc)
-			case _ => false
-		}
-	}
-
 	def getWorldLocation: WorldPoint = npcData.worldLoc
 	def getLocalLocation: LocalPoint = npcData.localPoint
 
@@ -215,8 +180,6 @@ class DemonicGorilla(npc: NPC)(using client: Client) {
 	def setLastTickInteracting(p: Player): Unit = stateData = stateData.copy(lastTickInteracting = p)
 	def setInitiatedCombat(b: Boolean): Unit = stateData = stateData.copy(initiatedCombat = b)
 	def isInitiatedCombat: Boolean = stateData.initiatedCombat
-	def setChangedPrayerThisTick(b: Boolean): Unit = stateData = stateData.copy(changedPrayerThisTick = b)
-	def isChangedPrayerThisTick: Boolean = stateData.changedPrayerThisTick
 
 
 	def isChangedAttackStyleThisTick: Boolean = stateData.changedAttackStyleThisTick
