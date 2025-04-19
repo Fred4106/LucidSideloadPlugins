@@ -104,8 +104,6 @@ package object demonicgorillaV2 {
 												 (using client: Client)
 	: List[PendingGorillaAttack] = {
 		val nPendingAttacks = scala.collection.mutable.ListBuffer.empty[PendingGorillaAttack]
-
-
 		val tickCounter = client.getTickCount
 		def onGorillaAttack(gorilla: DemonicGorilla, attackStyle: AttackStyle): Unit = {
 			gorilla.setInitiatedCombat(true)
@@ -118,6 +116,7 @@ package object demonicgorillaV2 {
 			if (attackStyle == AttackStyle.Bolder) {
 				// The gorilla can't throw boulders when it's meleeing
 				gorilla.setNextPosibleAttackStyles(gorilla.getNextPosibleAttackStyles.filter(_ != AttackStyle.Melee))
+
 			} else {
 				if (correctPrayer) {
 					gorilla.setAttacksUntilSwitch(gorilla.getAttacksUntilSwitch - 1)
@@ -174,9 +173,6 @@ package object demonicgorillaV2 {
 				gorilla.setNextAttackTick(tickCounter + 1)
 			}
 
-			val animationId = gorilla.getAnimation
-
-
 			//
 			if (gorilla.isTakenDamageRecently && tickCounter >= gorilla.getNextAttackTick + 4) {
 				// The gorilla was flinched, so its next attack gets delayed
@@ -197,59 +193,56 @@ package object demonicgorillaV2 {
 						checkGorillaAttackStyleSwitch(gorilla, z *)
 					}
 				}
-			}
-			else if (animationId != gorilla.getLastTickAnimation) {
-				if (animationId == AnimationID.DEMONIC_GORILLA_PUNCH) {
-					onGorillaAttack(gorilla, AttackStyle.Melee)
-				} else if (animationId == AnimationID.DEMONIC_GORILLA_MAGIC) {
-					onGorillaAttack(gorilla, AttackStyle.Magic)
-				} else if (animationId == AnimationID.DEMONIC_GORILLA_RANGE) {
-					onGorillaAttack(gorilla, AttackStyle.Ranged)
-				} else if ((animationId == AnimationID.DEMONIC_GORILLA_SMASH_CHEST) && gorilla.getInteracting != null &&
-					gorilla
-						.getNextPosibleAttackStyles
-						.exists(x => Set(AttackStyle.Magic, AttackStyle.Ranged).contains(x))) {
-					// Note that AoE animation is the same as prayer switch animation
-					// so we need to check if the prayer was switched or not.
-					// It also does this animation when it spawns, so
-					// we need the interacting != null check.
-					if (gorilla.getOverheadIcon == gorilla.getLastTickOverheadIcon) {
-						// Confirmed, the gorilla used the AoE attack
-						onGorillaAttack(gorilla, AttackStyle.Bolder)
-					}
-					else {
-						if (tickCounter >= gorilla.getNextAttackTick) {
-							gorilla.setChangedPrayerThisTick(true)
-							// This part is more complicated because the gorilla may have
-							// used an attack, but the prayer switch animation takes
-							// priority over normal attack animations.
-							val projectileId = gorilla.getRecentProjectileId
-							if (projectileId == DEMONIC_GORILLA_MAGIC) {
-								onGorillaAttack(gorilla, AttackStyle.Magic)
-							} else if (projectileId == DEMONIC_GORILLA_RANGED) {
-								onGorillaAttack(gorilla, AttackStyle.Ranged)
-							} else if (mp != null) {
-								val lastPlayerArea = mp.getLastWorldArea
-								if (lastPlayerArea != null && recentBoulders.exists(x => x.distanceTo(lastPlayerArea) == 0)) {
-									// A boulder started falling on the gorillas target,
-									// so we assume it was the gorilla who shot it
-									onGorillaAttack(gorilla, AttackStyle.Bolder)
-								}
-								else if (mp.getRecentHitsplats.nonEmpty) {
-									// It wasn't any of the three other attacks,
-									// but the player took damage, so we assume
-									// it's a melee attack
-									onGorillaAttack(gorilla, AttackStyle.Melee)
+			} else if (gorilla.getAnimationId != gorilla.getLastTickAnimation) {
+				gorilla.getAnimationId match {
+					case AnimationID.DEMONIC_GORILLA_PUNCH => onGorillaAttack(gorilla, AttackStyle.Melee)
+					case AnimationID.DEMONIC_GORILLA_MAGIC => onGorillaAttack(gorilla, AttackStyle.Magic)
+					case AnimationID.DEMONIC_GORILLA_RANGE => onGorillaAttack(gorilla, AttackStyle.Ranged)
+					case AnimationID.DEMONIC_GORILLA_SMASH_CHEST if gorilla.getInteracting != null && gorilla.getNextPosibleAttackStyles.exists(x => Set(AttackStyle.Magic, AttackStyle.Ranged).contains(x)) => {
+						// Note that AoE animation is the same as prayer switch animation
+						// so we need to check if the prayer was switched or not.
+						// It also does this animation when it spawns, so
+						// we need the interacting != null check.
+						if (gorilla.getOverheadIcon == gorilla.getLastTickOverheadIcon) {
+							// Confirmed, the gorilla used the AoE attack
+							onGorillaAttack(gorilla, AttackStyle.Bolder)
+						} else {
+							if (tickCounter >= gorilla.getNextAttackTick) {
+								gorilla.setChangedPrayerThisTick(true)
+								// This part is more complicated because the gorilla may have
+								// used an attack, but the prayer switch animation takes
+								// priority over normal attack animations.
+								val projectileId = gorilla.getRecentProjectileId
+								if (projectileId == DEMONIC_GORILLA_MAGIC) {
+									onGorillaAttack(gorilla, AttackStyle.Magic)
+								} else if (projectileId == DEMONIC_GORILLA_RANGED) {
+									onGorillaAttack(gorilla, AttackStyle.Ranged)
+								} else if (mp != null) {
+									val lastPlayerArea = mp.getLastWorldArea
+									if (lastPlayerArea != null && recentBoulders.exists(x => x.distanceTo(lastPlayerArea) == 0)) {
+										// A boulder started falling on the gorillas target,
+										// so we assume it was the gorilla who shot it
+										onGorillaAttack(gorilla, AttackStyle.Bolder)
+									}
+									else if (mp.getRecentHitsplats.nonEmpty) {
+										// It wasn't any of the three other attacks,
+										// but the player took damage, so we assume
+										// it's a melee attack
+										onGorillaAttack(gorilla, AttackStyle.Melee)
+									}
 								}
 							}
+							// The next attack tick is always delayed if the
+							// gorilla switched prayer
+							gorilla.setNextAttackTick(tickCounter + Attack_Rate)
+							gorilla.setChangedPrayerThisTick(true)
 						}
-						// The next attack tick is always delayed if the
-						// gorilla switched prayer
-						gorilla.setNextAttackTick(tickCounter + Attack_Rate)
-						gorilla.setChangedPrayerThisTick(true)
 					}
+
 				}
 			}
+
+
 			if (gorilla.getDisabledMeleeMovementForTicks > 0) {
 				gorilla.decrementDisabledMeleeMovementForTicks()
 			} else if(
@@ -271,7 +264,7 @@ package object demonicgorillaV2 {
 							val area1 = new WorldArea(x, 1, 1)
 							val v1    = !gorillas.exists((y) => {
 								if (y != gorilla) {
-									val area2 = if (y.index < gorilla.index) y.getWorldArea else y.getLastWorldArea
+									val area2 = if (y.getIndex < gorilla.getIndex) y.getWorldArea else y.getLastWorldArea
 									area2 != null && area1.intersectsWith(area2)
 								} else {
 									false
@@ -401,7 +394,7 @@ package object demonicgorillaV2 {
 					gorilla.setDisabledMeleeMovementForTicks(1)
 				}
 			}
-			gorilla.setLastTickAnimation(gorilla.getAnimation)
+			gorilla.setLastTickAnimation(gorilla.getAnimationId)
 			gorilla.setLastWorldArea(gorilla.getWorldArea)
 			gorilla.setLastTickInteracting(gorilla.getInteracting)
 			gorilla.setTakenDamageRecently(false)

@@ -199,11 +199,14 @@ class DemonicGorillaV2Plugin extends Plugin {
 	@Subscribe
 	private def onNpcDespawned(event: NpcDespawned): Unit = {
 		if (atGorillas) {
-			if(currentTarget.exists(_.npc == event.getNpc)) {
-				currentTarget = Option.empty
+			val (toKeep, toRemove) = gorillas.partition(_._1 != event.getNpc).pipe{
+				case (keep, remove) => keep -> remove.values.headOption
 			}
-			gorillas = gorillas.removed(event.getNpc)
-			if (gorillas.isEmpty) clear()
+			currentTarget = currentTarget.zip(toRemove).collect {
+				case (ct, tr) if ct != tr => ct
+			}.orElse(Option.empty[DemonicGorilla])
+
+			gorillas = toKeep
 		}
 	}
 
@@ -233,6 +236,8 @@ class DemonicGorillaV2Plugin extends Plugin {
 	@Subscribe(priority = 0)
 	private def onGameTick2(event: GameTick): Unit = {
 		if (atGorillas) {
+			gorillas.foreach(_._2.gameTick())
+
 			currentTarget.foreach(target => {
 					println(target.toString)
 			})

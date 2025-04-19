@@ -95,7 +95,7 @@ class DemonicGorillaOverlay @Inject()(val plugin: DemonicGorillaV2Plugin, val cl
 	override def render(graphics: Graphics2D): Dimension = {
 		val s1 = for {
 			gorilla <- plugin.getGorillas.filter(_.getInteracting != null)
-			lp <- Option(gorilla.localLocation)
+			lp <- Option(gorilla.getLocalLocation)
 			rlPoint <- Option(Perspective.localToCanvas(client, lp, client.getTopLevelWorldView.getPlane, -48))
 		} yield (gorilla, rlPoint)
 
