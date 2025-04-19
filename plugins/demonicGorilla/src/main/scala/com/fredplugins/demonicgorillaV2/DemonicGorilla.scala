@@ -56,7 +56,7 @@ case class MemorizedStateData(
 	lastWorldArea  : WorldArea | Null = null,
 	lastTickInteracting: Player | Null = null
 )
-class DemonicGorilla(npc: NPC)(using client: Client) {
+class DemonicGorilla(val npc: NPC)(using client: Client) {
 
 	private var npcData: MemorizedNpcData = MemorizedNpcData(npc.getIndex, npc.getId, npc.getAnimation, Option(npc.getInteracting).collect {
 		case n: Player => n

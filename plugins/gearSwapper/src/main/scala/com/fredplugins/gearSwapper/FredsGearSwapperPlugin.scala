@@ -167,12 +167,9 @@ class FredsGearSwapperPlugin() extends Plugin with KeyListener {
 			lastItemsEquipped.clear
 		}
 
-		if (client.getTickCount < 10) {
-			gearSwapSelected = -1
-			return
-		}
-
 		if (gearSwapState == GearSwapState.FINISHED) {
+			log.debug("lastSwapSelected: {}, gearSwapSelected {}", lastSwapSelected, gearSwapSelected)
+			if (shouldActivateSpec() != CombatUtils.isSpecEnabled) CombatUtils.toggleSpec()
 			gearSwapSelected = -1
 			gearSwapState = GearSwapState.TICK_1
 		}
@@ -195,7 +192,6 @@ class FredsGearSwapperPlugin() extends Plugin with KeyListener {
 				lastSwapSelected = gearSwapSelected
 			}
 		}
-		if (shouldActivateSpec() != CombatUtils.isSpecEnabled) CombatUtils.toggleSpec()
 	}
 
 	private def getEquipmentChanges(): Unit = {
@@ -302,8 +298,7 @@ class FredsGearSwapperPlugin() extends Plugin with KeyListener {
 					}
 					lastSwapSelected = 0
 				}
-			}
-													)
+			})
 		}
 		if (config.swap2Hotkey.matches(e) && config.swap2Enabled) {
 			clientThread.invoke(() => {
@@ -318,8 +313,7 @@ class FredsGearSwapperPlugin() extends Plugin with KeyListener {
 					}
 					lastSwapSelected = 1
 				}
-			}
-													)
+			})
 		}
 		if (config.swap3Hotkey.matches(e) && config.swap3Enabled) {
 			clientThread.invoke(() => {

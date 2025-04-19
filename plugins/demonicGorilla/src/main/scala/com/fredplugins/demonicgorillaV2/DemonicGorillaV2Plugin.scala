@@ -1,5 +1,6 @@
 package com.fredplugins.demonicgorillaV2
 
+import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.Binder
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -19,6 +20,7 @@ import net.runelite.api.events.HitsplatApplied
 import net.runelite.api.events.InteractingChanged
 import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
+import net.runelite.api.events.OverheadTextChanged
 import net.runelite.api.events.PlayerDespawned
 import net.runelite.api.events.PlayerSpawned
 import net.runelite.api.events.ProjectileMoved
@@ -44,7 +46,7 @@ import scala.compiletime.uninitialized
 	)
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
-class DemonicGorillaV2Plugin extends Plugin {
+class DemonicGorillaV2Plugin extends Plugin with ShimUtils.Logging("DEBUG") {
 	@Inject() private val client        : Client                = null
 	@Inject() private val clientThread  : ClientThread          = null
 	@Inject() private val overlayManager: OverlayManager        = null
@@ -91,13 +93,6 @@ class DemonicGorillaV2Plugin extends Plugin {
 
 	}
 
-	private def clear(): Unit = {
-		recentBoulders = List.empty[WorldPoint]
-		pendingAttacks = List.empty[PendingGorillaAttack]
-		memorizedPlayers = Map.empty[Player, MemorizedPlayer]
-		gorillas = Map.empty[NPC, DemonicGorilla]
-	}
-
 	private def reset(): Unit = {
 		recentBoulders = List.empty[WorldPoint]
 		pendingAttacks = List.empty[PendingGorillaAttack]
@@ -116,6 +111,17 @@ class DemonicGorillaV2Plugin extends Plugin {
 			case p => p -> MemorizedPlayer(p)
 		}
 																						).map(_.toMap).getOrElse(Map.empty[Player, MemorizedPlayer])
+	}
+
+	@Subscribe
+	private def onOverheadTextChanged(event: OverheadTextChanged): Unit = {
+		(event.getActor match {
+			case npc: NPC => gorillas.get(npc)
+			case _ => Option.empty[DemonicGorilla]
+		}).foreach(gorilla => {
+			log.debug(s"gorilla[${Integer.toHexString(gorilla.npc.hashCode())}] has overhead text: \"${event.getOverheadText}\"")
+		}
+							 )
 	}
 
 	@Subscribe
@@ -141,38 +147,27 @@ class DemonicGorillaV2Plugin extends Plugin {
 	}
 	@Subscribe
 	private def onHitsplatApplied(event: HitsplatApplied): Unit = {
-		if (!atGorillas || gorillas.isEmpty) return
+		if (!atGorillas || gorillas.isEmpty || !event.getHitsplat.isMine) return
 		event.getActor match {
 			case player: Player => {
 				memorizedPlayers.get(player).foreach(mp => {
 					mp.hit(event.getHitsplat)
-				}
-																						 )
+				})
 			}
 			case npc: NPC => {
-				def hitsplatType = event.getHitsplat.getHitsplatType
-
-				gorillas
-					.get(npc)
-					.filter(_ => {
-						(hitsplatType == HitsplatID.BLOCK_ME || hitsplatType == HitsplatID.DAMAGE_ME)
-					}
-									)
-					.foreach(gorilla => {
-						gorilla.setTakenDamageRecently(true)
-					}
-									 )
+				gorillas.get(npc).foreach(_.setTakenDamageRecently(true))
 			}
 		}
 	}
 
-	@Subscribe private def onGameStateChanged(event: GameStateChanged): Unit = {
+	@Subscribe
+	private def onGameStateChanged(event: GameStateChanged): Unit = {
 		event.getGameState match {
 			case GameState.LOGGED_IN => {
 				if (atDemonicGorillas) {
 					if (!atGorillas) {
 						init()
-					} else if (atGorillas) shutDown
+					}
 				}
 			}
 			case GameState.HOPPING =>
@@ -192,12 +187,14 @@ class DemonicGorillaV2Plugin extends Plugin {
 		memorizedPlayers = memorizedPlayers.updated(event.getPlayer, MemorizedPlayer(event.getPlayer))
 	}
 
-	@Subscribe private def onPlayerDespawned(event: PlayerDespawned): Unit = {
+	@Subscribe
+	private def onPlayerDespawned(event: PlayerDespawned): Unit = {
 		if (!atGorillas || gorillas.isEmpty) return
 		memorizedPlayers = memorizedPlayers.removed(event.getPlayer)
 	}
 
-	@Subscribe private def onNpcSpawned(event: NpcSpawned): Unit = {
+	@Subscribe
+	private def onNpcSpawned(event: NpcSpawned): Unit = {
 		if (!atGorillas) return
 		Option(event.getNpc).collect {
 			case npc@IsNpcGorilla() => npc
@@ -263,6 +260,6 @@ class DemonicGorillaV2Plugin extends Plugin {
 	}
 
 	private def atDemonicGorillas: Boolean = {
-		REGION_IDS.contains(client.getLocalPlayer.getWorldLocation.getRegionID());
+		REGION_IDS.contains(client.getLocalPlayer.getWorldLocation.getRegionID())
 	}
 }

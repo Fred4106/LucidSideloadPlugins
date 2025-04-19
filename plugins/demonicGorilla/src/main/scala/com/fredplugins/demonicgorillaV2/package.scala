@@ -159,7 +159,6 @@ package object demonicgorillaV2 {
 		}
 
 		gorillas.foreach(gorilla => {
-			//			val interacting: Player | Null          = gorilla.getInteracting
 			val mp = memorizedPlayers.find(_.player == gorilla.getInteracting).orNull
 			if (gorilla.getLastTickInteracting != null && gorilla.getInteracting == null) {
 				gorilla.setInitiatedCombat(false)
