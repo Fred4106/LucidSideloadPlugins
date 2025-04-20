@@ -60,6 +60,12 @@ public class MousePackets{
     public static void queueClickPacket() {
         queueClickPacket(client.getMouseCanvasPosition().getX(), client.getMouseCanvasPosition().getY());
     }
+    public static void queueClickPacket(Rectangle bounds) {
+        queueClickPacket(
+            (int)(bounds.getX() + (bounds.getWidth() * Math.random())),
+            (int)(bounds.getY() + (bounds.getHeight() * Math.random()))
+        );
+    }
     public static void queueClickPacket(NPC npc) {
         Shape hull = (npc != null) ? npc.getConvexHull() : null;
         if(hull != null) {

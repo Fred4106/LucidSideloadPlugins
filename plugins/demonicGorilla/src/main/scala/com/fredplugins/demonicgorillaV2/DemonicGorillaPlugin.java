@@ -23,12 +23,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.theplug.kotori.demonicgorillas;
+package com.fredplugins.demonicgorillaV2;
 
+import com.fredplugins.demonicgorillaV2.DemonicGorilla.AttackStyle;
 import com.google.common.collect.ImmutableSet;
 import com.lucidplugins.api.utils.CombatUtils;
 import com.lucidplugins.api.utils.InventoryUtils;
-import com.theplug.kotori.demonicgorillas.DemonicGorilla.AttackStyle;
 import ethanApiPlugin.EthanApiPlugin;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Client;
@@ -157,7 +157,7 @@ public class DemonicGorillaPlugin extends Plugin {
 		}
 	}
 
-	private void checkGorillaAttackStyleSwitch(DemonicGorilla gorilla, final AttackStyle... protectedStyles) {
+	private void checkGorillaAttackStyleSwitch(DemonicGorilla gorilla, final AttackStyle ... protectedStyles) {
 		if (gorilla.getAttacksUntilSwitch() <= 0 ||
 			gorilla.getNextPossibleAttackStyles().isEmpty()) {
 

@@ -219,7 +219,7 @@ public class InteractionUtils
         {
             return;
         }
-            MousePackets.queueClickPacket();
+            MousePackets.queueClickPacket(widget.getBounds());
             NPCPackets.queueWidgetOnNPC(npc, widget);
     }
 
@@ -232,7 +232,7 @@ public class InteractionUtils
             MousePackets.queueClickPacket();
             PlayerPackets.queueWidgetOnPlayer(player, widget);
     }
-    
+
     public static void useWidgetOnTileItem(Widget widget, ETileItem tileItem)
     {
         if (widget == null || tileItem == null)

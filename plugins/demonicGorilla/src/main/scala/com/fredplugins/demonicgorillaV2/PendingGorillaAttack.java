@@ -22,21 +22,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.theplug.kotori.demonicgorillas;
+package com.fredplugins.demonicgorillaV2;
 
-import com.theplug.kotori.demonicgorillas.DemonicGorilla.AttackStyle;
+import com.fredplugins.demonicgorillaV2.DemonicGorilla.AttackStyle;
 import net.runelite.api.Player;
 
 class PendingGorillaAttack {
 	private DemonicGorilla attacker;
 
-	private DemonicGorilla.AttackStyle attackStyle;
+	private AttackStyle attackStyle;
 
 	private Player target;
 
 	private int finishesOnTick;
 
-	PendingGorillaAttack(final DemonicGorilla attacker, final DemonicGorilla.AttackStyle attackStyle, final Player target, final int finishesOnTick) {
+	PendingGorillaAttack(final DemonicGorilla attacker, final AttackStyle attackStyle, final Player target, final int finishesOnTick) {
 		this.attacker = attacker;
 		this.attackStyle = attackStyle;
 		this.target = target;

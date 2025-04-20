@@ -155,7 +155,7 @@ import scala.util.{Random, Try}
 @PluginDescriptor(
 	name = "<html><font color=\"#A1004B\">Freds</font> PVM Helper 2</html>",
 	description = "Provides some auto movement and prayer help for limited set of bosses",
-	tags = Array("pvm", "scurrius", "jad", "prayer", "helper", "maps")
+	tags = Array("pvm", "scurriu	s", "jad", "prayer", "helper", "maps")
 )
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton

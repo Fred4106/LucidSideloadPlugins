@@ -188,6 +188,9 @@ class PvmDebuggerPlugin() extends Plugin {
 //		val spotAnimId = event.getGraphicsObject.getId
 	}
 
+	lazy val darkSquallHelper = {
+		new DarkSquallHelper(client)
+	}
 	override protected def startUp(): Unit = {
 		(new Frame() {
 			contents = debugPanel
@@ -201,10 +204,12 @@ class PvmDebuggerPlugin() extends Plugin {
 			gameStateCached = client.getGameState
 			inventorySnapshot = parseInventory(client.getItemContainer(InventoryID.INVENTORY))
 		})
+		darkSquallHelper.tap(eventBus.register(_))
 	}
 
 	override protected def shutDown(): Unit = {
 		inventorySnapshot = List.empty
 		gameStateCached = GameState.UNKNOWN
+		eventBus.unregister(darkSquallHelper)
 	}
 }
