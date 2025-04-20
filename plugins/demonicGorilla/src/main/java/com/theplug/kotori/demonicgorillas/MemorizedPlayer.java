@@ -24,30 +24,43 @@
  */
 package com.theplug.kotori.demonicgorillas;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
 import net.runelite.api.Hitsplat;
+import net.runelite.api.HitsplatID;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldArea;
 
-class MemorizedPlayer
-{
-	@Getter(AccessLevel.PACKAGE)
-	private Player player;
+import java.util.ArrayList;
+import java.util.List;
 
-	@Getter(AccessLevel.PACKAGE)
-	@Setter(AccessLevel.PACKAGE)
+class MemorizedPlayer {
+	private final Player player;
+	private final List<Hitsplat> recentHitsplats;
 	private WorldArea lastWorldArea;
 
-	@Getter(AccessLevel.PACKAGE)
-	private List<Hitsplat> recentHitsplats;
-
-	MemorizedPlayer(final Player player)
-	{
+	MemorizedPlayer(final Player player) {
 		this.player = player;
 		this.recentHitsplats = new ArrayList<>();
+	}
+
+	WorldArea getLastWorldArea() {
+		return this.lastWorldArea;
+	}
+
+	void addHitsplat(Hitsplat hs) {
+		this.recentHitsplats.add(hs);
+	}
+
+	boolean takenDamage() {
+		return !this.recentHitsplats.isEmpty();
+	}
+
+	boolean blockedDamage() {
+		return this.recentHitsplats.stream()
+			.anyMatch(x -> x.getHitsplatType() == HitsplatID.BLOCK_ME);
+	}
+
+	void onGameTick() {
+		lastWorldArea = player.getWorldArea();
+		recentHitsplats.clear();
 	}
 }

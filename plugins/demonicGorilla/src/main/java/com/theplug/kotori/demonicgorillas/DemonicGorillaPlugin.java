@@ -26,31 +26,47 @@
 package com.theplug.kotori.demonicgorillas;
 
 import com.google.common.collect.ImmutableSet;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-
+import com.lucidplugins.api.utils.CombatUtils;
+import com.lucidplugins.api.utils.InventoryUtils;
+import com.theplug.kotori.demonicgorillas.DemonicGorilla.AttackStyle;
 import ethanApiPlugin.EthanApiPlugin;
-import lombok.AccessLevel;
-import lombok.Getter;
-import net.runelite.api.*;
+import net.runelite.api.AnimationID;
+import net.runelite.api.Client;
+import net.runelite.api.GameState;
+import net.runelite.api.HeadIcon;
+import net.runelite.api.HitsplatID;
+import net.runelite.api.NPC;
+import net.runelite.api.NpcID;
+import net.runelite.api.Player;
+import net.runelite.api.Prayer;
+import net.runelite.api.Projectile;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.HitsplatApplied;
+import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.api.events.PlayerSpawned;
 import net.runelite.api.events.ProjectileMoved;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import org.apache.commons.lang3.ArrayUtils;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @PluginDependency(EthanApiPlugin.class)
 @PluginDescriptor(
@@ -59,112 +75,26 @@ import net.runelite.client.ui.overlay.OverlayManager;
 	description = "Count demonic gorilla attacks and display their next possible attack styles",
 	tags = {"combat", "overlay", "pve", "pvm", "demonics", "gorilla", "ported", "kotori"}
 )
-public class DemonicGorillaPlugin extends Plugin
-{
+public class DemonicGorillaPlugin extends Plugin {
 	private static final Set<Integer> DEMONIC_PROJECTILES = ImmutableSet.of(1302, 1304, 856);
-
+	private static final Set<Integer> REGION_IDS = Set.of(8280, 8536);
+	private static final int DEMONIC_GORILLA_AOE_ATTACK = 7228;
 	@Inject
 	private Client client;
-
 	@Inject
 	private OverlayManager overlayManager;
-
 	@Inject
 	private DemonicGorillaOverlay overlay;
-
 	@Inject
 	private ClientThread clientThread;
-
-	@Getter(AccessLevel.PACKAGE)
 	private Map<NPC, DemonicGorilla> gorillas;
-
 	private List<WorldPoint> recentBoulders;
-
 	private List<PendingGorillaAttack> pendingAttacks;
-
 	private Map<Player, MemorizedPlayer> memorizedPlayers;
 	private ArrayList<Projectile> gorillaProjectiles;
-	private static final Set<Integer> REGION_IDS = Set.of(8280, 8536);
 	private boolean atGorillas;
 
-	private static final int DEMONIC_GORILLA_AOE_ATTACK = 7228;
-
-	@Override
-	protected void startUp()
-	{
-		if (client.getGameState() != GameState.LOGGED_IN || !atDemonicGorillas())
-		{
-			return;
-		}
-		
-		init();
-	}
-
-	@Override
-	protected void shutDown()
-	{
-		atGorillas = false;
-		
-		overlayManager.remove(overlay);
-		gorillas = null;
-		recentBoulders = null;
-		pendingAttacks = null;
-		memorizedPlayers = null;
-		gorillaProjectiles = null;
-	}
-	
-	private void init()
-	{
-		atGorillas = true;
-		
-		overlayManager.add(overlay);
-		gorillas = new HashMap<>();
-		recentBoulders = new ArrayList<>();
-		pendingAttacks = new ArrayList<>();
-		gorillaProjectiles = new ArrayList<>();
-		memorizedPlayers = new HashMap<>();
-		clientThread.invoke(this::reset); // Updates the list of gorillas and players
-	}
-
-	private void clear()
-	{
-		recentBoulders.clear();
-		pendingAttacks.clear();
-		memorizedPlayers.clear();
-		gorillas.clear();
-	}
-
-	private void reset()
-	{
-		recentBoulders.clear();
-		pendingAttacks.clear();
-		resetGorillas();
-		resetPlayers();
-	}
-
-	private void resetGorillas()
-	{
-		gorillas.clear();
-		for (NPC npc : client.getNpcs())
-		{
-			if (isNpcGorilla(npc.getId()))
-			{
-				gorillas.put(npc, new DemonicGorilla(npc, client));
-			}
-		}
-	}
-
-	private void resetPlayers()
-	{
-		memorizedPlayers.clear();
-		for (Player player : client.getPlayers())
-		{
-			memorizedPlayers.put(player, new MemorizedPlayer(player));
-		}
-	}
-
-	private static boolean isNpcGorilla(int npcId)
-	{
+	private static boolean isNpcGorilla(int npcId) {
 		return npcId == NpcID.DEMONIC_GORILLA ||
 			npcId == NpcID.DEMONIC_GORILLA_7145 ||
 			npcId == NpcID.DEMONIC_GORILLA_7146 ||
@@ -173,49 +103,96 @@ public class DemonicGorillaPlugin extends Plugin
 			npcId == NpcID.DEMONIC_GORILLA_7149;
 	}
 
-	private void checkGorillaAttackStyleSwitch(DemonicGorilla gorilla, final DemonicGorilla.AttackStyle... protectedStyles)
-	{
+	@Override
+	protected void startUp() {
+		if (client.getGameState() != GameState.LOGGED_IN || !atDemonicGorillas()) {
+			return;
+		}
+
+		init();
+	}
+
+	@Override
+	protected void shutDown() {
+		atGorillas = false;
+
+		overlayManager.remove(overlay);
+		gorillas = null;
+		recentBoulders = null;
+		pendingAttacks = null;
+		memorizedPlayers = null;
+		gorillaProjectiles = null;
+	}
+
+	private void init() {
+		atGorillas = true;
+
+		overlayManager.add(overlay);
+		gorillas = new HashMap<>();
+		recentBoulders = new ArrayList<>();
+		pendingAttacks = new ArrayList<>();
+		gorillaProjectiles = new ArrayList<>();
+		memorizedPlayers = new HashMap<>();
+		clientThread.invoke(() -> {
+			recentBoulders.clear();
+			pendingAttacks.clear();
+			resetGorillas();
+			resetPlayers();
+		}); // Updates the list of gorillas and players
+	}
+
+	private void resetGorillas() {
+		gorillas.clear();
+		for (NPC npc : client.getNpcs()) {
+			if (isNpcGorilla(npc.getId())) {
+				gorillas.put(npc, new DemonicGorilla(npc));
+			}
+		}
+	}
+
+	private void resetPlayers() {
+		memorizedPlayers.clear();
+		for (Player player : client.getPlayers()) {
+			memorizedPlayers.put(player, new MemorizedPlayer(player));
+		}
+	}
+
+	private void checkGorillaAttackStyleSwitch(DemonicGorilla gorilla, final AttackStyle... protectedStyles) {
 		if (gorilla.getAttacksUntilSwitch() <= 0 ||
-			gorilla.getNextPosibleAttackStyles().isEmpty())
-		{
-			gorilla.setNextPosibleAttackStyles(Arrays
-				.stream(DemonicGorilla.ALL_REGULAR_ATTACK_STYLES)
-				.filter(x -> Arrays.stream(protectedStyles).noneMatch(y -> x == y))
-				.collect(Collectors.toList()));
-			gorilla.setAttacksUntilSwitch(DemonicGorilla.ATTACKS_PER_SWITCH);
+			gorilla.getNextPossibleAttackStyles().isEmpty()) {
+
+			gorilla.setNextPossibleAttackStyles(AttackStyle.MELEE, AttackStyle.RANGED, AttackStyle.MAGIC)
+				.filterNextPossibleAttackStylesContains(x -> !ArrayUtils.contains(protectedStyles, x));
+
+			gorilla.resetAttacksUntilSwitch();
 			gorilla.setChangedAttackStyleThisTick(true);
 		}
 	}
 
-	private DemonicGorilla.AttackStyle getProtectedStyle(Player player)
-	{
+	private AttackStyle getProtectedStyle(Player player) {
 		HeadIcon headIcon = player.getOverheadIcon();
-		if (headIcon == null)
-		{
+		if (headIcon == null) {
 			return null;
 		}
-		switch (headIcon)
-		{
+		switch (headIcon) {
 			case MELEE:
-				return DemonicGorilla.AttackStyle.MELEE;
+				return AttackStyle.MELEE;
 			case RANGED:
-				return DemonicGorilla.AttackStyle.RANGED;
+				return AttackStyle.RANGED;
 			case MAGIC:
-				return DemonicGorilla.AttackStyle.MAGIC;
+				return AttackStyle.MAGIC;
 			default:
 				return null;
 		}
 	}
 
-	private void onGorillaAttack(DemonicGorilla gorilla, final DemonicGorilla.AttackStyle attackStyle)
-	{
+	private void onGorillaAttack(DemonicGorilla gorilla, final AttackStyle attackStyle) {
 		gorilla.setInitiatedCombat(true);
 
 		Player target = (Player) gorilla.getNpc().getInteracting();
 
-		DemonicGorilla.AttackStyle protectedStyle = null;
-		if (target != null)
-		{
+		AttackStyle protectedStyle = null;
+		if (target != null) {
 			protectedStyle = getProtectedStyle(target);
 		}
 		boolean correctPrayer =
@@ -223,46 +200,33 @@ public class DemonicGorillaPlugin extends Plugin
 				(attackStyle != null &&
 					attackStyle.equals(protectedStyle));
 
-		if (attackStyle == DemonicGorilla.AttackStyle.BOULDER)
-		{
+		if (attackStyle == AttackStyle.BOULDER) {
 			// The gorilla can't throw boulders when it's meleeing
-			gorilla.setNextPosibleAttackStyles(gorilla
-				.getNextPosibleAttackStyles()
-				.stream()
-				.filter(x -> x != DemonicGorilla.AttackStyle.MELEE)
-				.collect(Collectors.toList()));
-		}
-		else
-		{
-			if (correctPrayer)
-			{
-				gorilla.setAttacksUntilSwitch(gorilla.getAttacksUntilSwitch() - 1);
-			}
-			else
-			{
+			gorilla.filterNextPossibleAttackStylesContains(x -> x != AttackStyle.MELEE);
+//			gorilla.setNextPossibleAttackStyles(gorilla.getNextPossibleAttackStyles().stream().filter(x -> x != DemonicGorilla.AttackStyle.MELEE).collect(Collectors.toUnmodifiableList()));
+		} else {
+			if (correctPrayer) {
+				gorilla.decrementAttacksUntilSwitch();
+//				gorilla.setAttacksUntilSwitch(gorilla.getAttacksUntilSwitch() - 1);
+			} else {
 				// We're not sure if the attack will hit a 0 or not,
 				// so we don't know if we should decrease the counter or not,
 				// so we keep track of the attack here until the damage splat
 				// has appeared on the player.
 
 				int damagesOnTick = client.getTickCount();
-				if (attackStyle == DemonicGorilla.AttackStyle.MAGIC)
-				{
+				if (attackStyle == AttackStyle.MAGIC) {
 					MemorizedPlayer mp = memorizedPlayers.get(target);
 					WorldArea lastPlayerArea = mp.getLastWorldArea();
-					if (lastPlayerArea != null)
-					{
+					if (lastPlayerArea != null) {
 						int dist = gorilla.getNpc().getWorldArea().distanceTo(lastPlayerArea);
 						damagesOnTick += (dist + DemonicGorilla.PROJECTILE_MAGIC_DELAY) /
 							DemonicGorilla.PROJECTILE_MAGIC_SPEED;
 					}
-				}
-				else if (attackStyle == DemonicGorilla.AttackStyle.RANGED)
-				{
+				} else if (attackStyle == AttackStyle.RANGED) {
 					MemorizedPlayer mp = memorizedPlayers.get(target);
 					WorldArea lastPlayerArea = mp.getLastWorldArea();
-					if (lastPlayerArea != null)
-					{
+					if (lastPlayerArea != null) {
 						int dist = gorilla.getNpc().getWorldArea().distanceTo(lastPlayerArea);
 						damagesOnTick += (dist + DemonicGorilla.PROJECTILE_RANGED_DELAY) /
 							DemonicGorilla.PROJECTILE_RANGED_SPEED;
@@ -271,24 +235,25 @@ public class DemonicGorillaPlugin extends Plugin
 				pendingAttacks.add(new PendingGorillaAttack(gorilla, attackStyle, target, damagesOnTick));
 			}
 
-			gorilla.setNextPosibleAttackStyles(gorilla
-				.getNextPosibleAttackStyles()
-				.stream()
-				.filter(x -> x == attackStyle)
-				.collect(Collectors.toList()));
+			gorilla.filterNextPossibleAttackStylesContains(x -> x == attackStyle);
 
-			if (gorilla.getNextPosibleAttackStyles().isEmpty())
-			{
+			if (gorilla.getNextPossibleAttackStyles().isEmpty()) {
 				// Sometimes the gorilla can switch attack style before it's supposed to
 				// if someone was fighting it earlier and then left, so we just
 				// reset the counter in that case.
 
-				gorilla.setNextPosibleAttackStyles(Arrays
-					.stream(DemonicGorilla.ALL_REGULAR_ATTACK_STYLES)
-					.filter(x -> x == attackStyle)
-					.collect(Collectors.toList()));
-				gorilla.setAttacksUntilSwitch(DemonicGorilla.ATTACKS_PER_SWITCH -
-					(correctPrayer ? 1 : 0));
+				gorilla.setNextPossibleAttackStyles(attackStyle);
+//				gorilla.filterNextPossibleAttackStylesContains(x -> x == attackStyle);
+//				gorilla.setNextPossibleAttackStyles(Arrays
+//					.stream(DemonicGorilla.ALL_REGULAR_ATTACK_STYLES)
+//					.filter(x -> x == attackStyle)
+//					.collect(Collectors.toUnmodifiableList()));
+//
+
+				gorilla.resetAttacksUntilSwitch();
+				if (correctPrayer) {
+					gorilla.decrementAttacksUntilSwitch();
+				}
 			}
 		}
 
@@ -298,23 +263,171 @@ public class DemonicGorillaPlugin extends Plugin
 		gorilla.setNextAttackTick(tickCounter + DemonicGorilla.ATTACK_RATE);
 	}
 
-	private void checkGorillaAttacks()
-	{
+	private DemonicGorilla targetGorilla = null;
+
+	@Subscribe
+	private void onInteractionChanged(InteractingChanged event) {
+		if (event.getSource() == client.getLocalPlayer() && event.getTarget() != null) {
+			if (event.getTarget() instanceof NPC) {
+				targetGorilla = gorillas.get(((NPC) event.getTarget()));
+			} else {
+				targetGorilla = null;
+			}
+		}
+	}
+
+	@Subscribe
+	private void onProjectileMoved(ProjectileMoved event) {
+		if (!atGorillas) {
+			return;
+		}
+
+		final Projectile projectile = event.getProjectile();
+		final int projectileId = projectile.getId();
+
+		if (!DEMONIC_PROJECTILES.contains(projectileId)) {
+			return;
+		}
+
+		if (gorillaProjectiles.contains(projectile)) {
+			return;
+		}
+		gorillaProjectiles.add(projectile);
+
+		final WorldPoint loc = WorldPoint.fromLocal(client.getTopLevelWorldView(), projectile.getX1(), projectile.getY1(), client.getTopLevelWorldView().getPlane());
+
+		if (projectileId == 856) {
+			recentBoulders.add(loc);
+		} else {
+			for (DemonicGorilla gorilla : gorillas.values()) {
+				if (gorilla.getNpc().getWorldLocation().distanceTo(loc) == 0) {
+					gorilla.setRecentProjectileId(projectile.getId());
+				}
+			}
+		}
+	}
+
+	private void checkPendingAttacks() {
+
+	}
+
+	@Subscribe
+	private void onHitsplatApplied(HitsplatApplied event) {
+		if (!atGorillas || gorillas.isEmpty()) {
+			return;
+		}
+
+		if (event.getActor() instanceof Player) {
+			Player player = (Player) event.getActor();
+			MemorizedPlayer mp = memorizedPlayers.get(player);
+			if (mp != null) {
+				mp.addHitsplat(event.getHitsplat());
+			}
+		} else if (event.getActor() instanceof NPC) {
+			DemonicGorilla gorilla = gorillas.get((NPC) event.getActor());
+			int hitsplatType = event.getHitsplat().getHitsplatType();
+			if (gorilla != null && (hitsplatType == HitsplatID.BLOCK_ME ||
+				hitsplatType == HitsplatID.DAMAGE_ME)) {
+				gorilla.setTakenDamageRecently(true);
+			}
+		}
+	}
+
+	@Subscribe
+	private void onGameStateChanged(GameStateChanged event) {
+		final GameState gs = event.getGameState();
+
+		switch (gs) {
+			case LOGGED_IN:
+				if (atDemonicGorillas()) {
+					if (!atGorillas) {
+						init();
+					}
+				} else {
+					if (atGorillas) {
+						shutDown();
+					}
+				}
+				break;
+			case HOPPING:
+			case LOGGING_IN:
+			case CONNECTION_LOST:
+			case LOGIN_SCREEN:
+				if (atGorillas) {
+					shutDown();
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	@Subscribe
+	private void onPlayerSpawned(PlayerSpawned event) {
+		if (!atGorillas || gorillas.isEmpty()) {
+			return;
+		}
+
+		Player player = event.getPlayer();
+		memorizedPlayers.put(player, new MemorizedPlayer(player));
+	}
+
+	@Subscribe
+	private void onPlayerDespawned(PlayerDespawned event) {
+		if (!atGorillas || gorillas.isEmpty()) {
+			return;
+		}
+
+		memorizedPlayers.remove(event.getPlayer());
+	}
+
+	@Subscribe
+	private void onNpcSpawned(NpcSpawned event) {
+		if (!atGorillas) {
+			return;
+		}
+		NPC npc = event.getNpc();
+		if (isNpcGorilla(npc.getId())) {
+			if (gorillas.isEmpty()) {
+				// Players are not kept track of when there are no gorillas in
+				// memory, so we need to add the players that were already in memory.
+				resetPlayers();
+			}
+
+			gorillas.put(npc, new DemonicGorilla(npc));
+		}
+	}
+
+	@Subscribe
+	private void onNpcDespawned(NpcDespawned event) {
+		if (!atGorillas) {
+			return;
+		}
+		if (gorillas.remove(event.getNpc()) != null && gorillas.isEmpty()) {
+			recentBoulders.clear();
+			pendingAttacks.clear();
+			memorizedPlayers.clear();
+			gorillas.clear();
+		}
+	}
+
+	@Subscribe
+	private void onGameTick(GameTick event) {
+		if (!atGorillas) {
+			return;
+		}
+		//region checkGorillaAttacks
 		int tickCounter = client.getTickCount();
-		for (DemonicGorilla gorilla : gorillas.values())
-		{
+		for (DemonicGorilla gorilla : gorillas.values()) {
 			Player interacting = (Player) gorilla.getNpc().getInteracting();
 			MemorizedPlayer mp = memorizedPlayers.get(interacting);
 
-			if (gorilla.getLastTickInteracting() != null && interacting == null)
-			{
+			if (gorilla.getLastTickInteracting() != null && interacting == null) {
 				gorilla.setInitiatedCombat(false);
-			}
-			else if (mp != null && mp.getLastWorldArea() != null &&
+			} else if (mp != null && mp.getLastWorldArea() != null &&
 				!gorilla.isInitiatedCombat() &&
 				tickCounter < gorilla.getNextAttackTick() &&
-				gorilla.getNpc().getWorldArea().isInMeleeDistance(mp.getLastWorldArea()))
-			{
+				gorilla.getNpc().getWorldArea().isInMeleeDistance(mp.getLastWorldArea())) {
 				gorilla.setInitiatedCombat(true);
 				gorilla.setNextAttackTick(tickCounter + 1);
 			}
@@ -322,92 +435,65 @@ public class DemonicGorillaPlugin extends Plugin
 			int animationId = gorilla.getNpc().getAnimation();
 
 			if (gorilla.isTakenDamageRecently() &&
-				tickCounter >= gorilla.getNextAttackTick() + 4)
-			{
+				tickCounter >= gorilla.getNextAttackTick() + 4) {
 				// The gorilla was flinched, so its next attack gets delayed
 				gorilla.setNextAttackTick(tickCounter + DemonicGorilla.ATTACK_RATE / 2);
 				gorilla.setInitiatedCombat(true);
 
 				if (mp != null && mp.getLastWorldArea() != null &&
 					!gorilla.getNpc().getWorldArea().isInMeleeDistance(mp.getLastWorldArea()) &&
-					!gorilla.getNpc().getWorldArea().intersectsWith(mp.getLastWorldArea()))
-				{
+					!gorilla.getNpc().getWorldArea().intersectsWith(mp.getLastWorldArea())) {
 					// Gorillas stop meleeing when they get flinched
 					// and the target isn't in melee distance
-					gorilla.setNextPosibleAttackStyles(gorilla
-						.getNextPosibleAttackStyles()
-						.stream()
-						.filter(x -> x != DemonicGorilla.AttackStyle.MELEE)
-						.collect(Collectors.toList()));
-					if (interacting != null)
-					{
-						checkGorillaAttackStyleSwitch(gorilla, DemonicGorilla.AttackStyle.MELEE,
+					gorilla.filterNextPossibleAttackStylesContains(x -> x != AttackStyle.MELEE);
+					if (interacting != null) {
+						checkGorillaAttackStyleSwitch(gorilla, AttackStyle.MELEE,
 							getProtectedStyle(interacting));
 					}
 				}
-			}
-			else if (animationId != gorilla.getLastTickAnimation())
-			{
-				if (animationId == AnimationID.DEMONIC_GORILLA_MELEE_ATTACK)
-				{
-					onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.MELEE);
-				}
-				else if (animationId == AnimationID.DEMONIC_GORILLA_MAGIC_ATTACK)
-				{
-					onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.MAGIC);
-				}
-				else if (animationId == AnimationID.DEMONIC_GORILLA_RANGED_ATTACK)
-				{
-					onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.RANGED);
-				}
-				else if (animationId == DEMONIC_GORILLA_AOE_ATTACK && interacting != null &&
-					gorilla.getNextPosibleAttackStyles().stream().anyMatch(x -> x == DemonicGorilla.AttackStyle.MAGIC || x == DemonicGorilla.AttackStyle.RANGED))
-				{
+			} else if (animationId != gorilla.getLastTickAnimation()) {
+				if (animationId == AnimationID.DEMONIC_GORILLA_MELEE_ATTACK) {
+					onGorillaAttack(gorilla, AttackStyle.MELEE);
+				} else if (animationId == AnimationID.DEMONIC_GORILLA_MAGIC_ATTACK) {
+					onGorillaAttack(gorilla, AttackStyle.MAGIC);
+				} else if (animationId == AnimationID.DEMONIC_GORILLA_RANGED_ATTACK) {
+					onGorillaAttack(gorilla, AttackStyle.RANGED);
+				} else if (animationId == DEMONIC_GORILLA_AOE_ATTACK && interacting != null &&
+					gorilla.nextPossibleAttackStylesContains(x -> x == AttackStyle.MAGIC || x == AttackStyle.RANGED)
+				) {
 					// Note that AoE animation is the same as prayer switch animation
 					// so we need to check if the prayer was switched or not.
 					// It also does this animation when it spawns, so
 					// we need the interacting != null check.
 
-					if (gorilla.getOverheadIcon() == gorilla.getLastTickOverheadIcon())
-					{
+					if (gorilla.getOverheadIcon() == gorilla.getLastTickOverheadIcon()) {
 						// Confirmed, the gorilla used the AoE attack
-						onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.BOULDER);
-					}
-					else
-					{
-						if (tickCounter >= gorilla.getNextAttackTick())
-						{
-							gorilla.setChangedPrayerThisTick(true);
+						onGorillaAttack(gorilla, AttackStyle.BOULDER);
+					} else {
+						if (tickCounter >= gorilla.getNextAttackTick()) {
+//							gorilla.setChangedPrayerThisTick(true);
 
 							// This part is more complicated because the gorilla may have
 							// used an attack, but the prayer switch animation takes
 							// priority over normal attack animations.
 
 							int projectileId = gorilla.getRecentProjectileId();
-							if (projectileId == 1304)
-							{
-								onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.MAGIC);
-							}
-							else if (projectileId == 1302)
-							{
-								onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.RANGED);
-							}
-							else if (mp != null)
-							{
+							if (projectileId == 1304) {
+								onGorillaAttack(gorilla, AttackStyle.MAGIC);
+							} else if (projectileId == 1302) {
+								onGorillaAttack(gorilla, AttackStyle.RANGED);
+							} else if (mp != null) {
 								WorldArea lastPlayerArea = mp.getLastWorldArea();
 								if (lastPlayerArea != null && recentBoulders.stream()
-									.anyMatch(x -> x.distanceTo(lastPlayerArea) == 0))
-								{
+									.anyMatch(x -> x.distanceTo(lastPlayerArea) == 0)) {
 									// A boulder started falling on the gorillas target,
 									// so we assume it was the gorilla who shot it
-									onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.BOULDER);
-								}
-								else if (!mp.getRecentHitsplats().isEmpty())
-								{
+									onGorillaAttack(gorilla, AttackStyle.BOULDER);
+								} else if (mp.takenDamage()) {
 									// It wasn't any of the three other attacks,
 									// but the player took damage, so we assume
 									// it's a melee attack
-									onGorillaAttack(gorilla, DemonicGorilla.AttackStyle.MELEE);
+									onGorillaAttack(gorilla, AttackStyle.MELEE);
 								}
 							}
 						}
@@ -415,22 +501,19 @@ public class DemonicGorillaPlugin extends Plugin
 						// The next attack tick is always delayed if the
 						// gorilla switched prayer
 						gorilla.setNextAttackTick(tickCounter + DemonicGorilla.ATTACK_RATE);
-						gorilla.setChangedPrayerThisTick(true);
+//						gorilla.setChangedPrayerThisTick(true);
 					}
 				}
 			}
 
-			if (gorilla.getDisabledMeleeMovementForTicks() > 0)
-			{
+			if (gorilla.getDisabledMeleeMovementForTicks() > 0) {
 				gorilla.setDisabledMeleeMovementForTicks(gorilla.getDisabledMeleeMovementForTicks() - 1);
-			}
-			else if (gorilla.isInitiatedCombat() &&
+			} else if (gorilla.isInitiatedCombat() &&
 				gorilla.getNpc().getInteracting() != null &&
 				!gorilla.isChangedAttackStyleThisTick() &&
-				gorilla.getNextPosibleAttackStyles().size() >= 2 &&
-				gorilla.getNextPosibleAttackStyles().stream()
-					.anyMatch(x -> x == DemonicGorilla.AttackStyle.MELEE))
-			{
+				gorilla.getNextPossibleAttackStyles().size() >= 2 &&
+				gorilla.nextPossibleAttackStylesContains(x -> x == AttackStyle.MELEE)
+			) {
 				// If melee is a possibility, we can check if the gorilla
 				// is or isn't moving toward the player to determine if
 				// it is actually attempting to melee or not.
@@ -438,9 +521,8 @@ public class DemonicGorillaPlugin extends Plugin
 				// because otherwise it attempts to travel to melee
 				// distance before attacking its target.
 
-				if (mp != null && mp.getLastWorldArea() != null && gorilla.getLastWorldArea() != null)
-				{
-					WorldArea predictedNewArea = com.theplug.kotori.demonicgorillas.WorldAreaExtended.calculateNextTravellingPoint(
+				if (mp != null && mp.getLastWorldArea() != null && gorilla.getLastWorldArea() != null) {
+					WorldArea predictedNewArea = WorldAreaExtended.calculateNextTravellingPoint(
 						client, gorilla.getLastWorldArea(), mp.getLastWorldArea(), true, x ->
 						{
 							// Gorillas can't normally walk through other gorillas
@@ -448,8 +530,7 @@ public class DemonicGorillaPlugin extends Plugin
 							final WorldArea area1 = new WorldArea(x, 1, 1);
 							return gorillas.values().stream().noneMatch(y ->
 							{
-								if (y == gorilla)
-								{
+								if (y == gorilla) {
 									return false;
 								}
 								final WorldArea area2 =
@@ -468,319 +549,132 @@ public class DemonicGorillaPlugin extends Plugin
 							// walkable, but I didn't feel like it's necessary to handle
 							// that special case as it should rarely happen.
 						});
-					if (predictedNewArea != null)
-					{
+					if (predictedNewArea != null) {
 						int distance = gorilla.getNpc().getWorldArea().distanceTo(mp.getLastWorldArea());
 						WorldPoint predictedMovement = predictedNewArea.toWorldPoint();
-						if (distance <= DemonicGorilla.MAX_ATTACK_RANGE && mp.getLastWorldArea().hasLineOfSightTo(client.getTopLevelWorldView(), gorilla.getLastWorldArea()))
-						{
-							if (predictedMovement.distanceTo(gorilla.getLastWorldArea().toWorldPoint()) != 0)
-							{
-								if (predictedMovement.distanceTo(gorilla.getNpc().getWorldLocation()) == 0)
-								{
-									gorilla.setNextPosibleAttackStyles(gorilla
-										.getNextPosibleAttackStyles()
-										.stream()
-										.filter(x -> x == DemonicGorilla.AttackStyle.MELEE)
-										.collect(Collectors.toList()));
+						if (distance <= DemonicGorilla.MAX_ATTACK_RANGE && mp.getLastWorldArea().hasLineOfSightTo(client.getTopLevelWorldView(), gorilla.getLastWorldArea())) {
+							if (predictedMovement.distanceTo(gorilla.getLastWorldArea().toWorldPoint()) != 0) {
+								if (predictedMovement.distanceTo(gorilla.getNpc().getWorldLocation()) == 0) {
+									gorilla.filterNextPossibleAttackStylesContains(x -> x == AttackStyle.MELEE);
+//									gorilla.setNextPossibleAttackStyles(gorilla
+//										.getNextPossibleAttackStyles()
+//										.stream()
+//										.filter(x -> x == DemonicGorilla.AttackStyle.MELEE)
+//										.collect(Collectors.toUnmodifiableList()));
+								} else {
+									gorilla.filterNextPossibleAttackStylesContains(x -> x != AttackStyle.MELEE);
+//									gorilla.setNextPossibleAttackStyles(gorilla
+//										.getNextPossibleAttackStyles()
+//										.stream()
+//										.filter(x -> x != DemonicGorilla.AttackStyle.MELEE)
+//										.collect(Collectors.toUnmodifiableList()));
 								}
-								else
-								{
-									gorilla.setNextPosibleAttackStyles(gorilla
-										.getNextPosibleAttackStyles()
-										.stream()
-										.filter(x -> x != DemonicGorilla.AttackStyle.MELEE)
-										.collect(Collectors.toList()));
-								}
-							}
-							else if (tickCounter >= gorilla.getNextAttackTick() &&
+							} else if (tickCounter >= gorilla.getNextAttackTick() &&
 								gorilla.getRecentProjectileId() == -1 &&
-								recentBoulders.stream().noneMatch(x -> x.distanceTo(mp.getLastWorldArea()) == 0))
-							{
-								gorilla.setNextPosibleAttackStyles(gorilla
-									.getNextPosibleAttackStyles()
-									.stream()
-									.filter(x -> x == DemonicGorilla.AttackStyle.MELEE)
-									.collect(Collectors.toList()));
+								recentBoulders.stream().noneMatch(x -> x.distanceTo(mp.getLastWorldArea()) == 0)) {
+								gorilla.filterNextPossibleAttackStylesContains(x -> x == AttackStyle.MELEE);
+//								gorilla.setNextPossibleAttackStyles(gorilla
+//									.getNextPossibleAttackStyles()
+//									.stream()
+//									.filter(x -> x == DemonicGorilla.AttackStyle.MELEE)
+//									.collect(Collectors.toUnmodifiableList()));
 							}
 						}
 					}
 				}
 			}
 
-			if (gorilla.isTakenDamageRecently())
-			{
-				gorilla.setInitiatedCombat(true);
-			}
-
-			if (gorilla.getOverheadIcon() != gorilla.getLastTickOverheadIcon())
-			{
-				if (gorilla.isChangedAttackStyleLastTick() ||
-					gorilla.isChangedAttackStyleThisTick())
-				{
-					// Apparently if it changes attack style and changes
-					// prayer on the same tick or 1 tick apart, it won't
-					// be able to move for the next 2 ticks if it attempts
-					// to melee
-					gorilla.setDisabledMeleeMovementForTicks(2);
-				}
-				else
-				{
-					// If it didn't change attack style lately,
-					// it's only for the next 1 tick
-					gorilla.setDisabledMeleeMovementForTicks(1);
-				}
-			}
-			gorilla.setLastTickAnimation(gorilla.getNpc().getAnimation());
-			gorilla.setLastWorldArea(gorilla.getNpc().getWorldArea());
-			gorilla.setLastTickInteracting(gorilla.getNpc().getInteracting());
-			gorilla.setTakenDamageRecently(false);
-			gorilla.setChangedPrayerThisTick(false);
-			gorilla.setChangedAttackStyleLastTick(gorilla.isChangedAttackStyleThisTick());
-			gorilla.setChangedAttackStyleThisTick(false);
-			gorilla.setLastTickOverheadIcon(gorilla.getOverheadIcon());
-			gorilla.setRecentProjectileId(-1);
+			gorilla.onGameTick();
 		}
-	}
+		//endregion
 
-	@Subscribe
-	private void onProjectileMoved(ProjectileMoved event)
-	{
-		if (!atGorillas)
-		{
-			return;
-		}
-		
-		final Projectile projectile = event.getProjectile();
-		final int projectileId = projectile.getId();
-
-		if (!DEMONIC_PROJECTILES.contains(projectileId))
-		{
-			return;
-		}
-
-		if (gorillaProjectiles.contains(projectile))
-		{
-			return;
-		}
-		gorillaProjectiles.add(projectile);
-
-		final WorldPoint loc = WorldPoint.fromLocal(client.getTopLevelWorldView(), projectile.getX1(), projectile.getY1(), client.getTopLevelWorldView().getPlane());
-
-		if (projectileId == 856)
-		{
-			recentBoulders.add(loc);
-		}
-		else
-		{
-			for (DemonicGorilla gorilla : gorillas.values())
-			{
-				if (gorilla.getNpc().getWorldLocation().distanceTo(loc) == 0)
-				{
-					gorilla.setRecentProjectileId(projectile.getId());
-				}
-			}
-		}
-	}
-
-	private void checkPendingAttacks()
-	{
+		//region checkPendingAttacks
 		Iterator<PendingGorillaAttack> it = pendingAttacks.iterator();
-		int tickCounter = client.getTickCount();
-		while (it.hasNext())
-		{
+		while (it.hasNext()) {
 			PendingGorillaAttack attack = it.next();
-			if (tickCounter >= attack.getFinishesOnTick())
-			{
-				boolean shouldDecreaseCounter = false;
+			if (tickCounter >= attack.getFinishesOnTick()) {
 				DemonicGorilla gorilla = attack.getAttacker();
 				MemorizedPlayer target = memorizedPlayers.get(attack.getTarget());
-				if (target == null)
-				{
-					// Player went out of memory, so assume the hit was a 0
-					shouldDecreaseCounter = true;
-				}
-				else if (target.getRecentHitsplats().isEmpty())
-				{
-					// No hitsplats was applied. This may happen in some cases
-					// where the player was out of memory while the
-					// projectile was travelling. So we assume the hit was a 0.
-					shouldDecreaseCounter = true;
-				}
-				else if (target.getRecentHitsplats().stream()
-					.anyMatch(x -> x.getHitsplatType() == HitsplatID.BLOCK_ME))
-				{
-					// A blue hitsplat appeared, so we assume the gorilla hit a 0
-					shouldDecreaseCounter = true;
-				}
-
-				if (shouldDecreaseCounter)
-				{
-					gorilla.setAttacksUntilSwitch(gorilla.getAttacksUntilSwitch() - 1);
+				if (target == null || !target.takenDamage() || target.blockedDamage()) {
+					gorilla.decrementAttacksUntilSwitch();
 					checkGorillaAttackStyleSwitch(gorilla);
 				}
 
 				it.remove();
 			}
 		}
-	}
+		//endregions
 
-	private void updatePlayers()
-	{
-		for (MemorizedPlayer mp : memorizedPlayers.values())
-		{
-			mp.setLastWorldArea(mp.getPlayer().getWorldArea());
-			mp.getRecentHitsplats().clear();
+		for (MemorizedPlayer mp : memorizedPlayers.values()) {
+			mp.onGameTick();
 		}
-	}
-
-	@Subscribe
-	private void onHitsplatApplied(HitsplatApplied event)
-	{
-		if (!atGorillas || gorillas.isEmpty())
-		{
-			return;
-		}
-
-		if (event.getActor() instanceof Player)
-		{
-			Player player = (Player) event.getActor();
-			MemorizedPlayer mp = memorizedPlayers.get(player);
-			if (mp != null)
-			{
-				mp.getRecentHitsplats().add(event.getHitsplat());
-			}
-		}
-		else if (event.getActor() instanceof NPC)
-		{
-			DemonicGorilla gorilla = gorillas.get((NPC) event.getActor());
-			int hitsplatType = event.getHitsplat().getHitsplatType();
-			if (gorilla != null && (hitsplatType == HitsplatID.BLOCK_ME ||
-				hitsplatType == HitsplatID.DAMAGE_ME))
-			{
-				gorilla.setTakenDamageRecently(true);
-			}
-		}
-	}
-
-	@Subscribe
-	private void onGameStateChanged(GameStateChanged event)
-	{
-		final GameState gs = event.getGameState();
-		
-		switch(gs)
-		{
-			case LOGGED_IN:
-				if (atDemonicGorillas())
-				{
-					if (!atGorillas)
-					{
-						init();
-					}
-				}
-				else
-				{
-					if (atGorillas)
-					{
-						shutDown();
-					}
-				}
-				break;
-			case HOPPING:
-			case LOGGING_IN:
-			case CONNECTION_LOST:
-			case LOGIN_SCREEN:
-				if (atGorillas)
-				{
-					shutDown();
-				}
-				break;
-			default:
-				break;
-		}
-	}
-
-	@Subscribe
-	private void onPlayerSpawned(PlayerSpawned event)
-	{
-		if (!atGorillas || gorillas.isEmpty())
-		{
-			return;
-		}
-
-		Player player = event.getPlayer();
-		memorizedPlayers.put(player, new MemorizedPlayer(player));
-	}
-
-	@Subscribe
-	private void onPlayerDespawned(PlayerDespawned event)
-	{
-		if (!atGorillas || gorillas.isEmpty())
-		{
-			return;
-		}
-
-		memorizedPlayers.remove(event.getPlayer());
-	}
-
-	@Subscribe
-	private void onNpcSpawned(NpcSpawned event)
-	{
-		if (!atGorillas)
-		{
-			return;
-		}
-		NPC npc = event.getNpc();
-		if (isNpcGorilla(npc.getId()))
-		{
-			if (gorillas.isEmpty())
-			{
-				// Players are not kept track of when there are no gorillas in
-				// memory, so we need to add the players that were already in memory.
-				resetPlayers();
-			}
-
-			gorillas.put(npc, new DemonicGorilla(npc, client));
-		}
-	}
-
-	@Subscribe
-	private void onNpcDespawned(NpcDespawned event)
-	{
-		if (!atGorillas)
-		{
-			return;
-		}
-		if (gorillas.remove(event.getNpc()) != null && gorillas.isEmpty())
-		{
-			clear();
-		}
-	}
-
-	@Subscribe
-	private void onGameTick(GameTick event)
-	{
-		if (!atGorillas)
-		{
-			return;
-		}
-		checkGorillaAttacks();
-		checkPendingAttacks();
-		updatePlayers();
 		recentBoulders.clear();
-		clearProjectileArray();
+		gorillaProjectiles.removeIf(p -> p.getRemainingCycles() <= 0);
+
+		if (targetGorilla != null && gorillas.containsValue(targetGorilla)) {
+			var playerProtectedAgainst = getProtectedStyle(client.getLocalPlayer());
+			if (targetGorilla.getNextPossibleAttackStyles().size() == 1) {
+				var usingAttackStyle = targetGorilla.getNextPossibleAttackStyles().get(0);
+				if (playerProtectedAgainst != usingAttackStyle) {
+					switch (usingAttackStyle) {
+						case MAGIC:
+							CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+							break;
+						case MELEE:
+							CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE);
+							break;
+						case RANGED:
+							CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MISSILES);
+							break;
+					}
+				}
+			} else if (targetGorilla.getNextPossibleAttackStyles().contains(AttackStyle.MELEE)) {
+				targetGorilla.getNextPossibleAttackStyles().stream().filter(x -> x != AttackStyle.MELEE).filter(x -> x != playerProtectedAgainst).findFirst().ifPresent(ats -> {
+					switch (ats) {
+						case MAGIC:
+							CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+							break;
+						case RANGED:
+							CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MISSILES);
+							break;
+					}
+				});
+			} else if (playerProtectedAgainst != AttackStyle.MAGIC) {
+				CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+			}
+
+			switch (targetGorilla.getOverheadIcon()) {
+				case MELEE:
+					if (InventoryUtils.contains(ItemID.BOW_OF_FAERDHINEN_INFINITE)) {
+						InventoryUtils.wieldItem(ItemID.BOW_OF_FAERDHINEN_INFINITE);
+					}
+					break;
+				case RANGED:
+					if (InventoryUtils.contains(ItemID.ARCLIGHT)) {
+						InventoryUtils.wieldItem(ItemID.ARCLIGHT);
+					}
+					break;
+				default:
+			}
+		} else {
+			targetGorilla = null;
+		}
 	}
 
-	private void clearProjectileArray()
-	{
-		gorillaProjectiles.removeIf(p -> p.getRemainingCycles() <= 0);
-	}
-	public int getPlayerRegionID()
-	{
+
+	public int getPlayerRegionID() {
 		return WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation()).getRegionID();
 	}
-	private boolean atDemonicGorillas()
-	{
+
+	private boolean atDemonicGorillas() {
 		return REGION_IDS.contains(getPlayerRegionID());
+	}
+
+	Map<NPC, DemonicGorilla> getGorillas() {
+		return this.gorillas;
+	}
+
+	DemonicGorilla getTargetGorilla() {
+		return this.targetGorilla;
 	}
 }

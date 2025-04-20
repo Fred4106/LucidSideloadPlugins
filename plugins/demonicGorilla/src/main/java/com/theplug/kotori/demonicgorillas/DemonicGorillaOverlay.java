@@ -24,11 +24,10 @@
  */
 package com.theplug.kotori.demonicgorillas;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +42,9 @@ import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
+import net.runelite.client.util.ColorUtil;
 
 @Singleton
 public class DemonicGorillaOverlay extends Overlay
@@ -58,7 +60,8 @@ public class DemonicGorillaOverlay extends Overlay
 
 	@Inject
 	private SkillIconManager iconManager;
-
+	@Inject
+	private ModelOutlineRenderer modelOutlineRenderer;
 	@Inject
 	public DemonicGorillaOverlay(final Client client, final DemonicGorillaPlugin plugin)
 	{
@@ -88,10 +91,15 @@ public class DemonicGorillaOverlay extends Overlay
 	{
 		for (DemonicGorilla gorilla : plugin.getGorillas().values())
 		{
-			if (gorilla.getNpc().getInteracting() == null)
+			if (gorilla.getNpc().getInteracting() == null && gorilla.getLastTickInteracting() == null)
 			{
 				continue;
 			}
+
+			if(gorilla == plugin.getTargetGorilla()) {
+				modelOutlineRenderer.drawOutline(gorilla.getNpc(), 4, COLOR_ICON_BORDER_FILL, 2);
+			}
+
 
 			LocalPoint lp = gorilla.getNpc().getLocalLocation();
 			if (lp != null)
@@ -100,9 +108,9 @@ public class DemonicGorillaOverlay extends Overlay
 				//		,gorilla.getNpc().getLogicalHeight() - 32);
 				if (point != null)
 				{
-					point = new Point(point.getX(), point.getY());
+//					point = new Point(point.getX(), point.getY());
 
-					List<DemonicGorilla.AttackStyle> attackStyles = gorilla.getNextPosibleAttackStyles();
+					List<DemonicGorilla.AttackStyle> attackStyles = gorilla.getNextPossibleAttackStyles();
 					List<BufferedImage> icons = new ArrayList<>();
 					int totalWidth = (attackStyles.size() - 1) * OVERLAY_ICON_MARGIN;
 					for (DemonicGorilla.AttackStyle attackStyle : attackStyles)
@@ -119,50 +127,75 @@ public class DemonicGorillaOverlay extends Overlay
 					int currentPosX = 0;
 					for (BufferedImage icon : icons)
 					{
-						setProgressIcon(graphics, point, icon, totalWidth, bgPadding, currentPosX,
+						double prog = ((double) DemonicGorilla.ATTACKS_PER_SWITCH - gorilla.getAttacksUntilSwitch()) / DemonicGorilla.ATTACKS_PER_SWITCH;
+						setProgressIcon(graphics, point, icon, prog, totalWidth, bgPadding, currentPosX,
 							COLOR_ICON_BACKGROUND, OVERLAY_ICON_DISTANCE, COLOR_ICON_BORDER, COLOR_ICON_BORDER_FILL);
-						Arc2D.Double arc = new Arc2D.Double(
-							point.getX() - totalWidth / 2 + currentPosX - bgPadding,
-							point.getY() - (float) (icon.getHeight() / 2) - OVERLAY_ICON_DISTANCE - bgPadding,
-							icon.getWidth() + bgPadding * 2,
-							icon.getHeight() + bgPadding * 2,
-							90.0,
-							-360.0 * (DemonicGorilla.ATTACKS_PER_SWITCH -
-								gorilla.getAttacksUntilSwitch()) / DemonicGorilla.ATTACKS_PER_SWITCH,
-							Arc2D.OPEN);
-						graphics.draw(arc);
 
 						currentPosX += icon.getWidth() + OVERLAY_ICON_MARGIN;
 					}
+				}
+
+				String textToShow = gorilla.debugString();
+				FontMetrics fm = graphics.getFontMetrics();
+				BasicStroke stroke = new BasicStroke(2, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] {2, .25f, 0f, 1f}, 0.0f);
+				Rectangle2D bounds = fm.getStringBounds(textToShow, graphics);
+				Point textLocation = Perspective.getCanvasTextLocation(client, graphics, lp, textToShow, 0);
+				if(textLocation!= null) {
+					Rectangle textBackground            = new Rectangle(textLocation.getX() +(int)  bounds.getX(), textLocation.getY() +(int) bounds.getY(), (int)(bounds.getWidth()), (int) bounds.getHeight());
+
+					OverlayUtil.renderPolygon(graphics, textBackground, ColorUtil.colorWithAlpha(Color.BLACK, 0), ColorUtil.colorWithAlpha(Color.WHITE, 64), stroke);
+					OverlayUtil.renderTextLocation(graphics, new Point(textLocation.getX(), textLocation.getY()), textToShow, Color.black);
 				}
 			}
 		}
 		return null;
 	}
 
-	public static void setProgressIcon(Graphics2D graphics, Point point, BufferedImage currentPhaseIcon, int totalWidth, int bgPadding, int currentPosX, Color colorIconBackground, int overlayIconDistance, Color colorIconBorder, Color colorIconBorderFill)
+	public static void setProgressIcon(Graphics2D graphics, Point point, BufferedImage currentPhaseIcon, double progress, int totalWidth, int bgPadding, int currentPosX, Color colorIconBackground, int overlayIconDistance, Color colorIconBorder, Color colorIconBorderFill)
 	{
-		graphics.setStroke(new BasicStroke(2));
-		graphics.setColor(colorIconBackground);
-		graphics.fillOval(
-			point.getX() - totalWidth / 2 + currentPosX - bgPadding,
-			point.getY() - currentPhaseIcon.getHeight() / 2 - overlayIconDistance - bgPadding,
+		Ellipse2D.Double oval = new Ellipse2D.Double(
+			point.getX() - (double) totalWidth / 2 + currentPosX - bgPadding,
+			point.getY() - (double) currentPhaseIcon.getHeight() / 2 - overlayIconDistance - bgPadding,
 			currentPhaseIcon.getWidth() + bgPadding * 2,
 			currentPhaseIcon.getHeight() + bgPadding * 2);
 
+//		graphics.fillOval(
+//			point.getX() - totalWidth / 2 + currentPosX - bgPadding,
+//			point.getY() - currentPhaseIcon.getHeight() / 2 - overlayIconDistance - bgPadding,
+//			currentPhaseIcon.getWidth() + bgPadding * 2,
+//			currentPhaseIcon.getHeight() + bgPadding * 2);
+
+		graphics.setStroke(new BasicStroke(2));
+		graphics.setColor(colorIconBackground);
+		graphics.fill(oval);
+
 		graphics.setColor(colorIconBorder);
-		graphics.drawOval(
-			point.getX() - totalWidth / 2 + currentPosX - bgPadding,
-			point.getY() - currentPhaseIcon.getHeight() / 2 - overlayIconDistance - bgPadding,
-			currentPhaseIcon.getWidth() + bgPadding * 2,
-			currentPhaseIcon.getHeight() + bgPadding * 2);
+		graphics.draw(oval);
+//		graphics.drawOval(
+//		graphics.drawOval(
+//			point.getX() - totalWidth / 2 + currentPosX - bgPadding,
+//			point.getY() - currentPhaseIcon.getHeight() / 2 - overlayIconDistance - bgPadding,
+//			currentPhaseIcon.getWidth() + bgPadding * 2,
+//			currentPhaseIcon.getHeight() + bgPadding * 2);
 
 		graphics.drawImage(
 			currentPhaseIcon,
-			point.getX() - totalWidth / 2 + currentPosX,
-			point.getY() - currentPhaseIcon.getHeight() / 2 - overlayIconDistance,
+			(int) oval.getX() + bgPadding,
+			(int) oval.getY() + bgPadding,
 			null);
 
 		graphics.setColor(colorIconBorderFill);
+
+		Arc2D.Double arc = new Arc2D.Double(
+			oval.getX(),
+			oval.getY(),
+			oval.getWidth(),
+			oval.getHeight(),
+			90.0,
+			-360.0 * progress,
+			Arc2D.OPEN
+		);
+
+		graphics.draw(arc);
 	}
 }

@@ -81,7 +81,7 @@ class SFredsTitheFarmV2PlantOverlay @Inject()(val client: Client, val plugin: Fr
 						withFont(Cache.countdownFont) {
 							val localLocation = LocalPoint.fromWorld(client, go.getWorldLocation)
 							val textToShow    = s"${(localLocation.getSceneX, localLocation.getSceneY)} => ${countdown}"
-							ProgressPieComponent().tap(pieComponent => {
+							new ProgressPieComponent().tap(pieComponent => {
 								val countdownPos = localToCanvas(client, localLocation, client.getPlane, 128)
 								pieComponent.setPosition(countdownPos)
 								pieComponent.setProgress(countdown.toDouble / 100d)

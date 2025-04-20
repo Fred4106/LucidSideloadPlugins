@@ -24,29 +24,38 @@
  */
 package com.theplug.kotori.demonicgorillas;
 
-import lombok.AccessLevel;
-import lombok.Getter;
+import com.theplug.kotori.demonicgorillas.DemonicGorilla.AttackStyle;
 import net.runelite.api.Player;
 
-class PendingGorillaAttack
-{
-	@Getter(AccessLevel.PACKAGE)
+class PendingGorillaAttack {
 	private DemonicGorilla attacker;
 
-	@Getter(AccessLevel.PACKAGE)
 	private DemonicGorilla.AttackStyle attackStyle;
 
-	@Getter(AccessLevel.PACKAGE)
 	private Player target;
 
-	@Getter(AccessLevel.PACKAGE)
 	private int finishesOnTick;
 
-	PendingGorillaAttack(final DemonicGorilla attacker, final DemonicGorilla.AttackStyle attackStyle, final Player target, final int finishesOnTick)
-	{
+	PendingGorillaAttack(final DemonicGorilla attacker, final DemonicGorilla.AttackStyle attackStyle, final Player target, final int finishesOnTick) {
 		this.attacker = attacker;
 		this.attackStyle = attackStyle;
 		this.target = target;
 		this.finishesOnTick = finishesOnTick;
+	}
+
+	DemonicGorilla getAttacker() {
+		return this.attacker;
+	}
+
+	AttackStyle getAttackStyle() {
+		return this.attackStyle;
+	}
+
+	Player getTarget() {
+		return this.target;
+	}
+
+	int getFinishesOnTick() {
+		return this.finishesOnTick;
 	}
 }
