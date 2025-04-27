@@ -182,7 +182,7 @@ public class EthanApiPlugin extends Plugin {
             for (Field declaredField : aClass.getDeclaredFields()) {
                 Field[] decFields = declaredField.getType().getDeclaredFields();
                 if(decFields.length==2){
-                    if(decFields[0].getType().isArray()&&decFields[1].getType().isArray()){
+                    if((decFields[0].getType() == short[].class || decFields[0].getType() == int[].class) &&(decFields[1].getType() == short[].class || decFields[1].getType() == int[].class)){
                         for (Field decField : decFields) {
                             decField.setAccessible(true);
                         }
@@ -198,10 +198,12 @@ public class EthanApiPlugin extends Plugin {
                                 }
                                 return HeadIcon.values()[(short)array1[0]];
                             }
-                            if((short)array2[0]==-1){
-                                return null;
+                            if(decFields[1].getType()==short[].class){
+                                if((short)array2[0]==-1){
+                                    return null;
+                                }
+                                return HeadIcon.values()[(short)array2[0]];
                             }
-                            return HeadIcon.values()[(short)array2[0]];
                         }
                     }
                 }

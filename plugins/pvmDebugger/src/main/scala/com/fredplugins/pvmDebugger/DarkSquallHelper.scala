@@ -26,6 +26,7 @@ import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.events.OverheadTextChanged
 import net.runelite.api.events.ProjectileMoved
+import net.runelite.client.eventbus.EventBus
 import net.runelite.client.eventbus.Subscribe
 
 import scala.jdk.CollectionConverters.*
@@ -104,11 +105,15 @@ case class InternalState(mode: Mode, warriorNpc: Option[WarriorType] = Option.em
 	}
 }
 
-class DarkSquallHelper @Inject()(val client: Client) extends ShimUtils.Logging("DEBUG") {
+class DarkSquallHelper (val client: Client) extends ShimUtils.Logging("DEBUG") {
 	var squallNpc: NPC = null
 	var lastTickState: InternalState = InternalState(Mode.Standard)
 	var curTickState: InternalState = InternalState(Mode.Standard)
-
+	def reset(): Unit = {
+		this.squallNpc = null
+		this.lastTickState = InternalState(Mode.Standard)
+		this.curTickState = InternalState(Mode.Standard)
+	}
 	@Subscribe
 	def onOverheadChanged(event: OverheadTextChanged): Unit = {
 		Option(event.getActor). collect {
@@ -134,7 +139,9 @@ class DarkSquallHelper @Inject()(val client: Client) extends ShimUtils.Logging("
 
 	@Subscribe
 	def onMenuEntryClicked(event: MenuOptionClicked): Unit = {
-		log.debug(s"clicked: ${event}")
+		if(squallNpc != null) {
+			log.debug(s"clicked: ${event}")
+		}
 	}
 
 	@Subscribe

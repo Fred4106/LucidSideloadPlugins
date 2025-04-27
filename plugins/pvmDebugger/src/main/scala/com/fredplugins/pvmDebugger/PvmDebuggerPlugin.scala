@@ -191,6 +191,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	lazy val darkSquallHelper = {
 		new DarkSquallHelper(client)
 	}
+	lazy val balanceElementalHelper = {
+		new BalanceElementalHelper(client)
+	}
 	override protected def startUp(): Unit = {
 		(new Frame() {
 			contents = debugPanel
@@ -204,12 +207,14 @@ class PvmDebuggerPlugin() extends Plugin {
 			gameStateCached = client.getGameState
 			inventorySnapshot = parseInventory(client.getItemContainer(InventoryID.INVENTORY))
 		})
-		darkSquallHelper.tap(eventBus.register(_))
+		eventBus.register(darkSquallHelper.tap(_.reset()))
+		eventBus.register(balanceElementalHelper.tap(_.reset()))
 	}
 
 	override protected def shutDown(): Unit = {
 		inventorySnapshot = List.empty
 		gameStateCached = GameState.UNKNOWN
 		eventBus.unregister(darkSquallHelper)
+		eventBus.unregister(balanceElementalHelper)
 	}
 }
