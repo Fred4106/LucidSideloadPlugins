@@ -2,6 +2,7 @@ package com.fredplugins.pvmDebugger
 
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.DebugPanel.ClearEvent
+import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
 import com.fredplugins.pvmDebugger.{SInvAdded, SInvQtyChanged, SInvRemoved, SLocation}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
@@ -36,9 +37,11 @@ class PvmDebuggerPlugin() extends Plugin {
 	private val log         : Logger              = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	@Inject private val client      : Client              = null
 	@Inject private val clientThread: ClientThread        = null
-	@Inject private val notifier    : Notifier            = null
 	@Inject private val eventBus      : EventBus           = null
+	@Inject private val notifier    : Notifier            = null
 	@Inject private val overlayManager: OverlayManager     = null
+	@Inject private val pvmDebuggerConfig: FredsPvmDebuggerConfig = null
+	@Inject private val guardiansConfig: GrotesqueGuardiansConfig = null
 
 
 //	//region types
@@ -56,7 +59,7 @@ class PvmDebuggerPlugin() extends Plugin {
 					Some(InvSlotItem(idx, i.getId, i.getQuantity))
 				}
 				case (i, idx) => {
-					log.debug(s"Testing: ${i}${idx}")
+//					log.debug(s"Testing: ${i}${idx}")
 					None
 				}
 			}).toList
@@ -106,7 +109,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	}
 
 
+	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
+		log.debug(s"${event.toString}")
 	}
 
 
@@ -195,6 +200,7 @@ class PvmDebuggerPlugin() extends Plugin {
 		new BalanceElementalHelper(client)
 	}
 	override protected def startUp(): Unit = {
+
 		(new Frame() {
 			contents = debugPanel
 		}.tap(mf => {
@@ -217,4 +223,8 @@ class PvmDebuggerPlugin() extends Plugin {
 		eventBus.unregister(darkSquallHelper)
 		eventBus.unregister(balanceElementalHelper)
 	}
+
+
+	@Provides def provideConfig(configManager: ConfigManager): FredsPvmDebuggerConfig = configManager.getConfig(classOf[FredsPvmDebuggerConfig])
+	@Provides def provideGuardiansConfig(configManager: ConfigManager): GrotesqueGuardiansConfig = configManager.getConfig(classOf[GrotesqueGuardiansConfig])
 }

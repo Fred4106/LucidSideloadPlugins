@@ -71,10 +71,10 @@ public class Dt2HelperPlugin extends Plugin {
     @Override
     protected void shutDown() throws Exception {
         super.shutDown();
-        forsakenAssassin.reset();
-        ketlaTheUnworthy.reset();
         eventBus.unregister(forsakenAssassin);
         eventBus.unregister(ketlaTheUnworthy);
+        forsakenAssassin.reset();
+        ketlaTheUnworthy.reset();
         overlayManager.remove(overlay);
     }
 //
