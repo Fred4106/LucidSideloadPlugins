@@ -25,6 +25,8 @@
  */
 package com.fredplugins.demonicgorillaV2;
 
+import ch.qos.logback.classic.Level;
+import com.fredplugins.common.utils.ShimUtils$;
 import com.fredplugins.demonicgorillaV2.DemonicGorilla.AttackStyle;
 import com.google.common.collect.ImmutableSet;
 import com.lucidplugins.api.utils.CombatUtils;
@@ -59,6 +61,8 @@ import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -67,6 +71,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @PluginDependency(EthanApiPlugin.class)
 @PluginDescriptor(
@@ -76,6 +81,11 @@ import java.util.Set;
 	tags = {"combat", "overlay", "pve", "pvm", "demonics", "gorilla", "ported", "kotori"}
 )
 public class DemonicGorillaPlugin extends Plugin {
+	private final static Logger log;
+	static {
+		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DemonicGorillaPlugin.class)).setLevel(Level.DEBUG);
+		log = LoggerFactory.getLogger(DemonicGorillaPlugin.class);
+	}
 	private static final Set<Integer> DEMONIC_PROJECTILES = ImmutableSet.of(1302, 1304, 856);
 	private static final Set<Integer> REGION_IDS = Set.of(8280, 8536);
 	private static final int DEMONIC_GORILLA_AOE_ATTACK = 7228;
@@ -88,10 +98,12 @@ public class DemonicGorillaPlugin extends Plugin {
 	@Inject
 	private ClientThread clientThread;
 	private Map<NPC, DemonicGorilla> gorillas;
-	private List<WorldPoint> recentBoulders;
+	private List<Projectile> recentBoulders;
 	private List<PendingGorillaAttack> pendingAttacks;
 	private Map<Player, MemorizedPlayer> memorizedPlayers;
 	private ArrayList<Projectile> gorillaProjectiles;
+
+	private List<WorldPoint> cachedBoulders = List.of();
 	private boolean atGorillas;
 
 	private static boolean isNpcGorilla(int npcId) {
@@ -268,7 +280,7 @@ public class DemonicGorillaPlugin extends Plugin {
 	@Subscribe
 	private void onInteractionChanged(InteractingChanged event) {
 		if (event.getSource() == client.getLocalPlayer() && event.getTarget() != null) {
-			if (event.getTarget() instanceof NPC) {
+			if (event.getTarget() instanceof NPC  && gorillas.containsKey((NPC)event.getTarget())) {
 				targetGorilla = gorillas.get(((NPC) event.getTarget()));
 			} else {
 				targetGorilla = null;
@@ -297,7 +309,8 @@ public class DemonicGorillaPlugin extends Plugin {
 		final WorldPoint loc = WorldPoint.fromLocal(client.getTopLevelWorldView(), projectile.getX1(), projectile.getY1(), client.getTopLevelWorldView().getPlane());
 
 		if (projectileId == 856) {
-			recentBoulders.add(loc);
+			log.debug("Projectile {} with class {}",  event.getProjectile(), event.getProjectile().getClass());
+			recentBoulders.add(projectile);
 		} else {
 			for (DemonicGorilla gorilla : gorillas.values()) {
 				if (gorilla.getNpc().getWorldLocation().distanceTo(loc) == 0) {
@@ -403,7 +416,11 @@ public class DemonicGorillaPlugin extends Plugin {
 		if (!atGorillas) {
 			return;
 		}
-		if (gorillas.remove(event.getNpc()) != null && gorillas.isEmpty()) {
+		DemonicGorilla demonicGorillaDespawned = gorillas.remove(event.getNpc());
+		if(demonicGorillaDespawned != null && targetGorilla == demonicGorillaDespawned) {
+			targetGorilla = null;
+		}
+		if (demonicGorillaDespawned != null && gorillas.isEmpty()) {
 			recentBoulders.clear();
 			pendingAttacks.clear();
 			memorizedPlayers.clear();
@@ -411,9 +428,14 @@ public class DemonicGorillaPlugin extends Plugin {
 		}
 	}
 
+	private WorldPoint projectileToTargetLocation(Projectile projectile) {
+		return WorldPoint.fromLocal(client, projectile.getTarget());
+	}
+
 	@Subscribe
 	private void onGameTick(GameTick event) {
 		if (!atGorillas) {
+			cachedBoulders = List.of();
 			return;
 		}
 		//region checkGorillaAttacks
@@ -485,7 +507,7 @@ public class DemonicGorillaPlugin extends Plugin {
 							} else if (mp != null) {
 								WorldArea lastPlayerArea = mp.getLastWorldArea();
 								if (lastPlayerArea != null && recentBoulders.stream()
-									.anyMatch(x -> x.distanceTo(lastPlayerArea) == 0)) {
+									.anyMatch(x -> projectileToTargetLocation(x).distanceTo(lastPlayerArea) == 0)) {
 									// A boulder started falling on the gorillas target,
 									// so we assume it was the gorilla who shot it
 									onGorillaAttack(gorilla, AttackStyle.BOULDER);
@@ -571,7 +593,7 @@ public class DemonicGorillaPlugin extends Plugin {
 								}
 							} else if (tickCounter >= gorilla.getNextAttackTick() &&
 								gorilla.getRecentProjectileId() == -1 &&
-								recentBoulders.stream().noneMatch(x -> x.distanceTo(mp.getLastWorldArea()) == 0)) {
+								recentBoulders.stream().noneMatch(x -> projectileToTargetLocation(x).distanceTo(mp.getLastWorldArea()) == 0)) {
 								gorilla.filterNextPossibleAttackStylesContains(x -> x == AttackStyle.MELEE);
 //								gorilla.setNextPossibleAttackStyles(gorilla
 //									.getNextPossibleAttackStyles()
@@ -608,7 +630,11 @@ public class DemonicGorillaPlugin extends Plugin {
 		for (MemorizedPlayer mp : memorizedPlayers.values()) {
 			mp.onGameTick();
 		}
-		recentBoulders.clear();
+		cachedBoulders = recentBoulders
+			.stream()
+			.map(p -> WorldPoint.fromLocal(client, p.getTarget()))
+			.collect(Collectors.toList());
+		recentBoulders.removeIf(p -> p.getRemainingCycles() <= 0);
 		gorillaProjectiles.removeIf(p -> p.getRemainingCycles() <= 0);
 
 		if (targetGorilla != null && gorillas.containsValue(targetGorilla)) {
@@ -653,6 +679,9 @@ public class DemonicGorillaPlugin extends Plugin {
 					if (InventoryUtils.contains(ItemID.ARCLIGHT)) {
 						InventoryUtils.wieldItem(ItemID.ARCLIGHT);
 					}
+					if (InventoryUtils.contains(ItemID.DRAGON_PARRYINGDAGGER)) {
+						InventoryUtils.wieldItem(ItemID.DRAGON_PARRYINGDAGGER);
+					}
 					break;
 				default:
 			}
@@ -672,6 +701,10 @@ public class DemonicGorillaPlugin extends Plugin {
 
 	Map<NPC, DemonicGorilla> getGorillas() {
 		return this.gorillas;
+	}
+
+	List<WorldPoint> getBoulderTargets() {
+		return this.cachedBoulders;
 	}
 
 	DemonicGorilla getTargetGorilla() {

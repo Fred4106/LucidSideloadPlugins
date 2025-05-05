@@ -24,15 +24,18 @@
  */
 package com.fredplugins.demonicgorillaV2;
 
+import com.fredplugins.common.OldOverlayUtil;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayRenderer;
 import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 import net.runelite.client.util.ColorUtil;
@@ -46,6 +49,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Singleton
 public class DemonicGorillaOverlay extends Overlay
@@ -86,7 +90,8 @@ public class DemonicGorillaOverlay extends Overlay
 		}
 		return null;
 	}
-
+	private final static Color DangerTileFill =  new Color(255, 0, 0, 128);
+	private final static Color WarningTileFill = new Color(212, 117, 0, 128);
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
@@ -106,10 +111,8 @@ public class DemonicGorillaOverlay extends Overlay
 			if (lp != null)
 			{
 				Point point = Perspective.localToCanvas(client, lp, client.getTopLevelWorldView().getPlane(), -48);
-				//		,gorilla.getNpc().getLogicalHeight() - 32);
 				if (point != null)
 				{
-//					point = new Point(point.getX(), point.getY());
 
 					List<DemonicGorilla.AttackStyle> attackStyles = gorilla.getNextPossibleAttackStyles();
 					List<BufferedImage> icons = new ArrayList<>();
@@ -147,6 +150,19 @@ public class DemonicGorillaOverlay extends Overlay
 					OverlayUtil.renderPolygon(graphics, textBackground, ColorUtil.colorWithAlpha(Color.BLACK, 0), ColorUtil.colorWithAlpha(Color.WHITE, 64), stroke);
 					OverlayUtil.renderTextLocation(graphics, new Point(textLocation.getX(), textLocation.getY()), textToShow, Color.black);
 				}
+			}
+		}
+
+		for(WorldPoint bolder : plugin.getBoulderTargets())
+		{
+			int distance = client.getLocalPlayer().getWorldLocation().distanceTo(bolder);
+			final Polygon polygon = Optional.ofNullable(LocalPoint.fromWorld(client, bolder)).map(lp -> Perspective.getCanvasTileAreaPoly(client, lp, 1)).orElse(null);
+
+			if (polygon != null)
+			{
+				Color fillColor = ColorUtil.colorWithAlpha(distance == 0 ? DangerTileFill : WarningTileFill, 255 - (Math.min(distance, 8) * 25));
+				Color borderColor = ColorUtil.colorWithAlpha(fillColor, ((int)((255-fillColor.getAlpha())*.2)) + fillColor.getAlpha()).darker();
+				OldOverlayUtil.drawOutlineAndFill(graphics, borderColor, fillColor, 3, polygon);
 			}
 		}
 		return null;
