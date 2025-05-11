@@ -55,7 +55,7 @@ dependencies {
     implementation(projects.ethans)
     implementation(projects.common)
     implementation(projects.commonScala)
-
+    implementation(projects.alchBlocker)
     implementation(projects.recolorCG)
     implementation(projects.zulrahHelper)
     implementation(projects.attackTimer)

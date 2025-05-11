@@ -26,6 +26,8 @@ package packetUtils;
 
 import net.runelite.api.widgets.Widget;
 
+import java.util.Arrays;
+
 /**
  * Represents a group-child {@link Widget} relationship.
  * <p>
@@ -1029,4 +1031,7 @@ public enum WidgetInfoExtended {
         return groupId << 16 | childId;
     }
 
+    public static WidgetInfoExtended valueOf(int packedId) {
+        return Arrays.stream(values()).filter(w -> w.getId() == packedId).findAny().orElse(null);
+    }
 }

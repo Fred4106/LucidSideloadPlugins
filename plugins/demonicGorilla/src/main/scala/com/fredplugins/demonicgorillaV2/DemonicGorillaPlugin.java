@@ -578,28 +578,13 @@ public class DemonicGorillaPlugin extends Plugin {
 							if (predictedMovement.distanceTo(gorilla.getLastWorldArea().toWorldPoint()) != 0) {
 								if (predictedMovement.distanceTo(gorilla.getNpc().getWorldLocation()) == 0) {
 									gorilla.filterNextPossibleAttackStylesContains(x -> x == AttackStyle.MELEE);
-//									gorilla.setNextPossibleAttackStyles(gorilla
-//										.getNextPossibleAttackStyles()
-//										.stream()
-//										.filter(x -> x == DemonicGorilla.AttackStyle.MELEE)
-//										.collect(Collectors.toUnmodifiableList()));
 								} else {
 									gorilla.filterNextPossibleAttackStylesContains(x -> x != AttackStyle.MELEE);
-//									gorilla.setNextPossibleAttackStyles(gorilla
-//										.getNextPossibleAttackStyles()
-//										.stream()
-//										.filter(x -> x != DemonicGorilla.AttackStyle.MELEE)
-//										.collect(Collectors.toUnmodifiableList()));
 								}
 							} else if (tickCounter >= gorilla.getNextAttackTick() &&
 								gorilla.getRecentProjectileId() == -1 &&
 								recentBoulders.stream().noneMatch(x -> projectileToTargetLocation(x).distanceTo(mp.getLastWorldArea()) == 0)) {
 								gorilla.filterNextPossibleAttackStylesContains(x -> x == AttackStyle.MELEE);
-//								gorilla.setNextPossibleAttackStyles(gorilla
-//									.getNextPossibleAttackStyles()
-//									.stream()
-//									.filter(x -> x == DemonicGorilla.AttackStyle.MELEE)
-//									.collect(Collectors.toUnmodifiableList()));
 							}
 						}
 					}
