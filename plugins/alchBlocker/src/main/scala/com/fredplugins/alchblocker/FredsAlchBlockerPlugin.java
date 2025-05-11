@@ -119,7 +119,7 @@ public class FredsAlchBlockerPlugin extends Plugin
 		isAlching = menuOption.equals("Cast") && menuTarget.endsWith("Level Alchemy");
 		// did you just click an item to try to alch it ("High-Alchemy <item>" from explorer's ring, "Cast High Level Alchemy -> <item>" from spell)
 //		boolean tryingToAlch = event.getMenuOption().contains("-Alchemy") || (event.getMenuOption().equals("Cast") && menuTarget.contains("Alchemy ->"));
-		log.debug("menuTarget='{}', menuOption='{}', isAlching={}", menuTarget, menuOption, isAlching);
+		log.trace("menuTarget='{}', menuOption='{}', isAlching={}", menuTarget, menuOption, isAlching);
 //		if (tryingToAlch && hiddenItems.contains(event.getItemId())) {
 //			event.consume();
 //		}
