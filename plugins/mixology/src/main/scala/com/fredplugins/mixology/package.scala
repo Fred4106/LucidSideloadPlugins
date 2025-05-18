@@ -6,7 +6,18 @@ import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.mixology.FredsMixologyPlugin
 import com.fredplugins.mixology.SMixType.{Aga, Lye, Mox}
-import net.runelite.api.ItemID.{ALCOAUGMENTATOR, ANTILEECH_LOTION, AQUALUX_AMALGAM, AZURE_AURA_MIX, LIPLACK_LIQUOR, MAMMOTHMIGHT_MIX, MARLEYS_MOONLIGHT, MEGALITE_LIQUID, MIXALOT, MYSTIC_MANA_AMALGAM}
+import net.runelite.api.gameval.ItemID.{
+	MM_POTION_MMM_UNFINISHED,
+	MM_POTION_MMA_UNFINISHED,
+	MM_POTION_MML_UNFINISHED,
+	MM_POTION_AAA_UNFINISHED,
+	MM_POTION_AAL_UNFINISHED,
+	MM_POTION_AAM_UNFINISHED,
+	MM_POTION_LLL_UNFINISHED,
+	MM_POTION_LLA_UNFINISHED,
+	MM_POTION_LLM_UNFINISHED,
+	MM_POTION_MAL_UNFINISHED,
+}
 import org.slf4j.Logger
 
 import java.awt.Color
@@ -121,16 +132,16 @@ package object mixology {
 	}
 	object SBrew extends enumeratum.Enum[SBrew] {
 		override def values: IndexedSeq[SBrew] = findValues
-		case object MMM extends SBrew(MAMMOTHMIGHT_MIX, 190) {}
-		case object MMA extends SBrew(MYSTIC_MANA_AMALGAM, 215) {}
-		case object MML extends SBrew(MARLEYS_MOONLIGHT, 240) {}
-		case object AAA extends SBrew(ALCOAUGMENTATOR, 190) {}
-		case object ALA extends SBrew(AQUALUX_AMALGAM, 290) {}
-		case object AAM extends SBrew(AZURE_AURA_MIX, 265) {}
-		case object LLL extends SBrew(LIPLACK_LIQUOR, 190) {}
-		case object ALL extends SBrew(ANTILEECH_LOTION, 340) {}
-		case object MLL extends SBrew(MEGALITE_LIQUID, 315) {}
-		case object MAL extends SBrew(MIXALOT, 365) {}
+		case object MMM extends SBrew(MM_POTION_MMM_UNFINISHED, 190) {}
+		case object MMA extends SBrew(MM_POTION_MMA_UNFINISHED, 215) {}
+		case object MML extends SBrew(MM_POTION_MML_UNFINISHED, 240) {}
+		case object AAA extends SBrew(MM_POTION_AAA_UNFINISHED, 190) {}
+		case object ALA extends SBrew(MM_POTION_AAL_UNFINISHED, 290) {}
+		case object AAM extends SBrew(MM_POTION_AAM_UNFINISHED, 265) {}
+		case object LLL extends SBrew(MM_POTION_LLL_UNFINISHED, 190) {}
+		case object ALL extends SBrew(MM_POTION_LLA_UNFINISHED, 340) {}
+		case object MLL extends SBrew(MM_POTION_LLM_UNFINISHED, 315) {}
+		case object MAL extends SBrew(MM_POTION_MAL_UNFINISHED, 365) {}
 //		inline def values: List[SBrew] = List(MMM, MMA, MML, AAA, ALA, AAM, LLL, ALL, MLL, MAL)
 		def fromItemId(id: Int): Option[SBrew] = values.find(b => b.processedId == id || b.unprocessedId == id)
 		def fromToolBench(to: TileObject)(using client: Client): Option[SBrew] = {

@@ -3,6 +3,8 @@ package com.fredplugins.pvmDebugger
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.DebugPanel.ClearEvent
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
+import com.fredplugins.pvmDebugger.kraken.KrakenConfig
+import com.fredplugins.pvmDebugger.kraken.KrakenHelper
 import com.fredplugins.pvmDebugger.{SInvAdded, SInvQtyChanged, SInvRemoved, SLocation}
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
@@ -42,6 +44,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val overlayManager: OverlayManager     = null
 	@Inject private val pvmDebuggerConfig: FredsPvmDebuggerConfig = null
 	@Inject private val guardiansConfig: GrotesqueGuardiansConfig = null
+	@Inject private val krakenConfig: KrakenConfig = null
 
 
 //	//region types
@@ -112,6 +115,10 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		log.debug(s"${event.toString}")
+		if(event.getGroup == KrakenConfig.GROUP && event.getKey == "enabled") {
+			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
+			else eventBus.unregister(krakenHelper)
+		}
 	}
 
 
@@ -199,6 +206,11 @@ class PvmDebuggerPlugin() extends Plugin {
 	lazy val balanceElementalHelper = {
 		new BalanceElementalHelper(client)
 	}
+
+	lazy val krakenHelper = {
+		new KrakenHelper(this, client, krakenConfig)
+	}
+
 	override protected def startUp(): Unit = {
 
 		(new Frame() {
@@ -215,6 +227,7 @@ class PvmDebuggerPlugin() extends Plugin {
 		})
 		eventBus.register(darkSquallHelper.tap(_.reset()))
 		eventBus.register(balanceElementalHelper.tap(_.reset()))
+		if(krakenConfig.enabled()) eventBus.register(krakenHelper)
 	}
 
 	override protected def shutDown(): Unit = {
@@ -222,9 +235,11 @@ class PvmDebuggerPlugin() extends Plugin {
 		gameStateCached = GameState.UNKNOWN
 		eventBus.unregister(darkSquallHelper)
 		eventBus.unregister(balanceElementalHelper)
+		eventBus.unregister(krakenHelper)
 	}
 
 
 	@Provides def provideConfig(configManager: ConfigManager): FredsPvmDebuggerConfig = configManager.getConfig(classOf[FredsPvmDebuggerConfig])
 	@Provides def provideGuardiansConfig(configManager: ConfigManager): GrotesqueGuardiansConfig = configManager.getConfig(classOf[GrotesqueGuardiansConfig])
+	@Provides def provideKrakenConfig(configManager: ConfigManager): KrakenConfig = configManager.getConfig(classOf[KrakenConfig])
 }

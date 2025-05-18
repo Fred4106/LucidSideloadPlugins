@@ -279,6 +279,9 @@ public class DemonicGorillaPlugin extends Plugin {
 
 	@Subscribe
 	private void onInteractionChanged(InteractingChanged event) {
+		if(gorillas == null || gorillas.isEmpty()) {
+			return;
+		}
 		if (event.getSource() == client.getLocalPlayer() && event.getTarget() != null) {
 			if (event.getTarget() instanceof NPC  && gorillas.containsKey((NPC)event.getTarget())) {
 				targetGorilla = gorillas.get(((NPC) event.getTarget()));

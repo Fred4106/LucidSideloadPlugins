@@ -4,7 +4,10 @@ import com.fredplugins.common.utils.SceneUtils
 import net.runelite.api.MenuAction.*
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.*
+import net.runelite.client.util.Text
 
+import scala.util.Try
+import scala.util.chaining.*
 object MenuExtensions {
 	private val tileObjectActions: List[MenuAction] = List(GAME_OBJECT_FIRST_OPTION, GAME_OBJECT_SECOND_OPTION, GAME_OBJECT_THIRD_OPTION, GAME_OBJECT_FOURTH_OPTION, GAME_OBJECT_FIFTH_OPTION, EXAMINE_OBJECT)
 	private val npcActions: List[MenuAction] = List(NPC_FIRST_OPTION, NPC_SECOND_OPTION, NPC_THIRD_OPTION, NPC_FOURTH_OPTION, NPC_FIFTH_OPTION, EXAMINE_NPC)
@@ -12,6 +15,9 @@ object MenuExtensions {
 	private val widgetTargetOnActions: List[MenuAction] = List(WIDGET_TARGET_ON_PLAYER, WIDGET_TARGET_ON_NPC, WIDGET_TARGET_ON_GAME_OBJECT)
 
 	extension (e: MenuEntry) {
+		def getSanitizedOption: String = Text.sanitize(e.getOption)
+		def getSanitizedTarget: String = Text.sanitize(e.getTarget)
+
 		def isTileObjectAction: Boolean = tileObjectActions.contains(e.getType)
 		def isNpcAction: Boolean = npcActions.contains(e.getType)
 		def isExamineAction: Boolean = Seq(EXAMINE_ITEM_GROUND, EXAMINE_OBJECT, EXAMINE_NPC, EXAMINE_ITEM).contains(e.getType)
@@ -38,6 +44,18 @@ object MenuExtensions {
 			Option.when(isNpcAction) {
 				SceneUtils.findNpc(e.getIdentifier)
 			}.flatten
+		}
+
+		def getParentMenu: Menu = {
+			e.getClass.getDeclaredFields.toList.find(f => {
+				val tpe = f.getType
+				classOf[Menu].isAssignableFrom(tpe)
+			}).flatMap[Menu](f => {
+				f.setAccessible(true)
+				val toRet = f.get(e)
+				f.setAccessible(false)
+				Try(classOf[Menu].cast(toRet)).toOption
+			}).orNull
 		}
 	}
 }

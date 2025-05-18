@@ -27,6 +27,7 @@
 
 package com.fredplugins.pvmDebugger.guardians;
 
+import com.fredplugins.common.constants.FontStyle;
 import net.runelite.api.Prayer;
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
@@ -703,32 +704,6 @@ public interface GrotesqueGuardiansConfig extends Config
 
 		public Color getColor() {
 			return this.color;
-		}
-	}
-	enum FontStyle {
-		BOLD("Bold", Font.BOLD),
-		ITALIC("Italic", Font.ITALIC),
-		PLAIN("Plain", Font.PLAIN);
-
-		private final String name;
-		private final int font;
-
-		FontStyle(String name, int font) {
-			this.name = name;
-			this.font = font;
-		}
-
-		@Override
-		public String toString() {
-			return name;
-		}
-
-		public String getName() {
-			return this.name;
-		}
-
-		public int getFont() {
-			return this.font;
 		}
 	}
 }

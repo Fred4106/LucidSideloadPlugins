@@ -275,9 +275,9 @@ public class InventoryUtils
         return Arrays.stream(client.getItemDefinition(itemId).getInventoryActions()).anyMatch(a -> a != null && a.equalsIgnoreCase(action));
     }
 
-    public static void itemInteract(int itemId, String action)
+    public static boolean itemInteract(int itemId, String action)
     {
-        InventoryInteraction.useItem(itemId, action);
+        return InventoryInteraction.useItem(itemId, action);
     }
 
     public static void castAlchemyOnItem(int id, boolean highAlchemy)
@@ -411,9 +411,9 @@ public class InventoryUtils
         }).stream().findFirst().orElse(null);
     }
 
-    public static void wieldItem(int id)
+    public static boolean wieldItem(int id)
     {
-        itemInteract(id, "Wield");
+        return itemInteract(id, "Wield");
     }
 
     public static int count(String name)
