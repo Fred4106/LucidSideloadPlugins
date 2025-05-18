@@ -114,7 +114,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
-		log.debug(s"${event.toString}")
+//		log.debug(s"${event.toString}")
 		if(event.getGroup == KrakenConfig.GROUP && event.getKey == "enabled") {
 			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
 			else eventBus.unregister(krakenHelper)
