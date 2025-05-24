@@ -427,6 +427,18 @@ public class DummyNPC implements NPC
         return null;
     }
 
+    @Nullable
+    @Override
+    public int[] getOverheadArchiveIds() {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public short[] getOverheadSpriteIds() {
+        return null;
+    }
+
     @Override
     public Model getModel()
     {
