@@ -3,6 +3,7 @@ package com.fredplugins.pvmDebugger
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.DebugPanel.ClearEvent
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
+import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansHelper
 import com.fredplugins.pvmDebugger.kraken.KrakenConfig
 import com.fredplugins.pvmDebugger.kraken.KrakenHelper
 import com.fredplugins.pvmDebugger.{SInvAdded, SInvQtyChanged, SInvRemoved, SLocation}
@@ -115,9 +116,21 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 //		log.debug(s"${event.toString}")
-		if(event.getGroup == KrakenConfig.GROUP && event.getKey == "enabled") {
-			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
-			else eventBus.unregister(krakenHelper)
+		if(event.getKey == "enabled") {
+			log.debug("Config changed {}", event.getGroup)
+			val eg = event.getGroup
+			if(eg.equals(KrakenConfig.GROUP)) {
+				if (krakenConfig.enabled()) eventBus.register(krakenHelper)
+				else eventBus.unregister(krakenHelper)
+			} else if(eg.equals(GrotesqueGuardiansConfig.GROUP)) {
+				if (guardiansConfig.enabled()) eventBus.register(grotesqueGuardiansHelper)
+				else eventBus.unregister(grotesqueGuardiansHelper)
+			} else {
+				log.error("Error matching group: {}", eg);
+			}
+//			event.getGroup == KrakenConfig.GROUP
+//			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
+//			else eventBus.unregister(krakenHelper)
 		}
 	}
 
@@ -209,6 +222,10 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	lazy val krakenHelper = {
 		new KrakenHelper(this, client, krakenConfig)
+	}
+
+	lazy val grotesqueGuardiansHelper = {
+		new GrotesqueGuardiansHelper(this, client, guardiansConfig)
 	}
 
 	override protected def startUp(): Unit = {

@@ -44,7 +44,16 @@ import java.awt.*;
 public interface GrotesqueGuardiansConfig extends Config
 {
 	static final String GROUP = "GrotesqueGuardians";
-
+	@ConfigItem(
+		name = "Enabled",
+		description = "Is Grotesque Guardians helper enabled?",
+		position = 0,
+		keyName = "enabled"
+	)
+	default boolean enabled()
+	{
+		return false;
+	}
 	@ConfigSection(
 			name = "Helper Settings",
 			description = "Automatic helper features.",
