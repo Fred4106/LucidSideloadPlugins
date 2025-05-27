@@ -1,9 +1,10 @@
 package com.fredplugins.superClickHelper
 
-import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getWorldLocationOpt, isTileObjectAction, isNpcAction, isRuneliteAction}
+import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getWorldLocationOpt, isNpcAction, isRuneliteAction, isTileObjectAction}
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
+import net.runelite.api.ChatMessageType
 import net.runelite.api.{Client, DecorativeObject, GameObject, GroundObject, MenuAction, MenuEntry, NPC, Scene, Tile, TileObject, WallObject}
 import net.runelite.api.events.PostMenuSort
 import net.runelite.client.eventbus.Subscribe
@@ -11,6 +12,8 @@ import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.api.events.{GameObjectSpawned, GameTick, MenuEntryAdded, MenuOptionClicked, PostMenuSort}
 import net.runelite.api.widgets.Widget
+import net.runelite.client.chat.ChatColorType
+import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 import net.runelite.client.menus.MenuManager
@@ -19,6 +22,7 @@ import net.runelite.client.ui.overlay.OverlayManager
 import net.runelite.client.util.ColorUtil
 import org.slf4j.Logger
 
+import java.awt.Color
 import scala.collection.mutable
 import scala.util.chaining.*
 import scala.jdk.CollectionConverters.*
@@ -43,6 +47,7 @@ class SuperClickerPlugin() extends Plugin {
 	@Inject() private val config        : SuperClickHelperConfig  = null
 	@Inject() private val overlay       : SuperClickHelperOverlay = null
 
+//	private var debugMode = false;
 
 	private val clickedTiles: mutable.ListBuffer[(Int, WorldPoint)] = mutable.ListBuffer.empty
 	private val clickedNpcs: mutable.ListBuffer[(Int, NPC)] = mutable.ListBuffer.empty
@@ -53,6 +58,22 @@ class SuperClickerPlugin() extends Plugin {
 	def getConfig(configManager: ConfigManager): SuperClickHelperConfig = {
 		configManager.getConfig[SuperClickHelperConfig](classOf[SuperClickHelperConfig])
 	}
+
+	def buildMessage(header: String, parts: (String, Any)*): String = {
+		def add(func: ChatMessageBuilder => ChatMessageBuilder)(chatMessageBuilder: ChatMessageBuilder => ChatMessageBuilder) = chatMessageBuilder
+			.andThen(func)
+
+		parts.foldLeft(new ChatMessageBuilder().append(ChatColorType.NORMAL).append(header + "\n"))((a, b) => {
+			(b._2 match {
+				case (c: Color, s: Any) => Option(add(_.append(c, s.toString)))
+				case null => Option.empty
+				case x => Option(add(_.append(Color.BLUE, x.toString)))
+			}).map(_.apply(_.append("[").append(b._1).append(": ")).andThen(_.append(ChatColorType.NORMAL).append("]\n")))
+				.map(_.apply(a))
+				.getOrElse(a)
+		}).build().stripTrailing().stripSuffix(",").stripSuffix("<br>")
+	}
+
 	override protected def startUp(): Unit = {
 		clickedTiles.clear()
 		clickedNpcs.clear()
@@ -102,6 +123,15 @@ class SuperClickerPlugin() extends Plugin {
 
 	@Subscribe
 	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
+		if(config.isDebugMenu) {
+			log.debug("Clicked {}(option=\"{}\", target=\"{}\")", menuOptionClicked.getMenuAction, menuOptionClicked.getMenuOption, menuOptionClicked.getMenuTarget)
+			val message = buildMessage(menuOptionClicked.getMenuAction.toString,
+									 ("option", menuOptionClicked.getMenuOption),
+									 ("target", menuOptionClicked.getMenuTarget),
+									 ("params", (menuOptionClicked.getParam0, menuOptionClicked.getParam1)),
+									 )
+			val line = client.addChatMessage(ChatMessageType.GAMEMESSAGE, "SuperClicker",message , "")
+		}
 		val targetOpt = MenuEntryTarget(menuOptionClicked)
 		targetOpt.foreach(met => log.info("Transformed {} into {}", menuOptionClicked, met))
 		if(targetOpt.isEmpty) {

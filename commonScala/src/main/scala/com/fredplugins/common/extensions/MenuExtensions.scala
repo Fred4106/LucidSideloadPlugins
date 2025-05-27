@@ -13,6 +13,22 @@ object MenuExtensions {
 	private val npcActions: List[MenuAction] = List(NPC_FIRST_OPTION, NPC_SECOND_OPTION, NPC_THIRD_OPTION, NPC_FOURTH_OPTION, NPC_FIFTH_OPTION, EXAMINE_NPC)
 	private val playerActions: List[MenuAction] = List(PLAYER_FIRST_OPTION, PLAYER_SECOND_OPTION, PLAYER_THIRD_OPTION, PLAYER_FOURTH_OPTION, PLAYER_FIFTH_OPTION, PLAYER_SIXTH_OPTION, PLAYER_SEVENTH_OPTION, PLAYER_EIGHTH_OPTION)
 	private val widgetTargetOnActions: List[MenuAction] = List(WIDGET_TARGET_ON_PLAYER, WIDGET_TARGET_ON_NPC, WIDGET_TARGET_ON_GAME_OBJECT)
+	private val widgetActions: List[MenuAction] = List(
+			MenuAction.WIDGET_TYPE_1,
+			MenuAction.WIDGET_TARGET,
+			MenuAction.WIDGET_CLOSE,
+			MenuAction.WIDGET_TYPE_4,
+			MenuAction.WIDGET_TYPE_5,
+			MenuAction.WIDGET_CONTINUE,
+			MenuAction.WIDGET_FIRST_OPTION,
+			MenuAction.WIDGET_SECOND_OPTION,
+			MenuAction.WIDGET_THIRD_OPTION,
+			MenuAction.WIDGET_FOURTH_OPTION,
+			MenuAction.WIDGET_FIFTH_OPTION,
+			MenuAction.WIDGET_TARGET_ON_WIDGET,
+			MenuAction.CC_OP_LOW_PRIORITY,
+			MenuAction.CC_OP
+	)
 
 	extension (e: MenuEntry) {
 		def getSanitizedOption: String = Text.sanitize(e.getOption)

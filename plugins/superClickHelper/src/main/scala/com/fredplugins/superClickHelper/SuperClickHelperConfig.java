@@ -100,10 +100,21 @@ public interface SuperClickHelperConfig extends Config
 	@ConfigItem(
 		keyName = "debugClicks",
 		name = "Debug Actions",
-		description = "enables debug overlay for menu clicks",
+		description = "enables debug overlay for clicked targets",
 		position = 12
 	)
 	default boolean isDebugClicks()
+	{
+		return true;
+	}
+
+		@ConfigItem(
+		keyName = "debugMenus",
+		name = "Debug MenuEntries",
+		description = "enables debug overlay for menu entries",
+		position = 13
+	)
+	default boolean isDebugMenu()
 	{
 		return true;
 	}

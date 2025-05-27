@@ -18,9 +18,11 @@ import net.runelite.api.Menu
 import net.runelite.api.MenuAction
 import net.runelite.api.MenuEntry
 import net.runelite.api.NPC
+import net.runelite.api.Prayer
 import net.runelite.api.Skill
 import net.runelite.api.events.GameTick
 import net.runelite.api.events.MenuEntryAdded
+import net.runelite.api.events.NpcChanged
 import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.events.PostMenuSort
@@ -62,7 +64,8 @@ class KrakenHelper(pvmDebuggerPlugin: PvmDebuggerPlugin, client:  Client, config
 		if(entry.isNpcAction) {
 			val npc = entry.getNpc
 			val explosivesWidgetOpt = Inventory.search().withId(ItemID.FISHING_EXPLOSIVE).first().toScala
-			if(npc.getId == NpcID.SLAYER_KRAKEN_BOSS_WHIRLPOOL &&
+			if(addExplosiveMenu &&
+				npc.getId == NpcID.SLAYER_KRAKEN_BOSS_WHIRLPOOL &&
 				entry.getSanitizedOption.equals("Disturb") &&
 				explosivesWidgetOpt.isDefined) {
 				val explosivesW = explosivesWidgetOpt.get
@@ -71,6 +74,7 @@ class KrakenHelper(pvmDebuggerPlugin: PvmDebuggerPlugin, client:  Client, config
 						.setOption(ColorUtil.prependColorTag("Disturb", Color.BLUE))
 						.setType(MenuAction.RUNELITE)
 						.onClick(e => {
+							addExplosiveMenu = false
 							InteractionUtils.useWidgetOnNPC(explosivesW, npc)
 //							setNpcHighlightColor(npc.getId(), c);
 //							clientThread.invokeLater(this :: rebuild);
@@ -79,21 +83,32 @@ class KrakenHelper(pvmDebuggerPlugin: PvmDebuggerPlugin, client:  Client, config
 			}
 		}
 	}
-//	def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
-//		val npc = npcSpawned.getNpc
-//		if(npc.getId == NpcID.SLAYER_KRAKEN_BOSS_WHIRLPOOL) {
-//			kraken = Some(npc)
-////			if(Inventory.getItemAmount(6664) > 0)
-////			InteractionUtils.useItemOnNPC(6664, kraken)
-//		}
-//	}
-//
-//	def onNpcDespawned(npcDespawned: NpcDespawned): Unit = {
-//		val npc = npcDespawned.getNpc
-//		if(kraken.contains(npc)) {
-//			kraken = Option.empty
-//		}
-//	}
+
+	var addExplosiveMenu: Boolean = false
+
+	@Subscribe
+	def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
+		val npc = npcSpawned.getNpc
+		if(npc.getId == NpcID.SLAYER_KRAKEN_BOSS_WHIRLPOOL && !addExplosiveMenu) {
+			addExplosiveMenu = true
+		}
+	}
+
+	@Subscribe
+	def onNpcChanged(e: NpcChanged): Unit = {
+		if(e.getNpc.getId == NpcID.SLAYER_KRAKEN_BOSS && e.getOld.getId == NpcID.SLAYER_KRAKEN_BOSS_WHIRLPOOL) {
+			CombatUtils.activatePrayer(Prayer.MYSTIC_LORE)
+//			CombatUtils.activatePrayer(Prayer.MYSTIC_MIGHT)
+		}
+	}
+
+	@Subscribe
+	def onNpcDespawned(npcDespawned: NpcDespawned): Unit = {
+		val npc = npcDespawned.getNpc
+		if(npc.getId == NpcID.SLAYER_KRAKEN_BOSS) {
+			CombatUtils.deactivatePrayers(false)
+		}
+	}
 
 	var cooldown = 0
 	var countdownTillFirstAttack = -1
