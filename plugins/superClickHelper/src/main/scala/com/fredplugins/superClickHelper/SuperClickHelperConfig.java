@@ -108,7 +108,7 @@ public interface SuperClickHelperConfig extends Config
 		return true;
 	}
 
-		@ConfigItem(
+	@ConfigItem(
 		keyName = "debugMenus",
 		name = "Debug MenuEntries",
 		description = "enables debug overlay for menu entries",

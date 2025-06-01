@@ -56,6 +56,7 @@ dependencies {
     implementation(projects.common)
     implementation(projects.commonScala)
     implementation(projects.alchBlocker)
+    implementation(projects.pyramidPlunder)
     implementation(projects.recolorCG)
     implementation(projects.zulrahHelper)
     implementation(projects.attackTimer)
