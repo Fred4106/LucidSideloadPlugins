@@ -47,9 +47,9 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 	}
 
 	override def render(graphics: Graphics2D): Dimension = {
-//		given Graphics2D = graphics
+		given Graphics2D = graphics
 //		given ModelOutlineRenderer = modelOutlineRenderer
-//		given Client = client
+		given Client = client
 //		withFont(Cache.cachedFont) {
 ////			if(config.isDebugClicks) {
 ////				val (npcs, tiles)  = plugin.getClickedState
@@ -74,7 +74,7 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 ////			}
 //		}
 		def elems: collection.mutable.Buffer[LayoutableRenderableEntity]/*java.util.List[LayoutableRenderableEntity]*/ = panelComponent.getChildren.	asScala
-		if(plugin.isInPyramidPlunder()) {
+//		if(PyramidPlunderHelper.isInPyramidPlunder) {
 			if (config.showChestsLooted) elems.addOne(LineComponent
 																							 .builder
 																							 .left("Total Chests Looted:")
@@ -92,13 +92,28 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 																				 .left("% Chance of at least one Sceptre:")
 																				 .right(String.format("%f", plugin.dryChance * 100))
 																				 .build)
+			elems.addOne(LineComponent
+										 .builder
+										 .left("UsingChestOrSarco = ")
+										 .right(s"${plugin.usingChestOrSarco}")
+										 .build)
+			elems.addOne(LineComponent
+										 .builder
+										 .left("UsingSpearTrap = ")
+										 .right(s"${plugin.usingSpearTrap}")
+										 .build)
+			elems.addOne(LineComponent
+										 .builder
+										 .left("SwarmSpawned = ")
+										 .right(s"${plugin.swarmSpawned}")
+										 .build)
 
-			if (config.showPetChance) elems.addOne(LineComponent
-																						.builder
-																						.left("% Chance of pet:")
-																						.right(String.format("%f", plugin.petDryChance * 100))
-																						.build)
-		}
+			//			if (config.showPetChance) elems.addOne(LineComponent
+//																						.builder
+//																						.left("% Chance of pet:")
+//																						.right(String.format("%f", plugin.petDryChance * 100))
+//																						.build)
+//		}
 		super.render(graphics)
 	}
 }

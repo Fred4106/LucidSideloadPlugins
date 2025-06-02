@@ -1,7 +1,6 @@
 package com.fredplugins.kroovy
 
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.kroovy.eventbus.{SEventBus, SEventBusFrame}
 import net.runelite.api.events.{GameTick, NpcSpawned}
 
 import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, ScheduledThreadPoolExecutor, TimeUnit}
@@ -18,21 +17,20 @@ object OtherOwner {
 
 }
 object EventDebugTest extends SwingApplication with ShimUtils.Logging {
-	val ss            : ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-	given bus: SEventBus = new SEventBus()
-
-	val r1 = bus.register[GameTick, 0, "TestGroup1"](this)((t: GameTick) => println(s"This - Gametick"))
-	val r2 = bus.register[GameTick, 4, "Other"](OtherOwner)((t: GameTick) => println(s"This is also a Gametick"))
-	val r3 = bus.register[NpcSpawned, 1, "Self"](OtherOwner)((t: NpcSpawned) => println(s"NpcService - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
-	val r4 = bus.register[NpcSpawned, 0, "Root"](this)((t: NpcSpawned) => println(s"This - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
-
-	var gameTickFuture: ScheduledFuture[?] = null
+	val ss: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+//
+//	val r1 = bus.register[GameTick, 0, "TestGroup1"](this)((t: GameTick) => println(s"This - Gametick"))
+//	val r2 = bus.register[GameTick, 4, "Other"](OtherOwner)((t: GameTick) => println(s"This is also a Gametick"))
+//	val r3 = bus.register[NpcSpawned, 1, "Self"](OtherOwner)((t: NpcSpawned) => println(s"NpcService - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
+//	val r4 = bus.register[NpcSpawned, 0, "Root"](this)((t: NpcSpawned) => println(s"This - NpcSpawned: ${t.getNpc.getId}, ${t.getNpc.getName}"))
+//
+//	var gameTickFuture: ScheduledFuture[?] = null
 
 	override def startup(args: Array[String]): Unit = {
-		val sBusFrame = SEventBusFrame.get
-		sBusFrame.open()
+//		val sBusFrame = SEventBusFrame.get
+//		sBusFrame.open()
 
-		gameTickFuture  = ss.scheduleAtFixedRate(() => {bus.post(GameTick())}, 1000, 600, TimeUnit.MILLISECONDS)
+//		gameTickFuture  = ss.scheduleAtFixedRate(() => {bus.post(GameTick())}, 1000, 600, TimeUnit.MILLISECONDS)
 
 //		val f: Frame = new Frame() with RichWindow.Undecorated {
 //			val textArea: TextArea = new TextArea(100, 200)  {
@@ -53,7 +51,7 @@ object EventDebugTest extends SwingApplication with ShimUtils.Logging {
 	}
 
 	override def shutdown(): Unit = {
-		gameTickFuture.cancel(false)
+//		gameTickFuture.cancel(false)
 		ss.shutdown()
 		Try {
 			ss.awaitTermination(4000, TimeUnit.MILLISECONDS)
