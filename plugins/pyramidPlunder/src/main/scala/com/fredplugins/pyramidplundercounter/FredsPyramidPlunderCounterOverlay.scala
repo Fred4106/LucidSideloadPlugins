@@ -107,7 +107,26 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 										 .left("SwarmSpawned = ")
 										 .right(s"${plugin.swarmSpawned}")
 										 .build)
-
+		plugin.stateLines.map{
+			case (str, (vid, vvalue)) => {
+				LineComponent
+					.builder
+					.left(s"${str}[${vid}]")
+					.right(s"${vvalue}")
+					.rightColor(
+						if(vvalue == 0) Color.RED
+						else if(vvalue == 1) Color.GREEN
+						else Color.YELLOW)
+					.leftColor(
+						if(str.contains("URN")) new Color(0, 255, 255, 255)
+						else if(str.contains("DOOR")) new Color(0, 255, 0, 255)
+						else if (str.contains("SARCOPHAGUS") || str.contains("GOLDEN_CHEST")) new Color(255, 255, 0, 255)
+						else new Color(255, 150, 150, 255))
+					.build
+			}
+		}.foreach{
+			case x => elems.addOne(x)
+		}
 			//			if (config.showPetChance) elems.addOne(LineComponent
 //																						.builder
 //																						.left("% Chance of pet:")

@@ -1,0 +1,18 @@
+package com.fredplugins.pvmDebugger.moons
+
+import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
+import net.runelite.api.Client
+import org.slf4j.Logger
+
+import scala.compiletime.uninitialized
+import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters.*
+import scala.jdk.StreamConverters.*
+import scala.util.chaining.*
+import scala.util.Random
+import scala.util.Try
+
+class BloodHelper(pvmDebuggerPlugin: PvmDebuggerPlugin, client: Client, config: FredsMoonConfig) {
+	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+}
