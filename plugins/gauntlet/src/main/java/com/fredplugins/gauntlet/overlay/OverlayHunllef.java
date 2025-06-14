@@ -381,19 +381,19 @@ public class OverlayHunllef extends Overlay
 
         final int tileHeight = Perspective.getTileHeight(client, localPoint, client.getTopLevelWorldView().getPlane());
 
-        double angle = Math.atan(projectile.getVelocityY() / projectile.getVelocityX());
-        angle = Math.toDegrees(angle) + (projectile.getVelocityX() < 0 ? 180 : 0);
-        angle = angle < 0 ? angle + 360 : angle;
-        angle = 360 - angle - 90;
-
-        double ori = angle * (512d / 90d);
-        ori = ori < 0 ? ori + 2048 : ori;
-
-        final int orientation = (int) Math.round(ori);
+//        double angle = 0.0d;//Math.atan(projectile.getVelocityY() / projectile.getVelocityX());
+//        angle = Math.toDegrees(angle);// + (projectile.getVelocityX() < 0 ? 180 : 0);
+//        angle = angle < 0 ? angle + 360 : angle;
+//        angle = 360 - angle - 90;
+//
+//        double ori = angle * (512d / 90d);
+//        ori = ori < 0 ? ori + 2048 : ori;
+//
+//        final int orientation = (int) Math.round(ori);
 
         final List<Vertex> vertices = getVertices(model);
 
-        vertices.replaceAll(vertex -> vertex.rotate(orientation));
+        vertices.replaceAll(vertex -> vertex.rotate(projectile.getOrientation()));
 
         final List<Point> list = new ArrayList<>();
 

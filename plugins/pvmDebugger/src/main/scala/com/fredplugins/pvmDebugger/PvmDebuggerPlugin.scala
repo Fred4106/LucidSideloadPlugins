@@ -131,9 +131,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	}
 
 //	private def self: PvmDebuggerPlugin = this
-	lazy val eclipseH = new SudoMoonPlugin("eclipse")(this, client, moonConfig)
-	lazy val blueH= new SudoMoonPlugin("blue")(this, client, moonConfig)
-	lazy val bloodH = new SudoMoonPlugin("blood")(this, client, moonConfig)
+	lazy val eclipseH = SudoMoonPlugin("eclipse")(this, client, moonConfig)
+	lazy val blueH= SudoMoonPlugin("blue")(this, client, moonConfig)
+	lazy val bloodH = SudoMoonPlugin("blood")(this, client, moonConfig)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {

@@ -153,6 +153,12 @@ public class PacketReflection {
 		if (def.type == PacketType.IF_BUTTON) {
 			params = List.of("widgetId", "slot", "itemId");
 		}
+		if (def.type == PacketType.IF_BUTTONX) {
+			params = List.of("widgetId", "slot", "itemId", "opCode");
+		}
+		if (def.type == PacketType.IF_SUBOP) {
+			params = List.of("widgetId", "slot", "itemId", "menuIndex", "subActionIndex");
+		}
 		if (def.type == PacketType.OPLOC) {
 			params = List.of("objectId", "worldPointX", "worldPointY", "ctrlDown");
 		}
@@ -190,15 +196,11 @@ public class PacketReflection {
 			params = List.of("npcIndex", "itemId", "slot", "widgetId", "ctrlDown");
 		}
 		if (params != null) {
-			for (int i = 0; i < Math.min(params.size(), objects.length); i++) {
-//                System.out.println("\t" + def.name + "(" + i + ")[\"" + params.get(i) + "\"] = " + objects[i] + ";");
-			}
-
 			for (int i = 0; i < def.writeData.length; i++) {
 				int index = params.indexOf(def.writeData[i]);
 				Object writeValue = objects[index];
 				for (String s : def.writeMethods[i]) {
-					//System.out.println("Writing " + s + " " + writeValue);
+//                    System.out.println("Writing " + s + " " + writeValue);
 					BufferMethods.writeValue(s, (Integer) writeValue, buffer);
 				}
 			}
@@ -283,5 +285,4 @@ public class PacketReflection {
 	private static int modInverse(int val) {
 		return modInverse(BigInteger.valueOf(val)).intValue();
 	}
-
 }

@@ -115,7 +115,7 @@ class ForsakenAssassin @Inject()(val client: Client, val eventBus: EventBus) {
 		if(State.target != null || event.getNpc.getId != ForsakenAssassinId) {
 		} else {
 			State.target = event.getNpc
-			State.vials = client.getTopLevelWorldView.getProjectiles.asScala.toList.filter(p => ForsakenProjectileType.find(p.getId).isDefined).map(p => new ForsakenProjectile(p))
+			State.vials = client.getProjectiles.asScala.toList.filter(p => ForsakenProjectileType.find(p.getId).isDefined).map(p => new ForsakenProjectile(p))
 			State.clouds = GameObjectUtils.search().filter(go => CloudType.find(go.getId).isDefined).result().asScala.toList.map(go => new ForsakenCloud(go))
 
 			State.animation = None

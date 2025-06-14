@@ -246,7 +246,7 @@ class JadLogic() extends Plugin with BossToolTrait {
 					case Prayer.PROTECT_FROM_MAGIC => 448
 					case Prayer.PROTECT_FROM_MISSILES => 449
 				}.map(id =>
-					client.getTopLevelWorldView.getProjectiles.asScala.toList.filter(p => p.getId == id)
+					client.getProjectiles.asScala.toList.filter(p => p.getId == id)
 				).getOrElse(List.empty)
 			}
 

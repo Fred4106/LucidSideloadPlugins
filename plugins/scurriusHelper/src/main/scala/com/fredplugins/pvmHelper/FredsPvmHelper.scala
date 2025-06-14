@@ -299,7 +299,7 @@ class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 	@Subscribe
 	private def onProjectileMoved(event: ProjectileMoved): Unit = {
 		if (event.getProjectile.getRemainingCycles == event.getProjectile.getEndCycle - event.getProjectile.getStartCycle) {
-			log.debug(s"Projectile Spawned: id={}, event={}", event.getProjectile.getId, event)
+			log.debug(s"Projectile Spawned: id={}, event={}, clazz={}", event.getProjectile.getId, event, event.getProjectile.getClass.getSimpleName)
 			state = state.withProjectile(event.getProjectile)
 		}
 	}

@@ -307,7 +307,7 @@ public class FredsAlchBlockerPlugin extends Plugin {
 		Widget inventory = client.getWidget(ComponentID.EXPLORERS_RING_INVENTORY);
 		if (inventory == null) {
 			inventory = client.getWidget(ComponentID.INVENTORY_CONTAINER);
-			if (inventory == null) {
+			if (inventory == null || inventory.getChildren() == null) {
 				return;
 			}
 		}
