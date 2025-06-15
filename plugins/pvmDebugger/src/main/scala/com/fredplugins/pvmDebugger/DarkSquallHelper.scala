@@ -171,10 +171,11 @@ class DarkSquallHelper (val client: Client) extends ShimUtils.Logging("DEBUG") {
 	private def onProjectileMoved(event: ProjectileMoved): Unit = {
 		val projectile   = event.getProjectile
 		val projectileId = projectile.getId
-		val loc = WorldPoint.fromLocal(
-			client.getTopLevelWorldView, projectile.getX1, projectile.getY1, client.getTopLevelWorldView
-				.getPlane)
-		curTickState = curTickState.addProjectile(projectile)
+		if(projectile.getSourcePoint != null) {
+			val loc = WorldPoint.fromLocal(
+				client.getTopLevelWorldView, projectile.getX1, projectile.getY1, projectile.getSourceLevel)
+			curTickState = curTickState.addProjectile(projectile)
+		}
 	}
 
 	@Subscribe
@@ -192,7 +193,7 @@ class DarkSquallHelper (val client: Client) extends ShimUtils.Logging("DEBUG") {
 				InteractionUtils.useWidgetOnTileItem(spellWidget, eitem)
 			})
 		} else {
-			val inInventoryExplosive = Inventory.search().withId(29573).first().asScala
+			val inInventoryExplosive = Inventory.search().withId(29573).first().toScala
 			inInventoryExplosive.foreach(w => {
 				val spellW = Spells.StandardSpell.HIGH_LEVEL_ALCHEMY.getWidget.getId.pipe(client.getWidget(_))
 				InteractionUtils.useWidgetOnWidget(spellW, w)

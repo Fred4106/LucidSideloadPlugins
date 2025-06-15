@@ -22,11 +22,14 @@ import org.slf4j.Logger
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
 import com.fredplugins.pvmDebugger.moons.FredsMoonConfig
+import com.fredplugins.pvmDebugger.moons.FredsMoonHelper
 import com.fredplugins.pvmDebugger.moons.SudoMoonHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
 import com.google.inject.Binder
 import com.google.inject.TypeLiteral
 import net.runelite.api.Client
+import net.runelite.client.chat.ChatMessageManager
+import net.runelite.client.plugins.PluginManager
 import org.slf4j.Logger
 
 import scala.compiletime.uninitialized
@@ -57,18 +60,31 @@ class PvmDebuggerPlugin() extends Plugin {
 	private         val log              : Logger                   = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	@Inject private val client           : Client                   = null
 	@Inject private val clientThread     : ClientThread             = null
-	@Inject private val eventBus         : EventBus                 = null
+	@Inject private val eventBus         : EventBus           = null
+	@Inject private val chatmessageManager         :ChatMessageManager           = null
+	@Inject private val pluginManager         : PluginManager      = null
+	@Inject private val configManager         : ConfigManager = null
 	@Inject private val notifier         : Notifier                 = null
 	@Inject private val overlayManager   : OverlayManager           = null
 	@Inject private val pvmDebuggerConfig: FredsPvmDebuggerConfig   = null
 	@Inject private val guardiansConfig  : GrotesqueGuardiansConfig = null
-	@Inject private val krakenConfig     : KrakenConfig             = null
-	@Inject private val moonConfig       : FredsMoonConfig          = null
+//	@Inject private val krakenConfig     : KrakenConfig             = null
+	@Inject private val krakenHelper     : KrakenHelper    = null
+	@Inject private val moonHelper     : FredsMoonHelper = null
+//	@Inject private val moonConfig       : FredsMoonConfig = null
 	@Inject private val tormentedDemonsConfig       : FredsTormentedDemonConfig          = null
 
 
 	def getClient: Client = client
 	def getClientThread: ClientThread = clientThread
+//	def register: ClientThread = clientThread
+	def getEventBus:EventBus = eventBus
+	def getChatMessageManager:ChatMessageManager = chatmessageManager
+	def getConfigManager:ConfigManager = configManager
+	def getOverlayManager: OverlayManager = overlayManager
+	def getConfig: FredsPvmDebuggerConfig = pvmDebuggerConfig
+	def getPluginManager:PluginManager = pluginManager
+	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
 
 	//	//region types
 	case class InvSlotItem(index: Int, id: Int, qty: Int)
@@ -132,49 +148,60 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-//	private def self: PvmDebuggerPlugin = this
-	lazy val eclipseH = new SudoMoonHelper("eclipse")(this, client, moonConfig)
-	lazy val blueH= new SudoMoonHelper("blue")(this, client, moonConfig)
-	lazy val bloodH =new SudoMoonHelper("blood")(this, client, moonConfig)
-
+	lazy val helperModules: Seq[HelperModule] = List(krakenHelper,moonHelper)
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
-		//		log.debug(s"${event.toString}")
-		if (event.getKey == "enabled") {
-			log.debug("Config changed {}", event.getGroup)
-			val eg = event.getGroup
-			if (eg.equals(KrakenConfig.GROUP)) {
-				if (krakenConfig.enabled()) {
-					eventBus.register(krakenHelper.tap(k => ()))
-				} else {
-					eventBus.unregister(krakenHelper)
+		helperModules.foreach(m => {
+			if(m.configGroup.equals(event.getGroup)&&event.getKey.equals("enabled")) {
+				java.lang.Boolean.parseBoolean(event.getNewValue) match {
+					case true => m.startup()
+					case false => m.shutdown()
 				}
-			} else if (eg.equals(GrotesqueGuardiansConfig.GROUP)) {
-				if (guardiansConfig.enabled()) {
-					eventBus.register(grotesqueGuardiansHelper)
-				} else {
-					eventBus.unregister(grotesqueGuardiansHelper)
-				}
-			} else if (eg.equals(FredsMoonConfig.GROUP)) {
-
-				import java.lang.{Boolean as JBoolean}
-				Option(event.getKey).collect {
-					case "eclipse.enabled" => eclipseH
-					case "blue.enabled" => blueH
-					case "blood.enabled" => bloodH
-				}
-			} else if (eg.equals(FredsTormentedDemonConfig.GroupName)) {
-				if (tormentedDemonsConfig.enabled()) {
-					eventBus.register(tormentedDemonsHelper.tap(_.startup()))
-				} else {
-					eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
-				}
-			} else {
-				log.error("Error matching group: {}", eg);
 			}
-			//			event.getGroup == KrakenConfig.GROUP
-			//			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
-			//			else eventBus.unregister(krakenHelper)
+		})
+		if(event.getGroup ==FredsPvmDebuggerConfig.GroupName) {
+			log.debug(s"config[\"{}\"][\"{}\"] changed to {} from {}", event.getGroup, event.getKey, event.getNewValue, event.getOldValue)
+		//		if (event.getKey == "enabled") {
+//			log.debug("Config changed {}", event.getGroup)
+//			val eg = event.getGroup
+//			eg match {
+//				case KrakenConfig.GROUP =>
+//				case GrotesqueGuardiansConfig.GROUP =>
+//				case FredsMoonConfig.GROUP =>
+//				case FredsTormentedDemonConfig.GroupName =>
+//			}
+//			if (eg.equals(KrakenConfig.GROUP)) {
+//				if (krakenConfig.enabled()) {
+//					eventBus.register(krakenHelper.tap(k => ()))
+//				} else {
+//					eventBus.unregister(krakenHelper)
+//				}
+//			} else if (eg.equals(GrotesqueGuardiansConfig.GROUP)) {
+//				if (guardiansConfig.enabled()) {
+//					eventBus.register(grotesqueGuardiansHelper)
+//				} else {
+//					eventBus.unregister(grotesqueGuardiansHelper)
+//				}
+//			} else if (eg.equals(FredsMoonConfig.GROUP)) {
+//
+//				import java.lang.{Boolean as JBoolean}
+//				Option(event.getKey).collect {
+//					case "eclipse.enabled" => eclipseH
+//					case "blue.enabled" => blueH
+//					case "blood.enabled" => bloodH
+//				}
+//			} else if (eg.equals(FredsTormentedDemonConfig.GroupName)) {
+//				if (tormentedDemonsConfig.enabled()) {
+//					eventBus.register(tormentedDemonsHelper.tap(_.startup()))
+//				} else {
+//					eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
+//				}
+//			} else {
+//				log.error("Error matching group: {}", eg);
+//			}
+//			//			event.getGroup == KrakenConfig.GROUP
+//			//			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
+//			//			else eventBus.unregister(krakenHelper)
 		}
 	}
 
@@ -270,9 +297,9 @@ class PvmDebuggerPlugin() extends Plugin {
 		new BalanceElementalHelper(client)
 	}
 
-	lazy val krakenHelper = {
-		new KrakenHelper(this, client, krakenConfig)
-	}
+//	lazy val krakenHelper = {
+//		new KrakenHelper(this, client, krakenConfig)
+//	}
 
 	lazy val grotesqueGuardiansHelper: GrotesqueGuardiansHelper   = {
 		new GrotesqueGuardiansHelper(this, client, guardiansConfig)
@@ -282,14 +309,14 @@ class PvmDebuggerPlugin() extends Plugin {
 	}
 	override protected def startUp(): Unit = {
 
-		(new Frame() {
-			contents = debugPanel
-		}.tap(mf => {
-			mf.pack()
-			mf.centerOnScreen()
-			mf.open()
-		}))
-		debugPanel.publish(ClearEvent)
+//		(new Frame() {
+//			contents = debugPanel
+//		}.tap(mf => {
+//			mf.pack()
+//			mf.centerOnScreen()
+//			mf.open()
+//		}))
+//		debugPanel.publish(ClearEvent)
 		clientThread.invoke(() => {
 			gameStateCached = client.getGameState
 			inventorySnapshot = parseInventory(client.getItemContainer(InventoryID.INVENTORY))
@@ -297,7 +324,8 @@ class PvmDebuggerPlugin() extends Plugin {
 		eventBus.register(darkSquallHelper.tap(_.reset()))
 		eventBus.register(balanceElementalHelper.tap(_.reset()))
 
-		if (krakenConfig.enabled()) eventBus.register(krakenHelper)
+//		if (krakenConfig.enabled()) eventBus.register(krakenHelper)
+		helperModules.foreach(m => m.startup())
 		if (tormentedDemonsConfig.enabled()) eventBus.register(tormentedDemonsHelper.tap(_.startup()))
 	}
 
@@ -306,7 +334,8 @@ class PvmDebuggerPlugin() extends Plugin {
 		gameStateCached = GameState.UNKNOWN
 		eventBus.unregister(darkSquallHelper)
 		eventBus.unregister(balanceElementalHelper)
-		eventBus.unregister(krakenHelper)
+//		eventBus.unregister(krakenHelper)
+		helperModules.foreach(m => m.shutdown())
 		eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
 	}
 //	override def configure(binder: Binder): Unit = {

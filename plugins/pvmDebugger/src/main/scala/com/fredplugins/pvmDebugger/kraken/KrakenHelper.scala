@@ -3,7 +3,9 @@ package com.fredplugins.pvmDebugger.kraken
 import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.common.extensions.MenuExtensions.{*, given}
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
+import com.google.inject.Inject
 import com.lucidplugins.api.item.SlottedItem
 import com.lucidplugins.api.utils.CombatUtils
 import com.lucidplugins.api.utils.EquipmentUtils
@@ -42,8 +44,16 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
-class KrakenHelper(pvmDebuggerPlugin: PvmDebuggerPlugin, client:  Client, config: KrakenConfig) {
+class KrakenHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: KrakenConfig) extends HelperModule {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+
+	override def init(): Unit = {
+		log.debug("Initializing KrakenHelper")
+	}
+	override def cleanup(): Unit = {
+		log.debug("Cleaning up KrakenHelper")
+	}
+
 	@Subscribe(priority = -9)
 	def onPostMenuSort(postMenuSort: PostMenuSort): Unit = {
 		if (!client.isMenuOpen) {

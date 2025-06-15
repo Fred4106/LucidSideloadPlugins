@@ -9,6 +9,17 @@ import net.runelite.client.config.ConfigSection;
 public interface FredsMoonConfig extends Config {
 	static final String GROUP = "FredsMoonHelper";
 
+	@ConfigItem(
+		name = "Enabled",
+		description = "Is Kraken helper enabled?",
+		position = 0,
+		keyName = "enabled"
+	)
+	default boolean enabled()
+	{
+		return false;
+	}
+
 	@ConfigSection(
 		name = "General",
 		description = "General settings shared between rooms",
