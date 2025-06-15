@@ -46,7 +46,7 @@ class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		val newRoomOpt = MoonRoomEnum.test(client)
 		val curRoom = currentRoom.map(_.toString).getOrElse("Empty")
 		val newRoom  = newRoomOpt.map(_.toString).getOrElse("Empty")
-		Option.when(newRoom != curRoom)(
+		Option.unless(newRoom.equals(curRoom))(
 			ChatMessageBuilder().append("Room changed from ").append(Color.PINK, curRoom).append(" to ").append(Color.YELLOW, newRoom)
 		).foreach(builder => printMessage(ChatMessageType.GAMEMESSAGE, "", "")(builder))
 		currentRoom = newRoomOpt
