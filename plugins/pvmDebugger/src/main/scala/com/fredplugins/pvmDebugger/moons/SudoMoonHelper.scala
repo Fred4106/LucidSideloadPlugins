@@ -17,7 +17,7 @@ import scala.util.chaining.*
 import scala.util.Random
 import scala.util.Try
 
-class SudoMoonPlugin(val target: String)(val pvmDebuggerPlugin: PvmDebuggerPlugin, val client: Client, val config: FredsMoonConfig) {
+class SudoMoonHelper(val target: String)(val pvmDebuggerPlugin: PvmDebuggerPlugin, val client: Client, val config: FredsMoonConfig) {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
 //	given Client = pvmDebuggerPlugin.getClient

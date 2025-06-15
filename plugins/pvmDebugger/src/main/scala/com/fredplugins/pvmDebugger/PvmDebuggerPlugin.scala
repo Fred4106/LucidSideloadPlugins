@@ -22,7 +22,8 @@ import org.slf4j.Logger
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
 import com.fredplugins.pvmDebugger.moons.FredsMoonConfig
-import com.fredplugins.pvmDebugger.moons.SudoMoonPlugin
+import com.fredplugins.pvmDebugger.moons.SudoMoonHelper
+import com.fredplugins.pvmDebugger.tormenteddemons.*
 import com.google.inject.Binder
 import com.google.inject.TypeLiteral
 import net.runelite.api.Client
@@ -63,6 +64,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val guardiansConfig  : GrotesqueGuardiansConfig = null
 	@Inject private val krakenConfig     : KrakenConfig             = null
 	@Inject private val moonConfig       : FredsMoonConfig          = null
+	@Inject private val tormentedDemonsConfig       : FredsTormentedDemonConfig          = null
 
 
 	def getClient: Client = client
@@ -131,9 +133,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	}
 
 //	private def self: PvmDebuggerPlugin = this
-	lazy val eclipseH = SudoMoonPlugin("eclipse")(this, client, moonConfig)
-	lazy val blueH= SudoMoonPlugin("blue")(this, client, moonConfig)
-	lazy val bloodH = SudoMoonPlugin("blood")(this, client, moonConfig)
+	lazy val eclipseH = new SudoMoonHelper("eclipse")(this, client, moonConfig)
+	lazy val blueH= new SudoMoonHelper("blue")(this, client, moonConfig)
+	lazy val bloodH =new SudoMoonHelper("blood")(this, client, moonConfig)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -143,7 +145,7 @@ class PvmDebuggerPlugin() extends Plugin {
 			val eg = event.getGroup
 			if (eg.equals(KrakenConfig.GROUP)) {
 				if (krakenConfig.enabled()) {
-					eventBus.register(krakenHelper)
+					eventBus.register(krakenHelper.tap(k => ()))
 				} else {
 					eventBus.unregister(krakenHelper)
 				}
@@ -153,13 +155,19 @@ class PvmDebuggerPlugin() extends Plugin {
 				} else {
 					eventBus.unregister(grotesqueGuardiansHelper)
 				}
-			} else if (eg.equals(FredsMoonConfig.GroupName)) {
+			} else if (eg.equals(FredsMoonConfig.GROUP)) {
 
 				import java.lang.{Boolean as JBoolean}
 				Option(event.getKey).collect {
 					case "eclipse.enabled" => eclipseH
 					case "blue.enabled" => blueH
 					case "blood.enabled" => bloodH
+				}
+			} else if (eg.equals(FredsTormentedDemonConfig.GroupName)) {
+				if (tormentedDemonsConfig.enabled()) {
+					eventBus.register(tormentedDemonsHelper.tap(_.startup()))
+				} else {
+					eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
 				}
 			} else {
 				log.error("Error matching group: {}", eg);
@@ -266,10 +274,12 @@ class PvmDebuggerPlugin() extends Plugin {
 		new KrakenHelper(this, client, krakenConfig)
 	}
 
-	lazy val grotesqueGuardiansHelper = {
+	lazy val grotesqueGuardiansHelper: GrotesqueGuardiansHelper   = {
 		new GrotesqueGuardiansHelper(this, client, guardiansConfig)
 	}
-
+	lazy val tormentedDemonsHelper   : FredsTormentedDemonsHelper = {
+		new FredsTormentedDemonsHelper(this, client, tormentedDemonsConfig)
+	}
 	override protected def startUp(): Unit = {
 
 		(new Frame() {
@@ -286,7 +296,9 @@ class PvmDebuggerPlugin() extends Plugin {
 		})
 		eventBus.register(darkSquallHelper.tap(_.reset()))
 		eventBus.register(balanceElementalHelper.tap(_.reset()))
+
 		if (krakenConfig.enabled()) eventBus.register(krakenHelper)
+		if (tormentedDemonsConfig.enabled()) eventBus.register(tormentedDemonsHelper.tap(_.startup()))
 	}
 
 	override protected def shutDown(): Unit = {
@@ -295,6 +307,7 @@ class PvmDebuggerPlugin() extends Plugin {
 		eventBus.unregister(darkSquallHelper)
 		eventBus.unregister(balanceElementalHelper)
 		eventBus.unregister(krakenHelper)
+		eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
 	}
 //	override def configure(binder: Binder): Unit = {
 //		binder.(TypeLiteral.get(classOf[GrotesqueGuardiansConfig]))
@@ -303,4 +316,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideGuardiansConfig(configManager: ConfigManager): GrotesqueGuardiansConfig = configManager.getConfig(classOf[GrotesqueGuardiansConfig])
 	@Provides def provideKrakenConfig(configManager: ConfigManager): KrakenConfig = configManager.getConfig(classOf[KrakenConfig])
 	@Provides def provideFredsMoonConfig(configManager: ConfigManager): FredsMoonConfig = configManager.getConfig(classOf[FredsMoonConfig])
+	@Provides def provideTormentedDemonsConfig(configManager: ConfigManager): FredsTormentedDemonConfig = configManager.getConfig(classOf[FredsTormentedDemonConfig])
 }

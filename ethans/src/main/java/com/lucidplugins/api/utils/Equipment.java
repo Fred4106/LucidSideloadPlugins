@@ -4,9 +4,11 @@ import com.lucidplugins.api.utils.query.EquipmentItemQuery;
 import net.runelite.api.Client;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
+import net.runelite.api.ScriptID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
+import net.runelite.client.callback.ClientThread;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +16,7 @@ import java.util.List;
 
 public class Equipment {
     static Client client = RuneLite.getInjector().getInstance(Client.class);
+    static ClientThread clientThread = RuneLite.getInjector().getInstance(ClientThread.class);
     static List<EquipmentItemWidget> equipment = new ArrayList<>();
     static HashMap<Integer, Integer> equipmentSlotWidgetMapping = new HashMap<>();
     static HashMap<Integer, Integer> mappingToIterableIntegers = new HashMap<>();
@@ -49,9 +52,11 @@ public class Equipment {
     public static EquipmentItemQuery search() {
         if (lastUpdateTick < client.getTickCount()) {
             int x = 25362447;
-            for (int i = 0; i < 11; i++) {
-                client.runScript(545, (x + i), mappingToIterableIntegers.get(i), 1, 1, 2);
-            }
+            clientThread.invokeLater(() -> {
+                for (int i = 0; i < 11; i++) {
+                    client.runScript(545, (x + i), mappingToIterableIntegers.get(i), 1, 1, 2);
+                }
+            });
             equipment.clear();
             int i = -1;
             if(client.getItemContainer(InventoryID.EQUIPMENT.getId()) == null){

@@ -5,9 +5,9 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 
-@ConfigGroup(value = FredsMoonConfig.GroupName)
+@ConfigGroup(value = FredsMoonConfig.GROUP)
 public interface FredsMoonConfig extends Config {
-	static final String GroupName = "FredsMoonHelper";
+	static final String GROUP = "FredsMoonHelper";
 
 	@ConfigSection(
 		name = "General",

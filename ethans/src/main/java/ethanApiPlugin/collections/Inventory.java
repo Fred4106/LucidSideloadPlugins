@@ -7,6 +7,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 
 import javax.inject.Singleton;
@@ -18,12 +19,15 @@ import java.util.stream.Collectors;
 @Singleton
 public class Inventory {
     static Client client = RuneLite.getInjector().getInstance(Client.class);
+    static ClientThread clientThread = RuneLite.getInjector().getInstance(ClientThread.class);
     static List<Widget> inventoryItems = new ArrayList<>();
     static int lastUpdateTick = 0;
 
     public static ItemQuery search() {
         if (lastUpdateTick < client.getTickCount()) {
-            client.runScript(6009, 9764864, 28, 1, -1);
+             clientThread.invokeLater(() -> {
+                client.runScript(6009, 9764864, 28, 1, -1);
+            });
             Inventory.inventoryItems =
                     Arrays.stream(client.getWidget(WidgetInfo.INVENTORY).getDynamicChildren()).filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
             lastUpdateTick = client.getTickCount();
