@@ -112,7 +112,7 @@ class DebugPanel extends BorderPanel {
 //					case b => Label(b.toString).tap(_.foreground = Color.ORANGE)
 //				}
 //			}
-			override def componentFor(list: ListView[_ <: DebugEvent], isSelected: Boolean, focused: Boolean, a: DebugEvent, index: Int): Component = {
+			override def componentFor(list: ListView[? <: DebugEvent], isSelected: Boolean, focused: Boolean, a: DebugEvent, index: Int): Component = {
 				(for {
 					(idx, eName, eValue) <- (0 until a.productArity).flatMap(idx => Try { (idx, a.productElementName(idx), a.productElement(idx)) }.toOption)
 				} yield {

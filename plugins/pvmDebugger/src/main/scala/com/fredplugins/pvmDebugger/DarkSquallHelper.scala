@@ -173,7 +173,7 @@ class DarkSquallHelper (val client: Client) extends ShimUtils.Logging("DEBUG") {
 		val projectileId = projectile.getId
 		if(projectile.getSourcePoint != null) {
 			val loc = WorldPoint.fromLocal(
-				client.getTopLevelWorldView, projectile.getX1, projectile.getY1, projectile.getSourceLevel)
+			client.getTopLevelWorldView, projectile.getX1, projectile.getY1, projectile.getSourceLevel)
 			curTickState = curTickState.addProjectile(projectile)
 		}
 	}

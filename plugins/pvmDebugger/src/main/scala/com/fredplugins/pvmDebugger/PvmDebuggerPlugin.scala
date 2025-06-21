@@ -56,8 +56,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	//	@Inject private val krakenConfig     : KrakenConfig             = null
 	@Inject private val krakenHelper         : KrakenHelper              = null
 	@Inject private val moonHelper           : FredsMoonHelper           = null
+	@Inject private val tormentedDemonsHelper           : FredsTormentedDemonsHelper           = null
 	//	@Inject private val moonConfig       : FredsMoonConfig = null
-	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
+//	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
 
 	def getClient: Client = client
 	def getClientThread: ClientThread = clientThread
@@ -133,7 +134,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper)
+	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper)
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		helperModules.foreach(m => {
@@ -289,9 +290,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	lazy val grotesqueGuardiansHelper: GrotesqueGuardiansHelper   = {
 		new GrotesqueGuardiansHelper(this, client, guardiansConfig)
 	}
-	lazy val tormentedDemonsHelper   : FredsTormentedDemonsHelper = {
-		new FredsTormentedDemonsHelper(this, client, tormentedDemonsConfig)
-	}
+//	lazy val tormentedDemonsHelper   : FredsTormentedDemonsHelper = {
+//		new FredsTormentedDemonsHelper(this, client, tormentedDemonsConfig)
+//	}
 	override protected def startUp(): Unit = {
 
 		//		(new Frame() {
@@ -309,9 +310,8 @@ class PvmDebuggerPlugin() extends Plugin {
 		eventBus.register(darkSquallHelper.tap(_.reset()))
 		eventBus.register(balanceElementalHelper.tap(_.reset()))
 
-		//		if (krakenConfig.enabled()) eventBus.register(krakenHelper)
 		helperModules.foreach(m => m.startup())
-		if (tormentedDemonsConfig.enabled()) eventBus.register(tormentedDemonsHelper.tap(_.startup()))
+//		if (tormentedDemonsConfig.enabled()) eventBus.register(tormentedDemonsHelper.tap(_.startup()))
 	}
 
 	override protected def shutDown(): Unit = {
@@ -321,7 +321,7 @@ class PvmDebuggerPlugin() extends Plugin {
 		eventBus.unregister(balanceElementalHelper)
 		//		eventBus.unregister(krakenHelper)
 		helperModules.foreach(m => m.shutdown())
-		eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
+//		eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
 	}
 	//	override def configure(binder: Binder): Unit = {
 	//		binder.(TypeLiteral.get(classOf[GrotesqueGuardiansConfig]))

@@ -34,7 +34,6 @@ import net.runelite.api.widgets.WidgetUtil
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.util.ColorUtil
 import net.runelite.client.util.Text
-import org.slf4j.Logger
 
 import java.awt.Color
 import scala.jdk.CollectionConverters.*
@@ -45,13 +44,12 @@ import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
 class KrakenHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: KrakenConfig) extends HelperModule {
-	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+//	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	override val moduleName: String = "KrakenHelper"
 
 	override def init(): Unit = {
-		log.debug("Initializing KrakenHelper")
 	}
 	override def cleanup(): Unit = {
-		log.debug("Cleaning up KrakenHelper")
 	}
 
 	@Subscribe(priority = -9)

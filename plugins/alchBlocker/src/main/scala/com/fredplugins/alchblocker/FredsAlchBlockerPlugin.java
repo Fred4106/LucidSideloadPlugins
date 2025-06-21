@@ -152,7 +152,7 @@ public class FredsAlchBlockerPlugin extends Plugin {
 			int unknown = intStack[sz - 2];
 			int targetSize = intStack[sz - 3];
 			int targetWidget = intStack[sz - 4];
-			log.debug("ScriptPreFired: INVENTORY_BUILD, targetWidget={}.{}, tSize={}, unknown={}, shiftDown={}", WidgetInfoExtended.TO_GROUP(targetWidget), WidgetInfoExtended.TO_CHILD(targetWidget), targetSize, unknown, shiftDown);
+//			log.debug("ScriptPreFired: INVENTORY_BUILD, targetWidget={}.{}, tSize={}, unknown={}, shiftDown={}", WidgetInfoExtended.TO_GROUP(targetWidget), WidgetInfoExtended.TO_CHILD(targetWidget), targetSize, unknown, shiftDown);
 		} else if (inventoryDrawIdx > 0) {
 			inventoryDrawIdx = inventoryDrawIdx - 1;
 			cachedStack = Arrays.copyOfRange(intStack, sz - 6, sz);
@@ -170,7 +170,7 @@ public class FredsAlchBlockerPlugin extends Plugin {
 		int offset = ScriptID.INVENTORY_DRAWITEM - event.getScriptId();
 		if (offset < 0 || offset > 1) return;
 		if (offset == 1) {
-			log.debug("ScriptPostFired: INVENTORY_BUILD has {} children", 28 - inventoryDrawIdx);
+//			log.debug("ScriptPostFired: INVENTORY_BUILD has {} children", 28 - inventoryDrawIdx);
 			cachedStack = new int[] {};
 //			hideBlockedItems();
 		} else if (cachedStack.length == 6) {
@@ -180,7 +180,7 @@ public class FredsAlchBlockerPlugin extends Plugin {
 			int targetWidget = cachedStack[2];
 			int itemQty = cachedStack[1];
 			int itemId = cachedStack[0];
-			log.debug("ScriptPostFired: INVENTORY_DRAWITEM[{}], item=(id={}, qty={}), targetWidget={}.{}, tSize={}, unknown={}, shiftDown={}", inventoryDrawIdx, itemId, itemQty, WidgetInfoExtended.TO_GROUP(targetWidget), WidgetInfoExtended.TO_CHILD(targetWidget), targetSize, unknown, shiftDown);
+//			log.debug("ScriptPostFired: INVENTORY_DRAWITEM[{}], item=(id={}, qty={}), targetWidget={}.{}, tSize={}, unknown={}, shiftDown={}", inventoryDrawIdx, itemId, itemQty, WidgetInfoExtended.TO_GROUP(targetWidget), WidgetInfoExtended.TO_CHILD(targetWidget), targetSize, unknown, shiftDown);
 			Widget[] childrfen = client.getWidget(targetWidget).getDynamicChildren();
 			if (childrfen.length >= 28) {
 				Widget renderedWidget = childrfen[inventoryDrawIdx];

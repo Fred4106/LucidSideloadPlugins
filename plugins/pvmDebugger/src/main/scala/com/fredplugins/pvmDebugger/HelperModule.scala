@@ -1,5 +1,6 @@
 package com.fredplugins.pvmDebugger
 
+import com.fredplugins.common.utils.ShimUtils
 import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
 import net.runelite.api.events.ChatMessage
@@ -23,6 +24,7 @@ import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 import scala.reflect.ClassTag
 import scala.reflect.classTag
+import org.slf4j.Logger
 
 trait WithPanel {
 	self: HelperModule =>
@@ -41,11 +43,20 @@ abstract class HelperModule/*[C <: Config :ClassTag]*/ {
 	val parent: PvmDebuggerPlugin
 	val client: Client
 //	type C <: Config
-	val config: Config// = parent.getConfigManager.getConfig[C](classTag[C].runtimeClass.asInstanceOf[Class[C]])
-
+	val config: Config & {
+		def enabled(): Boolean
+	}// = parent.getConfigManager.getConfig[C](classTag[C].runtimeClass.asInstanceOf[Class[C]])
+	val moduleName: String
+	protected final lazy val log: Logger = ShimUtils.getLogger(moduleName, "DEBUG")
 	val configGroup: String = parent.getConfigManager.getConfigDescriptor(config).getGroup.value()/*config.getAnnotation(classOf[ConfigGroup]).value()*/
 	def isRegistered(): Boolean = parent.getEventBus.isRegistered(this)
-	def isEnabled(): Boolean = parent.getConfigManager.getConfiguration(configGroup, "enabled", classOf[java.lang.Boolean])
+	def isEnabled(): Boolean = {
+//		if(enabledValue == null) parent.getConfigManager.setConfiguration(configGroup, "enabled", classOf[java.lang.Boolean])
+//		parent.getConfigManager.getConfiguration(configGroup, "enabled", classOf[java.lang.Boolean])
+		parent.getConfigManager.getConfiguration(configGroup, "enabled").toBooleanOption.getOrElse {
+			false.tap(b => parent.getConfigManager.setConfiguration(configGroup, "enabled", b.toString))
+		}
+	}
 
 	protected def init(): Unit
 	protected def cleanup(): Unit
@@ -53,11 +64,12 @@ abstract class HelperModule/*[C <: Config :ClassTag]*/ {
 	final def startup(): Unit = {
 		if(!isRegistered() && isEnabled()) {
 			init()
+			log.debug(s"Initializing ${moduleName}")
 			Option(this).collect {
-				case swp: HelperModule with WithOverlay => swp.overlay
+				case swp: WithOverlay => swp.overlay
 			}.foreach(o => parent.getOverlayManager.add(o))
 			Option(this).collect {
-				case swp: HelperModule with WithPanel => swp.panel
+				case swp: WithPanel => swp.panel
 			}.foreach(o => parent.getOverlayManager.add(o))
 
 			parent.getEventBus.register(this)
@@ -68,12 +80,13 @@ abstract class HelperModule/*[C <: Config :ClassTag]*/ {
 		if (isRegistered()) {
 			parent.getEventBus.unregister(this)
 			Option(this).collect {
-				case swp: HelperModule with WithOverlay => swp.overlay
+				case swp: WithOverlay => swp.overlay
 			}.foreach(o => parent.getOverlayManager.remove(o))
 			Option(this).collect {
-				case swp: HelperModule with WithPanel => swp.panel
+				case swp: WithPanel => swp.panel
 			}.foreach(o => parent.getOverlayManager.remove(o))
 			cleanup()
+			log.debug(s"Cleaning up ${moduleName}")
 		}
 	}
 

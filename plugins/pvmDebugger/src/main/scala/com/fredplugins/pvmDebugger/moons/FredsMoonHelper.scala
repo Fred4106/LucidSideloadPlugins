@@ -36,19 +36,17 @@ import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 
 class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsMoonConfig) extends HelperModule with WithPanel with WithOverlay {
-	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	override val moduleName: String = "FredsMoonHelper"
 	var currentRoom: Option[MoonRoomEnum] = None
 	var currentRoomChangedTick: Int = -1
 	override def init(): Unit = {
 		currentRoom = None
 		currentRoomChangedTick = -1
-		log.debug("Initializing FredsMoonHelper")
 	}
 
 	override def cleanup(): Unit = {
 		currentRoom = None
 		currentRoomChangedTick = -1
-		log.debug("Cleaning up FredsMoonHelper")
 	}
 
 //	client.getTickCount
