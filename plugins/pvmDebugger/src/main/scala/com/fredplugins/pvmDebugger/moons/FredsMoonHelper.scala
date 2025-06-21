@@ -4,12 +4,14 @@ import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
+import com.fredplugins.pvmDebugger.WithOverlay
 import com.fredplugins.pvmDebugger.WithPanel
 import com.fredplugins.pvmDebugger.moons
 import com.google.inject.Inject
 import ethanApiPlugin.collections.NPCs
 import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
+import net.runelite.api.GameState
 import net.runelite.api.NPC
 import net.runelite.api.events.ActorDeath
 import net.runelite.api.events.GameStateChanged
@@ -17,39 +19,42 @@ import net.runelite.api.events.GameTick
 import net.runelite.api.gameval.NpcID
 import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.eventbus.Subscribe
+import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import net.runelite.client.ui.overlay.components.LineComponent
 import net.runelite.client.ui.overlay.components.TitleComponent
+import net.runelite.client.util.ColorUtil
 import org.slf4j.Logger
 
 import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics2D
+import java.util.stream.Collectors
 import scala.util.Try
 import scala.util.chaining.scalaUtilChainingOps
+import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters.*
 
-class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsMoonConfig) extends HelperModule with WithPanel {
+class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsMoonConfig) extends HelperModule with WithPanel with WithOverlay {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	var currentRoom: Option[MoonRoomEnum] = None
-
+	var currentRoomChangedTick: Int = -1
 	override def init(): Unit = {
 		currentRoom = None
+		currentRoomChangedTick = -1
 		log.debug("Initializing FredsMoonHelper")
 	}
 
 	override def cleanup(): Unit = {
 		currentRoom = None
+		currentRoomChangedTick = -1
 		log.debug("Cleaning up FredsMoonHelper")
 	}
 
 //	client.getTickCount
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit={
-		val newRoomOpt = MoonRoomEnum.test(client)
-		val curRoom = currentRoom.map(_.toString).getOrElse("Empty")
-		val newRoom  = newRoomOpt.map(_.toString).getOrElse("Empty")
-		Option.unless(newRoom.equals(curRoom))(
-			ChatMessageBuilder().append("Room changed from ").append(Color.PINK, curRoom).append(" to ").append(Color.YELLOW, newRoom)
-		).foreach(builder => printMessage(ChatMessageType.GAMEMESSAGE, "", "")(builder))
-		currentRoom = newRoomOpt
+
 	}
 
 	@Subscribe
@@ -90,6 +95,16 @@ class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 //	}
 
 	def inMoons: Boolean = {
+		if(client.getTickCount != currentRoomChangedTick && client.getGameState == GameState.LOGGED_IN) {
+			val newRoomEnum = MoonRoomEnum.test(client)
+			val curRoom     = currentRoom.map(_.toString).getOrElse("Empty")
+			val newRoom     = newRoomEnum.map(_.toString).getOrElse("Empty")
+			Option.unless(newRoom.equals(curRoom))(
+				ChatMessageBuilder().append("Room changed from ").append(Color.PINK, curRoom).append(" to ").append(Color.YELLOW, newRoom)
+				).foreach(builder => printMessage(ChatMessageType.GAMEMESSAGE, "", "")(builder))
+			currentRoomChangedTick = client.getTickCount
+			currentRoom = newRoomEnum
+		}
 		currentRoom.isDefined
 	}
 
@@ -116,5 +131,66 @@ class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 			).build()}).get
 			Seq(roomLine)
 		}.getOrElse(Seq.empty[LayoutableRenderableEntity])
+	}
+	override def renderOverlay(g: Graphics2D): Dimension = {
+		if(inMoons) {
+
+//			val npcsToHighlight: List[NPC] = currentRoom.collect {
+//				case pvmDebugger.moons.MoonRoomEnum.EclipseRoom => 13012
+//				case pvmDebugger.moons.MoonRoomEnum.BloodRoom => 13011
+//				case pvmDebugger.moons.MoonRoomEnum.BlueRoom => 13013
+//			}.map(highlightId => {
+//				client.getTopLevelWorldView.npcs().asScala.toList.filter(n => {
+//					n.getId == highlightId
+//				})
+//			}).getOrElse(List.empty[NPC])
+
+			client.getTopLevelWorldView.npcs().asScala.toList.flatMap(n => {
+				n.getId match {
+					case NpcID.PMOON_BOSS_BLOOD_MOON_VIS |
+						NpcID.PMOON_BOSS_BLOOD_MOON => Some((n,  "blood", new Color(224, 61, 61)))
+					case NpcID.PMOON_BOSS_BLUE_MOON_VIS |
+						NpcID.PMOON_BOSS_BLUE_MOON => Some((n, "blue", new Color(56, 56, 255)))
+					case NpcID.PMOON_BOSS_ECLIPSE_MOON_VIS |
+						NpcID.PMOON_BOSS_ECLIPSE_MOON => Some((n,  "eclipse" ,new Color(255, 147, 0)))
+					case NpcID.PMOON_BOSS_ECLIPSE_MOON_SHIELD=> Some((n, "shield",  new Color(245, 119, 119)))
+					case NpcID.PMOON_BOSS_ECLIPSE_CLONE=> Some((n, "clone",  new Color(245, 119, 119)))
+					case NpcID.PMOON_BOSS_JAGUAR=> Some((n, "jaguar",  new Color(245, 119, 119)))
+					case NpcID.PMOON_BOSS_WINTER_STORM => Some((n, "storm",  new Color(245, 119, 119)))
+					case NpcID.PMOON_BOSS_ICICLE_1 =>						Some((n, "1",  new Color(181, 0, 190)))
+					case NpcID.PMOON_BOSS_ICICLE_2 =>						Some((n, "2",  new Color(181, 0, 190)))
+					case NpcID.PMOON_BOSS_ICICLE_3 =>						Some((n, "3",  new Color(181, 0, 190)))
+					case NpcID.PMOON_BOSS_ICICLE_UNCRACKED => Some((n, "uncracked", new Color(0, 255, 0)))
+					case NpcID.PMOON_BOSS_ICICLE_CRACKED =>  Some((n, "cracked", new Color(220, 255, 30)))
+					case NpcID.MOTH_MOONLIGHT_LOW_WANDER | NpcID.MOTH_MOONLIGHT => Some((n, "Moth",  new Color(119, 245, 228)))
+					case _ => Option.empty[(NPC, String, Color)]
+				}
+			}).foreach {
+				case (n, text, c) => {
+					//						val x   = point.getX - client.getTopLevelWorldView.getBaseX
+					//						val y   = point.getY - client.getTopLevelWorldView.getBaseY
+					val txt  = s"${n.getIndex.toString.padTo(4, ' ')}(${n.getLocalLocation.getSceneX},${n.getLocalLocation.getSceneY}) = ${n.getName}"
+
+					val poly = n.getCanvasTilePoly
+					if (poly != null) OverlayUtil.renderPolygon(g, poly, c)
+
+					parent.getModelOutlineRenderer.drawOutline(n, 2,  c, 4)
+
+					val textLocation = n.getCanvasTextLocation(g, txt, n.getLogicalHeight + 40)
+					val textLocation2 = n.getCanvasTextLocation(g, text, n.getLogicalHeight + 80)
+					if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, txt, Color.WHITE)
+					if (textLocation2 != null) OverlayUtil.renderTextLocation(g, textLocation2, text, Color.WHITE)
+				}
+			}
+
+//			tiles.foreach {
+//				case (i, point) => {
+//					val x   = point.getX - client.getTopLevelWorldView.getBaseX
+//					val y   = point.getY - client.getTopLevelWorldView.getBaseY
+//					val txt = s"${i.toString.padTo(4, ' ')}($x,$y)"
+//					renderTileOverlay(point, txt, ColorUtil.colorWithAlpha(Color.BLUE, 128 - ((112d / 100) * i).toInt), true)
+//				}
+		}
+		null.asInstanceOf[Dimension]
 	}
 }

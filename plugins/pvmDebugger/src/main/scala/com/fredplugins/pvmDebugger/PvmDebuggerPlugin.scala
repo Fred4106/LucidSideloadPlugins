@@ -1,51 +1,35 @@
 package com.fredplugins.pvmDebugger
 
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.pvmDebugger.DebugPanel.ClearEvent
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansHelper
 import com.fredplugins.pvmDebugger.kraken.KrakenConfig
 import com.fredplugins.pvmDebugger.kraken.KrakenHelper
-import com.fredplugins.pvmDebugger.{SInvAdded, SInvQtyChanged, SInvRemoved, SLocation}
-import com.google.inject.{Inject, Provides, Singleton}
-import ethanApiPlugin.EthanApiPlugin
-import net.runelite.api.events.*
-import net.runelite.api.*
-import net.runelite.client.Notifier
-import net.runelite.client.callback.ClientThread
-import net.runelite.client.config.ConfigManager
-import net.runelite.client.eventbus.{EventBus, Subscribe}
-import net.runelite.client.events.{ConfigChanged, PluginChanged}
-import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
-import net.runelite.client.ui.overlay.OverlayManager
-import org.slf4j.Logger
-import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
 import com.fredplugins.pvmDebugger.moons.FredsMoonConfig
 import com.fredplugins.pvmDebugger.moons.FredsMoonHelper
-import com.fredplugins.pvmDebugger.moons.SudoMoonHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
-import com.google.inject.Binder
-import com.google.inject.TypeLiteral
+import com.google.inject.Inject
+import com.google.inject.Provides
+import com.google.inject.Singleton
+import ethanApiPlugin.EthanApiPlugin
+import net.runelite.api.*
 import net.runelite.api.Client
+import net.runelite.api.events.*
+import net.runelite.client.Notifier
+import net.runelite.client.callback.ClientThread
 import net.runelite.client.chat.ChatMessageManager
+import net.runelite.client.config.ConfigManager
+import net.runelite.client.eventbus.EventBus
+import net.runelite.client.eventbus.Subscribe
+import net.runelite.client.events.ConfigChanged
 import net.runelite.client.plugins.PluginManager
+import net.runelite.client.plugins.Plugin
+import net.runelite.client.plugins.PluginDependency
+import net.runelite.client.plugins.PluginDescriptor
+import net.runelite.client.ui.overlay.OverlayManager
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
 
-import scala.compiletime.uninitialized
-import scala.jdk.CollectionConverters.*
-import scala.jdk.OptionConverters.*
-import scala.jdk.StreamConverters.*
-import scala.util.chaining.*
-import scala.util.Random
-import scala.util.Try
-import javax.swing.WindowConstants
-import scala.annotation.targetName
-import scala.compiletime.uninitialized
-import scala.swing
-import scala.swing.RichWindow.Undecorated
-import scala.swing.{Frame, Publisher, Swing}
-import scala.util.Try
 import scala.util.chaining.*
 
 @PluginDescriptor(
@@ -53,37 +37,38 @@ import scala.util.chaining.*
 	description = "Useful debugger for pvm",
 	tags = Array("pvm", "prayer", "helper", "maps", "debugger"),
 	hidden = false,
-)
+	)
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class PvmDebuggerPlugin() extends Plugin {
-	private         val log              : Logger                   = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
-	@Inject private val client           : Client                   = null
-	@Inject private val clientThread     : ClientThread             = null
-	@Inject private val eventBus         : EventBus           = null
-	@Inject private val chatmessageManager         :ChatMessageManager           = null
-	@Inject private val pluginManager         : PluginManager      = null
-	@Inject private val configManager         : ConfigManager = null
-	@Inject private val notifier         : Notifier                 = null
-	@Inject private val overlayManager   : OverlayManager           = null
-	@Inject private val pvmDebuggerConfig: FredsPvmDebuggerConfig   = null
-	@Inject private val guardiansConfig  : GrotesqueGuardiansConfig = null
-//	@Inject private val krakenConfig     : KrakenConfig             = null
-	@Inject private val krakenHelper     : KrakenHelper    = null
-	@Inject private val moonHelper     : FredsMoonHelper = null
-//	@Inject private val moonConfig       : FredsMoonConfig = null
-	@Inject private val tormentedDemonsConfig       : FredsTormentedDemonConfig          = null
-
+	private         val log                  : Logger                    = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	@Inject private val client               : Client                    = null
+	@Inject private val clientThread         : ClientThread              = null
+	@Inject private val eventBus             : EventBus                  = null
+	@Inject private val chatmessageManager   : ChatMessageManager        = null
+	@Inject private val modelOutlineRenderer : ModelOutlineRenderer      = null
+	@Inject private val pluginManager        : PluginManager             = null
+	@Inject private val configManager        : ConfigManager             = null
+	@Inject private val notifier             : Notifier                  = null
+	@Inject private val overlayManager       : OverlayManager            = null
+	@Inject private val pvmDebuggerConfig    : FredsPvmDebuggerConfig    = null
+	@Inject private val guardiansConfig      : GrotesqueGuardiansConfig  = null
+	//	@Inject private val krakenConfig     : KrakenConfig             = null
+	@Inject private val krakenHelper         : KrakenHelper              = null
+	@Inject private val moonHelper           : FredsMoonHelper           = null
+	//	@Inject private val moonConfig       : FredsMoonConfig = null
+	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
 
 	def getClient: Client = client
 	def getClientThread: ClientThread = clientThread
-//	def register: ClientThread = clientThread
-	def getEventBus:EventBus = eventBus
-	def getChatMessageManager:ChatMessageManager = chatmessageManager
-	def getConfigManager:ConfigManager = configManager
+	//	def register: ClientThread = clientThread
+	def getEventBus: EventBus = eventBus
+	def getModelOutlineRenderer: ModelOutlineRenderer = modelOutlineRenderer
+	def getChatMessageManager: ChatMessageManager = chatmessageManager
+	def getConfigManager: ConfigManager = configManager
 	def getOverlayManager: OverlayManager = overlayManager
 	def getConfig: FredsPvmDebuggerConfig = pvmDebuggerConfig
-	def getPluginManager:PluginManager = pluginManager
+	def getPluginManager: PluginManager = pluginManager
 	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
 
 	//	//region types
@@ -148,60 +133,60 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(krakenHelper,moonHelper)
+	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper)
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		helperModules.foreach(m => {
-			if(m.configGroup.equals(event.getGroup)&&event.getKey.equals("enabled")) {
+			if (m.configGroup.equals(event.getGroup) && event.getKey.equals("enabled")) {
 				java.lang.Boolean.parseBoolean(event.getNewValue) match {
 					case true => m.startup()
 					case false => m.shutdown()
 				}
 			}
 		})
-		if(event.getGroup ==FredsPvmDebuggerConfig.GroupName) {
+		if (event.getGroup == FredsPvmDebuggerConfig.GroupName) {
 			log.debug(s"config[\"{}\"][\"{}\"] changed to {} from {}", event.getGroup, event.getKey, event.getNewValue, event.getOldValue)
-		//		if (event.getKey == "enabled") {
-//			log.debug("Config changed {}", event.getGroup)
-//			val eg = event.getGroup
-//			eg match {
-//				case KrakenConfig.GROUP =>
-//				case GrotesqueGuardiansConfig.GROUP =>
-//				case FredsMoonConfig.GROUP =>
-//				case FredsTormentedDemonConfig.GroupName =>
-//			}
-//			if (eg.equals(KrakenConfig.GROUP)) {
-//				if (krakenConfig.enabled()) {
-//					eventBus.register(krakenHelper.tap(k => ()))
-//				} else {
-//					eventBus.unregister(krakenHelper)
-//				}
-//			} else if (eg.equals(GrotesqueGuardiansConfig.GROUP)) {
-//				if (guardiansConfig.enabled()) {
-//					eventBus.register(grotesqueGuardiansHelper)
-//				} else {
-//					eventBus.unregister(grotesqueGuardiansHelper)
-//				}
-//			} else if (eg.equals(FredsMoonConfig.GROUP)) {
-//
-//				import java.lang.{Boolean as JBoolean}
-//				Option(event.getKey).collect {
-//					case "eclipse.enabled" => eclipseH
-//					case "blue.enabled" => blueH
-//					case "blood.enabled" => bloodH
-//				}
-//			} else if (eg.equals(FredsTormentedDemonConfig.GroupName)) {
-//				if (tormentedDemonsConfig.enabled()) {
-//					eventBus.register(tormentedDemonsHelper.tap(_.startup()))
-//				} else {
-//					eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
-//				}
-//			} else {
-//				log.error("Error matching group: {}", eg);
-//			}
-//			//			event.getGroup == KrakenConfig.GROUP
-//			//			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
-//			//			else eventBus.unregister(krakenHelper)
+			//		if (event.getKey == "enabled") {
+			//			log.debug("Config changed {}", event.getGroup)
+			//			val eg = event.getGroup
+			//			eg match {
+			//				case KrakenConfig.GROUP =>
+			//				case GrotesqueGuardiansConfig.GROUP =>
+			//				case FredsMoonConfig.GROUP =>
+			//				case FredsTormentedDemonConfig.GroupName =>
+			//			}
+			//			if (eg.equals(KrakenConfig.GROUP)) {
+			//				if (krakenConfig.enabled()) {
+			//					eventBus.register(krakenHelper.tap(k => ()))
+			//				} else {
+			//					eventBus.unregister(krakenHelper)
+			//				}
+			//			} else if (eg.equals(GrotesqueGuardiansConfig.GROUP)) {
+			//				if (guardiansConfig.enabled()) {
+			//					eventBus.register(grotesqueGuardiansHelper)
+			//				} else {
+			//					eventBus.unregister(grotesqueGuardiansHelper)
+			//				}
+			//			} else if (eg.equals(FredsMoonConfig.GROUP)) {
+			//
+			//				import java.lang.{Boolean as JBoolean}
+			//				Option(event.getKey).collect {
+			//					case "eclipse.enabled" => eclipseH
+			//					case "blue.enabled" => blueH
+			//					case "blood.enabled" => bloodH
+			//				}
+			//			} else if (eg.equals(FredsTormentedDemonConfig.GroupName)) {
+			//				if (tormentedDemonsConfig.enabled()) {
+			//					eventBus.register(tormentedDemonsHelper.tap(_.startup()))
+			//				} else {
+			//					eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
+			//				}
+			//			} else {
+			//				log.error("Error matching group: {}", eg);
+			//			}
+			//			//			event.getGroup == KrakenConfig.GROUP
+			//			//			if(krakenConfig.enabled()) eventBus.register(krakenHelper)
+			//			//			else eventBus.unregister(krakenHelper)
 		}
 	}
 
@@ -250,8 +235,8 @@ class PvmDebuggerPlugin() extends Plugin {
 									(qtyElements.map(q => {
 										SInvQtyChanged(
 											q.index, q.id, q.qty, q.qty - qtyMinusElements.find(r => r.itemMatches(q))
-																																		.map(_.qty)
-																																		.getOrElse(0))
+												.map(_.qty)
+												.getOrElse(0))
 										//										q - qtyMinusElements.find(r => r.itemMatches(q)).map(_.qty).getOrElse(0)
 									}), realAddedElements.map(a => SInvAdded(
 										a.index, a.id, a
@@ -297,9 +282,9 @@ class PvmDebuggerPlugin() extends Plugin {
 		new BalanceElementalHelper(client)
 	}
 
-//	lazy val krakenHelper = {
-//		new KrakenHelper(this, client, krakenConfig)
-//	}
+	//	lazy val krakenHelper = {
+	//		new KrakenHelper(this, client, krakenConfig)
+	//	}
 
 	lazy val grotesqueGuardiansHelper: GrotesqueGuardiansHelper   = {
 		new GrotesqueGuardiansHelper(this, client, guardiansConfig)
@@ -309,14 +294,14 @@ class PvmDebuggerPlugin() extends Plugin {
 	}
 	override protected def startUp(): Unit = {
 
-//		(new Frame() {
-//			contents = debugPanel
-//		}.tap(mf => {
-//			mf.pack()
-//			mf.centerOnScreen()
-//			mf.open()
-//		}))
-//		debugPanel.publish(ClearEvent)
+		//		(new Frame() {
+		//			contents = debugPanel
+		//		}.tap(mf => {
+		//			mf.pack()
+		//			mf.centerOnScreen()
+		//			mf.open()
+		//		}))
+		//		debugPanel.publish(ClearEvent)
 		clientThread.invoke(() => {
 			gameStateCached = client.getGameState
 			inventorySnapshot = parseInventory(client.getItemContainer(InventoryID.INVENTORY))
@@ -324,7 +309,7 @@ class PvmDebuggerPlugin() extends Plugin {
 		eventBus.register(darkSquallHelper.tap(_.reset()))
 		eventBus.register(balanceElementalHelper.tap(_.reset()))
 
-//		if (krakenConfig.enabled()) eventBus.register(krakenHelper)
+		//		if (krakenConfig.enabled()) eventBus.register(krakenHelper)
 		helperModules.foreach(m => m.startup())
 		if (tormentedDemonsConfig.enabled()) eventBus.register(tormentedDemonsHelper.tap(_.startup()))
 	}
@@ -334,13 +319,13 @@ class PvmDebuggerPlugin() extends Plugin {
 		gameStateCached = GameState.UNKNOWN
 		eventBus.unregister(darkSquallHelper)
 		eventBus.unregister(balanceElementalHelper)
-//		eventBus.unregister(krakenHelper)
+		//		eventBus.unregister(krakenHelper)
 		helperModules.foreach(m => m.shutdown())
 		eventBus.unregister(tormentedDemonsHelper.tap(_.shutdown()))
 	}
-//	override def configure(binder: Binder): Unit = {
-//		binder.(TypeLiteral.get(classOf[GrotesqueGuardiansConfig]))
-//	}
+	//	override def configure(binder: Binder): Unit = {
+	//		binder.(TypeLiteral.get(classOf[GrotesqueGuardiansConfig]))
+	//	}
 	@Provides def provideConfig(configManager: ConfigManager): FredsPvmDebuggerConfig = configManager.getConfig(classOf[FredsPvmDebuggerConfig])
 	@Provides def provideGuardiansConfig(configManager: ConfigManager): GrotesqueGuardiansConfig = configManager.getConfig(classOf[GrotesqueGuardiansConfig])
 	@Provides def provideKrakenConfig(configManager: ConfigManager): KrakenConfig = configManager.getConfig(classOf[KrakenConfig])
