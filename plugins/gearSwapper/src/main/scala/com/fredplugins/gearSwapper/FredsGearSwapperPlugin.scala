@@ -379,8 +379,7 @@ class FredsGearSwapperPlugin() extends Plugin with KeyListener {
 					}
 					lastSwapSelected = 5
 				}
-			}
-													)
+			})
 		}
 		if (gearSwapSelected != -1) e.consume()
 	}

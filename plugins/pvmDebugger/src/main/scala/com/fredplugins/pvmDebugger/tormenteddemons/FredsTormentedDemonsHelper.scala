@@ -4,9 +4,11 @@ import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
 import com.fredplugins.pvmDebugger.WithPanel
+import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.HotkeyAction
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TORMENTED_DEMON_IDS
 import com.google.inject.Inject
 import com.lucidplugins.api.utils.CombatUtils
+import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
 import net.runelite.api.NPC
 import net.runelite.api.coords.WorldPoint
@@ -16,12 +18,16 @@ import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.gameval.NpcID
 import net.runelite.client.RuneLite
+import net.runelite.client.chat.ChatMessageBuilder
+import net.runelite.client.config.Keybind
 import net.runelite.client.eventbus.Subscribe
+import net.runelite.client.input.KeyListener
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import net.runelite.client.ui.overlay.components.LineComponent
 import org.slf4j.Logger
 
 import java.awt.Color
+import java.awt.event.KeyEvent
 import scala.jdk.CollectionConverters.*
 import java.util.stream.Collectors
 import scala.collection.mutable
@@ -34,6 +40,13 @@ import scala.compiletime.uninitialized
 object FredsTormentedDemons {
 	lazy val client: Client = RuneLite.getInjector().getInstance[Client](classOf[Client])
 	val TORMENTED_DEMON_IDS: Seq[Int] = List(NpcID.TORMENTED_DEMON_1, NpcID.TORMENTED_DEMON_2)
+
+	enum HotkeyAction(val op: (FredsTormentedDemonConfig => Keybind)) {
+		case DodgeFireball extends HotkeyAction(_.dodgeFireballHotkey())
+		case SwapMelee extends HotkeyAction(_.swapMeleeGearHotkey())
+		case SwapRange extends HotkeyAction(_.swapRangeGearHotkey())
+		case SwapMagic extends HotkeyAction(_.swapMageGearHotkey())
+	}
 
 	case class TormentedDemonData(animation: Int, poseAnimation: Int, location: WorldPoint) {
 		def update(npc: NPC): TormentedDemonData = {
@@ -49,13 +62,50 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 	override val moduleName: String = "FredsTormentedDemonsHelper"
 //	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	private var targetDemon: Option[NPC] = Option.empty
+	private var blockingHotkey: Option[HotkeyAction] = Option.empty[HotkeyAction]
+	private def doAction(e: HotkeyAction): Unit = {
+		Option(e).collect[(String, String, ChatMessageBuilder)] {
+			case HotkeyAction.DodgeFireball => ("Tormented", "Dodge Fireball", new ChatMessageBuilder().append("Moving from ").append(Color.red, "fireball").append("."))
+			case HotkeyAction.SwapMelee => ("Tormented", "Swap Melee", new ChatMessageBuilder().append("Swapping to ").append(Color.orange, "melee").append(" gear."))
+			case HotkeyAction.SwapRange => ("Tormented", "Swap Range", new ChatMessageBuilder().append("Swapping to ").append(Color.green, "range").append(" gear."))
+			case HotkeyAction.SwapMagic => ("Tormented", "Swap Mage", new ChatMessageBuilder().append("Swapping to ").append(Color.blue, "magic").append(" gear."))
+		}.map[Runnable] {
+			case (group, sender, msg) => () => {
+				printMessage(ChatMessageType.TRADE, group, sender)(msg)
+			}
+		}.foreach(r => parent.getClientThread.invoke(r))
+	}
 
+	private val internalKeyListener = new KeyListener {
+		override def keyTyped(e: KeyEvent): Unit = {}
+		override def keyPressed(e: KeyEvent): Unit = {
+			if(blockingHotkey.isEmpty) {
+				val foundHotkeyEnum = HotkeyAction.values.find(v => v.op(config).matches(e))
+				blockingHotkey = foundHotkeyEnum.tapEach(a => {
+					e.consume()
+					doAction(a)
+				}).headOption
+//				if(foundHotkeyEnum.isDefined) {
+//					doAction(foundHotkeyEnum.get)
+//					e.consume()
+//				}
+//				blockingHotkey = foundHotkeyEnum
+			}
+		}
+		override def keyReleased(e: KeyEvent): Unit = {
+			if(blockingHotkey.exists(_.op(config).matches(e))) {
+				e.consume()
+				blockingHotkey = Option.empty[HotkeyAction]
+			}
+		}
+	}
 
 	private val demons: mutable.Map[NPC, FredsTormentedDemons.TormentedDemonData] = scala.collection.mutable.HashMap.empty[NPC, FredsTormentedDemons.TormentedDemonData]
 
 	def cleanup(): Unit = {
 		demons.clear()
 		targetDemon = Option.empty
+		parent.getKeyManager.unregisterKeyListener(internalKeyListener)
 	}
 	def init(): Unit = {
 //		val  npcs : List[NPC] = client.getTopLevelWorldView.npcs().asScala.toList
@@ -64,11 +114,12 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 		targetDemon = Option.empty
 		client.getTopLevelWorldView.npcs().asScala.toList.filter(n => TORMENTED_DEMON_IDS.contains(n.getId)).foreach(n => demons.put(n, FredsTormentedDemons.TormentedDemonData(n.getAnimation, n.getPoseAnimation, n.getWorldLocation)))
 		findNewTarget()
+		parent.getKeyManager.registerKeyListener(internalKeyListener)
 	}
 
 	def findNewTarget(): Unit = {
-		val interactingWithOpt   = Option(client.getLocalPlayer.getInteracting)
-		val interactingWithDemon = interactingWithOpt.flatMap(a => Try(a.asInstanceOf[NPC]).toOption).filterNot(_.isDead).flatMap(interactingWith => {
+		val interactingWithOpt   = Option(client.getLocalPlayer).flatMap(lp => Option(lp.getInteracting)).flatMap[NPC](a => Try(a.asInstanceOf[NPC]).toOption)
+		val interactingWithDemon = interactingWithOpt.filterNot(_.isDead).flatMap(interactingWith => {
 			demons.find(n => n._1 == interactingWith)
 		})
 		interactingWithDemon.foreach {

@@ -2,6 +2,9 @@ package com.fredplugins.pvmDebugger.tormenteddemons;
 import lombok.Getter;
 import net.runelite.client.config.*;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+
 @ConfigGroup(FredsTormentedDemonConfig.GroupName)
 public interface FredsTormentedDemonConfig extends Config { 
 	static final String GroupName = "FredsTormentedDemonsHelper";
@@ -279,6 +282,63 @@ public interface FredsTormentedDemonConfig extends Config {
 	default String meleeGear() {
 		return " ";
 	}
+
+	@ConfigSection(
+			name = "Hotkey Settings",
+			description = "Specify hotkeys for swapping gear and prayers",
+			position = 5,
+			closedByDefault = true
+	)
+	String hotkeySettingsSection = "hotkeySettings";
+
+	@ConfigItem(
+		name = "Dodge Fireball Hotkey",
+		description = "Hotkey to trigger fireball dodge",
+		position = 0,
+		keyName = "dodgeFireballHotkey",
+		section = hotkeySettingsSection
+	)
+	default Keybind dodgeFireballHotkey()
+	{
+		return new Keybind(KeyEvent.VK_F, 0);
+	}
+
+	@ConfigItem(
+		name = "Melee Swap Hotkey",
+		description = "Hotkey to trigger a melee gear swap",
+		position = 1,
+		keyName = "swapMeleeGearHotkey",
+		section = hotkeySettingsSection
+	)
+	default Keybind swapMeleeGearHotkey()
+	{
+		return new Keybind(KeyEvent.VK_A, 0);
+	}
+
+	@ConfigItem(
+		name = "Mage Swap Hotkey",
+		description = "Hotkey to trigger a magic gear swap",
+		position = 2,
+		keyName = "swapMageGearHotkey",
+		section = hotkeySettingsSection
+	)
+	default Keybind swapMageGearHotkey()
+	{
+		return new Keybind(KeyEvent.VK_S, 0);
+	}
+
+	@ConfigItem(
+		name = "Range Swap Hotkey",
+		description = "Hotkey to trigger a ranged gear swap",
+		position = 3,
+		keyName = "swapRangeGearHotkey",
+		section = hotkeySettingsSection
+	)
+	default Keybind swapRangeGearHotkey()
+	{
+		return new Keybind(KeyEvent.VK_D, 0);
+	}
+
 
 	enum MODE {
 		FULL_AUTO,

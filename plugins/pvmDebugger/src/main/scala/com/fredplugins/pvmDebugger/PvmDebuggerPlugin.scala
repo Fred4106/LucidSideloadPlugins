@@ -22,6 +22,7 @@ import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.EventBus
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.events.ConfigChanged
+import net.runelite.client.input.KeyManager
 import net.runelite.client.plugins.PluginManager
 import net.runelite.client.plugins.Plugin
 import net.runelite.client.plugins.PluginDependency
@@ -45,8 +46,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val client               : Client                    = null
 	@Inject private val clientThread         : ClientThread              = null
 	@Inject private val eventBus             : EventBus                  = null
-	@Inject private val chatmessageManager   : ChatMessageManager        = null
-	@Inject private val modelOutlineRenderer : ModelOutlineRenderer      = null
+	@Inject private val chatmessageManager   : ChatMessageManager   = null
+	@Inject private val keyManager   : KeyManager           = null
+	@Inject private val modelOutlineRenderer : ModelOutlineRenderer = null
 	@Inject private val pluginManager        : PluginManager             = null
 	@Inject private val configManager        : ConfigManager             = null
 	@Inject private val notifier             : Notifier                  = null
@@ -67,6 +69,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	def getModelOutlineRenderer: ModelOutlineRenderer = modelOutlineRenderer
 	def getChatMessageManager: ChatMessageManager = chatmessageManager
 	def getConfigManager: ConfigManager = configManager
+	def getKeyManager: KeyManager = keyManager
 	def getOverlayManager: OverlayManager = overlayManager
 	def getConfig: FredsPvmDebuggerConfig = pvmDebuggerConfig
 	def getPluginManager: PluginManager = pluginManager
