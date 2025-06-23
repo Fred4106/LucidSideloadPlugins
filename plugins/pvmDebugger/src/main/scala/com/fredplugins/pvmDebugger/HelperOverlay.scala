@@ -17,6 +17,7 @@ import scala.reflect.{TypeTest, Typeable}
 
 sealed abstract class HelperOverlay() extends Overlay() {
 	def log: Logger// = ShimUtils.getLogger(finalName, "DEBUG")
+	setPosition(OverlayPosition.DYNAMIC)
 }
 
 object HelperOverlay {

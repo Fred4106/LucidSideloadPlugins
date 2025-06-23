@@ -13,6 +13,7 @@ import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
 import net.runelite.api.GameState
 import net.runelite.api.NPC
+import net.runelite.api.Perspective
 import net.runelite.api.events.ActorDeath
 import net.runelite.api.events.GameStateChanged
 import net.runelite.api.events.GameTick
@@ -169,15 +170,24 @@ class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 					//						val y   = point.getY - client.getTopLevelWorldView.getBaseY
 					val txt  = s"${n.getIndex.toString.padTo(4, ' ')}(${n.getLocalLocation.getSceneX},${n.getLocalLocation.getSceneY}) = ${n.getName}"
 
-					val poly = n.getCanvasTilePoly
-					if (poly != null) OverlayUtil.renderPolygon(g, poly, c)
+//					val poly =Perspective.getCanvasTileAreaPoly(client, n.getLocalLocation, 1, 1, client.getPlane, 0)
+//					if (poly != null) OverlayUtil.renderPolygon(g, poly, c)
 
 					parent.getModelOutlineRenderer.drawOutline(n, 2,  c, 4)
 
-					val textLocation = n.getCanvasTextLocation(g, txt, n.getLogicalHeight + 40)
-					val textLocation2 = n.getCanvasTextLocation(g, text, n.getLogicalHeight + 80)
-					if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, txt, Color.WHITE)
-					if (textLocation2 != null) OverlayUtil.renderTextLocation(g, textLocation2, text, Color.WHITE)
+					def renderActorOverlay(text: String, color: Color, zoffset: Int): Unit = {
+						val poly = n.getCanvasTilePoly
+						if (poly != null) OverlayUtil.renderPolygon(g, poly, color)
+						val textLocation = n.getCanvasTextLocation(g, text, n.getLogicalHeight + zoffset)
+						if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, text, color)
+					}
+					renderActorOverlay(text, c, 40)
+					renderActorOverlay(txt, c, 60)
+
+//					val textLocation = Perspective.getCanvasTextLocation(client, g, n.getLocalLocation, txt, 10)///n.getCanvasTextLocation(g, txt, n.getLogicalHeight + 40)
+//					val textLocation2 = Perspective.getCanvasTextLocation(client, g, n.getLocalLocation, text, 30)// n.getCanvasTextLocation(g, text, n.getLogicalHeight + 80)
+//					if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, txt, Color.WHITE)
+//					if (textLocation2 != null) OverlayUtil.renderTextLocation(g, textLocation2, text, Color.WHITE)
 				}
 			}
 
