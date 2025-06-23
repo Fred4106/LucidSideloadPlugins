@@ -12,7 +12,7 @@ object MenuExtensions {
 	private val tileObjectActions: List[MenuAction] = List(GAME_OBJECT_FIRST_OPTION, GAME_OBJECT_SECOND_OPTION, GAME_OBJECT_THIRD_OPTION, GAME_OBJECT_FOURTH_OPTION, GAME_OBJECT_FIFTH_OPTION, EXAMINE_OBJECT)
 	private val npcActions: List[MenuAction] = List(NPC_FIRST_OPTION, NPC_SECOND_OPTION, NPC_THIRD_OPTION, NPC_FOURTH_OPTION, NPC_FIFTH_OPTION, EXAMINE_NPC)
 	private val playerActions: List[MenuAction] = List(PLAYER_FIRST_OPTION, PLAYER_SECOND_OPTION, PLAYER_THIRD_OPTION, PLAYER_FOURTH_OPTION, PLAYER_FIFTH_OPTION, PLAYER_SIXTH_OPTION, PLAYER_SEVENTH_OPTION, PLAYER_EIGHTH_OPTION)
-	private val widgetTargetOnActions: List[MenuAction] = List(WIDGET_TARGET_ON_PLAYER, WIDGET_TARGET_ON_NPC, WIDGET_TARGET_ON_GAME_OBJECT)
+	private val widgetTargetOnActions: List[MenuAction] = List(WIDGET_TARGET_ON_PLAYER, WIDGET_TARGET_ON_NPC, WIDGET_TARGET_ON_GAME_OBJECT, WIDGET_TARGET_ON_WIDGET)
 	private val widgetActions: List[MenuAction] = List(
 			MenuAction.WIDGET_TYPE_1,
 			MenuAction.WIDGET_TARGET,
@@ -25,7 +25,6 @@ object MenuExtensions {
 			MenuAction.WIDGET_THIRD_OPTION,
 			MenuAction.WIDGET_FOURTH_OPTION,
 			MenuAction.WIDGET_FIFTH_OPTION,
-			MenuAction.WIDGET_TARGET_ON_WIDGET,
 			MenuAction.CC_OP_LOW_PRIORITY,
 			MenuAction.CC_OP
 	)
@@ -38,7 +37,6 @@ object MenuExtensions {
 		def isNpcAction: Boolean = npcActions.contains(e.getType)
 		def isExamineAction: Boolean = Seq(EXAMINE_ITEM_GROUND, EXAMINE_OBJECT, EXAMINE_NPC, EXAMINE_ITEM).contains(e.getType)
 		def isPlayerAction: Boolean = playerActions.contains(e.getType)
-		def isWidgetTargetOnAction: Boolean = widgetTargetOnActions.contains(e.getType)
 		def isRuneliteAction: Boolean = e.getType.getId >= RUNELITE.getId
 
 		def getWorldLocation(using c: Client): WorldPoint = {

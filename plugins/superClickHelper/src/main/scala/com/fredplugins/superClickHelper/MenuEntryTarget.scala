@@ -19,7 +19,7 @@ object MenuEntryTarget {
 		case me if me.isTileObjectAction => SceneUtils.findTileObject(me.getParam0, me.getParam1, me.getIdentifier).map(to => TileObjectTarget(to))//.TileObjectTarget(me.getParam0, me.getParam1, me.getIdentifier)
 		case me if me.isNpcAction => SceneUtils.findNpc(me.getIdentifier).map(npc => NpcTarget(npc))
 		case me if me.isPlayerAction => SceneUtils.findPlayer(me.getIdentifier).map(player => PlayerTarget(player))
-//		case me if me.isWidgetTargetOnAction => /*PlayerTarget(me.getParam0, me.getParam1, me.getIdentifier)*/
+		//		case me if me.isWidgetTargetOnAction => /*PlayerTarget(me.getParam0, me.getParam1, me.getIdentifier)*/
 //		case me if me.isItemAction =>
 	}
 	def apply(menuEntry: MenuEntryAdded)(using client: Client): Option[MenuEntryTarget] = {
