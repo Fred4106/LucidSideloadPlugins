@@ -1,18 +1,28 @@
 package com.fredplugins.superClickHelper
 
+import com.fredplugins.common.InterfaceTab
 import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getWorldLocationOpt, isNpcAction, isRuneliteAction, isTileObjectAction}
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.spells.WidgetInfo
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.ChatMessageType
+import net.runelite.api.EnumComposition
+import net.runelite.api.EnumID
+import net.runelite.api.ItemComposition
+import net.runelite.api.ParamID
 import net.runelite.api.{Client, DecorativeObject, GameObject, GroundObject, MenuAction, MenuEntry, NPC, Scene, Tile, TileObject, WallObject}
 import net.runelite.api.events.PostMenuSort
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
+import net.runelite.api.events.ScriptPreFired
 import net.runelite.api.events.{GameObjectSpawned, GameTick, MenuEntryAdded, MenuOptionClicked, PostMenuSort}
+import net.runelite.api.gameval.InterfaceID
+import net.runelite.api.gameval.VarbitID
 import net.runelite.api.widgets.Widget
+import net.runelite.api.widgets.WidgetConfigNode
+import net.runelite.api.widgets.WidgetID
 import net.runelite.client.RuneLite
 import net.runelite.client.chat.ChatColorType
 import net.runelite.client.chat.ChatMessageBuilder
@@ -49,8 +59,9 @@ class SuperClickerPlugin() extends Plugin {
 	@Inject() private val client  : Client   = null
 	given Client = client
 
-	@Inject() private val menuManager   : MenuManager                   = null
-	@Inject() private val overlayManager: OverlayManager                = null
+	@Inject() private val menuManager   : MenuManager           = null
+//	@Inject() private val interfaceManager   : WidgetConfigNode = null
+	@Inject() private val overlayManager: OverlayManager        = null
 	@Inject() private val config        : SuperClickHelperConfig  = null
 	@Inject() private val overlay       : SuperClickHelperOverlay = null
 //	@Inject() private val panel       : SuperClickHelperPanel = null
@@ -117,6 +128,7 @@ class SuperClickerPlugin() extends Plugin {
 	override protected def startUp(): Unit = {
 		clickedTiles.clear()
 		clickedNpcs.clear()
+		blockTopLevelSwitch = false
 
 		overlays().foreach(o => {
 			eventBus.register(o)
@@ -165,8 +177,63 @@ class SuperClickerPlugin() extends Plugin {
 //		cachedWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
 	}
 
+	var blockTopLevelSwitch: Boolean = false
+	@Subscribe
+	def onScriptPreFired(scriptEvent: ScriptPreFired): Unit = {
+		if(scriptEvent.getScriptId == 915 && blockTopLevelSwitch) {
+			val targetTabOpt = InterfaceTab.values().find(t => t.getId == Int.unbox(scriptEvent.getScriptEvent.getArguments.apply(1)))
+			if(targetTabOpt.contains(InterfaceTab.SPELLBOOK)) {
+				scriptEvent.getScriptEvent.getArguments.update(1, Int.box(InterfaceTab.INVENTORY.getId))
+				blockTopLevelSwitch = false
+			}
+		}
+	}
+
 	@Subscribe
 	def onMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
+		val me = menuOptionAdded.getMenuEntry
+		if(client.getMenu.getMenuEntries.contains(me) && !blockTopLevelSwitch) {
+			if(me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS && me.getWidget != null) {
+				val subSpellbookId = client.getEnum(EnumID.SPELLBOOKS_SUB).getIntValue(client.getVarbitValue(VarbitID.SPELLBOOK))
+				val widgetsTable   = client.getEnum(subSpellbookId).getIntVals.toList.flatMap(spellbookId => {//.getIntValue(client.getVarbitValue(VarbitID.SPELLBOOK_SUBLIST))
+					val spellbook: EnumComposition = client.getEnum(spellbookId)
+					for {
+						i <- 0 until spellbook.size()
+					} yield {
+						val spellObj = client.getItemDefinition(spellbook.getIntValue(i))
+						val w        = client.getWidget(spellObj.getIntValue(ParamID.SPELL_BUTTON))
+						w
+					}
+				})
+				widgetsTable.zipWithIndex.foreach((xxx) => log.debug("widget[{}] = (({}, {}), {})", xxx._2, WidgetInfo.TO_GROUP(xxx._1.getId), WidgetInfo.TO_CHILD(xxx._1.getId), xxx._1.getIndex))
+
+				if(me.getWidget.getItemId == 6332) {
+					widgetsTable.find(w => w.getId == InterfaceID.MagicSpellbook.PLANK_MAKE).foreach(spellWidget => {
+						client.getMenu.createMenuEntry(-1)
+							.setOption("Cast".colored(Color.BLUE))
+							.setType(MenuAction.WIDGET_TARGET)
+							.setIdentifier(0)
+							.setParam0(-1)
+							.setParam1(spellWidget.getId)
+							.onClick(e => {
+								blockTopLevelSwitch = true
+							});
+					})
+				} else if(me.getWidget.getItemId == 21111 || me.getWidget.getItemId == 1639) {
+					widgetsTable.find(w => w.getId == InterfaceID.MagicSpellbook.ENCHANT_2).foreach(spellWidget => {
+						client.getMenu.createMenuEntry(-1)
+							.setOption("Cast".colored(Color.BLUE))
+							.setType(MenuAction.WIDGET_TARGET)
+							.setIdentifier(0)
+							.setParam0(-1)
+							.setParam1(spellWidget.getId)
+							.onClick(e => {
+								blockTopLevelSwitch = true
+							});
+					})
+				}
+			}
+		}
 //		val targetOpt = MenuEntryTarget(menuOptionAdded)
 //		targetOpt.foreach(met => log.info("Transformed {} into {}", menuOptionAdded, met))
 //		if (targetOpt.isEmpty) {
