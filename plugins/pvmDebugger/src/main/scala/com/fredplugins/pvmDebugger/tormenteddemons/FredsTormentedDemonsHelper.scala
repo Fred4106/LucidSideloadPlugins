@@ -71,7 +71,7 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 			case HotkeyAction.SwapMagic => ("Tormented", "Swap Mage", new ChatMessageBuilder().append("Swapping to ").append(Color.blue, "magic").append(" gear."))
 		}.map[Runnable] {
 			case (group, sender, msg) => () => {
-				printMessage(ChatMessageType.TRADE, group, sender)(msg)
+				printMessage(ChatMessageType.FRIENDSCHAT, group, sender)(msg)
 			}
 		}.foreach(r => parent.getClientThread.invoke(r))
 	}

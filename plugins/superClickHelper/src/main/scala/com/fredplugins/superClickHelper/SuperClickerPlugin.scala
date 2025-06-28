@@ -88,7 +88,29 @@ class SuperClickerPlugin() extends Plugin {
 			if(n != get()) field.set(null, n.packed * writeKey)
 		}
 	}
+	object SbValue {
+//		case class SbType(group: Int, child: Int) {
+//			def packed: Int = WidgetInfo.PACK(group, child)
+//		}
+		private lazy val field    = client.getClass.getClassLoader.loadClass("client").getDeclaredField("sb").tap(_.setAccessible(true))
+		private      val readKey  = -1805685543
+		private      val writeKey = -438152343
+		private inline def readField: Int = Option(field.get(null).asInstanceOf[Integer]).map(_.intValue() * readKey).fold(-1)(x => x)
+		private var cachedValue: Int = readField
 
+		def get(): Int = cachedValue
+
+		def update(): Option[(Int, Int)] = {
+			readField.pipe(nv => Option(cachedValue -> nv).filter(a => a._1 != a._2)).tapEach {
+				case (oldV, newV) => cachedValue = newV
+			}.headOption
+		}
+
+		def set(n: Int): Unit = {
+			if (n != get()) field.set(null, n * writeKey)
+		}
+	}
+	var cachedWidgetValue = Option.empty[Widget]
 
 	def overlays(): Seq[SuperClickHelperOverlay] = List(overlay/*, panel*/)
 
@@ -122,9 +144,25 @@ class SuperClickerPlugin() extends Plugin {
 			case (i, point) if i < 20 => Some((i + 1, point))
 			case (_, point) => None
 		}
-		SrValue.update().foreach {
-			case (o, n) => client.addChatMessage(ChatMessageType.TRADE, "SuperClicker", s"ph.sr changed from '${o}' to '${n}'", "gametick")
+//		SrValue.update().foreach {
+//			case (o, n) => client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"ph.sr changed from '${o}' to '${n}'", "gametick")
+//		}
+//		SbValue.update().foreach {
+//			case (o, n) => client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"client.sb changed from '${o}' to '${n}'", "gametick")
+//		}
+		val nWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
+		if(cachedWidgetValue != nWidgetValue) {
+			def widgetToStr(w: Widget): ((Int, Int), Int) = {
+					(
+						WidgetInfo.TO_GROUP(w.getId),
+						WidgetInfo.TO_CHILD(w.getId)
+					) -> w.getIndex
+			}
+			client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"SelectedWidget changed from '${cachedWidgetValue.map(widgetToStr)}' to '${nWidgetValue.map(widgetToStr)}'", "gametick")
+			cachedWidgetValue = nWidgetValue
 		}
+
+//		cachedWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
 	}
 
 	@Subscribe
@@ -169,7 +207,7 @@ class SuperClickerPlugin() extends Plugin {
 //			val message = " id=`${menuOptionClicked.getId}`, params=`${menuOptionClicked.pipe(j => j.getParam0 -> j.getParam1)}`, option=`${menuOptionClicked.getMenuOption}`, target=`${menuOptionClicked.getMenuTarget}`)"
 			val message = messageParts.fold("")(_.appendedAll(_))
 			log.debug(Text.removeFormattingTags(message))
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "SuperClicker", message , s"clicked${client.getTickCount}")
+			client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", message , s"clicked${client.getTickCount}")
 		}
 //		val targetOpt = MenuEntryTarget(menuOptionClicked)
 //		targetOpt.foreach(met => log.info("Transformed {} into {}", menuOptionClicked, met))

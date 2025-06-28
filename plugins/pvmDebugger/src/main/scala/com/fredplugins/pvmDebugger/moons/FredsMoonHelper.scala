@@ -55,11 +55,13 @@ class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	def onGameTick(gameTick: GameTick): Unit={
 
 	}
-
-	@Subscribe
-	def onGameStateChanged(event: GameStateChanged): Unit = {
-		printMessage(ChatMessageType.GAMEMESSAGE, "", "")(ChatMessageBuilder().append("Gamestate changed to ").append(Color.BLUE, event.getGameState.toString))
-	}
+//
+//	@Subscribe
+//	def onGameStateChanged(event: GameStateChanged): Unit = {
+//		if(inMoons) {
+//			printMessage(ChatMessageType.FRIENDSCHAT, "Moons Helper")(ChatMessageBuilder().append("Gamestate changed to ").append(Color.BLUE, event.getGameState.toString))
+//		}
+//	}
 
 //	@Subscribe
 //	def onActorDied(event: ActorDeath): Unit = {
@@ -100,7 +102,7 @@ class FredsMoonHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 			val newRoom     = newRoomEnum.map(_.toString).getOrElse("Empty")
 			Option.unless(newRoom.equals(curRoom))(
 				ChatMessageBuilder().append("Room changed from ").append(Color.PINK, curRoom).append(" to ").append(Color.YELLOW, newRoom)
-				).foreach(builder => printMessage(ChatMessageType.GAMEMESSAGE, "", "")(builder))
+				).foreach(builder => printMessage(ChatMessageType.FRIENDSCHAT, "Moons Helper", "inMoons")(builder))
 			currentRoomChangedTick = client.getTickCount
 			currentRoom = newRoomEnum
 		}

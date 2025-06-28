@@ -90,9 +90,15 @@ abstract class HelperModule/*[C <: Config :ClassTag]*/ {
 		}
 	}
 
+	def printMessage(tpe: ChatMessageType, sender: String)(msg: ChatMessageBuilder): Unit = {
+		val queuedMessage = QueuedMessage.builder().`type`(tpe).sender(sender).name(sender).runeLiteFormattedMessage(msg.build()).build()
+//		val msg = (new ChatMessageBuilder).append("Can't initialize, unable to find barriers. Found: " + barriers.size).build
+		parent.getChatMessageManager.queue(queuedMessage)
+	}
+
 	def printMessage(tpe: ChatMessageType, sender: String, name: String)(msg: ChatMessageBuilder): Unit = {
 		val queuedMessage = QueuedMessage.builder().`type`(tpe).sender(sender).name(name).runeLiteFormattedMessage(msg.build()).build()
-//		val msg = (new ChatMessageBuilder).append("Can't initialize, unable to find barriers. Found: " + barriers.size).build
+		//		val msg = (new ChatMessageBuilder).append("Can't initialize, unable to find barriers. Found: " + barriers.size).build
 		parent.getChatMessageManager.queue(queuedMessage)
 	}
 }
