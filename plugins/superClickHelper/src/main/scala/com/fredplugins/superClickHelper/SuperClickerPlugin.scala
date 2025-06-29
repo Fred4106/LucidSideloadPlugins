@@ -11,6 +11,8 @@ import net.runelite.api.EnumComposition
 import net.runelite.api.EnumID
 import net.runelite.api.ItemComposition
 import net.runelite.api.ParamID
+import net.runelite.api.ScriptEvent
+import net.runelite.api.ScriptID
 import net.runelite.api.{Client, DecorativeObject, GameObject, GroundObject, MenuAction, MenuEntry, NPC, Scene, Tile, TileObject, WallObject}
 import net.runelite.api.events.PostMenuSort
 import net.runelite.client.eventbus.Subscribe
@@ -20,12 +22,13 @@ import net.runelite.api.events.ScriptPreFired
 import net.runelite.api.events.{GameObjectSpawned, GameTick, MenuEntryAdded, MenuOptionClicked, PostMenuSort}
 import net.runelite.api.gameval.InterfaceID
 import net.runelite.api.gameval.VarbitID
+import net.runelite.api.widgets.JavaScriptCallback
 import net.runelite.api.widgets.Widget
-import net.runelite.api.widgets.WidgetConfigNode
-import net.runelite.api.widgets.WidgetID
 import net.runelite.client.RuneLite
+import net.runelite.client.callback.ClientThread
 import net.runelite.client.chat.ChatColorType
 import net.runelite.client.chat.ChatMessageBuilder
+import net.runelite.client.config.ConfigGroup
 import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 import net.runelite.client.externalplugins.ExternalPluginManager
@@ -59,9 +62,10 @@ class SuperClickerPlugin() extends Plugin {
 	@Inject() private val client  : Client   = null
 	given Client = client
 
-	@Inject() private val menuManager   : MenuManager           = null
-//	@Inject() private val interfaceManager   : WidgetConfigNode = null
-	@Inject() private val overlayManager: OverlayManager        = null
+	@Inject() private val menuManager   : MenuManager    = null
+	@Inject() private val clientThread   : ClientThread  = null
+	@Inject() private val overlayManager: OverlayManager = null
+	@Inject() private val configManager        : ConfigManager  = null
 	@Inject() private val config        : SuperClickHelperConfig  = null
 	@Inject() private val overlay       : SuperClickHelperOverlay = null
 //	@Inject() private val panel       : SuperClickHelperPanel = null
@@ -77,73 +81,166 @@ class SuperClickerPlugin() extends Plugin {
 		configManager.getConfig[SuperClickHelperConfig](classOf[SuperClickHelperConfig])
 	}
 
-	object SrValue {
-		case class SrType(group: Int, child: Int) {
-			def packed: Int = WidgetInfo.PACK(group, child)
-		}
-		private lazy val field = client.getClass.getClassLoader.loadClass("ph").getDeclaredField("sr").tap(_.setAccessible(true))
-		private val readKey = 2100281859
-		private val writeKey = -2068285269
-		private inline def readField: SrType = Option(field.get(null).asInstanceOf[Integer]).map(_.intValue() * readKey).fold[SrType](SrType(-1, -1))(x => SrType(WidgetInfo.TO_GROUP(x), WidgetInfo.TO_CHILD(x)))
-		private var cachedValue: SrType = readField
-
-		def get(): SrType = if(cachedValue != null) cachedValue else readField.tap(rv => cachedValue = rv)
-
-		def update(): Option[(SrType, SrType)] = {
-			readField.pipe(nv => Option(cachedValue -> nv).filter(a => a._1 != a._2)).tapEach {
-				case (oldV, newV) => cachedValue = newV
-			}.headOption
-		}
-
-		def set(n: SrType): Unit = {
-			if(n != get()) field.set(null, n.packed * writeKey)
-		}
-	}
-	object SbValue {
-//		case class SbType(group: Int, child: Int) {
-//			def packed: Int = WidgetInfo.PACK(group, child)
-//		}
-		private lazy val field    = client.getClass.getClassLoader.loadClass("client").getDeclaredField("sb").tap(_.setAccessible(true))
-		private      val readKey  = -1805685543
-		private      val writeKey = -438152343
-		private inline def readField: Int = Option(field.get(null).asInstanceOf[Integer]).map(_.intValue() * readKey).fold(-1)(x => x)
-		private var cachedValue: Int = readField
-
-		def get(): Int = cachedValue
-
-		def update(): Option[(Int, Int)] = {
-			readField.pipe(nv => Option(cachedValue -> nv).filter(a => a._1 != a._2)).tapEach {
-				case (oldV, newV) => cachedValue = newV
-			}.headOption
-		}
-
-		def set(n: Int): Unit = {
-			if (n != get()) field.set(null, n * writeKey)
-		}
-	}
 	var cachedWidgetValue = Option.empty[Widget]
 
 	def overlays(): Seq[SuperClickHelperOverlay] = List(overlay/*, panel*/)
+	var blockTopLevelSwitch: Boolean = false
 
 	override protected def startUp(): Unit = {
 		clickedTiles.clear()
 		clickedNpcs.clear()
 		blockTopLevelSwitch = false
 
+		clientThread.invokeLater(() => this.reinitializeSpellbook())
+
 		overlays().foreach(o => {
 			eventBus.register(o)
 			overlayManager.add(o)
 		})
 	}
+
 	override protected def shutDown(): Unit = {
 		overlays().foreach(o => {
 			overlayManager.remove(o)
 			eventBus.unregister(o)
 		})
 
+		clientThread.invokeLater(() => this.reinitializeSpellbook())
 
 		clickedNpcs.clear()
 		clickedTiles.clear()
+	}
+
+	private final inline def ConfigGroupName(): String = config.getClass.getAnnotation[ConfigGroup](classOf[ConfigGroup]).value()
+	private final val HIDE_UNHIDE_OP: Int = 6
+
+	inline def getKey(spellbook: Int, spell: Int): String = {
+		"spell_hidden_book_" + spellbook + "_" + spell
+	}
+
+	def isHidden(spellbook: Int, spell: Int): Boolean = {
+		configManager.getConfiguration[Boolean](ConfigGroupName(), getKey(spellbook, spell), classOf[Boolean])
+	}
+
+	def setHidden(spellbook: Int, spell: Int, hidden: Boolean): Unit = {
+		(hidden match {
+			case true => configManager.setConfiguration[Boolean](_, _, true)
+			case false => configManager.unsetConfiguration(_, _)
+		})(ConfigGroupName(), getKey(spellbook, spell))
+	}
+	def widgetToNiceString(w: Widget): String ={
+		val idxStr = (if (w.getIndex > -1) s" [${w.getIndex}]" else "")
+		s"${WidgetInfo.TO_GROUP(w.getId)}.${WidgetInfo.TO_CHILD(w.getId)}${idxStr}"
+	}
+
+	def initializeSpells(spellBookEnum: Int): IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
+		val spellbook = client.getEnum(spellBookEnum)
+		log.info("initializeSpells({}), spellbook.size() = {}", spellBookEnum, spellbook.size)
+		val spellsList = for{
+			//i
+//			objId = spellbook.getIntValue(i)
+			objId <- (0 until spellbook.size()).map(spellbook.getIntValue)
+			objDef = client.getItemDefinition(objId)
+			component = objDef.getIntValue(ParamID.SPELL_BUTTON)
+			w = client.getWidget(component)
+		} yield((objId, objDef), (component, w))
+
+		spellsList.map(u => spellBookEnum -> u).tapEach {
+			case (i, ((spellObjId, composition), (component, w))) => {
+				val newOnOpListener = Option(w.getOnOpListener()).pipe(oldListener => {
+					new JavaScriptCallback {
+						override def run(e: ScriptEvent): Unit = {
+							if (e.getOp == HIDE_UNHIDE_OP + 1) {
+								val s                          = e.getSource
+								// Spells can be shared between spellbooks, so we can't assume spellBookEnum is the current spellbook.
+								// from ~magic_spellbook_redraw
+								val subSpellBookId_varbit_book = client.getVarbitValue(VarbitID.SPELLBOOK)
+								val subSpellbookId             = client.getEnum(EnumID.SPELLBOOKS_SUB).getIntValue(subSpellBookId_varbit_book)
+								log.info("VarbitID.SPELLBOOK({}) => subSpellbookId({})", subSpellBookId_varbit_book, subSpellbookId)
+								val spellBookId_varbit_book_sublist = client.getVarbitValue(VarbitID.SPELLBOOK_SUBLIST)
+								val spellbookId                     = client.getEnum(subSpellbookId).getIntValue(spellBookId_varbit_book_sublist)
+								log.info("VarbitID.SPELLBOOK_SUBLIST({}) => spellbookId({})", spellBookId_varbit_book_sublist, spellbookId)
+								var hidden = isHidden(spellbookId, spellObjId)
+								hidden = !hidden
+								log.debug("Changing {} to hidden: {}", s.getName, hidden)
+								setHidden(spellbookId, spellObjId, hidden)
+								s.setOpacity(if (hidden) 100 else 0)
+								s.setAction(HIDE_UNHIDE_OP, if (hidden) "Unhide" else "Hide")
+							} else {
+								oldListener.foreach(old => client.runScript(old *))
+								//							client.runScript(opListener *)
+							}
+						}
+					}
+				})
+				w.setOnOpListener(newOnOpListener)
+			}
+		}
+
+//		var i = 0
+//		while (i < spellbook.size) {
+//			val spellObjId     = spellbook.getIntValue(i)
+//			val spellObjDef       = client.getItemDefinition(spellObjId)
+//			val spellComponent = spellObjDef.getIntValue(ParamID.SPELL_BUTTON)
+//			val w              = client.getWidget(spellComponent)
+//			log.info("spellbook[{}] = (spellObj(id, def)=({}, {}), spell(component, widget)=({}, {})", i, spellObjId, spellObjDef, spellComponent, widgetToNiceString(w))
+//			// spells with no target mask have an existing op listener, capture it to
+//			// call it later
+//			val opListener: Array[AnyRef] = w.getOnOpListener()
+//			w.setOnOpListener(
+//				new JavaScriptCallback {
+//					override def run(e: ScriptEvent): Unit = {
+//						if (e.getOp == HIDE_UNHIDE_OP + 1) {
+//							val s                          = e.getSource
+//							// Spells can be shared between spellbooks, so we can't assume spellBookEnum is the current spellbook.
+//							// from ~magic_spellbook_redraw
+//							val subSpellBookId_varbit_book = client.getVarbitValue(VarbitID.SPELLBOOK)
+//							val subSpellbookId             = client.getEnum(EnumID.SPELLBOOKS_SUB).getIntValue(subSpellBookId_varbit_book)
+//							log.info("VarbitID.SPELLBOOK({}) => subSpellbookId({})", subSpellBookId_varbit_book, subSpellbookId)
+//							val spellBookId_varbit_book_sublist = client.getVarbitValue(VarbitID.SPELLBOOK_SUBLIST)
+//							val spellbookId                     = client.getEnum(subSpellbookId).getIntValue(spellBookId_varbit_book_sublist)
+//							log.info("VarbitID.SPELLBOOK_SUBLIST({}) => spellbookId({})", spellBookId_varbit_book_sublist, spellbookId)
+//							var hidden = isHidden(spellbookId, spellObjId)
+//							hidden = !hidden
+//							log.debug("Changing {} to hidden: {}", s.getName, hidden)
+//							setHidden(spellbookId, spellObjId, hidden)
+//							s.setOpacity(if (hidden) 100 else 0)
+//							s.setAction(HIDE_UNHIDE_OP, if (hidden) "Unhide" else "Hide")
+//						} else if (opListener != null) {
+//							client.runScript(opListener *)
+//						}
+//					}
+//				}
+//			)
+//			i += 1
+//		}
+	}
+
+	private def reinitializeSpellbook(): Unit = {
+		val w = client.getWidget(InterfaceID.MagicSpellbook.UNIVERSE)
+		if (w != null && w.getOnLoadListener() != null){
+			client.createScriptEvent(w.getOnLoadListener() *).setSource(w).run()
+		}
+	}
+	val spellsWidgetTable: mutable.ListBuffer[(Int, ((Int, ItemComposition), (Int, Widget)))] = scala.collection.mutable.ListBuffer.empty[(Int, ((Int, ItemComposition), (Int, Widget)))]
+	@Subscribe
+	def onScriptPreFired(event: ScriptPreFired): Unit = {
+		if (event.getScriptId == ScriptID.MAGIC_SPELLBOOK_INITIALISESPELLS) {
+			val stack         = client.getIntStack
+			val sz            = client.getIntStackSize
+			val spellBookEnum = stack(sz - 12) // eg 1982, 5285, 1983, 1984, 1985
+
+//			val i = Integer.toHexString(14286921)
+			spellsWidgetTable.filterInPlace(_._1 != spellBookEnum)
+			val toCache = clientThread.runOnClientThread[IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))]](() => initializeSpells(spellBookEnum))
+			spellsWidgetTable.addAll(toCache)
+		} else if (event.getScriptId == 915 && blockTopLevelSwitch) {
+			val targetTabOpt = InterfaceTab.values().find(t => t.getId == Int.unbox(event.getScriptEvent.getArguments.apply(1)))
+			if (targetTabOpt.contains(InterfaceTab.SPELLBOOK)) {
+				event.getScriptEvent.getArguments.update(1, Int.box(InterfaceTab.INVENTORY.getId))
+				blockTopLevelSwitch = false
+			}
+		}
 	}
 
 	@Subscribe
@@ -164,73 +261,82 @@ class SuperClickerPlugin() extends Plugin {
 //		}
 		val nWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
 		if(cachedWidgetValue != nWidgetValue) {
-			def widgetToStr(w: Widget): ((Int, Int), Int) = {
-					(
-						WidgetInfo.TO_GROUP(w.getId),
-						WidgetInfo.TO_CHILD(w.getId)
-					) -> w.getIndex
-			}
-			client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"SelectedWidget changed from '${cachedWidgetValue.map(widgetToStr)}' to '${nWidgetValue.map(widgetToStr)}'", "gametick")
+
+			client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"SelectedWidget changed from '${cachedWidgetValue.map(widgetToNiceString)}' to '${nWidgetValue.map(widgetToNiceString)}'", "gametick")
 			cachedWidgetValue = nWidgetValue
 		}
 
 //		cachedWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
 	}
 
-	var blockTopLevelSwitch: Boolean = false
-	@Subscribe
-	def onScriptPreFired(scriptEvent: ScriptPreFired): Unit = {
-		if(scriptEvent.getScriptId == 915 && blockTopLevelSwitch) {
-			val targetTabOpt = InterfaceTab.values().find(t => t.getId == Int.unbox(scriptEvent.getScriptEvent.getArguments.apply(1)))
-			if(targetTabOpt.contains(InterfaceTab.SPELLBOOK)) {
-				scriptEvent.getScriptEvent.getArguments.update(1, Int.box(InterfaceTab.INVENTORY.getId))
-				blockTopLevelSwitch = false
-			}
-		}
+	def findSpell(group: Int, id: Int): Option[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
+		spellsWidgetTable.toList.find(e => {
+			val (egroup, eid) = e._2._2._2.getId.pipe(eid => WidgetInfo.TO_GROUP(eid) -> WidgetInfo.TO_CHILD(eid))
+			egroup == group && eid == id
+		})
 	}
 
 	@Subscribe
 	def onMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
 		val me = menuOptionAdded.getMenuEntry
-		if(client.getMenu.getMenuEntries.contains(me) && !blockTopLevelSwitch) {
-			if(me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS && me.getWidget != null) {
-				val subSpellbookId = client.getEnum(EnumID.SPELLBOOKS_SUB).getIntValue(client.getVarbitValue(VarbitID.SPELLBOOK))
-				val widgetsTable   = client.getEnum(subSpellbookId).getIntVals.toList.flatMap(spellbookId => {//.getIntValue(client.getVarbitValue(VarbitID.SPELLBOOK_SUBLIST))
-					val spellbook: EnumComposition = client.getEnum(spellbookId)
-					for {
-						i <- 0 until spellbook.size()
-					} yield {
-						val spellObj = client.getItemDefinition(spellbook.getIntValue(i))
-						val w        = client.getWidget(spellObj.getIntValue(ParamID.SPELL_BUTTON))
-						w
-					}
-				})
-				widgetsTable.zipWithIndex.foreach((xxx) => log.debug("widget[{}] = (({}, {}), {})", xxx._2, WidgetInfo.TO_GROUP(xxx._1.getId), WidgetInfo.TO_CHILD(xxx._1.getId), xxx._1.getIndex))
+		val meData = (me.getType, me.getParam0, me.getParam1, me.getIdentifier)
+		if(!blockTopLevelSwitch) {
+			if(client.getMenu.getMenuEntries.contains(me) && me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
+//				val subSpellbookId            = client.getEnum(EnumID.SPELLBOOKS_SUB).getIntValue(client.getVarbitValue(VarbitID.SPELLBOOK))
+//				val widgetsTable: Seq[Widget] = client.getEnum(subSpellbookId).getIntVals.toList.flatMap(spellbookId => {//.getIntValue(client.getVarbitValue(VarbitID.SPELLBOOK_SUBLIST))
+//					val spellbook: EnumComposition = client.getEnum(spellbookId)
+//					for {
+//						i <- 0 until spellbook.size()
+//					} yield {
+//						val spellObj = client.getItemDefinition(spellbook.getIntValue(i))
+//						val w        = client.getWidget(spellObj.getIntValue(ParamID.SPELL_BUTTON))
+//						w
+//					}
+//				})
+//				widgetsTable.zipWithIndex.foreach((xxx) => log.debug("widget[{}] = (({}, {}), {})", xxx._2, WidgetInfo.TO_GROUP(xxx._1.getId), WidgetInfo.TO_CHILD(xxx._1.getId), xxx._1.getIndex))
 
-				if(me.getWidget.getItemId == 6332) {
-					widgetsTable.find(w => w.getId == InterfaceID.MagicSpellbook.PLANK_MAKE).foreach(spellWidget => {
-						client.getMenu.createMenuEntry(-1)
-							.setOption("Cast".colored(Color.BLUE))
-							.setType(MenuAction.WIDGET_TARGET)
-							.setIdentifier(0)
-							.setParam0(-1)
-							.setParam1(spellWidget.getId)
-							.onClick(e => {
-								blockTopLevelSwitch = true
-							});
-					})
+				val spellSearchOpt = (if(me.getItemId == 12011) {
+					findSpell(218, 133)
+				} else if(me.getItemId == 6332) {
+					findSpell(218, 133)
+//					widgetsTable.find(w => w.getId == InterfaceID.MagicSpellbook.PLANK_MAKE).foreach(spellWidget => {
+//						client.getMenu.createMenuEntry(-1)
+//							.setOption("Cast".colored(Color.BLUE))
+//							.setType(MenuAction.WIDGET_TARGET)
+//							.setIdentifier(0)
+//							.setParam0(-1)
+//							.setParam1(spellWidget.getId)
+//							.onClick(e => {
+//								blockTopLevelSwitch = true
+//							});
+//					})
 				} else if(me.getWidget.getItemId == 21111 || me.getWidget.getItemId == 1639) {
-					widgetsTable.find(w => w.getId == InterfaceID.MagicSpellbook.ENCHANT_2).foreach(spellWidget => {
+					findSpell(218, 24)
+//					widgetsTable.find(w => w.getId == InterfaceID.MagicSpellbook.ENCHANT_2).foreach(spellWidget => {
+//						client.getMenu.createMenuEntry(-1)
+//							.setOption("Cast".colored(Color.BLUE))
+//							.setType(MenuAction.WIDGET_TARGET)
+//							.setIdentifier(0)
+//							.setParam0(-1)
+//							.setParam1(spellWidget.getId)
+//							.onClick(e => {
+//								blockTopLevelSwitch = true
+//							});
+//					})
+				} else Option.empty)
+
+				spellSearchOpt.foreach{
+					case (_, (_, (cid, w))) => {
 						client.getMenu.createMenuEntry(-1)
 							.setOption("Cast".colored(Color.BLUE))
 							.setType(MenuAction.WIDGET_TARGET)
 							.setIdentifier(0)
 							.setParam0(-1)
-							.setParam1(spellWidget.getId)
+							.setParam1(cid)
 							.onClick(e => {
 								blockTopLevelSwitch = true
 							});
-					})
+					}
 				}
 			}
 		}
