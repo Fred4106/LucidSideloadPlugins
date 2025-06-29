@@ -24,49 +24,54 @@
  */
 package com.fredplugins.common.queries;
 
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.runelite.api.Client;
 import net.runelite.api.InventoryID;
-import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
-import com.fredplugins.common.Query;
 import com.fredplugins.common.QueryResults;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.api.widgets.WidgetItem;
 
-@RequiredArgsConstructor
-public class InventoryItemQuery extends Query<Item, InventoryItemQuery, QueryResults<Item>>
+public class InventoryItemQuery extends WidgetItemQuery
 {
-	private final InventoryID inventory;
-
 	@Override
-	public QueryResults<Item> result(Client client)
+	public QueryResults<WidgetItem> result(Client client)
 	{
-		ItemContainer container = client.getItemContainer(inventory);
-		if (container == null)
-		{
-			return new QueryResults<>(null);
-		}
-		return new QueryResults<>(Arrays.stream(container.getItems())
+		Collection<WidgetItem> widgetItems = getInventoryItems(client);
+		return new QueryResults<>(widgetItems.stream()
 			.filter(Objects::nonNull)
 			.filter(predicate)
 			.collect(Collectors.toList()));
 	}
 
-	public InventoryItemQuery idEquals(int... ids)
+	private Collection<WidgetItem> getInventoryItems(Client client)
 	{
-		predicate = and(item ->
+		Collection<WidgetItem> widgetItems = new ArrayList<>();
+		Widget inv = client.getWidget(WidgetInfo.INVENTORY);
+		if (inv != null && !inv.isHidden())
 		{
-			for (int id : ids)
+			Widget[] children = inv.getDynamicChildren();
+			for (int i = 0; i < children.length; i++)
 			{
-				if (item.getId() == id)
+				Widget child = children[i];
+				if (child.getItemId() == 6512 || child.isSelfHidden())
 				{
-					return true;
+					continue;
 				}
+				// set bounds to same size as default inventory
+				Rectangle bounds = child.getBounds();
+				bounds.setBounds(bounds.x - 1, bounds.y - 1, 32, 32);
+				// Index is set to 0 because the widget's index does not correlate to the order in the bank
+				widgetItems.add(new WidgetItem(child.getItemId(), child.getItemQuantity(), bounds, child, null));
 			}
-			return false;
-		});
-		return this;
+		}
+		return widgetItems;
 	}
 }
