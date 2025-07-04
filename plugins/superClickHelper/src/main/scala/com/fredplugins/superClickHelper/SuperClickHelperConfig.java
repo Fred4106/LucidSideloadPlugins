@@ -4,6 +4,7 @@ import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
 
 import java.awt.*;
@@ -12,16 +13,23 @@ import java.awt.*;
 public interface SuperClickHelperConfig extends Config
 {
 	final String GroupName = "superClickHelper";
-	@Alpha
-	@ConfigItem(
-		position = 1,
-		keyName = "hexColorUnwatered",
-		name = "Unwatered plant",
-		description = "Color of unwatered plant timer"
+	@ConfigSection(
+		name = "Alches",
+		description = "One click alch settings",
+		position = 0
 	)
-	default Color getColorUnwatered()
+	String ALCH_SECTION = "Alch";
+
+	@ConfigItem(
+		position = 0,
+		keyName = "isAlchNotesOnly",
+		name = "Notes Only",
+		description = "Only add alch one-click to noted items.",
+		section = ALCH_SECTION
+	)
+	default boolean isAlchNotesOnly()
 	{
-		return new Color(255, 187, 0);
+		return true;
 	}
 
 //	@Alpha
@@ -69,7 +77,12 @@ public interface SuperClickHelperConfig extends Config
 //	default Color getColorEmpty() {
 //		return new Color(93, 56, 45);
 //	}
-
+	@ConfigSection(
+		name = "Debug",
+		description = "Debug details",
+		position = 9
+	)
+	String DEBUG_SECTION = "Debug";
 	@Range(
 		min = 6,
 		max = 32
@@ -78,7 +91,8 @@ public interface SuperClickHelperConfig extends Config
 		keyName = "fontSize",
 		name = "Font Size",
 		description = "sets font size for overlay",
-		position = 10
+		position = 0,
+		section = DEBUG_SECTION
 	)
 	default int getFontSize()
 	{
@@ -90,7 +104,8 @@ public interface SuperClickHelperConfig extends Config
 		keyName = "fontBold",
 		name = "Bold Font",
 		description = "sets bold font for overlay",
-		position = 11
+		position = 1,
+		section = DEBUG_SECTION
 	)
 	default boolean getFontBold()
 	{
@@ -99,9 +114,10 @@ public interface SuperClickHelperConfig extends Config
 
 	@ConfigItem(
 		keyName = "debugClicks",
-		name = "Debug Actions",
+		name = "Debug Clicks",
 		description = "enables debug overlay for clicked targets",
-		position = 12
+		position = 2,
+		section = DEBUG_SECTION
 	)
 	default boolean isDebugClicks()
 	{
@@ -112,9 +128,22 @@ public interface SuperClickHelperConfig extends Config
 		keyName = "debugMenus",
 		name = "Debug MenuEntries",
 		description = "enables debug overlay for menu entries",
-		position = 13
+		position = 3,
+		section = DEBUG_SECTION
 	)
 	default boolean isDebugMenu()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "debugSelectedWidget",
+		name = "Debug Selected Widget",
+		description = "enables debug for selected widget value",
+		position = 4,
+		section = DEBUG_SECTION
+	)
+	default boolean isDebugSelectedWidget()
 	{
 		return true;
 	}

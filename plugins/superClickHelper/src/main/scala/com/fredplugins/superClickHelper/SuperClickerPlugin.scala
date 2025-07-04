@@ -59,7 +59,27 @@ import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import net.runelite.api.gameval.ItemID.{ASGARNIAN_HOP_SEED, BARLEY_SEED, BIRDHOUSE_MAGIC, BIRDHOUSE_MAHOGANY, BIRDHOUSE_MAPLE, BIRDHOUSE_NORMAL, BIRDHOUSE_OAK, BIRDHOUSE_REDWOOD, BIRDHOUSE_TEAK, BIRDHOUSE_WILLOW, BIRDHOUSE_YEW, HAMMERSTONE_HOP_SEED, JUTE_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED, YANILLIAN_HOP_SEED}
 import net.runelite.api.gameval.ObjectID.{BIRDHOUSE_1, BIRDHOUSE_2, BIRDHOUSE_3, BIRDHOUSE_4, BIRDHOUSE_MAGIC_BIRD, BIRDHOUSE_MAGIC_BUILT, BIRDHOUSE_MAGIC_FULL, BIRDHOUSE_MAHOGANY_BIRD, BIRDHOUSE_MAHOGANY_BUILT, BIRDHOUSE_MAHOGANY_FULL, BIRDHOUSE_MAPLE_BIRD, BIRDHOUSE_MAPLE_BUILT, BIRDHOUSE_MAPLE_FULL, BIRDHOUSE_NORMAL_BIRD, BIRDHOUSE_NORMAL_BUILT, BIRDHOUSE_NORMAL_FULL, BIRDHOUSE_NOT_BUILT, BIRDHOUSE_OAK_BIRD, BIRDHOUSE_OAK_BUILT, BIRDHOUSE_OAK_FULL, BIRDHOUSE_REDWOOD_BIRD, BIRDHOUSE_REDWOOD_BUILT, BIRDHOUSE_REDWOOD_FULL, BIRDHOUSE_TEAK_BIRD, BIRDHOUSE_TEAK_BUILT, BIRDHOUSE_TEAK_FULL, BIRDHOUSE_WILLOW_BIRD, BIRDHOUSE_WILLOW_BUILT, BIRDHOUSE_WILLOW_FULL, BIRDHOUSE_YEW_BIRD, BIRDHOUSE_YEW_BUILT, BIRDHOUSE_YEW_FULL}
+import net.runelite.api.gameval.ItemID.{RUNE_2H_SWORD, RUNE_ARMOURED_BOOTS, RUNE_AXE, RUNE_AXE_2H, RUNE_BATTLEAXE, RUNE_CHAINBODY, RUNE_CLAWS, RUNE_DAGGER, RUNE_DAGGER_P, RUNE_DAGGER_P_, RUNE_DAGGER_P__, RUNE_FULL_HELM, RUNE_HALBERD, RUNE_KITESHIELD, RUNE_LONGSWORD, RUNE_MACE, RUNE_MED_HELM, RUNE_PICKAXE, RUNE_PLATEBODY, RUNE_PLATELEGS, RUNE_PLATESKIRT, RUNE_SCIMITAR, RUNE_SPEAR, RUNE_SPEAR_P, RUNE_SPEAR_P_, RUNE_SPEAR_P__, RUNE_SQ_SHIELD, RUNE_SWORD, RUNE_THROWNAXE, RUNE_WARHAMMER}
 
+import net.runelite.api.gameval.ItemID.{ADAMANT_2H_SWORD, ADAMANT_ARMOURED_BOOTS, ADAMANT_AXE, ADAMANT_AXE_2H, ADAMANT_BATTLEAXE, ADAMANT_CHAINBODY, ADAMANT_CLAWS, ADAMANT_DAGGER, ADAMANT_DAGGER_P, ADAMANT_DAGGER_P_, ADAMANT_DAGGER_P__, ADAMANT_FULL_HELM, ADAMANT_HALBERD, ADAMANT_KITESHIELD, ADAMANT_LONGSWORD, ADAMANT_MACE, ADAMANT_MED_HELM, ADAMANT_PICKAXE, ADAMANT_PLATEBODY, ADAMANT_PLATELEGS, ADAMANT_PLATESKIRT, ADAMANT_SCIMITAR, ADAMANT_SPEAR, ADAMANT_SPEAR_P, ADAMANT_SPEAR_P_, ADAMANT_SPEAR_P__, ADAMANT_SQ_SHIELD, ADAMANT_SWORD, ADAMNT_THROWNAXE, ADAMNT_WARHAMMER}
+
+import net.runelite.api.gameval.ItemID.{MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS, MITHRIL_AXE, MITHRIL_AXE_2H, MITHRIL_BATTLEAXE, MITHRIL_CHAINBODY, MITHRIL_CLAWS, MITHRIL_DAGGER, MITHRIL_DAGGER_P, MITHRIL_DAGGER_P_, MITHRIL_DAGGER_P__, MITHRIL_FULL_HELM, MITHRIL_HALBERD, MITHRIL_KITESHIELD, MITHRIL_LONGSWORD, MITHRIL_MACE, MITHRIL_MED_HELM, MITHRIL_PICKAXE, MITHRIL_PLATEBODY, MITHRIL_PLATELEGS, MITHRIL_PLATESKIRT, MITHRIL_SCIMITAR, MITHRIL_SPEAR, MITHRIL_SPEAR_P, MITHRIL_SPEAR_P_, MITHRIL_SPEAR_P__, MITHRIL_SQ_SHIELD, MITHRIL_SWORD, MITHRIL_THROWNAXE, MITHRIL_WARHAMMER}
+import net.runelite.api.gameval.ItemID.{
+	MAPLE_SHORTBOW, MAPLE_LONGBOW, YEW_SHORTBOW, YEW_LONGBOW, MAGIC_LONGBOW,
+	AIR_BATTLESTAFF, FIRE_BATTLESTAFF, EARTH_BATTLESTAFF, WATER_BATTLESTAFF
+}
+import net.runelite.api.gameval.ItemID.{
+	ARROW_SHAFT, FEATHER,
+	HEADLESS_ARROW, SLAYER_BROAD_ARROWHEAD,
+	MAHOGANY_LOGS, TEAK_LOGS,
+	UNSTRUNG_OPAL_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_TOPAZ_AMULET,
+	UNSTRUNG_GOLD_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_EMERALD_AMULET,
+	UNSTRUNG_RUBY_AMULET, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET,
+	UNSTRUNG_ONYX_AMULET, UNSTRUNG_ZENYTE_AMULET,
+	OPAL_RING, OPAL_NECKLACE, STRUNG_OPAL_AMULET, OPAL_BRACELET,
+	JADE_RING, JADE_NECKLACE, STRUNG_JADE_AMULET, JADE_BRACELET,
+	TOPAZ_RING, TOPAZ_NECKLACE, STRUNG_TOPAZ_AMULET, TOPAZ_BRACELET
+}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#32C8CD\">Freds</font> Super Clicker</html>",
@@ -82,6 +102,19 @@ class SuperClickerPlugin() extends Plugin {
 	@Inject() private val config        : SuperClickHelperConfig  = null
 	@Inject() private val overlay       : SuperClickHelperOverlay = null
 //	@Inject() private val panel       : SuperClickHelperPanel = null
+
+
+
+	extension (s: Any) {
+		def colored(c: Color): String = s"${ColorUtil.colorTag(c)}${s.toString}${ColorUtil.CLOSING_COLOR_TAG}"
+//		def icon(iconId:Int): String = s"<img=${iconId}>"
+//		def emoji(e: ): String = s"<${}>"
+	}
+
+	def sendChatMessage(name: String)(message: => String): Unit = {
+		client.addChatMessage(ChatMessageType.FRIENDSCHAT, name, s"${ColorUtil.CLOSING_COLOR_TAG}${message}", "SuperClicker", false)
+	}
+
 
 	private val clickedTiles: mutable.ListBuffer[(Int, WorldPoint)] = mutable.ListBuffer.empty
 	private val clickedNpcs: mutable.ListBuffer[(Int, NPC)] = mutable.ListBuffer.empty
@@ -146,8 +179,8 @@ class SuperClickerPlugin() extends Plugin {
 		})(ConfigGroupName(), getKey(spellbook, spell))
 	}
 	def widgetToNiceString(w: Widget): String ={
-		val idxStr = (if (w.getIndex > -1) s" [${w.getIndex}]" else "")
-		s"${WidgetInfo.TO_GROUP(w.getId)}.${WidgetInfo.TO_CHILD(w.getId)}${idxStr}"
+		val idxStr = (if (w.getIndex > -1) s" [${w.getIndex.colored(Color.BLUE)}]" else "")
+		s"${WidgetInfo.TO_GROUP(w.getId).colored(Color.GREEN)}.${WidgetInfo.TO_CHILD(w.getId).colored(Color.GREEN)}${idxStr}"
 	}
 
 	def initializeSpells(spellBookEnum: Int): IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
@@ -261,21 +294,13 @@ class SuperClickerPlugin() extends Plugin {
 			"Found seeds {} and birdhouses {}", Option(birdhouseSeed()).map(w => s"${w.getId} @ ${w.getWidget.getIndex}"),
 			Option(birdhouseItem()).map(w => s"${w.getId} @ ${w.getWidget.getIndex}")
 		)
-
-//		SrValue.update().foreach {
-//			case (o, n) => client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"ph.sr changed from '${o}' to '${n}'", "gametick")
-//		}
-//		SbValue.update().foreach {
-//			case (o, n) => client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"client.sb changed from '${o}' to '${n}'", "gametick")
-//		}
 		val nWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
-		if(cachedWidgetValue != nWidgetValue) {
-
-			client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", s"SelectedWidget changed from '${cachedWidgetValue.map(widgetToNiceString)}' to '${nWidgetValue.map(widgetToNiceString)}'", "gametick")
-			cachedWidgetValue = nWidgetValue
+		if(cachedWidgetValue != nWidgetValue && config.isDebugSelectedWidget) {
+			sendChatMessage("SelectedWidget"){
+				s"Changed from ${cachedWidgetValue.map(widgetToNiceString)} to ${nWidgetValue.map(widgetToNiceString)}"
+			}
 		}
-
-//		cachedWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
+		cachedWidgetValue = nWidgetValue
 	}
 
 	def findSpell(group: Int, id: Int): Option[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
@@ -283,19 +308,6 @@ class SuperClickerPlugin() extends Plugin {
 			val (egroup, eid) = e._2._2._2.getId.pipe(eid => WidgetInfo.TO_GROUP(eid) -> WidgetInfo.TO_CHILD(eid))
 			egroup == group && eid == id
 		})
-	}
-
-	import net.runelite.api.gameval.ItemID.{
-		MAHOGANY_LOGS, TEAK_LOGS,
-		UNSTRUNG_OPAL_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_TOPAZ_AMULET,
-		UNSTRUNG_GOLD_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_EMERALD_AMULET,
-		UNSTRUNG_RUBY_AMULET, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET,
-		UNSTRUNG_ONYX_AMULET, UNSTRUNG_ZENYTE_AMULET,
-		OPAL_RING, OPAL_NECKLACE, STRUNG_OPAL_AMULET, OPAL_BRACELET,
-		JADE_RING, JADE_NECKLACE, STRUNG_JADE_AMULET, JADE_BRACELET,
-		TOPAZ_RING, TOPAZ_NECKLACE, STRUNG_TOPAZ_AMULET, TOPAZ_BRACELET,
-		RUNE_PLATELEGS,RUNE_PLATEBODY, RUNE_FULL_HELM,RUNE_BATTLEAXE,
-		MITHRIL_PLATELEGS
 	}
 
 
@@ -317,9 +329,25 @@ class SuperClickerPlugin() extends Plugin {
 	}
 
 	object Alchable {
-		val listOfAlches: List[Int] = List(RUNE_PLATELEGS, RUNE_PLATEBODY, RUNE_FULL_HELM			, RUNE_BATTLEAXE, MITHRIL_PLATELEGS)
+		inline def bowAlches: List[Int] = List(MAPLE_SHORTBOW, MAPLE_LONGBOW, YEW_SHORTBOW, YEW_LONGBOW, MAGIC_LONGBOW)
+		inline def staffAlches: List[Int] = List(AIR_BATTLESTAFF, FIRE_BATTLESTAFF, EARTH_BATTLESTAFF, WATER_BATTLESTAFF)
+		inline def mithrilAlches: List[Int] =List(MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS, MITHRIL_AXE, MITHRIL_AXE_2H, MITHRIL_BATTLEAXE, MITHRIL_CHAINBODY, MITHRIL_CLAWS, MITHRIL_DAGGER, MITHRIL_DAGGER_P, MITHRIL_DAGGER_P_, MITHRIL_DAGGER_P__, MITHRIL_FULL_HELM, MITHRIL_HALBERD, MITHRIL_KITESHIELD, MITHRIL_LONGSWORD, MITHRIL_MACE, MITHRIL_MED_HELM, MITHRIL_PICKAXE, MITHRIL_PLATEBODY, MITHRIL_PLATELEGS, MITHRIL_PLATESKIRT, MITHRIL_SCIMITAR, MITHRIL_SPEAR, MITHRIL_SPEAR_P, MITHRIL_SPEAR_P_, MITHRIL_SPEAR_P__, MITHRIL_SQ_SHIELD, MITHRIL_SWORD, MITHRIL_THROWNAXE, MITHRIL_WARHAMMER)
+		inline def adamantAlches: List[Int] = List(ADAMANT_2H_SWORD, ADAMANT_ARMOURED_BOOTS, ADAMANT_AXE, ADAMANT_AXE_2H, ADAMANT_BATTLEAXE, ADAMANT_CHAINBODY, ADAMANT_CLAWS, ADAMANT_DAGGER, ADAMANT_DAGGER_P, ADAMANT_DAGGER_P_, ADAMANT_DAGGER_P__, ADAMANT_FULL_HELM, ADAMANT_HALBERD, ADAMANT_KITESHIELD, ADAMANT_LONGSWORD, ADAMANT_MACE, ADAMANT_MED_HELM, ADAMANT_PICKAXE, ADAMANT_PLATEBODY, ADAMANT_PLATELEGS, ADAMANT_PLATESKIRT, ADAMANT_SCIMITAR, ADAMANT_SPEAR, ADAMANT_SPEAR_P, ADAMANT_SPEAR_P_, ADAMANT_SPEAR_P__, ADAMANT_SQ_SHIELD, ADAMANT_SWORD, ADAMNT_THROWNAXE, ADAMNT_WARHAMMER)
+		inline def runeAlches: List[Int] =List(RUNE_2H_SWORD, RUNE_ARMOURED_BOOTS, RUNE_AXE, RUNE_AXE_2H, RUNE_BATTLEAXE, RUNE_CHAINBODY, RUNE_CLAWS, RUNE_DAGGER, RUNE_DAGGER_P, RUNE_DAGGER_P_, RUNE_DAGGER_P__, RUNE_FULL_HELM, RUNE_HALBERD, RUNE_KITESHIELD, RUNE_LONGSWORD, RUNE_MACE, RUNE_MED_HELM, RUNE_PICKAXE, RUNE_PLATEBODY, RUNE_PLATELEGS, RUNE_PLATESKIRT, RUNE_SCIMITAR, RUNE_SPEAR, RUNE_SPEAR_P, RUNE_SPEAR_P_, RUNE_SPEAR_P__, RUNE_SQ_SHIELD, RUNE_SWORD, RUNE_THROWNAXE, RUNE_WARHAMMER)
+
+		private lazy val listOfAlches: List[Int] = List(bowAlches, staffAlches, mithrilAlches, adamantAlches, runeAlches).flatten
+		private lazy val listOfAlchesNoted: List[Int] = listOfAlches.map(client.getItemDefinition).flatMap(x => Option(x.getLinkedNoteId).filter(_ != -1))
+//			.flatMap(laid => laid.flatMap(aid =>
+//				Seq(aid,client.getItemDefinition(aid).getLinkedNoteId).filter(_ != -1)
+//			))
 		def unapply(id: Int): Boolean = {
-			listOfAlches.flatMap(aid => Seq(aid, client.getItemDefinition(aid).getLinkedNoteId)).contains(id)
+			(
+				if (!config.isAlchNotesOnly) {
+					listOfAlches
+				} else {
+					Seq.empty[Int]
+				}
+			).appendedAll(listOfAlchesNoted).contains(id)
 		}
 	}
 
@@ -355,7 +383,7 @@ class SuperClickerPlugin() extends Plugin {
 				case TOPAZ_JEWELRY() => findSpell(218, 37)
 				case UNSTRUNG_JEWELRY() => findSpell(218, 126)
 				case Alchable() => findSpell(218, 44)
-			}.flatten.foreach{
+			}.flatten.map {
 				case (_, (_, (cid, w))) => {
 					client.getMenu.createMenuEntry(-1)
 						.setOption("Cast".colored(Color.BLUE))
@@ -367,6 +395,29 @@ class SuperClickerPlugin() extends Plugin {
 							blockTopLevelSwitch = true
 						}).tap(m => priorityMenuEntries.addOne(m));
 				}
+			}
+		}
+	}
+
+	@Subscribe
+	def onWidgetItemMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
+		val me = menuOptionAdded.getMenuEntry
+		if (!client.getMenu.getMenuEntries.contains(me)) return
+		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
+			Option(me.getItemId).collect {
+				//				case ItemID.PAYDIRT =>
+				case ARROW_SHAFT | FEATHER => search(FEATHER).zip(search(ARROW_SHAFT))//(218, 133)
+				case SLAYER_BROAD_ARROWHEAD | HEADLESS_ARROW => search(SLAYER_BROAD_ARROWHEAD).zip(search(HEADLESS_ARROW))
+			}.flatten.map((a, b) => a.getWidget -> b.getWidget).map {
+				case (a, b) => client.getMenu.createMenuEntry(-1)
+					.setOption("Make".colored(Color.GREEN))
+					.setType(MenuAction.RUNELITE)
+					.setIdentifier(0)
+					.onClick((e) => {
+						clientThread.invokeLater(() => {
+							InteractionUtils.useWidgetOnWidget(a, b)
+						})
+					}).tap(m => priorityMenuEntries.addOne(m));
 			}
 		}
 	}
@@ -431,7 +482,6 @@ class SuperClickerPlugin() extends Plugin {
 	@Subscribe
 	def onGameObjectMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
 		val me = menuOptionAdded.getMenuEntry
-		log.debug("me {}  {} is a tileObjectAction {}",me.getOption, me.getType, me.isTileObjectAction)
 		if(!(client.getMenu.getMenuEntries.contains(me) && me.isTileObjectAction)) return
 
 		val targetedTileObject = me.getTileObjectOpt.flatMap(to => {
@@ -451,7 +501,7 @@ class SuperClickerPlugin() extends Plugin {
 						.setParam0(birdSeenLocation._1)
 						.setParam1(birdSeenLocation._2)
 						.onClick(e => {
-							client.addChatMessage(ChatMessageType.FRIENDSCHAT, "Entry Clicked", s"harvesting bird @ ${birdSeenLocation}" , s"birdhouses")
+							sendChatMessage("birdhouses"){s"harvesting bird @ ${birdSeenLocation}"}
 						})
 				}
 				case (30552, to) if(birdhouseItem() != null) => {
@@ -463,7 +513,9 @@ class SuperClickerPlugin() extends Plugin {
 						.setParam0(birdSeenLocation._1)
 						.setParam1(birdSeenLocation._2)
 						.onClick(e => {
-							client.addChatMessage(ChatMessageType.FRIENDSCHAT, "Entry Clicked", s"building a birdhouse @ ${birdSeenLocation} with item ${birdhouseItem()}", s"birdhouse")
+							sendChatMessage(s"birdhouses"){
+								s"building a birdhouse @ ${birdSeenLocation} with item ${birdhouseItem()}"
+							}
 						})
 //					log.debug("Added menu to object {} with impostorId {} @ {}", to, impostorId, to.getLocalLocation.pipe(ll => ll.getSceneX -> ll.getSceneY))
 				}
@@ -492,23 +544,6 @@ class SuperClickerPlugin() extends Plugin {
 								InteractionUtils.useWidgetOnTileObject(w, targetTileObject)
 							})
 						})
-//						.pipe(meb => {
-							//.pipe(w => (w.getId, w.getIndex)).pipe {
-//								case (wId, widx) => {
-//									meb.setParam0(widx).setParam1(wId)
-//										.onClick(e => {
-//											clientThread.invoke(() => {
-//												client.runScript(wListener);
-//											})
-//											client.addChatMessage(ChatMessageType.FRIENDSCHAT, "Entry Clicked", s"Selecting seeds ${wId} @ ${widx} in inventory", s"birdhouses")
-//										})
-//									meb.onClick((e) => {
-//
-//										InteractionUtils.useWidgetOnTileObject(w, patch)
-//									})
-//								}
-//							}
-//						})
 				}
 			}).foreach(b => b.apply(client.getMenu.createMenuEntry(-1)).tap(priorityMenuEntries.addOne(_)))
 		})
@@ -548,12 +583,6 @@ class SuperClickerPlugin() extends Plugin {
 		priorityMenuEntries.clear()
 	}
 
-	extension (s: String) {
-		def colored(c: Color): String = s"${ColorUtil.colorTag(c)}$s${ColorUtil.CLOSING_COLOR_TAG}"
-		def icon(iconId:Int): String = s"<img=${iconId}>"
-//		def emoji(e: ): String = s"<${}>"
-	}
-
 	@Subscribe
 	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
 
@@ -567,10 +596,9 @@ class SuperClickerPlugin() extends Plugin {
 				"target".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(menuOptionClicked.getMenuTarget)}".colored(new Color(100, 100, 200))).appendedAll(")")
 			)
 
-//			val message = " id=`${menuOptionClicked.getId}`, params=`${menuOptionClicked.pipe(j => j.getParam0 -> j.getParam1)}`, option=`${menuOptionClicked.getMenuOption}`, target=`${menuOptionClicked.getMenuTarget}`)"
-			val message = messageParts.fold("")(_.appendedAll(_))
-			log.debug(Text.removeFormattingTags(message))
-			client.addChatMessage(ChatMessageType.FRIENDSCHAT, "SuperClicker", message , s"clicked${client.getTickCount}")
+			sendChatMessage("MenuClicked"){
+				messageParts.fold("")(_.appendedAll(_))
+			}
 		}
 
 		val me = menuOptionClicked.getMenuEntry
