@@ -1,7 +1,7 @@
 package com.fredplugins.superClickHelper
 
 import com.fredplugins.common.InterfaceTab
-import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getTileObjectOpt, getWorldLocationOpt, isNpcAction, isRuneliteAction, isTileObjectAction}
+import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getTileObjectOpt, getWorldLocationOpt, isNpcAction, isRuneliteAction, isTileObjectAction, prettyString}
 import com.fredplugins.common.queries.InventoryItemQuery
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
@@ -132,7 +132,11 @@ class SuperClickerPlugin() extends Plugin {
 	def overlays(): Seq[SuperClickHelperOverlay] = List(overlay/*, panel*/)
 	var blockTopLevelSwitch: Boolean = false
 
+	var cookingHelper: CookingHelper = null
+
 	override protected def startUp(): Unit = {
+		cookingHelper = new CookingHelper(this, client, clientThread)
+
 		clickedTiles.clear()
 		clickedNpcs.clear()
 		blockTopLevelSwitch = false
@@ -144,6 +148,7 @@ class SuperClickerPlugin() extends Plugin {
 			eventBus.register(o)
 			overlayManager.add(o)
 		})
+		eventBus.register(cookingHelper)
 	}
 
 	override protected def shutDown(): Unit = {
@@ -159,6 +164,9 @@ class SuperClickerPlugin() extends Plugin {
 
 		clickedNpcs.clear()
 		clickedTiles.clear()
+
+		eventBus.unregister(cookingHelper)
+		cookingHelper=  null
 	}
 
 	private final inline def ConfigGroupName(): String = config.getClass.getAnnotation[ConfigGroup](classOf[ConfigGroup]).value()
@@ -585,19 +593,20 @@ class SuperClickerPlugin() extends Plugin {
 
 	@Subscribe
 	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
-
 		if(config.isDebugMenu) {
-			val paramColor = new Color(0xC06A09)
-			val messageParts = Seq(
-				menuOptionClicked.getMenuAction.name().colored(Color.blue).appendedAll("("),
-				"id".colored(paramColor).appendedAll("=").appendedAll(s"${menuOptionClicked.getId}".colored(Color.GREEN)).appendedAll(", "),
-				"params".colored(paramColor).appendedAll("=(").appendedAll(s"${menuOptionClicked.getParam0}".colored(Color.CYAN)).appendedAll(", ").appendedAll(s"${menuOptionClicked.getParam1}".colored(Color.CYAN)).appendedAll("), "),
-				"option".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(menuOptionClicked.getMenuOption)}".colored(Color.MAGENTA)).appendedAll(", "),
-				"target".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(menuOptionClicked.getMenuTarget)}".colored(new Color(100, 100, 200))).appendedAll(")")
-			)
+//			val paramColor = new Color(0xC06A09)
+//			val messageParts = Seq(
+//				menuOptionClicked.getMenuAction.name().colored(Color.blue).appendedAll("("),
+//				"id".colored(paramColor).appendedAll("=").appendedAll(s"${menuOptionClicked.getId}".colored(Color.GREEN)).appendedAll(", "),
+//				"params".colored(paramColor).appendedAll("=(").appendedAll(s"${menuOptionClicked.getParam0}".colored(Color.CYAN)).appendedAll(", ").appendedAll(s"${menuOptionClicked.getParam1}".colored(Color.CYAN)).appendedAll("), "),
+//				"option".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(menuOptionClicked.getMenuOption)}".colored(Color.MAGENTA)).appendedAll(", "),
+//				"target".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(menuOptionClicked.getMenuTarget)}".colored(new Color(100, 100, 200))).appendedAll(")")
+//			)
+
 
 			sendChatMessage("MenuClicked"){
-				messageParts.fold("")(_.appendedAll(_))
+				menuOptionClicked.getMenuEntry.prettyString()
+//				messageParts.fold("")(_.appendedAll(_))
 			}
 		}
 

@@ -11,13 +11,12 @@ include(":ethans")
 include(":common")
 include(":commonScala")
 //"customPrayers"
-//"gearSwapper",
 //"mta"
 //"pvmHelper"
 //"titheFarm"
 //"kroovy"
 
-val x = listOf("alchBlocker", "recolorCG", "pyramidPlunder", "zulrahHelper", "attackTimer", "demonicGorilla", "dt2",  "gauntlet", "giantsFoundry",  "layoutHelper", "mixology", "pvmDebugger", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm2", "superClickHelper")
+val x = listOf("alchBlocker", "gearSwapper", "recolorCG", "pyramidPlunder", "zulrahHelper", "attackTimer", "demonicGorilla", "dt2",  "gauntlet", "giantsFoundry",  "layoutHelper", "mixology", "pvmDebugger", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm2", "superClickHelper")
 x.forEach {xm->
     include(xm)
 }

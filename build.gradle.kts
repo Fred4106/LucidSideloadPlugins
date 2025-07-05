@@ -63,7 +63,7 @@ dependencies {
 //    implementation(projects.customPrayers)
     implementation(projects.demonicGorilla)
     implementation(projects.dt2)
-//    implementation(projects.gearSwapper)
+    implementation(projects.gearSwapper)
     implementation(projects.gauntlet)
     implementation(projects.giantsFoundry)
 //    implementation(projects.kroovy)

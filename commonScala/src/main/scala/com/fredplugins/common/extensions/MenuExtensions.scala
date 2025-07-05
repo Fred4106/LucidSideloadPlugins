@@ -6,8 +6,10 @@ import net.runelite.api.coords.WorldPoint
 import net.runelite.api.*
 import net.runelite.client.util.Text
 
+import java.awt.Color
 import scala.util.Try
 import scala.util.chaining.*
+
 object MenuExtensions {
 	private val tileObjectActions: List[MenuAction] = List(GAME_OBJECT_FIRST_OPTION, GAME_OBJECT_SECOND_OPTION, GAME_OBJECT_THIRD_OPTION, GAME_OBJECT_FOURTH_OPTION, GAME_OBJECT_FIFTH_OPTION, EXAMINE_OBJECT, WIDGET_TARGET_ON_GAME_OBJECT)
 	private val npcActions: List[MenuAction] = List(NPC_FIRST_OPTION, NPC_SECOND_OPTION, NPC_THIRD_OPTION, NPC_FOURTH_OPTION, NPC_FIFTH_OPTION, EXAMINE_NPC)
@@ -70,6 +72,19 @@ object MenuExtensions {
 				f.setAccessible(false)
 				Try(classOf[Menu].cast(toRet)).toOption
 			}).orNull
+		}
+		
+		def prettyString(): String = {
+			val paramColor   = new Color(0xC06A09)
+			import TextExtensions.colored
+			val messageParts = Seq(
+				e.getType.name().colored(Color.blue).appendedAll("("),
+				"id".colored(paramColor).appendedAll("=").appendedAll(s"${e.getIdentifier}".colored(Color.GREEN)).appendedAll(", "),
+				"params".colored(paramColor).appendedAll("=(").appendedAll(s"${e.getParam0}".colored(Color.CYAN)).appendedAll(", ").appendedAll(s"${e.getParam1}".colored(Color.CYAN)).appendedAll("), "),
+				"option".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(e.getOption)}".colored(Color.MAGENTA)).appendedAll(", "),
+				"target".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(e.getTarget)}".colored(new Color(100, 100, 200))).appendedAll(")")
+			)
+			messageParts.fold("")(_.appendedAll(_))
 		}
 	}
 }
