@@ -42,7 +42,7 @@ import scala.compiletime.uninitialized
 object CookingHelper {
 	val rawFishIds: Seq[Int] = List(ItemID.RAW_MONKFISH, ItemID.RAW_SHARK, ItemID.TBWT_RAW_KARAMBWAN, ItemID.HUNTING_ANTELOPESUN_MEAT)
 	val cookedFishIds: Seq[Int] = List(ItemID.MONKFISH, ItemID.SHARK, ItemID.TBWT_COOKED_KARAMBWAN, ItemID.ANTELOPESUN_COOKED)
-	val stoveObjIds: Seq[Int] = List(ObjectID.DS2_GUILD_COOKING_RANGE, ObjectID.HOS_COOKING_RANGE, ObjectID.HOS_COOKING_RANGE_02)
+	val stoveObjIds: Seq[Int] = List(ObjectID.DS2_GUILD_COOKING_RANGE, ObjectID.IZNOT_CLAY_RANGE)
 //	val allFishIds: Seq[Int] = Seq(rawFishIds,cookedFishIds).flatten
 }
 class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: ClientThread) {
