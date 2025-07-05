@@ -101,7 +101,7 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 				val oldCallback = me.onClick()
 				me.setOption(oldOptionRecolored).onClick(event => {
 					plugin.sendChatMessage("Cooking Helper")(event.prettyString())
-					didPickup = false
+//					didPickup = false
 					oldCallback.accept(event)
 				})
 			} else {
