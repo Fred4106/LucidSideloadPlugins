@@ -256,6 +256,11 @@ class SuperClickerPlugin() extends Plugin {
 	def birdhouseItem(): WidgetItem = {
 		if (birdhouseItem_c == null) {
 			birdhouseItem_c = search(BIRDHOUSE_REDWOOD, BIRDHOUSE_MAGIC, BIRDHOUSE_YEW, BIRDHOUSE_MAHOGANY, BIRDHOUSE_MAPLE, BIRDHOUSE_TEAK, BIRDHOUSE_WILLOW, BIRDHOUSE_OAK, BIRDHOUSE_NORMAL).orNull
+			if (birdhouseItem_c != null) {
+				log.debug(
+					"Found birdhouse {}", Option(birdhouseItem_c).map(w => s"${w.getId} @ ${w.getWidget.getIndex}")
+				)
+			}
 		}
 		birdhouseItem_c
 	}
@@ -263,6 +268,11 @@ class SuperClickerPlugin() extends Plugin {
 	def birdhouseSeed(): WidgetItem = {
 		if (birdhouseSeed_c == null) {
 			birdhouseSeed_c = search(BARLEY_SEED, JUTE_SEED, HAMMERSTONE_HOP_SEED, ASGARNIAN_HOP_SEED, YANILLIAN_HOP_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED).orNull
+			if(birdhouseSeed_c != null) {
+				log.debug(
+					"Found seeds {}", Option(birdhouseSeed_c).map(w => s"${w.getId} @ ${w.getWidget.getIndex}")
+				)
+			}
 		}
 		birdhouseSeed_c
 	}
@@ -298,10 +308,6 @@ class SuperClickerPlugin() extends Plugin {
 			case (_, point) => None
 		}
 
-		log.debug(
-			"Found seeds {} and birdhouses {}", Option(birdhouseSeed()).map(w => s"${w.getId} @ ${w.getWidget.getIndex}"),
-			Option(birdhouseItem()).map(w => s"${w.getId} @ ${w.getWidget.getIndex}")
-		)
 		val nWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
 		if(cachedWidgetValue != nWidgetValue && config.isDebugSelectedWidget) {
 			sendChatMessage("SelectedWidget"){
@@ -497,7 +503,6 @@ class SuperClickerPlugin() extends Plugin {
 		}).tap(tto => {
 			tto.map(_._2).foreach(processedGameObjects.addOne)
 			val birdSeenLocation = tto.map(_._2).map(_.getLocalLocation.pipe(ll => ll.getSceneX -> ll.getSceneY)).getOrElse((-1, -1))
-			val targetTileObject = tto.map(_._2).get
 
 			tto.collect({
 				case (BIRDHOUSE_BIRD(), to) => {
@@ -525,22 +530,7 @@ class SuperClickerPlugin() extends Plugin {
 								s"building a birdhouse @ ${birdSeenLocation} with item ${birdhouseItem()}"
 							}
 						})
-//					log.debug("Added menu to object {} with impostorId {} @ {}", to, impostorId, to.getLocalLocation.pipe(ll => ll.getSceneX -> ll.getSceneY))
 				}
-//				case (BIRDHOUSE_EMPTY(), to) if(Option(client.getSelectedWidget()).exists(_.getItemId.pipe(BIRDHOUSE_SEED.unapply(_)))) => {
-//					(_: MenuEntry)
-//						.setOption("Use")
-//						.setType(MenuAction.WIDGET_TARGET_ON_GAME_OBJECT)
-//						.setIdentifier(to.getId)
-//						.setParam0(birdSeenLocation._1)
-//						.setParam1(birdSeenLocation._2)
-//						.onClick(e => {
-//							//WIDGET_TARGET(id=0, params=(26, 9764864), option=Use, target=<lt>col=ff9040<gt>Jute seed<lt>/col<gt>)
-//							//[Client] DEBUG c.f.superClickHelper.SuperClickerPlugin - WIDGET_TARGET_ON_GAME_OBJECT(id=30567, params=(48, 49), option=Use, target=<lt>col=ff9040<gt>Jute seed<lt>/col<gt><lt>col=ffffff<gt> -<gt> <lt>col=ffff<gt>Magic birdhouse (empty))
-//							client.addChatMessage(ChatMessageType.FRIENDSCHAT, "Entry Clicked", s"Filling birdhouse @ ${birdSeenLocation} with seeds ${client.getSelectedWidget.getItemId}", s"birdhouses")
-//						})
-////					log.debug("Added menu to object {} with impostorId {} @ {}", to, impostorId, to.getLocalLocation.pipe(ll => ll.getSceneX -> ll.getSceneY))
-//				}
 				case (BIRDHOUSE_EMPTY(), to) if (birdhouseSeed() != null) => {
 					(_: MenuEntry)
 						.setOption("Selecting seeds")
@@ -549,7 +539,7 @@ class SuperClickerPlugin() extends Plugin {
 						.onClick((e) => {
 							val w = birdhouseSeed().getWidget
 							clientThread.invokeLater(() => {
-								InteractionUtils.useWidgetOnTileObject(w, targetTileObject)
+								InteractionUtils.useWidgetOnTileObject(w, to)
 							})
 						})
 				}
@@ -569,11 +559,12 @@ class SuperClickerPlugin() extends Plugin {
 	}
 
 	@Subscribe
-	def onPostGameTick(event: ItemContainerChanged): Unit = {
-		processedGameObjects.clear()
+	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
 		if(event.getItemContainer.getId == InventoryID.INV) {
 			birdhouseSeed_c = null
 			birdhouseItem_c = null
+			birdhouseItem()
+			birdhouseSeed()
 		}
 	}
 

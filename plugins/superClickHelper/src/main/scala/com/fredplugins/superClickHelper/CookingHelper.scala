@@ -7,6 +7,7 @@ import com.fredplugins.common.queries.InventoryItemQuery
 import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.superClickHelper.CookingHelper.cookedFishIds
 import com.fredplugins.superClickHelper.CookingHelper.rawFishIds
+import com.fredplugins.superClickHelper.CookingHelper.stoveObjIds
 import com.lucidplugins.api.item.SlottedItem
 import ethanApiPlugin.collections.Inventory
 import ethanApiPlugin.collections.TileItems
@@ -24,7 +25,7 @@ import net.runelite.api.events.MenuOpened
 import net.runelite.api.events.PostMenuSort
 import net.runelite.api.gameval.InventoryID
 import net.runelite.api.gameval.InterfaceID
-import net.runelite.api.gameval.ItemID
+import net.runelite.api.gameval.{ItemID, ObjectID}
 import net.runelite.api.widgets.Widget
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.eventbus.Subscribe
@@ -39,8 +40,9 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 object CookingHelper {
-	val rawFishIds: Seq[Int] = List(ItemID.RAW_MONKFISH, ItemID.RAW_SHARK)
-	val cookedFishIds: Seq[Int] = List(ItemID.MONKFISH, ItemID.SHARK)
+	val rawFishIds: Seq[Int] = List(ItemID.RAW_MONKFISH, ItemID.RAW_SHARK, ItemID.TBWT_RAW_KARAMBWAN, ItemID.HUNTING_ANTELOPESUN_MEAT)
+	val cookedFishIds: Seq[Int] = List(ItemID.MONKFISH, ItemID.SHARK, ItemID.TBWT_COOKED_KARAMBWAN, ItemID.ANTELOPESUN_COOKED)
+	val stoveObjIds: Seq[Int] = List(ObjectID.DS2_GUILD_COOKING_RANGE, ObjectID.HOS_COOKING_RANGE, ObjectID.HOS_COOKING_RANGE_02)
 //	val allFishIds: Seq[Int] = Seq(rawFishIds,cookedFishIds).flatten
 }
 class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: ClientThread) {
@@ -81,7 +83,7 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 
 	@Subscribe(priority = -20)
 	def onMenuEntryAdded(menuEntryAdded: MenuEntryAdded): Unit = {
-		val entryToModify: Option[MenuEntry] = Option(menuEntryAdded.getMenuEntry).filter(me => me.getTileObjectOpt.exists(_.getId == 31631) && TextUtil.standardize(me.getOption).equalsIgnoreCase("Cook"))
+		val entryToModify: Option[MenuEntry] = Option(menuEntryAdded.getMenuEntry).filter(me => me.getTileObjectOpt.exists(_.getId.pipe(stoveObjIds.contains)) && TextUtil.standardize(me.getOption).equalsIgnoreCase("Cook"))
 		entryToModify.foreach(me => {
 			val parent = me.getParentMenu
 			if (rawFishCached.size - dropFishIndex > 1) {
