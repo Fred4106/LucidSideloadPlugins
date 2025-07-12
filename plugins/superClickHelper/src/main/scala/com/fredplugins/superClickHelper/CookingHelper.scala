@@ -102,9 +102,8 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 				val oldOptionRecolored = me.getOption.pipe(TextUtil.removeTags(_)).colored(Color.ORANGE)
 				val oldCallback = me.onClick()
 				me.setOption(oldOptionRecolored).onClick(event => {
+					if(oldCallback != null) oldCallback.accept(event)
 					plugin.sendChatMessage("Cooking Helper")(event.prettyString())
-//					didPickup = false
-					oldCallback.accept(event)
 				})
 			} else {
 				val groundItemRaw = TileItems.search().filter(t => rawFishIds.contains(t.getTileItem.getId)).nearestToPlayer().toScala

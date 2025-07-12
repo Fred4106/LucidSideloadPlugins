@@ -1,20 +1,17 @@
 package com.fredplugins.superClickHelper
 
 import com.fredplugins.common.InterfaceTab
-import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getTileObjectOpt, getWorldLocationOpt, isNpcAction, isRuneliteAction, isTileObjectAction, prettyString}
+import com.fredplugins.common.extensions.MenuExtensions.*
+import com.fredplugins.common.extensions.TextExtensions.*
 import com.fredplugins.common.queries.InventoryItemQuery
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.spells.WidgetInfo
 import com.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.EthanApiPlugin
-import ethanApiPlugin.collections.Inventory
-import ethanApiPlugin.collections.query.ItemQuery
 import net.runelite.api.ChatMessageType
-import net.runelite.api.EnumComposition
 import net.runelite.api.EnumID
 import net.runelite.api.ItemComposition
-import net.runelite.api.ItemContainer
 import net.runelite.api.ParamID
 import net.runelite.api.ScriptEvent
 import net.runelite.api.ScriptID
@@ -91,25 +88,21 @@ import net.runelite.api.gameval.ItemID.{
 class SuperClickerPlugin() extends Plugin {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
-	@Inject() private val eventBus: EventBus = null
-	@Inject() private val client  : Client   = null
+	@Inject() protected[superClickHelper] val eventBus: EventBus = null
+	@Inject() protected[superClickHelper] val client  : Client   = null
+	@Inject() protected[superClickHelper] val pluginManager: PluginManager   = null
+	@Inject() protected[superClickHelper] val menuManager   : MenuManager    = null
+
+	@Inject() protected[superClickHelper] val clientThread   : ClientThread  = null
+	@Inject() protected[superClickHelper] val overlayManager: OverlayManager = null
+	@Inject() protected[superClickHelper] val configManager        : ConfigManager  = null
+	@Inject() protected[superClickHelper] val config        : SuperClickHelperConfig  = null
+	@Inject() protected[superClickHelper] val overlay       : SuperClickHelperOverlay = null
+
 	given Client = client
+	given EventBus = eventBus
+	//	@Inject() private val panel       : SuperClickHelperPanel = null
 
-	@Inject() private val menuManager   : MenuManager    = null
-	@Inject() private val clientThread   : ClientThread  = null
-	@Inject() private val overlayManager: OverlayManager = null
-	@Inject() private val configManager        : ConfigManager  = null
-	@Inject() private val config        : SuperClickHelperConfig  = null
-	@Inject() private val overlay       : SuperClickHelperOverlay = null
-//	@Inject() private val panel       : SuperClickHelperPanel = null
-
-
-
-	extension (s: Any) {
-		def colored(c: Color): String = s"${ColorUtil.colorTag(c)}${s.toString}${ColorUtil.CLOSING_COLOR_TAG}"
-//		def icon(iconId:Int): String = s"<img=${iconId}>"
-//		def emoji(e: ): String = s"<${}>"
-	}
 
 	def sendChatMessage(name: String)(message: => String): Unit = {
 		client.addChatMessage(ChatMessageType.FRIENDSCHAT, name, s"${ColorUtil.CLOSING_COLOR_TAG}${message}", "SuperClicker", false)
@@ -127,6 +120,12 @@ class SuperClickerPlugin() extends Plugin {
 		configManager.getConfig[SuperClickHelperConfig](classOf[SuperClickHelperConfig])
 	}
 
+	@Provides
+	@Singleton
+	def inventoryMonitorService(): InventoryMonitorService = {
+		new InventoryMonitorService(this)
+	}
+
 	var cachedWidgetValue = Option.empty[Widget]
 
 	def overlays(): Seq[SuperClickHelperOverlay] = List(overlay/*, panel*/)
@@ -134,7 +133,9 @@ class SuperClickerPlugin() extends Plugin {
 
 	var cookingHelper: CookingHelper = null
 
+	@Inject val inventoryService: InventoryMonitorService = null//;//InventoryMonitorService(this)
 	override protected def startUp(): Unit = {
+
 		cookingHelper = new CookingHelper(this, client, clientThread)
 
 		clickedTiles.clear()
@@ -193,7 +194,7 @@ class SuperClickerPlugin() extends Plugin {
 
 	def initializeSpells(spellBookEnum: Int): IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
 		val spellbook = client.getEnum(spellBookEnum)
-		log.info("initializeSpells({}), spellbook.size() = {}", spellBookEnum, spellbook.size)
+//		log.info("initializeSpells({}), spellbook.size() = {}", spellBookEnum, spellbook.size)
 		val spellsList = for{
 			//i
 //			objId = spellbook.getIntValue(i)
@@ -214,10 +215,10 @@ class SuperClickerPlugin() extends Plugin {
 								// from ~magic_spellbook_redraw
 								val subSpellBookId_varbit_book = client.getVarbitValue(VarbitID.SPELLBOOK)
 								val subSpellbookId             = client.getEnum(EnumID.SPELLBOOKS_SUB).getIntValue(subSpellBookId_varbit_book)
-								log.info("VarbitID.SPELLBOOK({}) => subSpellbookId({})", subSpellBookId_varbit_book, subSpellbookId)
+//								log.info("VarbitID.SPELLBOOK({}) => subSpellbookId({})", subSpellBookId_varbit_book, subSpellbookId)
 								val spellBookId_varbit_book_sublist = client.getVarbitValue(VarbitID.SPELLBOOK_SUBLIST)
 								val spellbookId                     = client.getEnum(subSpellbookId).getIntValue(spellBookId_varbit_book_sublist)
-								log.info("VarbitID.SPELLBOOK_SUBLIST({}) => spellbookId({})", spellBookId_varbit_book_sublist, spellbookId)
+//								log.info("VarbitID.SPELLBOOK_SUBLIST({}) => spellbookId({})", spellBookId_varbit_book_sublist, spellbookId)
 								var hidden = isHidden(spellbookId, spellObjId)
 								hidden = !hidden
 								log.debug("Changing {} to hidden: {}", s.getName, hidden)
@@ -283,8 +284,6 @@ class SuperClickerPlugin() extends Plugin {
 			val stack         = client.getIntStack
 			val sz            = client.getIntStackSize
 			val spellBookEnum = stack(sz - 12) // eg 1982, 5285, 1983, 1984, 1985
-
-//			val i = Integer.toHexString(14286921)
 			spellsWidgetTable.filterInPlace(_._1 != spellBookEnum)
 			val toCache = clientThread.runOnClientThread[IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))]](() => initializeSpells(spellBookEnum))
 			spellsWidgetTable.addAll(toCache)
@@ -585,20 +584,7 @@ class SuperClickerPlugin() extends Plugin {
 	@Subscribe
 	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
 		if(config.isDebugMenu) {
-//			val paramColor = new Color(0xC06A09)
-//			val messageParts = Seq(
-//				menuOptionClicked.getMenuAction.name().colored(Color.blue).appendedAll("("),
-//				"id".colored(paramColor).appendedAll("=").appendedAll(s"${menuOptionClicked.getId}".colored(Color.GREEN)).appendedAll(", "),
-//				"params".colored(paramColor).appendedAll("=(").appendedAll(s"${menuOptionClicked.getParam0}".colored(Color.CYAN)).appendedAll(", ").appendedAll(s"${menuOptionClicked.getParam1}".colored(Color.CYAN)).appendedAll("), "),
-//				"option".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(menuOptionClicked.getMenuOption)}".colored(Color.MAGENTA)).appendedAll(", "),
-//				"target".colored(paramColor).appendedAll("=").appendedAll(s"${Text.escapeJagex(menuOptionClicked.getMenuTarget)}".colored(new Color(100, 100, 200))).appendedAll(")")
-//			)
-
-
-			sendChatMessage("MenuClicked"){
-				menuOptionClicked.getMenuEntry.prettyString()
-//				messageParts.fold("")(_.appendedAll(_))
-			}
+			sendChatMessage("MenuClicked")(menuOptionClicked.getMenuEntry.prettyString())
 		}
 
 		val me = menuOptionClicked.getMenuEntry
