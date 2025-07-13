@@ -93,10 +93,10 @@ class SuperClickerPlugin() extends Plugin {
 	@Inject() protected[superClickHelper] val pluginManager: PluginManager   = null
 	@Inject() protected[superClickHelper] val menuManager   : MenuManager    = null
 
-	@Inject() protected[superClickHelper] val clientThread   : ClientThread  = null
-	@Inject() protected[superClickHelper] val overlayManager: OverlayManager = null
-	@Inject() protected[superClickHelper] val configManager        : ConfigManager  = null
-	@Inject() protected[superClickHelper] val config        : SuperClickHelperConfig  = null
+	@Inject() protected[superClickHelper] val clientThread  : ClientThread           = null
+	@Inject() private                     val overlayManager: OverlayManager         = null
+	@Inject() private                     val configManager : ConfigManager          = null
+	@Inject() protected[superClickHelper] val config        : SuperClickHelperConfig = null
 	@Inject() protected[superClickHelper] val overlay       : SuperClickHelperOverlay = null
 
 	given Client = client
@@ -120,22 +120,17 @@ class SuperClickerPlugin() extends Plugin {
 		configManager.getConfig[SuperClickHelperConfig](classOf[SuperClickHelperConfig])
 	}
 
-	@Provides
-	@Singleton
-	def inventoryMonitorService(): InventoryMonitorService = {
-		new InventoryMonitorService(this)
-	}
-
-	var cachedWidgetValue = Option.empty[Widget]
+	private var cachedWidgetValue = Option.empty[Widget]
 
 	def overlays(): Seq[SuperClickHelperOverlay] = List(overlay/*, panel*/)
-	var blockTopLevelSwitch: Boolean = false
+	private var blockTopLevelSwitch: Boolean = false
 
-	var cookingHelper: CookingHelper = null
+	private var cookingHelper: CookingHelper = null
 
-	@Inject val inventoryService: InventoryMonitorService = null//;//InventoryMonitorService(this)
+	private val inventoryService: InventoryMonitorService = new InventoryMonitorService(this)//InventoryMonitorService(this)
+
 	override protected def startUp(): Unit = {
-
+		eventBus.register(inventoryService)
 		cookingHelper = new CookingHelper(this, client, clientThread)
 
 		clickedTiles.clear()
@@ -177,22 +172,22 @@ class SuperClickerPlugin() extends Plugin {
 		"spell_hidden_book_" + spellbook + "_" + spell
 	}
 
-	def isHidden(spellbook: Int, spell: Int): Boolean = {
+	private def isHidden(spellbook: Int, spell: Int): Boolean = {
 		configManager.getConfiguration[Boolean](ConfigGroupName(), getKey(spellbook, spell), classOf[Boolean])
 	}
 
-	def setHidden(spellbook: Int, spell: Int, hidden: Boolean): Unit = {
+	private def setHidden(spellbook: Int, spell: Int, hidden: Boolean): Unit = {
 		(hidden match {
 			case true => configManager.setConfiguration[Boolean](_, _, true)
 			case false => configManager.unsetConfiguration(_, _)
 		})(ConfigGroupName(), getKey(spellbook, spell))
 	}
-	def widgetToNiceString(w: Widget): String ={
-		val idxStr = (if (w.getIndex > -1) s" [${w.getIndex.colored(Color.BLUE)}]" else "")
+	private def widgetToNiceString(w: Widget): String ={
+		val idxStr = if (w.getIndex > -1) s" [${w.getIndex.colored(Color.BLUE)}]" else ""
 		s"${WidgetInfo.TO_GROUP(w.getId).colored(Color.GREEN)}.${WidgetInfo.TO_CHILD(w.getId).colored(Color.GREEN)}${idxStr}"
 	}
 
-	def initializeSpells(spellBookEnum: Int): IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
+	private def initializeSpells(spellBookEnum: Int): IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
 		val spellbook = client.getEnum(spellBookEnum)
 //		log.info("initializeSpells({}), spellbook.size() = {}", spellBookEnum, spellbook.size)
 		val spellsList = for{
@@ -206,7 +201,7 @@ class SuperClickerPlugin() extends Plugin {
 
 		spellsList.map(u => spellBookEnum -> u).tapEach {
 			case (i, ((spellObjId, composition), (component, w))) => {
-				val newOnOpListener = Option(w.getOnOpListener()).pipe(oldListener => {
+				val newOnOpListener = Option(w.getOnOpListener).pipe(oldListener => {
 					new JavaScriptCallback {
 						override def run(e: ScriptEvent): Unit = {
 							if (e.getOp == HIDE_UNHIDE_OP + 1) {
@@ -239,22 +234,22 @@ class SuperClickerPlugin() extends Plugin {
 
 	private def reinitializeSpellbook(): Unit = {
 		val w = client.getWidget(InterfaceID.MagicSpellbook.UNIVERSE)
-		if (w != null && w.getOnLoadListener() != null){
-			client.createScriptEvent(w.getOnLoadListener() *).setSource(w).run()
+		if (w != null && w.getOnLoadListener != null){
+			client.createScriptEvent(w.getOnLoadListener *).setSource(w).run()
 		}
 	}
-	val spellsWidgetTable: mutable.ListBuffer[(Int, ((Int, ItemComposition), (Int, Widget)))] = scala.collection.mutable.ListBuffer.empty[(Int, ((Int, ItemComposition), (Int, Widget)))]
+	private val spellsWidgetTable: mutable.ListBuffer[(Int, ((Int, ItemComposition), (Int, Widget)))] = scala.collection.mutable.ListBuffer.empty[(Int, ((Int, ItemComposition), (Int, Widget)))]
 	val priorityMenuEntries: mutable.ListBuffer[MenuEntry] = scala.collection.mutable.ListBuffer.empty[MenuEntry]
 
 
 	def search(ids: Int*): Option[WidgetItem] = {
 		new InventoryItemQuery().idEquals(ids *).result(client).asScala.toList
-			.sortBy(u => (u.getId.min(65535).max(0) << 8) | (u.getWidget.getIndex.min(255).max(0))).headOption
+			.sortBy(u => (u.getId.min(65535).max(0) << 8) | u.getWidget.getIndex.min(255).max(0)).headOption
 	}
 	private val processedGameObjects: mutable.ListBuffer[TileObject] = mutable.ListBuffer.empty
 	private var birdhouseItem_c: WidgetItem = null
 	private var birdhouseSeed_c: WidgetItem = null
-	def birdhouseItem(): WidgetItem = {
+	private def birdhouseItem(): WidgetItem = {
 		if (birdhouseItem_c == null) {
 			birdhouseItem_c = search(BIRDHOUSE_REDWOOD, BIRDHOUSE_MAGIC, BIRDHOUSE_YEW, BIRDHOUSE_MAHOGANY, BIRDHOUSE_MAPLE, BIRDHOUSE_TEAK, BIRDHOUSE_WILLOW, BIRDHOUSE_OAK, BIRDHOUSE_NORMAL).orNull
 			if (birdhouseItem_c != null) {
@@ -266,7 +261,7 @@ class SuperClickerPlugin() extends Plugin {
 		birdhouseItem_c
 	}
 
-	def birdhouseSeed(): WidgetItem = {
+	private def birdhouseSeed(): WidgetItem = {
 		if (birdhouseSeed_c == null) {
 			birdhouseSeed_c = search(BARLEY_SEED, JUTE_SEED, HAMMERSTONE_HOP_SEED, ASGARNIAN_HOP_SEED, YANILLIAN_HOP_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED).orNull
 			if(birdhouseSeed_c != null) {
@@ -316,7 +311,7 @@ class SuperClickerPlugin() extends Plugin {
 		cachedWidgetValue = nWidgetValue
 	}
 
-	def findSpell(group: Int, id: Int): Option[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
+	private def findSpell(group: Int, id: Int): Option[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
 		spellsWidgetTable.toList.find(e => {
 			val (egroup, eid) = e._2._2._2.getId.pipe(eid => WidgetInfo.TO_GROUP(eid) -> WidgetInfo.TO_CHILD(eid))
 			egroup == group && eid == id
@@ -324,29 +319,29 @@ class SuperClickerPlugin() extends Plugin {
 	}
 
 
-	object OPAL_JEWELRY {
+	private object OPAL_JEWELRY {
 		def unapply(id: Int): Boolean = {
 					List(OPAL_RING, OPAL_NECKLACE, STRUNG_OPAL_AMULET, OPAL_BRACELET).contains(id)
 		}
 	}
-	object JADE_JEWELRY {
+	private object JADE_JEWELRY {
 		def unapply(id: Int): Boolean = {
 			List(JADE_RING, JADE_NECKLACE, STRUNG_JADE_AMULET, JADE_BRACELET).contains(id)
 		}
 	}
 
-	object TOPAZ_JEWELRY {
+	private object TOPAZ_JEWELRY {
 		def unapply(id: Int): Boolean = {
 			List(TOPAZ_RING, TOPAZ_NECKLACE, STRUNG_TOPAZ_AMULET, TOPAZ_BRACELET).contains(id)
 		}
 	}
 
-	object Alchable {
-		inline def bowAlches: List[Int] = List(MAPLE_SHORTBOW, MAPLE_LONGBOW, YEW_SHORTBOW, YEW_LONGBOW, MAGIC_LONGBOW)
-		inline def staffAlches: List[Int] = List(AIR_BATTLESTAFF, FIRE_BATTLESTAFF, EARTH_BATTLESTAFF, WATER_BATTLESTAFF)
-		inline def mithrilAlches: List[Int] =List(MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS, MITHRIL_AXE, MITHRIL_AXE_2H, MITHRIL_BATTLEAXE, MITHRIL_CHAINBODY, MITHRIL_CLAWS, MITHRIL_DAGGER, MITHRIL_DAGGER_P, MITHRIL_DAGGER_P_, MITHRIL_DAGGER_P__, MITHRIL_FULL_HELM, MITHRIL_HALBERD, MITHRIL_KITESHIELD, MITHRIL_LONGSWORD, MITHRIL_MACE, MITHRIL_MED_HELM, MITHRIL_PICKAXE, MITHRIL_PLATEBODY, MITHRIL_PLATELEGS, MITHRIL_PLATESKIRT, MITHRIL_SCIMITAR, MITHRIL_SPEAR, MITHRIL_SPEAR_P, MITHRIL_SPEAR_P_, MITHRIL_SPEAR_P__, MITHRIL_SQ_SHIELD, MITHRIL_SWORD, MITHRIL_THROWNAXE, MITHRIL_WARHAMMER)
-		inline def adamantAlches: List[Int] = List(ADAMANT_2H_SWORD, ADAMANT_ARMOURED_BOOTS, ADAMANT_AXE, ADAMANT_AXE_2H, ADAMANT_BATTLEAXE, ADAMANT_CHAINBODY, ADAMANT_CLAWS, ADAMANT_DAGGER, ADAMANT_DAGGER_P, ADAMANT_DAGGER_P_, ADAMANT_DAGGER_P__, ADAMANT_FULL_HELM, ADAMANT_HALBERD, ADAMANT_KITESHIELD, ADAMANT_LONGSWORD, ADAMANT_MACE, ADAMANT_MED_HELM, ADAMANT_PICKAXE, ADAMANT_PLATEBODY, ADAMANT_PLATELEGS, ADAMANT_PLATESKIRT, ADAMANT_SCIMITAR, ADAMANT_SPEAR, ADAMANT_SPEAR_P, ADAMANT_SPEAR_P_, ADAMANT_SPEAR_P__, ADAMANT_SQ_SHIELD, ADAMANT_SWORD, ADAMNT_THROWNAXE, ADAMNT_WARHAMMER)
-		inline def runeAlches: List[Int] =List(RUNE_2H_SWORD, RUNE_ARMOURED_BOOTS, RUNE_AXE, RUNE_AXE_2H, RUNE_BATTLEAXE, RUNE_CHAINBODY, RUNE_CLAWS, RUNE_DAGGER, RUNE_DAGGER_P, RUNE_DAGGER_P_, RUNE_DAGGER_P__, RUNE_FULL_HELM, RUNE_HALBERD, RUNE_KITESHIELD, RUNE_LONGSWORD, RUNE_MACE, RUNE_MED_HELM, RUNE_PICKAXE, RUNE_PLATEBODY, RUNE_PLATELEGS, RUNE_PLATESKIRT, RUNE_SCIMITAR, RUNE_SPEAR, RUNE_SPEAR_P, RUNE_SPEAR_P_, RUNE_SPEAR_P__, RUNE_SQ_SHIELD, RUNE_SWORD, RUNE_THROWNAXE, RUNE_WARHAMMER)
+	private object Alchable {
+		private inline def bowAlches: List[Int] = List(MAPLE_SHORTBOW, MAPLE_LONGBOW, YEW_SHORTBOW, YEW_LONGBOW, MAGIC_LONGBOW)
+		private inline def staffAlches: List[Int] = List(AIR_BATTLESTAFF, FIRE_BATTLESTAFF, EARTH_BATTLESTAFF, WATER_BATTLESTAFF)
+		private inline def mithrilAlches: List[Int] =List(MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS, MITHRIL_AXE, MITHRIL_AXE_2H, MITHRIL_BATTLEAXE, MITHRIL_CHAINBODY, MITHRIL_CLAWS, MITHRIL_DAGGER, MITHRIL_DAGGER_P, MITHRIL_DAGGER_P_, MITHRIL_DAGGER_P__, MITHRIL_FULL_HELM, MITHRIL_HALBERD, MITHRIL_KITESHIELD, MITHRIL_LONGSWORD, MITHRIL_MACE, MITHRIL_MED_HELM, MITHRIL_PICKAXE, MITHRIL_PLATEBODY, MITHRIL_PLATELEGS, MITHRIL_PLATESKIRT, MITHRIL_SCIMITAR, MITHRIL_SPEAR, MITHRIL_SPEAR_P, MITHRIL_SPEAR_P_, MITHRIL_SPEAR_P__, MITHRIL_SQ_SHIELD, MITHRIL_SWORD, MITHRIL_THROWNAXE, MITHRIL_WARHAMMER)
+		private inline def adamantAlches: List[Int] = List(ADAMANT_2H_SWORD, ADAMANT_ARMOURED_BOOTS, ADAMANT_AXE, ADAMANT_AXE_2H, ADAMANT_BATTLEAXE, ADAMANT_CHAINBODY, ADAMANT_CLAWS, ADAMANT_DAGGER, ADAMANT_DAGGER_P, ADAMANT_DAGGER_P_, ADAMANT_DAGGER_P__, ADAMANT_FULL_HELM, ADAMANT_HALBERD, ADAMANT_KITESHIELD, ADAMANT_LONGSWORD, ADAMANT_MACE, ADAMANT_MED_HELM, ADAMANT_PICKAXE, ADAMANT_PLATEBODY, ADAMANT_PLATELEGS, ADAMANT_PLATESKIRT, ADAMANT_SCIMITAR, ADAMANT_SPEAR, ADAMANT_SPEAR_P, ADAMANT_SPEAR_P_, ADAMANT_SPEAR_P__, ADAMANT_SQ_SHIELD, ADAMANT_SWORD, ADAMNT_THROWNAXE, ADAMNT_WARHAMMER)
+		private inline def runeAlches: List[Int] =List(RUNE_2H_SWORD, RUNE_ARMOURED_BOOTS, RUNE_AXE, RUNE_AXE_2H, RUNE_BATTLEAXE, RUNE_CHAINBODY, RUNE_CLAWS, RUNE_DAGGER, RUNE_DAGGER_P, RUNE_DAGGER_P_, RUNE_DAGGER_P__, RUNE_FULL_HELM, RUNE_HALBERD, RUNE_KITESHIELD, RUNE_LONGSWORD, RUNE_MACE, RUNE_MED_HELM, RUNE_PICKAXE, RUNE_PLATEBODY, RUNE_PLATELEGS, RUNE_PLATESKIRT, RUNE_SCIMITAR, RUNE_SPEAR, RUNE_SPEAR_P, RUNE_SPEAR_P_, RUNE_SPEAR_P__, RUNE_SQ_SHIELD, RUNE_SWORD, RUNE_THROWNAXE, RUNE_WARHAMMER)
 
 		private lazy val listOfAlches: List[Int] = List(bowAlches, staffAlches, mithrilAlches, adamantAlches, runeAlches).flatten
 		private lazy val listOfAlchesNoted: List[Int] = listOfAlches.map(client.getItemDefinition).flatMap(x => Option(x.getLinkedNoteId).filter(_ != -1))
@@ -364,7 +359,7 @@ class SuperClickerPlugin() extends Plugin {
 		}
 	}
 
-	object UNSTRUNG_JEWELRY {
+	private object UNSTRUNG_JEWELRY {
 		def unapply(id: Int): Boolean = {
 			List(
 				UNSTRUNG_GOLD_AMULET,
@@ -406,7 +401,7 @@ class SuperClickerPlugin() extends Plugin {
 						.setParam1(cid)
 						.onClick(e => {
 							blockTopLevelSwitch = true
-						}).tap(m => priorityMenuEntries.addOne(m));
+						}).tap(m => priorityMenuEntries.addOne(m))
 				}
 			}
 		}
@@ -418,7 +413,6 @@ class SuperClickerPlugin() extends Plugin {
 		if (!client.getMenu.getMenuEntries.contains(me)) return
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
 			Option(me.getItemId).collect {
-				//				case ItemID.PAYDIRT =>
 				case ARROW_SHAFT | FEATHER => search(FEATHER).zip(search(ARROW_SHAFT))//(218, 133)
 				case SLAYER_BROAD_ARROWHEAD | HEADLESS_ARROW => search(SLAYER_BROAD_ARROWHEAD).zip(search(HEADLESS_ARROW))
 			}.flatten.map((a, b) => a.getWidget -> b.getWidget).map {
@@ -426,7 +420,7 @@ class SuperClickerPlugin() extends Plugin {
 					.setOption("Make".colored(Color.GREEN))
 					.setType(MenuAction.RUNELITE)
 					.setIdentifier(0)
-					.onClick((e) => {
+					.onClick(e => {
 						clientThread.invokeLater(() => {
 							InteractionUtils.useWidgetOnWidget(a, b)
 						})
@@ -451,18 +445,18 @@ class SuperClickerPlugin() extends Plugin {
 				List(BIRDHOUSE_NORMAL_FULL, BIRDHOUSE_OAK_FULL, BIRDHOUSE_WILLOW_FULL, BIRDHOUSE_TEAK_FULL, BIRDHOUSE_MAPLE_FULL, BIRDHOUSE_MAHOGANY_FULL, BIRDHOUSE_YEW_FULL, BIRDHOUSE_MAGIC_FULL, BIRDHOUSE_REDWOOD_FULL).contains(id)
 		}
 	}
-	object BIRDHOUSE_EMPTY{
+	private object BIRDHOUSE_EMPTY{
 		def unapply(id: Int): Boolean = {
 				List(BIRDHOUSE_NORMAL_BUILT, BIRDHOUSE_OAK_BUILT, BIRDHOUSE_WILLOW_BUILT, BIRDHOUSE_TEAK_BUILT, BIRDHOUSE_MAPLE_BUILT, BIRDHOUSE_MAHOGANY_BUILT, BIRDHOUSE_YEW_BUILT, BIRDHOUSE_MAGIC_BUILT, BIRDHOUSE_REDWOOD_BUILT).contains(id)
 		}
 	}
-	object BIRDHOUSE_BIRD {
+	private object BIRDHOUSE_BIRD {
 		def unapply(id: Int): Boolean = {
 			List(BIRDHOUSE_NORMAL_BIRD, BIRDHOUSE_OAK_BIRD, BIRDHOUSE_WILLOW_BIRD, BIRDHOUSE_TEAK_BIRD, BIRDHOUSE_MAPLE_BIRD, BIRDHOUSE_MAHOGANY_BIRD, BIRDHOUSE_YEW_BIRD, BIRDHOUSE_MAGIC_BIRD, BIRDHOUSE_REDWOOD_BIRD).contains(id)
 		}
 	}
 
-	object BIRDHOUSE_SPOT {
+	private object BIRDHOUSE_SPOT {
 		def unapply(tileObject: TileObject): Option[(Int, TileObject)] = {
 			Option(tileObject).filter(_.getId.pipe(List(BIRDHOUSE_1, BIRDHOUSE_2, BIRDHOUSE_3, BIRDHOUSE_4).contains(_))).flatMap(to => {
 				Option(client.getObjectDefinition(to.getId)).map(d => scala.util.Try(d.getImpostor).getOrElse(d)).map(oc => (oc.getId, to))
@@ -516,7 +510,7 @@ class SuperClickerPlugin() extends Plugin {
 							sendChatMessage("birdhouses"){s"harvesting bird @ ${birdSeenLocation}"}
 						})
 				}
-				case (30552, to) if(birdhouseItem() != null) => {
+				case (30552, to) if birdhouseItem() != null => {
 					//GAME_OBJECT_FIRST_OPTION(id=30567, params=(48, 49), option=Build, target=<lt>col=ffff<gt>Space)
 					(_: MenuEntry)
 						.setOption("Build".colored(Color.GREEN.darker()))
@@ -530,19 +524,19 @@ class SuperClickerPlugin() extends Plugin {
 							}
 						})
 				}
-				case (BIRDHOUSE_EMPTY(), to) if (birdhouseSeed() != null) => {
+				case (BIRDHOUSE_EMPTY(), to) if birdhouseSeed() != null => {
 					(_: MenuEntry)
 						.setOption("Selecting seeds")
 						.setType(MenuAction.RUNELITE)
 						.setIdentifier(0)
-						.onClick((e) => {
+						.onClick(e => {
 							val w = birdhouseSeed().getWidget
 							clientThread.invokeLater(() => {
 								InteractionUtils.useWidgetOnTileObject(w, to)
 							})
 						})
 				}
-			}).foreach(b => b.apply(client.getMenu.createMenuEntry(-1)).tap(priorityMenuEntries.addOne(_)))
+			}).foreach(b => b.apply(client.getMenu.createMenuEntry(-1)).tap(priorityMenuEntries.addOne))
 		})
 //		def birdhouseSeed(query: ItemQuery): List[Widget] = query.withIdFilter {
 //			BIRDHOUSE_SEED.unapply(_)

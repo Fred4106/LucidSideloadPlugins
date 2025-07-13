@@ -10,9 +10,9 @@ object MenuEntryTarget {
 	import com.fredplugins.common.extensions.MenuExtensions._
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
-	case class TileObjectTarget(tileObject: TileObject) extends MenuEntryTarget
-	case class NpcTarget(npc: NPC) extends MenuEntryTarget
-	case class PlayerTarget(player: Player) extends MenuEntryTarget
+	private case class TileObjectTarget(tileObject: TileObject) extends MenuEntryTarget
+	private case class NpcTarget(npc: NPC) extends MenuEntryTarget
+	private case class PlayerTarget(player: Player) extends MenuEntryTarget
 	case class WidgetTargetOn(w: Int) extends MenuEntryTarget
 
 	private def transformPF(using client: Client): PartialFunction[MenuEntry, Option[MenuEntryTarget]] = {
@@ -25,7 +25,7 @@ object MenuEntryTarget {
 	def apply(menuEntry: MenuEntryAdded)(using client: Client): Option[MenuEntryTarget] = {
 		val possibleResult = transformPF.lift.apply(menuEntry.getMenuEntry).flatten
 		if(possibleResult.isEmpty) {
-//			log.debug(s"Cant convert {} to MenuEntryTarget", menuEntry)
+			log.debug(s"Cant convert {} to MenuEntryTarget", menuEntry)
 		}
 		possibleResult
 	}

@@ -78,8 +78,8 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 		updateInventoryCache()
 	}
 
-	var dropFishIndex: Int    = 0
-	var didPickup    :Boolean = false
+	private var dropFishIndex: Int    = 0
+	private var didPickup    :Boolean = false
 
 	@Subscribe(priority = -20)
 	def onMenuEntryAdded(menuEntryAdded: MenuEntryAdded): Unit = {
@@ -97,9 +97,9 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 						dropFishIndex += 1
 						plugin.sendChatMessage("Cooking Helper")(event.prettyString())
 					}
-				}).tap(plugin.priorityMenuEntries.addOne(_))
-			} else if(rawFishCached.size - dropFishIndex == 1 || didPickup==true) {
-				val oldOptionRecolored = me.getOption.pipe(TextUtil.removeTags(_)).colored(Color.ORANGE)
+				}).tap(plugin.priorityMenuEntries.addOne)
+			} else if(rawFishCached.size - dropFishIndex == 1 || didPickup) {
+				val oldOptionRecolored = me.getOption.pipe(TextUtil.removeTags).colored(Color.ORANGE)
 				val oldCallback = me.onClick()
 				me.setOption(oldOptionRecolored).onClick(event => {
 					if(oldCallback != null) oldCallback.accept(event)
@@ -112,7 +112,7 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 						groundItemRaw.get.interact(false)
 						didPickup = true
 						plugin.sendChatMessage("Cooking Helper")(event.prettyString())
-					}).tap(plugin.priorityMenuEntries.addOne(_))
+					}).tap(plugin.priorityMenuEntries.addOne)
 				}
 			}
 		})

@@ -24,17 +24,17 @@ class SuperClickHelperOverlay @Inject()(val client: Client, val plugin: SuperCli
 	setPosition(OverlayPosition.DYNAMIC)
 	setLayer(OverlayLayer.ABOVE_WIDGETS)
 	setPriority(Overlay.PRIORITY_HIGHEST)
-	object Cache {
-		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), config.getFontSize)
-		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), (config.getFontSize * 1.5).toInt)
+	private object Cache {
+		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
 	}
 	@Subscribe
 	def onConfigChanged(e: ConfigChanged): Unit = {
 		if(e.getGroup == SuperClickHelperConfig.GroupName) {
 			e.getKey match {
 				case "fontSize" | "fontBold" => {
-					Cache.cachedFont = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), config.getFontSize)
-					Cache.countdownFont = FontManager.getRunescapeFont.deriveFont((if (config.getFontBold) 1 else 0), (config.getFontSize * 1.5).toInt)
+					Cache.cachedFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+					Cache.countdownFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
 				}
 				case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
 			}

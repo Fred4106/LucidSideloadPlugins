@@ -1,13 +1,10 @@
 package com.fredplugins.superClickHelper;
 
-import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
-
-import java.awt.*;
 
 @ConfigGroup(SuperClickHelperConfig.GroupName)
 public interface SuperClickHelperConfig extends Config
