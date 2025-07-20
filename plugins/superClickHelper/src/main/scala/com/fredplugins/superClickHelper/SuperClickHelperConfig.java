@@ -144,4 +144,17 @@ public interface SuperClickHelperConfig extends Config
 	{
 		return true;
 	}
+
+
+	@ConfigItem(
+		keyName = "debugInventoryMonitorService",
+		name = "Debug Inventory Service",
+		description = "shows debug overlay for the inventory monitor service",
+		position = 5,
+		section = DEBUG_SECTION
+	)
+	default boolean isDebugInventoryMonitorService()
+	{
+		return true;
+	}
 }

@@ -94,8 +94,8 @@ class SuperClickerPlugin() extends Plugin {
 	@Inject() protected[superClickHelper] val menuManager   : MenuManager    = null
 
 	@Inject() protected[superClickHelper] val clientThread  : ClientThread           = null
-	@Inject() private                     val overlayManager: OverlayManager         = null
-	@Inject() private                     val configManager : ConfigManager          = null
+	@Inject() protected[superClickHelper] val overlayManager: OverlayManager         = null
+	@Inject() protected[superClickHelper] val configManager : ConfigManager          = null
 	@Inject() protected[superClickHelper] val config        : SuperClickHelperConfig = null
 	@Inject() protected[superClickHelper] val overlay       : SuperClickHelperOverlay = null
 
@@ -130,7 +130,7 @@ class SuperClickerPlugin() extends Plugin {
 	private val inventoryService: InventoryMonitorService = new InventoryMonitorService(this)//InventoryMonitorService(this)
 
 	override protected def startUp(): Unit = {
-		eventBus.register(inventoryService)
+		inventoryService.init()
 		cookingHelper = new CookingHelper(this, client, clientThread)
 
 		clickedTiles.clear()
