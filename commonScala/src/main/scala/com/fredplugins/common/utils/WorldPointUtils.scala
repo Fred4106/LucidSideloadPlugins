@@ -8,6 +8,10 @@ import scala.util.chaining.*
 object WorldPointUtils {
 	private val log = ShimUtils.getLogger(getClass.getName, "DEBUG")
 
+	def toTemplate(wp: WorldPoint)(using client:Client): WorldPoint = {
+		Option.when[WorldPoint => WorldPoint](client.getTopLevelWorldView.isInstance)(fromInstance(_)).getOrElse(identity[WorldPoint]).apply(wp)
+	}
+
 	def toInstance(worldPoint: WorldPoint)(using client:Client): Seq[WorldPoint] = {
 		inline def range(tx: Int) = (tx until CHUNK_SIZE + tx)
 		inline def isBound(tx: Int, ty: Int, tz: Int): Boolean = range(tx).contains(worldPoint.getX) && range(ty).contains(worldPoint.getY) && worldPoint.getPlane == tz

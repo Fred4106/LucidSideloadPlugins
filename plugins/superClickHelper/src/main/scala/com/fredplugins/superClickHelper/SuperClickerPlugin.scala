@@ -128,9 +128,11 @@ class SuperClickerPlugin() extends Plugin {
 	private var cookingHelper: CookingHelper = null
 
 	private val inventoryService: InventoryMonitorService = new InventoryMonitorService(this)//InventoryMonitorService(this)
+	private val hallowedSepulchreService: HallowedSepulchreHelper = new HallowedSepulchreHelper(this)//InventoryMonitorService(this)
 
 	override protected def startUp(): Unit = {
 		inventoryService.init()
+		hallowedSepulchreService.init()
 		cookingHelper = new CookingHelper(this, client, clientThread)
 
 		clickedTiles.clear()

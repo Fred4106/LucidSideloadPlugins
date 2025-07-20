@@ -1,5 +1,11 @@
 package com.fredplugins.common.extensions
 
+import com.formdev.flatlaf.util.Animator
+import com.fredplugins.common.utils.WorldPointUtils
+import net.runelite.api.Animation
+import net.runelite.api.DynamicObject
+import net.runelite.api.GameObject
+import net.runelite.api.coords.WorldPoint
 import net.runelite.api.{Client, ObjectComposition, TileObject}
 
 import scala.compiletime.uninitialized
@@ -22,6 +28,17 @@ object ObjectExtensions {
 			(sceneX, sceneY)
 		}
 	}
+	extension(e: GameObject)(using client: Client) {
+		def animationOpt: Option[Animation] = {
+			Option(e.getRenderable).collect {
+				case d: DynamicObject => Option(d.getAnimation)
+			}.flatten
+		}
+		def templateLocation: WorldPoint = {
+			WorldPointUtils.toTemplate(e.getWorldLocation)
+		}
+	}
+
 	extension (e: TileObject)(using client: Client) {
 		def wrapped: TileObjectWrapper = TileObjectWrapper(e)
 		def composition: ObjectComposition = client.getObjectDefinition(e.getId)

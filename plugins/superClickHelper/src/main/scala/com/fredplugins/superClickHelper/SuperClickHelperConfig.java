@@ -74,6 +74,26 @@ public interface SuperClickHelperConfig extends Config
 //	default Color getColorEmpty() {
 //		return new Color(93, 56, 45);
 //	}
+
+	@ConfigSection(
+		name = "Hallowed Sepulchre",
+		description = "Hallowed Sepulchre config details",
+		position = 8
+	)
+	String HALLOWED_SEPULCHRE_SECTION = "Hallowed Sepulchre";
+		@ConfigItem(
+		keyName = "hallowedSepulchrePanel",
+		name = "Enable Hallowed Sepulchre Panel",
+		description = "enables debug panel for hallowed sepulchre",
+		position = 0,
+		section = HALLOWED_SEPULCHRE_SECTION
+	)
+	default boolean isHallowedSepulchrePanel()
+	{
+		return true;
+	}
+
+
 	@ConfigSection(
 		name = "Debug",
 		description = "Debug details",

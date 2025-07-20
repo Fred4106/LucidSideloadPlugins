@@ -123,7 +123,8 @@ class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService
 					Option.when(config.isDebugInventoryMonitorService)(overlayManager.add(_)).getOrElse(overlayManager.remove(_))
 						.apply(InventoryMonitorOverlay)
 				}
-2			}
+				case _ => 
+			}
 		}
 	}
 

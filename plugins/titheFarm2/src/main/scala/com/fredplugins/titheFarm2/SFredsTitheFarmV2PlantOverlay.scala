@@ -1,7 +1,7 @@
 package com.fredplugins.titheFarm2
 
 import com.fredplugins.common.{OldOverlayUtil, overlays}
-import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlay, renderTileOverlay, withFont}
+import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlayBak, renderTileOverlay, withFont}
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.titheFarm2.SPlantInfo.{EmptyPlantInfo, NonEmptyPlantInfo}
 import com.fredplugins.titheFarm2.TitheFarmLookup.PlantData
@@ -76,7 +76,7 @@ class SFredsTitheFarmV2PlantOverlay @Inject()(val client: Client, val plugin: Fr
 				case (loc, data@PlantData(cachedInfo: NonEmptyPlantInfo, go, composted, countdown)) => {
 //					log.debug("Trying to render game overlay at loc {} with gameObject {} and data {}", loc, go.getId, data)
 					val c = stateToColor(cachedInfo)
-					renderGameObjectOverlay(go, s"${cachedInfo}", c, data.cachedInfo.age == 2)
+					renderGameObjectOverlayBak(go, s"${cachedInfo}", c, data.cachedInfo.age == 2)
 					if (countdown > 0) {
 						withFont(Cache.countdownFont) {
 							val localLocation = LocalPoint.fromWorld(client, go.getWorldLocation)

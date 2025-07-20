@@ -9,6 +9,7 @@ import net.runelite.client.events.ExternalPluginsChanged
 import net.runelite.client.events.PluginChanged
 import net.runelite.client.plugins.PluginManager
 import net.runelite.client.ui.overlay.OverlayManager
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
@@ -24,7 +25,8 @@ abstract class MonitorService(val plugin: SuperClickerPlugin, level: String = "D
 	protected final def pluginManager: PluginManager = plugin.pluginManager
 	protected final def overlayManager: OverlayManager = plugin.overlayManager
 	protected final def config: SuperClickHelperConfig = plugin.config
-
+	given ModelOutlineRenderer = plugin.getInjector.getInstance(classOf[ModelOutlineRenderer])
+	given Client = client
 	def name: String = this.getClass.getSimpleName
 
 	protected def startService(): Unit

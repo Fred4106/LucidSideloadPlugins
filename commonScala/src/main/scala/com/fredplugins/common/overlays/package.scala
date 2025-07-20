@@ -1,6 +1,10 @@
 package com.fredplugins.common
 
+import com.fredplugins.common.extensions.ObjectExtensions.*
+import net.runelite.api.Actor
+import net.runelite.api.NPC
 import net.runelite.api.Perspective.localToCanvas
+import net.runelite.api.Player
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.api.{Client, GameObject, Perspective, Point}
 import net.runelite.client.ui.overlay.OverlayUtil
@@ -41,14 +45,15 @@ package object overlays {
 			OverlayUtil.renderPolygon(graphics, s, borderColor, ColorUtil.colorWithAlpha(borderColor, fillAlpha), getStroke(2, dashed))
 		}
 	}
-	def renderGameObjectOverlay(gameObject: GameObject, text: String, borderColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
+	def renderGameObjectOverlayBak(gameObject: GameObject, text: String, borderColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
 		modelOutlineRenderer.drawOutline(gameObject, 3, borderColor.darker, 0)
 		Option(gameObject.getConvexHull).foreach(s => {
 			OverlayUtil.renderPolygon(g, s, borderColor.brighter(), ColorUtil.colorWithAlpha(borderColor, 16), getStroke(1, dashed))
 		})
 
 		val localLoc = gameObject.getLocalLocation
-		renderMinimapArea(localLoc, (3, 3), 1, borderColor, 24, dashed)
+
+		renderMinimapArea(localLoc, gameObject.composition.pipe(c => c.getSizeX -> c.getSizeY), 1, borderColor, 24, dashed)
 
 		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
 			case (str, strLoc@(x, y, b)) => {
@@ -59,6 +64,49 @@ package object overlays {
 			}
 		}
 	}
+	def renderGameObjectOverlay(gameObject: GameObject, text: String)(outlineThickness:Int, feather: Int, borderColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
+		modelOutlineRenderer.drawOutline(gameObject, outlineThickness, borderColor.darker, feather)
+		Option(gameObject.getConvexHull).foreach(s => {
+			OverlayUtil.renderPolygon(g, s, borderColor.brighter(), ColorUtil.colorWithAlpha(borderColor, 16), getStroke(1, dashed))
+		})
+
+		val localLoc = gameObject.getLocalLocation
+		renderMinimapArea(localLoc, gameObject.composition.pipe(c => c.getSizeX -> c.getSizeY), 1, borderColor, 24, dashed)
+
+		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
+			case (str, strLoc@(x, y, b)) => {
+				val padding = 5
+				//				val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding * 2)
+				//				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
+				OverlayUtil.renderTextLocation(g, new Point(x, y), str, Color.BLACK)
+			}
+		}
+	}
+
+	def drawActorOutline(actor: Actor, outlineW: Int, borderC: Color, feather: Int)(using modelOutlineRenderer: ModelOutlineRenderer): Unit = actor match {
+		case npc: NPC => modelOutlineRenderer.drawOutline(npc, outlineW, borderC, feather)
+		case player: Player => modelOutlineRenderer.drawOutline(player, outlineW, borderC, feather)
+	}
+	def renderActorOverlay(actor: Actor, text: String)(outlineThickness:Int, feather: Int, borderColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
+		drawActorOutline(actor, outlineThickness, borderColor.darker, feather)
+
+		Option(actor.getConvexHull).foreach(s => {
+			OverlayUtil.renderPolygon(g, s, borderColor.brighter(), ColorUtil.colorWithAlpha(borderColor, 16), getStroke(1, dashed))
+		})
+
+		val localLoc = actor.getLocalLocation
+		renderMinimapArea(localLoc, actor.getWorldArea.pipe(wa => wa.getWidth -> wa.getHeight), 1, borderColor, 24, dashed)
+
+		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
+			case (str, strLoc@(x, y, b)) => {
+				val padding        = 5
+//				val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding * 2)
+//				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
+				OverlayUtil.renderTextLocation(g, new Point(x, y), str, Color.BLACK)
+			}
+		}
+	}
+
 	def renderTileOverlay(worldLocation: WorldPoint, text: String, fillColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client): Unit = {
 		val localPoint = LocalPoint.fromWorld(client, worldLocation)
 //		val poly       = Perspective.getCanvasTilePoly(client, localPoint)
