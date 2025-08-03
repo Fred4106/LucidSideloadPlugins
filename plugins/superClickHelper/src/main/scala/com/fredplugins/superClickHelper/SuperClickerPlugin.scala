@@ -8,6 +8,7 @@ import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import com.lucidplugins.api.spells.WidgetInfo
 import com.lucidplugins.api.utils.InteractionUtils
+import com.lucidplugins.api.utils.InventoryUtils
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.ChatMessageType
 import net.runelite.api.EnumID
@@ -57,26 +58,10 @@ import scala.jdk.OptionConverters.*
 import net.runelite.api.gameval.ItemID.{ASGARNIAN_HOP_SEED, BARLEY_SEED, BIRDHOUSE_MAGIC, BIRDHOUSE_MAHOGANY, BIRDHOUSE_MAPLE, BIRDHOUSE_NORMAL, BIRDHOUSE_OAK, BIRDHOUSE_REDWOOD, BIRDHOUSE_TEAK, BIRDHOUSE_WILLOW, BIRDHOUSE_YEW, HAMMERSTONE_HOP_SEED, JUTE_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED, YANILLIAN_HOP_SEED}
 import net.runelite.api.gameval.ObjectID.{BIRDHOUSE_1, BIRDHOUSE_2, BIRDHOUSE_3, BIRDHOUSE_4, BIRDHOUSE_MAGIC_BIRD, BIRDHOUSE_MAGIC_BUILT, BIRDHOUSE_MAGIC_FULL, BIRDHOUSE_MAHOGANY_BIRD, BIRDHOUSE_MAHOGANY_BUILT, BIRDHOUSE_MAHOGANY_FULL, BIRDHOUSE_MAPLE_BIRD, BIRDHOUSE_MAPLE_BUILT, BIRDHOUSE_MAPLE_FULL, BIRDHOUSE_NORMAL_BIRD, BIRDHOUSE_NORMAL_BUILT, BIRDHOUSE_NORMAL_FULL, BIRDHOUSE_NOT_BUILT, BIRDHOUSE_OAK_BIRD, BIRDHOUSE_OAK_BUILT, BIRDHOUSE_OAK_FULL, BIRDHOUSE_REDWOOD_BIRD, BIRDHOUSE_REDWOOD_BUILT, BIRDHOUSE_REDWOOD_FULL, BIRDHOUSE_TEAK_BIRD, BIRDHOUSE_TEAK_BUILT, BIRDHOUSE_TEAK_FULL, BIRDHOUSE_WILLOW_BIRD, BIRDHOUSE_WILLOW_BUILT, BIRDHOUSE_WILLOW_FULL, BIRDHOUSE_YEW_BIRD, BIRDHOUSE_YEW_BUILT, BIRDHOUSE_YEW_FULL}
 import net.runelite.api.gameval.ItemID.{RUNE_2H_SWORD, RUNE_ARMOURED_BOOTS, RUNE_AXE, RUNE_AXE_2H, RUNE_BATTLEAXE, RUNE_CHAINBODY, RUNE_CLAWS, RUNE_DAGGER, RUNE_DAGGER_P, RUNE_DAGGER_P_, RUNE_DAGGER_P__, RUNE_FULL_HELM, RUNE_HALBERD, RUNE_KITESHIELD, RUNE_LONGSWORD, RUNE_MACE, RUNE_MED_HELM, RUNE_PICKAXE, RUNE_PLATEBODY, RUNE_PLATELEGS, RUNE_PLATESKIRT, RUNE_SCIMITAR, RUNE_SPEAR, RUNE_SPEAR_P, RUNE_SPEAR_P_, RUNE_SPEAR_P__, RUNE_SQ_SHIELD, RUNE_SWORD, RUNE_THROWNAXE, RUNE_WARHAMMER}
-
 import net.runelite.api.gameval.ItemID.{ADAMANT_2H_SWORD, ADAMANT_ARMOURED_BOOTS, ADAMANT_AXE, ADAMANT_AXE_2H, ADAMANT_BATTLEAXE, ADAMANT_CHAINBODY, ADAMANT_CLAWS, ADAMANT_DAGGER, ADAMANT_DAGGER_P, ADAMANT_DAGGER_P_, ADAMANT_DAGGER_P__, ADAMANT_FULL_HELM, ADAMANT_HALBERD, ADAMANT_KITESHIELD, ADAMANT_LONGSWORD, ADAMANT_MACE, ADAMANT_MED_HELM, ADAMANT_PICKAXE, ADAMANT_PLATEBODY, ADAMANT_PLATELEGS, ADAMANT_PLATESKIRT, ADAMANT_SCIMITAR, ADAMANT_SPEAR, ADAMANT_SPEAR_P, ADAMANT_SPEAR_P_, ADAMANT_SPEAR_P__, ADAMANT_SQ_SHIELD, ADAMANT_SWORD, ADAMNT_THROWNAXE, ADAMNT_WARHAMMER}
-
 import net.runelite.api.gameval.ItemID.{MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS, MITHRIL_AXE, MITHRIL_AXE_2H, MITHRIL_BATTLEAXE, MITHRIL_CHAINBODY, MITHRIL_CLAWS, MITHRIL_DAGGER, MITHRIL_DAGGER_P, MITHRIL_DAGGER_P_, MITHRIL_DAGGER_P__, MITHRIL_FULL_HELM, MITHRIL_HALBERD, MITHRIL_KITESHIELD, MITHRIL_LONGSWORD, MITHRIL_MACE, MITHRIL_MED_HELM, MITHRIL_PICKAXE, MITHRIL_PLATEBODY, MITHRIL_PLATELEGS, MITHRIL_PLATESKIRT, MITHRIL_SCIMITAR, MITHRIL_SPEAR, MITHRIL_SPEAR_P, MITHRIL_SPEAR_P_, MITHRIL_SPEAR_P__, MITHRIL_SQ_SHIELD, MITHRIL_SWORD, MITHRIL_THROWNAXE, MITHRIL_WARHAMMER}
-import net.runelite.api.gameval.ItemID.{
-	MAPLE_SHORTBOW, MAPLE_LONGBOW, YEW_SHORTBOW, YEW_LONGBOW, MAGIC_LONGBOW,
-	AIR_BATTLESTAFF, FIRE_BATTLESTAFF, EARTH_BATTLESTAFF, WATER_BATTLESTAFF
-}
-import net.runelite.api.gameval.ItemID.{
-	ARROW_SHAFT, FEATHER,
-	HEADLESS_ARROW, SLAYER_BROAD_ARROWHEAD,
-	MAHOGANY_LOGS, TEAK_LOGS,
-	UNSTRUNG_OPAL_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_TOPAZ_AMULET,
-	UNSTRUNG_GOLD_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_EMERALD_AMULET,
-	UNSTRUNG_RUBY_AMULET, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET,
-	UNSTRUNG_ONYX_AMULET, UNSTRUNG_ZENYTE_AMULET,
-	OPAL_RING, OPAL_NECKLACE, STRUNG_OPAL_AMULET, OPAL_BRACELET,
-	JADE_RING, JADE_NECKLACE, STRUNG_JADE_AMULET, JADE_BRACELET,
-	TOPAZ_RING, TOPAZ_NECKLACE, STRUNG_TOPAZ_AMULET, TOPAZ_BRACELET
-}
+import net.runelite.api.gameval.ItemID.{AIR_BATTLESTAFF, EARTH_BATTLESTAFF, FIRE_BATTLESTAFF, MAGIC_LONGBOW, MAPLE_LONGBOW, MAPLE_SHORTBOW, WATER_BATTLESTAFF, YEW_LONGBOW, YEW_SHORTBOW}
+import net.runelite.api.gameval.ItemID.{ARROW_SHAFT, FEATHER, HEADLESS_ARROW, JADE_BRACELET, JADE_NECKLACE, JADE_RING, MAHOGANY_LOGS, OPAL_BRACELET, OPAL_NECKLACE, OPAL_RING, SLAYER_BROAD_ARROWHEAD, STRUNG_JADE_AMULET, STRUNG_OPAL_AMULET, STRUNG_TOPAZ_AMULET, TEAK_LOGS, TOPAZ_BRACELET, TOPAZ_NECKLACE, TOPAZ_RING, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET, UNSTRUNG_EMERALD_AMULET, UNSTRUNG_GOLD_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_ONYX_AMULET, UNSTRUNG_OPAL_AMULET, UNSTRUNG_RUBY_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_TOPAZ_AMULET, UNSTRUNG_ZENYTE_AMULET}
 
 @PluginDescriptor(
 	name = "<html><font color=\"#32C8CD\">Freds</font> Super Clicker</html>",
@@ -123,7 +108,7 @@ class SuperClickerPlugin() extends Plugin {
 	private var cachedWidgetValue = Option.empty[Widget]
 
 	def overlays(): Seq[SuperClickHelperOverlay] = List(overlay/*, panel*/)
-	private var blockTopLevelSwitch: Boolean = false
+	private var blockTopLevelSwitch: Int = -1
 
 	private var cookingHelper: CookingHelper = null
 
@@ -137,7 +122,7 @@ class SuperClickerPlugin() extends Plugin {
 
 		clickedTiles.clear()
 		clickedNpcs.clear()
-		blockTopLevelSwitch = false
+		blockTopLevelSwitch = -1
 		spellsWidgetTable.clear()
 		priorityMenuEntries.clear()
 		clientThread.invokeLater(() => this.reinitializeSpellbook())
@@ -155,7 +140,7 @@ class SuperClickerPlugin() extends Plugin {
 			eventBus.unregister(o)
 		})
 
-		blockTopLevelSwitch = false
+		blockTopLevelSwitch = -1
 		spellsWidgetTable.clear()
 		priorityMenuEntries.clear()
 		clientThread.invokeLater(() => this.reinitializeSpellbook())
@@ -284,11 +269,10 @@ class SuperClickerPlugin() extends Plugin {
 			spellsWidgetTable.filterInPlace(_._1 != spellBookEnum)
 			val toCache = clientThread.runOnClientThread[IndexedSeq[(Int, ((Int, ItemComposition), (Int, Widget)))]](() => initializeSpells(spellBookEnum))
 			spellsWidgetTable.addAll(toCache)
-		} else if (event.getScriptId == 915 && blockTopLevelSwitch) {
+		} else if (event.getScriptId == 915 && blockTopLevelSwitch > -1) {
 			val targetTabOpt = InterfaceTab.values().find(t => t.getId == Int.unbox(event.getScriptEvent.getArguments.apply(1)))
 			if (targetTabOpt.contains(InterfaceTab.SPELLBOOK)) {
 				event.getScriptEvent.getArguments.update(1, Int.box(InterfaceTab.INVENTORY.getId))
-				blockTopLevelSwitch = false
 			}
 		}
 	}
@@ -311,6 +295,7 @@ class SuperClickerPlugin() extends Plugin {
 			}
 		}
 		cachedWidgetValue = nWidgetValue
+		blockTopLevelSwitch = blockTopLevelSwitch - 1
 	}
 
 	private def findSpell(group: Int, id: Int): Option[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
@@ -383,8 +368,9 @@ class SuperClickerPlugin() extends Plugin {
 	@Subscribe
 	def onMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
 		val me = menuOptionAdded.getMenuEntry
-		if(!client.getMenu.getMenuEntries.contains(me) || blockTopLevelSwitch) return
+		if(!client.getMenu.getMenuEntries.contains(me) || blockTopLevelSwitch > -1) return
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
+			val inventoryItemWidget = me.getWidget
 			Option(me.getItemId).collect{
 //				case ItemID.PAYDIRT =>
 				case MAHOGANY_LOGS | TEAK_LOGS => findSpell(218, 133)
@@ -394,16 +380,25 @@ class SuperClickerPlugin() extends Plugin {
 				case UNSTRUNG_JEWELRY() => findSpell(218, 126)
 				case Alchable() => findSpell(218, 44)
 			}.flatten.map {
-				case (_, (_, (cid, w))) => {
+//				case (a, (b, (c, d))) => a
+				case (unkown1, (unknown2, (cid, w))) => {
+//					val inventoryItemWidget = findItem
 					client.getMenu.createMenuEntry(-1)
 						.setOption("Cast".colored(Color.BLUE))
-						.setType(MenuAction.WIDGET_TARGET)
+//						.setType(MenuAction.WIDGET_TARGET)
+						.setType(MenuAction.RUNELITE)
 						.setIdentifier(0)
-						.setParam0(-1)
-						.setParam1(cid)
+//						.setParam0(-1)
+//						.setParam1(cid)
+//					.onClick(e => {
 						.onClick(e => {
-							blockTopLevelSwitch = true
-						}).tap(m => priorityMenuEntries.addOne(m))
+							blockTopLevelSwitch = 3
+							clientThread.invokeLater(() => {
+								InteractionUtils.useWidgetOnWidget(w, inventoryItemWidget)
+							})
+						}).tap(m => priorityMenuEntries.addOne(m));
+//							blockTopLevelSwitch = 3
+//						}).tap(m => priorityMenuEntries.addOne(m))
 				}
 			}
 		}
@@ -415,7 +410,7 @@ class SuperClickerPlugin() extends Plugin {
 		if (!client.getMenu.getMenuEntries.contains(me)) return
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
 			Option(me.getItemId).collect {
-				case ARROW_SHAFT | FEATHER => search(FEATHER).zip(search(ARROW_SHAFT))//(218, 133)
+				case ARROW_SHAFT | FEATHER                   => search(FEATHER).zip(search(ARROW_SHAFT))//(218, 133)
 				case SLAYER_BROAD_ARROWHEAD | HEADLESS_ARROW => search(SLAYER_BROAD_ARROWHEAD).zip(search(HEADLESS_ARROW))
 			}.flatten.map((a, b) => a.getWidget -> b.getWidget).map {
 				case (a, b) => client.getMenu.createMenuEntry(-1)
