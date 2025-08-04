@@ -30,7 +30,7 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 //	setLayer(OverlayLayer.UNDER_WIDGETS)
 //	setPriority(Overlay.PRIORITY_HIGHEST)
 	object Cache {
-		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, 	config.getFontSize)
 		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
 	}
 
@@ -50,63 +50,68 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 		given Graphics2D = graphics
 //		given ModelOutlineRenderer = modelOutlineRenderer
 		given Client = client
-//		withFont(Cache.cachedFont) {
-////			if(config.isDebugClicks) {
-////				val (npcs, tiles)  = plugin.getClickedState
-////
-////				tiles.foreach {
-////					case (i, point) => {
+		withFont(Cache.cachedFont) {
+//			if(config.isDebugClicks) {
+//				val (npcs, tiles)  = plugin.getClickedState
+//
+//				tiles.foreach {
+//					case (i, point) => {
+//						val x   = point.getX - client.getTopLevelWorldView.getBaseX
+//						val y   = point.getY - client.getTopLevelWorldView.getBaseY
+//						val txt = s"${i.toString.padTo(4, ' ')}($x,$y)"
+//						renderTileOverlay(point, txt, ColorUtil.colorWithAlpha(Color.BLUE, 128 - ((112d / 100) * i).toInt), true)
+//					}
+//				}
+//
+//				npcs.foreach {
+//					case (i, n) => {
 ////						val x   = point.getX - client.getTopLevelWorldView.getBaseX
 ////						val y   = point.getY - client.getTopLevelWorldView.getBaseY
-////						val txt = s"${i.toString.padTo(4, ' ')}($x,$y)"
-////						renderTileOverlay(point, txt, ColorUtil.colorWithAlpha(Color.BLUE, 128 - ((112d / 100) * i).toInt), true)
-////					}
-////				}
-////
-////				npcs.foreach {
-////					case (i, n) => {
-//////						val x   = point.getX - client.getTopLevelWorldView.getBaseX
-//////						val y   = point.getY - client.getTopLevelWorldView.getBaseY
-////						val txt = s"${i.toString.padTo(4, ' ')}(${n.getLocalLocation.getSceneX},${n.getLocalLocation.getSceneY}) = ${n.getName}"
-////						OverlayUtil.renderActorOverlay(summon[Graphics2D], n, txt, ColorUtil.colorWithAlpha(Color.BLUE, 128 - ((112d / 100) * i).toInt))
-////					}
-////				}
-////			}
-//		}
-		def elems: collection.mutable.Buffer[LayoutableRenderableEntity]/*java.util.List[LayoutableRenderableEntity]*/ = panelComponent.getChildren.	asScala
+//						val txt = s"${i.toString.padTo(4, ' ')}(${n.getLocalLocation.getSceneX},${n.getLocalLocation.getSceneY}) = ${n.getName}"
+//						OverlayUtil.renderActorOverlay(summon[Graphics2D], n, txt, ColorUtil.colorWithAlpha(Color.BLUE, 128 - ((112d / 100) * i).toInt))
+//					}
+//				}
+//			}
+		}
+//		def elems: collection.mutable.ArrayBuffer[LayoutableRenderableEntity]/*java.util.List[LayoutableRenderableEntity]*/ = panelComponent.getChildren.asScala
+
 //		if(PyramidPlunderHelper.isInPyramidPlunder) {
-			if (config.showChestsLooted) elems.addOne(LineComponent
-																							 .builder
-																							 .left("Total Chests Looted:")
-																							 .right(String.format("%d", plugin.chestLooted))
-																							 .build)
+//			if (config.showChestsLooted) elems.addOne(LineComponent
+//																							 .builder
+//																							 .left("Total Chests Looted:")
+//																							 .right(String.format("%d", plugin.chestLooted))
+//																							 .build)
+//
+//			if (config.showSarcoLooted) elems.addOne(LineComponent
+//																							.builder
+//																							.left("Total Sarcophagi Looted:")
+//																							.right(String.format("%d", plugin.sarcoLooted))
+//																							.build)
+//
+//			if (config.showChance) elems.addOne(LineComponent
+//																				 .builder
+//																				 .left("% Chance of at least one Sceptre:")
+//																				 .right(String.format("%f", plugin.dryChance * 100))
+//																				 .build)
+//			elems.addOne(LineComponent
+//										 .builder
+//										 .left("UsingChestOrSarco = ")
+//										 .right(s"${plugin.usingChestOrSarco}")
+//										 .build)
+//			elems.addOne(LineComponent
+//										 .builder
+//										 .left("UsingSpearTrap = ")
+//										 .right(s"${plugin.usingSpearTrap}")
+//										 .build)
 
-			if (config.showSarcoLooted) elems.addOne(LineComponent
-																							.builder
-																							.left("Total Sarcophagi Looted:")
-																							.right(String.format("%d", plugin.sarcoLooted))
-																							.build)
-
-			if (config.showChance) elems.addOne(LineComponent
-																				 .builder
-																				 .left("% Chance of at least one Sceptre:")
-																				 .right(String.format("%f", plugin.dryChance * 100))
-																				 .build)
-			elems.addOne(LineComponent
-										 .builder
-										 .left("UsingChestOrSarco = ")
-										 .right(s"${plugin.usingChestOrSarco}")
-										 .build)
-			elems.addOne(LineComponent
-										 .builder
-										 .left("UsingSpearTrap = ")
-										 .right(s"${plugin.usingSpearTrap}")
-										 .build)
-			elems.addOne(LineComponent
-										 .builder
-										 .left("SwarmSpawned = ")
-										 .right(s"${plugin.swarmSpawned}")
-										 .build)
+		plugin.currentRoom.collect(room => {
+			LineComponent
+				.builder
+				.left(s"Room ${room}")
+				.right(s"${room.percentageOds}")
+				.build
+		}).foreach(panelComponent.getChildren.add(_))
+//		elems.addOne()
 		plugin.stateLines.map{
 			case (str, (vid, vvalue)) => {
 				LineComponent
@@ -124,8 +129,8 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 						else new Color(255, 150, 150, 255))
 					.build
 			}
-		}.foreach{
-			case x => elems.addOne(x)
+		}.foreach {
+			case x => panelComponent.getChildren.add(x)
 		}
 			//			if (config.showPetChance) elems.addOne(LineComponent
 //																						.builder
