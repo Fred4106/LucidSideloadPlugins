@@ -90,7 +90,7 @@ class KetlaTheUnworthy @Inject()(val client: Client, val eventBus: EventBus) {
 		} else if(State.target == null && event.getNpc.getId == NpcID.KETLA_THE_UNWORTHY) {
 			State.target = new NpcWrapper(event.getNpc)
 			State.projectiles = client.getProjectiles.asScala.toList
-			State.minions = ethanApiPlugin.collections.NPCs.search().withId(12330).results.asScala.toList.map(new NpcWrapper(_))
+			State.minions = ethanApiPlugin.collections.NPCs.search().withId(12330).result.asScala.toList.map(new NpcWrapper(_))
 //			State.clouds = GameObjectUtils.search().filter(go => CloudType.find(go.getId).isDefined).result().asScala.toList.map(go => new ForsakenCloud(go))
 //			State.addedClouds.clear()
 //			State.removedClouds.clear()

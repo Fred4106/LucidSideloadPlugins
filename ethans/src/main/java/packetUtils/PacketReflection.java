@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PacketReflection {
-	public static Client getClient() {
+	public static Client getClient(){
 		return RuneLite.getInjector().getInstance(Client.class);
 	}
 
-	public static Class loadClassFromClientClassLoader(String name) {
+	public static Class loadClassFromClientClassLoader(String name){
 		try {
 			ClassLoader clientLoader = getClient().getClass().getClassLoader();
 			return clientLoader.loadClass(name);
@@ -27,11 +27,11 @@ public class PacketReflection {
 		return null;
 	}
 
-	public static Class getClassWithGetPacketBufferNode() {
+	public static Class getClassWithGetPacketBufferNode(){
 		return loadClassFromClientClassLoader(ObfuscatedNames.classContainingGetPacketBufferNodeName);
 	}
 
-	public static Method getGetPacketBufferNode() {
+	public static Method getGetPacketBufferNode(){
 		try {
 			return Arrays.stream(getClassWithGetPacketBufferNode().getDeclaredMethods()).filter(m -> m.getReturnType().equals(getPacketBufferNodeClass())).collect(Collectors.toList()).get(0);
 		} catch (Exception e) {
@@ -40,7 +40,7 @@ public class PacketReflection {
 		return null;
 	}
 
-	public static Class getClientPacketClass() {
+	public static Class getClientPacketClass(){
 		return loadClassFromClientClassLoader(ObfuscatedNames.clientPacketClassName);
 	}
 
@@ -53,7 +53,7 @@ public class PacketReflection {
 		return null;
 	}
 
-	public static Class getPacketWriterClass() {
+	public static Class getPacketWriterClass(){
 		try {
 			Field packetWriterField = getPacketWriterField();
 			packetWriterField.setAccessible(true);
@@ -66,7 +66,7 @@ public class PacketReflection {
 		return null;
 	}
 
-	public static Object getIsaacObject() {
+	public static Object getIsaacObject(){
 		try {
 			Field isaacField = getPacketWriterClass().getDeclaredField(ObfuscatedNames.isaacCipherFieldName);
 			isaacField.setAccessible(true);
@@ -79,15 +79,14 @@ public class PacketReflection {
 		return null;
 	}
 
-	public static Class getIsaacClass() {
+	public static Class getIsaacClass(){
 		return getIsaacObject().getClass();
 	}
 
-	public static Class getPacketBufferNodeClass() {
+	public static Class getPacketBufferNodeClass(){
 		return loadClassFromClientClassLoader(ObfuscatedNames.packetBufferNodeClassName);
 	}
-
-	public static Object getPacketWriteObject() {
+	public static Object getPacketWriteObject(){
 		Field packetWriterField = getPacketWriterField();
 		packetWriterField.setAccessible(true);
 		try {
@@ -176,7 +175,7 @@ public class PacketReflection {
 				"ctrlDown");
 		}
 		if (def.type == PacketType.EVENT_MOUSE_CLICK) {
-			params = List.of("mouseInfo", "mouseX", "mouseY");
+			params = List.of("mouseInfo", "mouseX", "mouseY", "0");
 		}
 		if (def.type == PacketType.MOVE_GAMECLICK) {
 			params = List.of("worldPointX", "worldPointY", "ctrlDown", "5");

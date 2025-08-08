@@ -7,29 +7,29 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
-import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.callback.ClientThread;
 
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@Singleton
 public class ShopInventory {
-    static Client client = RuneLite.getInjector().getInstance(Client.class);
-    static List<Widget> shopInventoryItems = new ArrayList<>();
-    static int lastUpdateTick = 0;
+	static Client client = RuneLite.getInjector().getInstance(Client.class);
+	static ClientThread clientThread = RuneLite.getInjector().getInstance(ClientThread.class);
+	static List<Widget> shopInventoryItems = new ArrayList<>();
+	static int lastUpdateTick = 0;
 
-    public static ItemQuery search() {
-        if (lastUpdateTick < client.getTickCount()) {
-            shopInventoryItems =
-                    Arrays.stream(client.getWidget(WidgetInfo.SHOP_INVENTORY_ITEMS_CONTAINER).getDynamicChildren()).filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
-            lastUpdateTick = client.getTickCount();
-        }
-        return new ItemQuery(shopInventoryItems.stream().filter(Objects::nonNull).collect(Collectors.toList()));
-    }
+	public static ItemQuery search() {
+		if (lastUpdateTick < client.getTickCount()) {
+			shopInventoryItems = clientThread.runOnClientThread(() -> {
+				return Arrays.stream(client.getWidget(WidgetInfo.SHOP_INVENTORY_ITEMS_CONTAINER).getDynamicChildren()).filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
+			});
+			lastUpdateTick = client.getTickCount();
+		}
+		return new ItemQuery(shopInventoryItems.stream().filter(Objects::nonNull).collect(Collectors.toList()));
+	}
 
 //	@Subscribe
 //	public void onWidgetLoaded(WidgetLoaded e)
@@ -72,9 +72,9 @@ public class ShopInventory {
 //		}
 //	}
 
-    public static void onGameStateChanged(GameStateChanged gameStateChanged) {
-        if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST) {
-            ShopInventory.shopInventoryItems.clear();
-        }
-    }
+	public static void onGameStateChanged(GameStateChanged gameStateChanged) {
+		if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST) {
+			ShopInventory.shopInventoryItems.clear();
+		}
+	}
 }

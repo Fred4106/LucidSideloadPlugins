@@ -12,12 +12,13 @@ import net.runelite.client.RuneLite;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+
 @Singleton
 public class TileItems {
-    static Client client = RuneLite.getInjector().getInstance(Client.class);
-    static List<ETileItem> tileItems = new ArrayList<>();
+	static Client client = RuneLite.getInjector().getInstance(Client.class);
+	static List<ETileItem> tileItems = new ArrayList<>();
 
-    public static TileItemQuery search() {
-        return new TileItemQuery(tileItems);
-    }
+	public static TileItemQuery search() {
+		return new TileItemQuery(tileItems);
+	}
 }

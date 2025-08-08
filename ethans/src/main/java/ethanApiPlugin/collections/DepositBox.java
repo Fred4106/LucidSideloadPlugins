@@ -15,21 +15,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-@Singleton
 
 public class DepositBox {
-    static Client client = RuneLite.getInjector().getInstance(Client.class);
-    static List<Widget> depositBoxItems = new ArrayList<>();
-    static int lastUpdateTick = 0;
+	static Client client = RuneLite.getInjector().getInstance(Client.class);
+	static List<Widget> depositBoxItems = new ArrayList<>();
+	static int lastUpdateTick = 0;
 
-    public static ItemQuery search() {
-        if (lastUpdateTick < client.getTickCount()) {
-            DepositBox.depositBoxItems =
-                    Arrays.stream(client.getWidget(WidgetInfo.DEPOSIT_BOX_INVENTORY_ITEMS_CONTAINER).getDynamicChildren()).filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
-            lastUpdateTick = client.getTickCount();
-        }
-        return new ItemQuery(depositBoxItems);
-    }
+	public static ItemQuery search() {
+		if (lastUpdateTick < client.getTickCount()) {
+			DepositBox.depositBoxItems =
+				Arrays.stream(client.getWidget(WidgetInfo.DEPOSIT_BOX_INVENTORY_ITEMS_CONTAINER).getDynamicChildren()).filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
+			lastUpdateTick = client.getTickCount();
+		}
+		return new ItemQuery(depositBoxItems);
+	}
 
 //    @Subscribe
 //    public void onWidgetLoaded(WidgetLoaded e) {
@@ -61,9 +60,9 @@ public class DepositBox {
 //        }
 //    }
 
-    public static void onGameStateChanged(GameStateChanged gameStateChanged) {
-        if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST) {
-            DepositBox.depositBoxItems.clear();
-        }
-    }
+	public static void onGameStateChanged(GameStateChanged gameStateChanged) {
+		if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST) {
+			DepositBox.depositBoxItems.clear();
+		}
+	}
 }

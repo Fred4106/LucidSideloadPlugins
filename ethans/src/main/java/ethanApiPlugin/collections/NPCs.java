@@ -11,17 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Singleton
 public class NPCs {
-//    static Client client = RuneLite.getInjector().getInstance(Client.class);
-    private static final List<NPC> npcList = new ArrayList<>();
+	//    static Client client = RuneLite.getInjector().getInstance(Client.class);
+	private static final List<NPC> npcList = new ArrayList<>();
 
-    public static NPCQuery search() {
-        return new NPCQuery(npcList);
-    }
-    
-    public static void onGameTick(Client client) {
-        npcList.clear();
-        client.getTopLevelWorldView().npcs().forEach(npcList::add);
-    }
+	public static NPCQuery search() {
+		return new NPCQuery(npcList);
+	}
+
+	public static void onGameTick(Client client) {
+		npcList.clear();
+		client.getTopLevelWorldView().npcs().forEach(npcList::add);
+	}
 }

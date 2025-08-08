@@ -10,6 +10,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetID;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 
 import javax.inject.Singleton;
@@ -18,70 +19,44 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-@Singleton
-public class GrandExchangeInventory 
-{
 
-    static Client client = RuneLite.getInjector().getInstance(Client.class);
-    static List<Widget> geInventoryItems = new ArrayList<>();
+public class GrandExchangeInventory {
+	static Client client = RuneLite.getInjector().getInstance(Client.class);
+	static ClientThread clientThread = RuneLite.getInjector().getInstance(ClientThread.class);
+	public static List<Widget> inventoryItems = new ArrayList<>();
+	static int lastUpdateTick = 0;
 
-    public static ItemQuery search()
-    {
-        return new ItemQuery(geInventoryItems.stream().filter(Objects::nonNull).collect(Collectors.toList()));
-    }
+	public static ItemQuery search() {
+		if (lastUpdateTick < client.getTickCount()) {
+			GrandExchangeInventory.inventoryItems = clientThread.runOnClientThread(() -> {
+				client.runScript(6009, WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER.getId(), 28, 1, -1);
+				return Arrays.stream(client.getWidget(WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER).getDynamicChildren())
+					.filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
+			});
+			lastUpdateTick = client.getTickCount();
+		}
+		return new ItemQuery(inventoryItems);
+	}
 
-    @Subscribe
-    public void onWidgetLoaded(WidgetLoaded e)
-    {
-        if (e.getGroupId() == WidgetID.GRAND_EXCHANGE_INVENTORY_GROUP_ID)
-        {
-            try
-            {
-                geInventoryItems =
-                        Arrays.stream(client.getWidget(WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER).getDynamicChildren()).filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
+	public static int getEmptySlots() {
+		return 28 - search().result().size();
+	}
 
-                for (Widget w : geInventoryItems) {
-                    System.out.println(w.getName());
-                }
-            }
-            catch (NullPointerException err)
-            {
-                geInventoryItems.clear();
-            }
-        }
-    }
+	public static boolean full() {
+		return getEmptySlots() == 0;
+	}
 
-    @Subscribe
-    public void onItemContainerChanged(ItemContainerChanged e)
-    {
-        if (e.getContainerId() == 518)
-        {
-            if (client.getWidget(WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER) == null)
-            {
-                geInventoryItems.clear();
-                return;
-            }
-            try
-            {
-                geInventoryItems =
-                        Arrays.stream(client.getWidget(WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER).getDynamicChildren()).filter(Objects::nonNull).filter(x -> x.getItemId() != 6512 && x.getItemId() != -1).collect(Collectors.toList());
-                return;
-            }
-            catch (NullPointerException err)
-            {
-                geInventoryItems.clear();
-                return;
-            }
-        }
+	public static int getItemAmount(int itemId) {
+		return search().withId(itemId).result().size();
+	}
 
-    }
+	public static int getItemAmount(String itemName) {
+		return search().withName(itemName).result().size();
+	}
 
-    @Subscribe
-    public void onGameStateChanged(GameStateChanged gameStateChanged)
-    {
-        if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST)
-        {
-            geInventoryItems.clear();
-        }
-    }
+	public static void onGameStateChanged(GameStateChanged gameStateChanged) {
+		if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST) {
+			GrandExchangeInventory.inventoryItems.clear();
+		}
+	}
 }

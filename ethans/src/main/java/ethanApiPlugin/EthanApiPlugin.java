@@ -4,12 +4,14 @@ import ethanApiPlugin.collections.Bank;
 import ethanApiPlugin.collections.BankInventory;
 import ethanApiPlugin.collections.DepositBox;
 import ethanApiPlugin.collections.Equipment;
+import ethanApiPlugin.collections.GrandExchangeInventory;
 import ethanApiPlugin.collections.Inventory;
 import ethanApiPlugin.collections.NPCs;
 import ethanApiPlugin.collections.Players;
 import ethanApiPlugin.collections.Shop;
 import ethanApiPlugin.collections.ShopInventory;
 import ethanApiPlugin.collections.TileObjects;
+import ethanApiPlugin.collections.TradeInventory;
 import ethanApiPlugin.collections.query.QuickPrayer;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -50,10 +52,10 @@ import java.util.stream.Collectors;
 import static net.runelite.api.Varbits.QUICK_PRAYER;
 
 @PluginDescriptor(
-		name = "EthanApiPlugin",
-		description = "",
-		tags = {"ethan"},
-		hidden = false
+	name = "EthanApiPlugin",
+	description = "",
+	tags = {"ethan"},
+	hidden = false
 )
 @Slf4j
 public class EthanApiPlugin extends Plugin {
@@ -67,43 +69,43 @@ public class EthanApiPlugin extends Plugin {
 	static long animationMult;
 	static final HashSet<WorldPoint> EMPTY_SET = new HashSet<>();
 	public static final int[][] directionsMap = {
-			{-2, 0},
-			{0, 2},
-			{2, 0},
-			{0, -2},
-			{1, 0},
-			{0, 1},
-			{-1, 0},
-			{0, -1},
-			{1, 1},
-			{-1, -1},
-			{-1, 1},
-			{1, -1},
-			{-2, 2},
-			{-2, -2},
-			{2, 2},
-			{2, -2},
-			{-2, -1},
-			{-2, 1},
-			{-1, -2},
-			{-1, 2},
-			{1, -2},
-			{1, 2},
-			{2, -1},
-			{2, 1}
+		{-2, 0},
+		{0, 2},
+		{2, 0},
+		{0, -2},
+		{1, 0},
+		{0, 1},
+		{-1, 0},
+		{0, -1},
+		{1, 1},
+		{-1, -1},
+		{-1, 1},
+		{1, -1},
+		{-2, 2},
+		{-2, -2},
+		{2, 2},
+		{2, -2},
+		{-2, -1},
+		{-2, 1},
+		{-1, -2},
+		{-1, 2},
+		{1, -2},
+		{1, 2},
+		{2, -1},
+		{2, 1}
 	};
 	@Inject
 	EventBus eventBus;
 	public static LoadingCache<Integer, ItemComposition> itemDefs = CacheBuilder.newBuilder()
-			.maximumSize(1000)
-			.expireAfterWrite(20, TimeUnit.MINUTES)
-			.build(
-					new CacheLoader<Integer, ItemComposition>() {
-						@Override
-						public ItemComposition load(Integer itemId) {
-							return itemManager.getItemComposition(itemId);
-						}
-					});
+		.maximumSize(1000)
+		.expireAfterWrite(20, TimeUnit.MINUTES)
+		.build(
+			new CacheLoader<Integer, ItemComposition>() {
+				@Override
+				public ItemComposition load(Integer itemId) {
+					return itemManager.getItemComposition(itemId);
+				}
+			});
 
 
 	public static boolean loggedIn() {
@@ -130,8 +132,9 @@ public class EthanApiPlugin extends Plugin {
 
 	private static Field srField = null;
 	private static Field sbField = null;
+
 	public static Optional<Widget> getSelectedWidget() {
-		if(srField == null) {
+		if (srField == null) {
 			try {
 				srField = client.getClass().getClassLoader().loadClass("ph").getDeclaredField("sr");
 				srField.setAccessible(true);
@@ -141,7 +144,7 @@ public class EthanApiPlugin extends Plugin {
 				throw new RuntimeException(e);
 			}
 		}
-		if(sbField == null) {
+		if (sbField == null) {
 			try {
 				sbField = client.getClass().getClassLoader().loadClass("client").getDeclaredField("sb");
 				sbField.setAccessible(true);
@@ -151,12 +154,12 @@ public class EthanApiPlugin extends Plugin {
 				throw new RuntimeException(e);
 			}
 		}
-		if(srField != null && sbField != null && client.isWidgetSelected()) {
+		if (srField != null && sbField != null && client.isWidgetSelected()) {
 			Widget widgetValue = null;
 			try {
 				widgetValue = client.getWidget((((Integer) srField.get(null)).intValue() * 2100281859));
 				int childValue = (((Integer) sbField.get(null)).intValue() * -1805685543);
-				if(childValue  > -1) {
+				if (childValue > -1) {
 					widgetValue = widgetValue.getChild(childValue);
 				}
 			} catch (Exception e) {
@@ -173,8 +176,8 @@ public class EthanApiPlugin extends Plugin {
 		if (npc == null) {
 			return -1;
 		}
-		if(animationField ==null|| animationMult ==0){
-			Field[] fields = Arrays.stream(npc.getClass().getSuperclass().getDeclaredFields()).filter(x->x.getType()==int.class&&!Modifier.isFinal(x.getModifiers())&&!Modifier.isStatic(x.getModifiers())).toArray(Field[]::new);
+		if (animationField == null || animationMult == 0) {
+			Field[] fields = Arrays.stream(npc.getClass().getSuperclass().getDeclaredFields()).filter(x -> x.getType() == int.class && !Modifier.isFinal(x.getModifiers()) && !Modifier.isStatic(x.getModifiers())).toArray(Field[]::new);
 			boolean[] changed = new boolean[fields.length];
 			int[] values = new int[fields.length];
 			for (int i = 0; i < fields.length; i++) {
@@ -186,15 +189,15 @@ public class EthanApiPlugin extends Plugin {
 			for (int i = 0; i < 5; i++) {
 				npc.setAnimation(rand.nextInt(Integer.MAX_VALUE));
 				for (int i1 = 0; i1 < values.length; i1++) {
-					if(values[i1]!=fields[i1].getInt(npc)){
+					if (values[i1] != fields[i1].getInt(npc)) {
 						changed[i1] = true;
 					}
 				}
 			}
 			int animationFieldIndex = -1;
 			for (int i = 0; i < changed.length; i++) {
-				if(changed[i]){
-					if(animationFieldIndex!=-1){
+				if (changed[i]) {
+					if (animationFieldIndex != -1) {
 						System.out.println("too many changed");
 						return -1;
 					}
@@ -202,7 +205,7 @@ public class EthanApiPlugin extends Plugin {
 				}
 			}
 			String fieldName = fields[animationFieldIndex].getName();
-			fields[animationFieldIndex].setInt(npc,1);
+			fields[animationFieldIndex].setInt(npc, 1);
 			long multiplier = npc.getAnimation();
 			for (Field field : fields) {
 				field.setAccessible(false);
@@ -218,12 +221,12 @@ public class EthanApiPlugin extends Plugin {
 	}
 
 	public static HeadIcon headIconThruLengthEightArrays(NPC npc) throws IllegalAccessException {
-		Class<?>[] trying = new Class<?>[]{npc.getClass(),npc.getComposition().getClass()};
+		Class<?>[] trying = new Class<?>[]{npc.getClass(), npc.getComposition().getClass()};
 		for (Class<?> aClass : trying) {
 			for (Field declaredField : aClass.getDeclaredFields()) {
 				Field[] decFields = declaredField.getType().getDeclaredFields();
-				if(decFields.length==2){
-					if((decFields[0].getType() == short[].class || decFields[0].getType() == int[].class) &&(decFields[1].getType() == short[].class || decFields[1].getType() == int[].class)){
+				if (decFields.length == 2) {
+					if ((decFields[0].getType() == short[].class || decFields[0].getType() == int[].class) && (decFields[1].getType() == short[].class || decFields[1].getType() == int[].class)) {
 						for (Field decField : decFields) {
 							decField.setAccessible(true);
 						}
@@ -232,18 +235,18 @@ public class EthanApiPlugin extends Plugin {
 						for (Field decField : decFields) {
 							decField.setAccessible(false);
 						}
-						if(array1.length==8&array2.length==8){
-							if(decFields[0].getType()==short[].class){
-								if((short)array1[0]==-1){
+						if (array1.length == 8 & array2.length == 8) {
+							if (decFields[0].getType() == short[].class) {
+								if ((short) array1[0] == -1) {
 									return null;
 								}
-								return HeadIcon.values()[(short)array1[0]];
+								return HeadIcon.values()[(short) array1[0]];
 							}
-							if(decFields[1].getType()==short[].class){
-								if((short)array2[0]==-1){
+							if (decFields[1].getType() == short[].class) {
+								if ((short) array2[0] == -1) {
 									return null;
 								}
-								return HeadIcon.values()[(short)array2[0]];
+								return HeadIcon.values()[(short) array2[0]];
 							}
 						}
 					}
@@ -255,14 +258,14 @@ public class EthanApiPlugin extends Plugin {
 
 	@SneakyThrows
 	public static HeadIcon getHeadIcon(NPC npc) {
-		if(npc==null) return null;
+		if (npc == null) return null;
 		HeadIcon icon = getOldHeadIcon(npc);
-		if(icon!=null){
+		if (icon != null) {
 			//System.out.println("Icon returned using oldHeadIcon");
 			return icon;
 		}
 		icon = getOlderHeadicon(npc);
-		if(icon!=null){
+		if (icon != null) {
 			//System.out.println("Icon returned using OlderHeadicon");
 			return icon;
 		}
@@ -273,7 +276,7 @@ public class EthanApiPlugin extends Plugin {
 
 
 	@SneakyThrows
-	public static HeadIcon getOlderHeadicon(NPC npc){
+	public static HeadIcon getOlderHeadicon(NPC npc) {
 		Method getHeadIconMethod = null;
 		for (Method declaredMethod : npc.getComposition().getClass().getDeclaredMethods()) {
 			if (declaredMethod.getName().length() == 2 && declaredMethod.getReturnType() == short.class && declaredMethod.getParameterCount() == 1) {
@@ -282,7 +285,7 @@ public class EthanApiPlugin extends Plugin {
 				short headIcon = -1;
 				try {
 					headIcon = (short) getHeadIconMethod.invoke(npc.getComposition(), 0);
-				}catch (Exception e){
+				} catch (Exception e) {
 					//nothing
 				}
 				getHeadIconMethod.setAccessible(false);
@@ -489,7 +492,7 @@ public class EthanApiPlugin extends Plugin {
 
 	public static boolean isMoving() {
 		return client.getLocalPlayer().getPoseAnimation()
-				!= client.getLocalPlayer().getIdlePoseAnimation();
+			!= client.getLocalPlayer().getIdlePoseAnimation();
 	}
 
 	@Deprecated
@@ -506,7 +509,7 @@ public class EthanApiPlugin extends Plugin {
 					}
 					if (tile1.getGameObjects().length != 0) {
 						GameObject returnVal =
-								Arrays.stream(tile1.getGameObjects()).filter(gameObject -> gameObject != null && client.getObjectDefinition(gameObject.getId()).getName().toLowerCase().contains(objectName.toLowerCase())).findFirst().orElse(null);
+							Arrays.stream(tile1.getGameObjects()).filter(gameObject -> gameObject != null && client.getObjectDefinition(gameObject.getId()).getName().toLowerCase().contains(objectName.toLowerCase())).findFirst().orElse(null);
 						if (returnVal != null) {
 							validObjects.add(returnVal);
 						}
@@ -567,7 +570,7 @@ public class EthanApiPlugin extends Plugin {
 		Arrays.stream(client.getScene().getTiles()).flatMap(Arrays::stream).flatMap(Arrays::stream).filter(Objects::nonNull).filter(tile -> tile.getGameObjects() != null && tile.getGameObjects().length != 0).forEach(tile ->
 		{
 			GameObject returnVal =
-					Arrays.stream(tile.getGameObjects()).filter(gameObject -> gameObject != null && gameObject.getId() == id).findFirst().orElse(null);
+				Arrays.stream(tile.getGameObjects()).filter(gameObject -> gameObject != null && gameObject.getId() == id).findFirst().orElse(null);
 			if (returnVal != null) {
 				validObjects.add(returnVal);
 			}
@@ -1225,7 +1228,7 @@ public class EthanApiPlugin extends Plugin {
 	@Override
 	public void startUp() throws Exception {
 		Logger actionProgressLog = LoggerFactory.getLogger("com.github.calebwhiting.runelite.plugins.actionprogress.detect.ChatboxDetector");
-		try{
+		try {
 			((ch.qos.logback.classic.Logger) actionProgressLog).setLevel(ch.qos.logback.classic.Level.DEBUG);
 		} catch (Exception e) {
 			actionProgressLog.warn("Failed to change logging level", e);
@@ -1237,6 +1240,7 @@ public class EthanApiPlugin extends Plugin {
 //        eventBus.register(RuneLite.getInjector().getInstance(Shop.class));
 		System.out.println("Starting up Ethans API!");
 	}
+
 	@Subscribe(priority = 10000)
 	public void onGameTick(GameTick e) {
 //        log.info("Ethans GameTick");
@@ -1248,10 +1252,12 @@ public class EthanApiPlugin extends Plugin {
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged) {
 //        log.info("Ethans GameStateChanged");
-		ShopInventory.onGameStateChanged(gameStateChanged);
 		Inventory.onGameStateChanged(gameStateChanged);
 		Bank.onGameStateChanged(gameStateChanged);
 		BankInventory.onGameStateChanged(gameStateChanged);
 		DepositBox.onGameStateChanged(gameStateChanged);
+		ShopInventory.onGameStateChanged(gameStateChanged);
+		GrandExchangeInventory.onGameStateChanged(gameStateChanged);
+		TradeInventory.onGameStateChanged(gameStateChanged);
 	}
 }
