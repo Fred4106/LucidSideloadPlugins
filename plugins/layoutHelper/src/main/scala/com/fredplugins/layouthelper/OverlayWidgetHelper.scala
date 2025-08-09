@@ -1,10 +1,10 @@
 package com.fredplugins.layouthelper
 
 import com.fredplugins.layouthelper.OverlayWidgetHelper.{componentIdField, resizableField, snappableField}
-import com.lucidplugins.api.spells.WidgetInfo
 import net.runelite.client.chat.{ChatColorType, ChatMessageBuilder}
 import net.runelite.client.ui.overlay.{Overlay, OverlayManager, OverlayPosition, WidgetOverlay}
 import org.slf4j.LoggerFactory
+import packetUtils.WidgetInfoExtended
 
 import java.awt.{Color, Dimension, Point}
 import java.lang.reflect.{Field, Method}
@@ -109,8 +109,8 @@ class OverlayWidgetHelper(private val wo: WidgetOverlay) {
   }
 
   val componentId: Int = componentIdField.get(wo).asInstanceOf[Int]
-  def groupId: Int = WidgetInfo.TO_GROUP(componentId)
-  def childId: Int = WidgetInfo.TO_CHILD(componentId)
+  def groupId: Int = WidgetInfoExtended.TO_GROUP(componentId)
+  def childId: Int = WidgetInfoExtended.TO_CHILD(componentId)
 
   def movable: Boolean = wo.isMovable
   def resettable: Boolean = wo.isResettable

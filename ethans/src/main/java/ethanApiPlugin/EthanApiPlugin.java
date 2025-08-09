@@ -130,45 +130,46 @@ public class EthanApiPlugin extends Plugin {
 	}
 
 
-	private static Field srField = null;
-	private static Field sbField = null;
+//	private static Field srField = null;
+//	private static Field sbField = null;
 
 	public static Optional<Widget> getSelectedWidget() {
-		if (srField == null) {
-			try {
-				srField = client.getClass().getClassLoader().loadClass("ph").getDeclaredField("sr");
-				srField.setAccessible(true);
-			} catch (NoSuchFieldException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		if (sbField == null) {
-			try {
-				sbField = client.getClass().getClassLoader().loadClass("client").getDeclaredField("sb");
-				sbField.setAccessible(true);
-			} catch (NoSuchFieldException e) {
-				throw new RuntimeException(e);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		if (srField != null && sbField != null && client.isWidgetSelected()) {
-			Widget widgetValue = null;
-			try {
-				widgetValue = client.getWidget((((Integer) srField.get(null)).intValue() * 2100281859));
-				int childValue = (((Integer) sbField.get(null)).intValue() * -1805685543);
-				if (childValue > -1) {
-					widgetValue = widgetValue.getChild(childValue);
-				}
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-			return Optional.<Widget>ofNullable(widgetValue);
-		} else {
-			return Optional.<Widget>empty();
-		}
+		return Optional.ofNullable(client.getSelectedWidget());
+//		if (srField == null) {
+//			try {
+//				srField = client.getClass().getClassLoader().loadClass("ph").getDeclaredField("sr");
+//				srField.setAccessible(true);
+//			} catch (NoSuchFieldException e) {
+//				throw new RuntimeException(e);
+//			} catch (ClassNotFoundException e) {
+//				throw new RuntimeException(e);
+//			}
+//		}
+//		if (sbField == null) {
+//			try {
+//				sbField = client.getClass().getClassLoader().loadClass("client").getDeclaredField("sb");
+//				sbField.setAccessible(true);
+//			} catch (NoSuchFieldException e) {
+//				throw new RuntimeException(e);
+//			} catch (ClassNotFoundException e) {
+//				throw new RuntimeException(e);
+//			}
+//		}
+//		if (srField != null && sbField != null && client.isWidgetSelected()) {
+//			Widget widgetValue = null;
+//			try {
+//				widgetValue = client.getWidget((((Integer) srField.get(null)).intValue() * 2100281859));
+//				int childValue = (((Integer) sbField.get(null)).intValue() * -1805685543);
+//				if (childValue > -1) {
+//					widgetValue = widgetValue.getChild(childValue);
+//				}
+//			} catch (Exception e) {
+//				throw new RuntimeException(e);
+//			}
+//			return Optional.<Widget>ofNullable(widgetValue);
+//		} else {
+//			return Optional.<Widget>empty();
+//		}
 	}
 
 	@SneakyThrows

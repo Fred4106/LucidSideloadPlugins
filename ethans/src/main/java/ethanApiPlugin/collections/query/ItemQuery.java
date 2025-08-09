@@ -11,6 +11,7 @@ import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
 
 import java.util.*;
+import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,11 @@ public class ItemQuery {
 
 	public ItemQuery withId(int id) {
 		items = items.stream().filter(item -> item.getItemId() == id).collect(Collectors.toList());
+		return this;
+	}
+
+	public ItemQuery withIdFilter(IntPredicate idPredicate) {
+		items = items.stream().filter(item -> idPredicate.test(item.getItemId())).collect(Collectors.toList());
 		return this;
 	}
 

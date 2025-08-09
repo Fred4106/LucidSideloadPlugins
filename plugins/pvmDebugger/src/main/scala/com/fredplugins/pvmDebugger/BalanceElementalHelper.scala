@@ -8,8 +8,6 @@ import com.fredplugins.pvmDebugger.BalanceElementalIds.BalanceElementalNpc
 import com.fredplugins.pvmDebugger.BalanceElementalIds.BalanceElementalType
 import com.fredplugins.pvmDebugger.BalanceElementalIds.BalanceElementalType.unapply
 import com.google.inject.Inject
-import com.lucidplugins.api.spells.Spells
-import com.lucidplugins.api.spells.WidgetInfo
 import com.lucidplugins.api.utils.CombatUtils
 import com.lucidplugins.api.utils.CombatUtils
 import com.lucidplugins.api.utils.Equipment

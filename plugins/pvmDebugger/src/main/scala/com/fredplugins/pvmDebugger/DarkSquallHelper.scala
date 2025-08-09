@@ -8,8 +8,6 @@ import com.fredplugins.pvmDebugger.DarkSquallIds.DarkSquallNpcId
 import com.fredplugins.pvmDebugger.DarkSquallIds.StrongWarriorNpcId
 import com.fredplugins.pvmDebugger.WarriorType.spell
 import com.google.inject.Inject
-import com.lucidplugins.api.spells.Spells
-import com.lucidplugins.api.spells.WidgetInfo
 import com.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.collections.ETileItem
 import ethanApiPlugin.collections.Inventory
@@ -26,6 +24,8 @@ import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.events.OverheadTextChanged
 import net.runelite.api.events.ProjectileMoved
+import net.runelite.api.gameval.InterfaceID
+import net.runelite.api.gameval.InterfaceID.MagicSpellbook
 import net.runelite.client.eventbus.EventBus
 import net.runelite.client.eventbus.Subscribe
 
@@ -64,9 +64,9 @@ object WarriorType {
 		}
 	}
 
-	def spell(s: WarriorType): WidgetInfo = s match {
-		case WarriorType.Agilty(_) => Spells.StandardSpell.ENTANGLE.getWidget
-		case WarriorType.Heavy(_) => Spells.StandardSpell.ENFEEBLE.getWidget
+	def spell(s: WarriorType): Int = s match {
+		case WarriorType.Agilty(_) => InterfaceID.MagicSpellbook.ENTANGLE
+		case WarriorType.Heavy(_) => InterfaceID.MagicSpellbook.ENFEEBLE
 	}
 }
 object DarkSquallIds {
@@ -184,18 +184,18 @@ class DarkSquallHelper (val client: Client) extends ShimUtils.Logging("DEBUG") {
 
 		if(curTickState.mode == Mode.SummonWarrior && curTickState.warriorNpc.isDefined) {
 			curTickState.warriorNpc.foreach(warrior => {
-				InteractionUtils.useWidgetOnNPC(client.getWidget(spell(warrior).getId), warrior.getNpc)
+				InteractionUtils.useWidgetOnNPC(client.getWidget(spell(warrior)), warrior.getNpc)
 			})
 		}
 		else if (curTickState.mode == Mode.ThrowExplosive && curTickState.explosive.isDefined) {
 			curTickState.explosive.foreach(eitem => {
-				val spellWidget = client.getWidget(Spells.StandardSpell.TELEKINETIC_GRAB.getWidget.getId)
+				val spellWidget = client.getWidget(InterfaceID.MagicSpellbook.TELEGRAB)
 				InteractionUtils.useWidgetOnTileItem(spellWidget, eitem)
 			})
 		} else {
 			val inInventoryExplosive = Inventory.search().withId(29573).first().toScala
 			inInventoryExplosive.foreach(w => {
-				val spellW = Spells.StandardSpell.HIGH_LEVEL_ALCHEMY.getWidget.getId.pipe(client.getWidget(_))
+				val spellW = MagicSpellbook.HIGH_ALCHEMY.pipe(client.getWidget(_))
 				InteractionUtils.useWidgetOnWidget(spellW, w)
 			})
 		}
