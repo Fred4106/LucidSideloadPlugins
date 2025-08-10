@@ -359,13 +359,15 @@ class HallowedSepulchreHelper(plugin: SuperClickerPlugin) extends MonitorService
 		fireStatues.clear()
 		currentFloor = -1
 		timeRemaining = -1
-		client.getTopLevelWorldView.npcs().asScala.toList.filter(n => SEPULCHRE_NPCS.contains(n.getId))
-			.foreach(npcs.add)
-		GameObjectUtils.search().filter(to => to.isInstanceOf[GameObject] && filterFireStatues(to.asInstanceOf[GameObject]).isDefined).result.asScala.toList
-			.flatMap(to => Option(to).collect{
-				case go: GameObject => go
-			})
-			.foreach(fireStatues.add)
+		if(client.getGameState == GameState.LOGGING_IN) {
+			client.getTopLevelWorldView.npcs().asScala.toList.filter(n => SEPULCHRE_NPCS.contains(n.getId))
+				.foreach(npcs.add)
+			GameObjectUtils.search().filter(to => to.isInstanceOf[GameObject] && filterFireStatues(to.asInstanceOf[GameObject]).isDefined).result.asScala.toList
+				.flatMap(to => Option(to).collect{
+					case go: GameObject => go
+				})
+				.foreach(fireStatues.add)
+		}
 	}
 	override protected def stopService(): Unit = {
 		npcs.clear()

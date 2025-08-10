@@ -10,6 +10,7 @@ import ethanApiPlugin.collections.TileObjects
 import ethanApiPlugin.collections.query.TileObjectQuery
 import net.runelite.api.Client
 import net.runelite.api.Player
+import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.VarbitChanged
 import net.runelite.client.callback.ClientThread
 
@@ -105,18 +106,21 @@ class TotemService @Inject()(val client: Client, val clientThread: ClientThread)
 
 	private var closestTotem: Totem = null
 
-	def updateClosestTotem(p: Player): Unit = {
-		val wp = p.getWorldLocation.pipe(wl => {
-			p.getWorldView.isInstance match {
-				case true => WorldPointUtils.fromInstance(wl)
-				case false => wl
-			}
-		})
-		val foundTotemObject = TileObjects.search().withId(Totems.values.map(_.baseObjId).toList *).withinDistance(15).nearestToPlayer().toScala
+	def updateClosestTotem(p: WorldPoint): Unit = {
+//		val wp = p.pipe(wl => {
+////			p.getWorldView.isInstance match {
+////				case true => WorldPointUtils.fromInstance(wl)
+////				case false => wl
+////			}
+//			wl
+//		})
+
+		val foundTotemObject = TileObjects.search().withId(Totems.values.map(_.baseObjId).toList *)
+			//.filter(to => to.getWorldLocation.distanceTo(p) < 15)
+			.nearestToPoint(p).toScala
 		val foundTotem = foundTotemObject.flatMap(to => {
 			Totems.values.find(_.baseObjId == to.getId)
-		}
-		).orNull
+		}).orNull
 		if(foundTotem != closestTotem) {
 			log.debug(s"Updating closest totem from ${closestTotem} to ${foundTotem} on tick ${client.getTickCount}")
 			closestTotem = foundTotem

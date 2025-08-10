@@ -3,27 +3,42 @@ package com.lucidplugins.api.utils;
 
 //import ethanApiPlugin.collections.TileObjects;
 //import interactionApi.TileObjectInteraction;
+import ch.qos.logback.classic.Level;
+import ethanApiPlugin.EthanApiPlugin;
 import ethanApiPlugin.collections.query.TileObjectQuery;
 import net.runelite.api.*;
 import net.runelite.client.RuneLite;
+import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class GameObjectUtils
 {
+	private final static Logger log;
+
+	static {
+		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(GameObjectUtils.class)).setLevel(Level.DEBUG);
+		log = LoggerFactory.getLogger(GameObjectUtils.class);
+	}
+
     static Client client = RuneLite.getInjector().getInstance(Client.class);
 
     public static TileObject getFirstTileObjectAt(Tile tile, int... ids)
     {
-        return Arrays.stream(tile.getGameObjects()).filter(gameObject -> gameObject != null && Arrays.asList(ids).contains(gameObject.getId())).findFirst().orElse(null);
+        return Arrays.stream(tile.getGameObjects()).filter(gameObject -> gameObject != null && ArrayUtils.contains(ids, gameObject.getId())).findFirst().orElse(null);
     }
 
     public static TileObjectQuery search() {
         List<TileObject> tileObjects = new ArrayList<>();
 //        TileItems.tileItems.clear();
+		try
+		{
         for (Tile[] tiles : client.getTopLevelWorldView().getScene().getTiles()[client.getTopLevelWorldView().getPlane()]) {
             if (tiles == null) {
                 continue;
@@ -69,6 +84,9 @@ public class GameObjectUtils
                 }
             }
         }
+	} catch (Exception e) {
+			log.error("Failed to run game object query", e);
+		}
         return new TileObjectQuery(tileObjects);
     }
 //

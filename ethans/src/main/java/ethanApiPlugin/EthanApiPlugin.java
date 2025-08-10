@@ -18,6 +18,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import ethanApiPlugin.pathfinding.Node;
+import ethanApiPlugin.services.localPlayer.LocalPlayerService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -64,6 +65,7 @@ public class EthanApiPlugin extends Plugin {
 	static Client client = RuneLite.getInjector().getInstance(Client.class);
 	static PluginManager pluginManager = RuneLite.getInjector().getInstance(PluginManager.class);
 	static ItemManager itemManager = RuneLite.getInjector().getInstance(ItemManager.class);
+	static LocalPlayerService localPlayerService = RuneLite.getInjector().getInstance(LocalPlayerService.class);
 	static Method doAction = null;
 	static String animationField = null;
 	static long animationMult;
@@ -132,6 +134,10 @@ public class EthanApiPlugin extends Plugin {
 
 //	private static Field srField = null;
 //	private static Field sbField = null;
+
+	public static int getLocalPlayerRegionId() {
+		return localPlayerService.getCurrentRegionID();
+	}
 
 	public static Optional<Widget> getSelectedWidget() {
 		return Optional.ofNullable(client.getSelectedWidget());
@@ -1240,6 +1246,7 @@ public class EthanApiPlugin extends Plugin {
 //        eventBus.register(RuneLite.getInjector().getInstance(DepositBox.class));
 //        eventBus.register(RuneLite.getInjector().getInstance(Shop.class));
 		System.out.println("Starting up Ethans API!");
+		localPlayerService.reset();
 	}
 
 	@Subscribe(priority = 10000)
@@ -1248,6 +1255,7 @@ public class EthanApiPlugin extends Plugin {
 		TileObjects.onGameTick(client);
 		Players.onGameTick(client);
 		NPCs.onGameTick(client);
+		localPlayerService.onGameTick(client, eventBus);
 	}
 
 	@Subscribe

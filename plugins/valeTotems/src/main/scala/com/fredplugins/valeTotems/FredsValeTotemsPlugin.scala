@@ -5,6 +5,9 @@ import com.fredplugins.common.utils.ShimUtils
 import com.google.gson.Gson
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
+import ethanApiPlugin.services.localPlayer.LocalPlayerService
+import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged
+import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.ChatMessageType
 import net.runelite.api.GameState
 import net.runelite.api.Skill
@@ -22,6 +25,7 @@ import net.runelite.api.events.{GameObjectSpawned, GameTick, MenuEntryAdded, Men
 import net.runelite.api.gameval.VarbitID
 import net.runelite.api.gameval.VarbitID.{NTK_CURRENT_ROOM_LEVEL, NTK_DOOR1_STATE, NTK_DOOR2_STATE, NTK_DOOR3_STATE, NTK_DOOR4_STATE, NTK_GOLDEN_CHEST_STATE, NTK_OUTSIDE_DOOR1_STATE, NTK_OUTSIDE_DOOR2_STATE, NTK_OUTSIDE_DOOR3_STATE, NTK_OUTSIDE_DOOR4_STATE, NTK_PLAYED_BEFORE, NTK_PLAYER_TIMER_COUNT, NTK_ROOM_NUMBER, NTK_SARCOPHAGUS_PUSH, NTK_SARCOPHAGUS_STATE, NTK_TRAP_ACTIVE, NTK_URN10_STATE, NTK_URN11_STATE, NTK_URN12_STATE, NTK_URN13_STATE, NTK_URN14_STATE, NTK_URN15_STATE, NTK_URN1_STATE, NTK_URN2_STATE, NTK_URN3_STATE, NTK_URN4_STATE, NTK_URN5_STATE, NTK_URN6_STATE, NTK_URN7_STATE, NTK_URN8_STATE, NTK_URN9_STATE}
 import net.runelite.api.widgets.Widget
+import net.runelite.client.callback.ClientThread
 import net.runelite.client.chat.ChatColorType
 import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.config.ConfigManager
@@ -52,6 +56,9 @@ class FredsValeTotemsPlugin() extends Plugin {
 
 	@Inject() private val eventBus: EventBus = null
 	@Inject() private val client  : Client   = null
+	@Inject() private val clientThread  : ClientThread   = null
+	@Inject() private val ethanApiPlugin: EthanApiPlugin = null
+
 	given Client = client
 
 	@Inject() private val menuManager   : MenuManager                  = null
@@ -80,23 +87,63 @@ class FredsValeTotemsPlugin() extends Plugin {
 				.getOrElse(a)
 		}).build().stripTrailing().stripSuffix(",").stripSuffix("<br>")
 	}
+	private var totemServiceSubscriptionHandles = Seq.empty[EventBus.Subscriber]
 
 	override protected def startUp(): Unit = {
 		eventBus.register(overlay)
-		overlayManager.add(overlay)
+
+		if(TotemRegions.isValid(EthanApiPlugin.getLocalPlayerRegionId())) {
+			overlayManager.add(overlay)
+			registerEvents()
+		}
 	}
+
 	override protected def shutDown(): Unit = {
-		overlayManager.remove(overlay)
 		eventBus.unregister(overlay)
+		overlayManager.remove(overlay)
+		unregisterEvents()
+	}
+
+	private def registerEvents(): Unit = {
+		totemServiceSubscriptionHandles = if(totemServiceSubscriptionHandles.isEmpty) {
+			List(
+				eventBus.register(classOf[LocalPositionChanged],
+					gt => totemService.updateClosestTotem(gt.getTo),
+					0.0f),
+				eventBus.register(classOf[VarbitChanged],
+					vbc => totemService.onVarbitChanged(vbc),
+					0.0f)
+			)
+		} else totemServiceSubscriptionHandles
+	}
+
+	private def unregisterEvents(): Unit = {
+		val handles = totemServiceSubscriptionHandles
+		totemServiceSubscriptionHandles = List.empty
+
+		handles.foreach(sub => eventBus.unregister(sub))
 	}
 
 	@Subscribe
-	def onGameTick(e: GameTick): Unit = {
-		totemService.updateClosestTotem(client.getLocalPlayer())
+	def onRegionChanged(e: LocalRegionChanged): Unit = {
+		val isCurRegValid = TotemRegions.isValid(e.currentRegion())
+		if(TotemRegions.isValid(e.previousRegion()) != isCurRegValid) {
+			(isCurRegValid match {
+				case true => registerEvents(); overlayManager.add
+				case false => unregisterEvents(); overlayManager.remove
+			}).apply(overlay)
+
+			log.debug(s"Region is ${if(isCurRegValid) "in" else "not in"} bounds, so ${if(isCurRegValid) "register" else "unregister"} totemservice event handlers\nresulting in ${totemServiceSubscriptionHandles} to track")
+		}
 	}
 
-	@Subscribe
-	def onVarbitChanged(event: VarbitChanged): Unit = {
-		totemService.onVarbitChanged(event)
-	}
+//	@Subscribe
+//	def onGameTick(e: GameTick): Unit = {
+////		totemService.updateClosestTotem(client.getLocalPlayer())
+//	}
+//
+//	@Subscribe
+//	def onVarbitChanged(event: VarbitChanged): Unit = {
+//		totemService.onVarbitChanged(event)
+//	}
 }
