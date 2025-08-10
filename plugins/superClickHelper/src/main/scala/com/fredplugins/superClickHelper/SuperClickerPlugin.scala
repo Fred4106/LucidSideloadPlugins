@@ -383,12 +383,12 @@ class SuperClickerPlugin() extends Plugin {
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
 			val inventoryItemWidget = me.getWidget
 			Option(me.getItemId).collect{
-				case MAHOGANY_LOGS | TEAK_LOGS if(findSpell(218, 133).isDefined) => findSpell(218, 133)
-				case OPAL_JEWELRY() if(findSpell(218,13).exists(u => u._2._2._2.getSpriteId == 18)) => findSpell(218, 13)
-				case JADE_JEWELRY() if(findSpell(218,24).exists(u => u._2._2._2.getSpriteId == 28)) => findSpell(218, 24)
-				case TOPAZ_JEWELRY() if(findSpell(218,37).exists(u => u._2._2._2.getSpriteId == 39)) => findSpell(218, 37)
-				case UNSTRUNG_JEWELRY() if(findSpell(218,126).exists(u => u._2._2._2.getSpriteId == 550))  => findSpell(218, 126)
-				case Alchable() if(findSpell(218,44).exists(u => u._2._2._2.getSpriteId == 41))  => findSpell(218, 44)
+				case MAHOGANY_LOGS | TEAK_LOGS if(findSpell(218, 133).exists(u => List(1975, 581).contains(u._2._2._2.getSpriteId))) => findSpell(218, 133)
+				case OPAL_JEWELRY() if(findSpell(218,13).exists(u => List(18, 1765).contains(u._2._2._2.getSpriteId))) => findSpell(218, 13)
+				case JADE_JEWELRY() if(findSpell(218,24).exists(u => List(28, 1766).contains(u._2._2._2.getSpriteId))) => findSpell(218, 24)
+				case TOPAZ_JEWELRY() if(findSpell(218,37).exists(u => List(1767 , 39).contains(u._2._2._2.getSpriteId))) => findSpell(218, 37)
+				case UNSTRUNG_JEWELRY() if(findSpell(218,126).exists(u => List(1954, 550).contains(u._2._2._2.getSpriteId)))  => findSpell(218, 126)
+				case Alchable() if(findSpell(218,44).exists(u => List(41, 1791).contains(u._2._2._2.getSpriteId))) => findSpell(218, 44)
 			}.flatten.collect {//(u  => u)//)//(iid => iid.)
 //				case (a, (b, (c, d))) => a
 				case (unkown1, (unknown2, (cid, w))) => {
