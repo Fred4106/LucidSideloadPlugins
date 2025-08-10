@@ -58,6 +58,7 @@ dependencies {
     implementation(projects.alchBlocker)
     implementation(projects.pyramidPlunder)
     implementation(projects.recolorCG)
+    implementation(projects.valeTotems)
     implementation(projects.zulrahHelper)
     implementation(projects.attackTimer)
 //    implementation(projects.customPrayers)
