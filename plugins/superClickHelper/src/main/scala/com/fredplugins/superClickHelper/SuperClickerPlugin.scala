@@ -388,7 +388,7 @@ class SuperClickerPlugin() extends Plugin {
 				case JADE_JEWELRY() if(findSpell(218,24).exists(u => List(28, 1766).contains(u._2._2._2.getSpriteId))) => findSpell(218, 24)
 				case TOPAZ_JEWELRY() if(findSpell(218,37).exists(u => List(1767 , 39).contains(u._2._2._2.getSpriteId))) => findSpell(218, 37)
 				case UNSTRUNG_JEWELRY() if(findSpell(218,126).exists(u => List(1954, 550).contains(u._2._2._2.getSpriteId)))  => findSpell(218, 126)
-				case Alchable() if(findSpell(218,44).exists(u => List(41, 1791).contains(u._2._2._2.getSpriteId))) => findSpell(218, 44)
+				case Alchable() if(findSpell(218,44).exists(u => List(41, 1781).contains(u._2._2._2.getSpriteId))) => findSpell(218, 44)
 			}.flatten.collect {//(u  => u)//)//(iid => iid.)
 //				case (a, (b, (c, d))) => a
 				case (unkown1, (unknown2, (cid, w))) => {
