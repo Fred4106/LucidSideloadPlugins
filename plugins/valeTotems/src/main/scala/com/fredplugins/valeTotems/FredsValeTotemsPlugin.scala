@@ -42,6 +42,7 @@ import scala.collection.mutable
 import scala.util.chaining.*
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
+import scala.util.Try
 
 
 @PluginDescriptor(
@@ -49,18 +50,16 @@ import scala.jdk.OptionConverters.*
 	description = "A plugin to support fletching in Ashenvale.",
 	tags = Array("Ashenvale","fletching","fletchtodt","minigame","totem","vale","valetotems","vale totem", "fred4106")
 )
-@PluginDependency(classOf[EthanApiPlugin])
+@PluginDependency(value = classOf[EthanApiPlugin])
 @Singleton
 class FredsValeTotemsPlugin() extends Plugin {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
-	@Inject() private val eventBus: EventBus = null
-	@Inject() private val client  : Client   = null
-	@Inject() private val clientThread  : ClientThread   = null
-	@Inject() private val ethanApiPlugin: EthanApiPlugin = null
-
-	given Client = client
-
+	@Inject() private val eventBus: EventBus                     = null
+	@Inject() private val client  : Client                       = null
+	@Inject() private val clientThread  : ClientThread           = null
+	@Inject() private val localPlayerService: LocalPlayerService = null//getLocalPlayerRegionId
+//	@Inject() private val ethanApiPlugin: EthanApiPlugin = null
 	@Inject() private val menuManager   : MenuManager                  = null
 	@Inject() private val overlayManager: OverlayManager               = null
 	@Inject() private val config        : FredsValeTotemsConfig        = null
@@ -91,57 +90,65 @@ class FredsValeTotemsPlugin() extends Plugin {
 
 	override protected def startUp(): Unit = {
 		eventBus.register(overlay)
-
-		if(TotemRegions.isValid(EthanApiPlugin.getLocalPlayerRegionId())) {
-			overlayManager.add(overlay)
-			registerEvents()
-		}
+		overlayManager.add(overlay)
+//		val isStartingInValidSpot = clientThread.runOnClientThread(() => {
+//			Try{
+//				(client.getLocalPlayer.getWorldLocation.getRegionID)
+//			}.getOrElse(-1)
+//		}).pipe(TotemRegions.isValid(_))
 	}
 
 	override protected def shutDown(): Unit = {
 		eventBus.unregister(overlay)
 		overlayManager.remove(overlay)
-		unregisterEvents()
 	}
 
-	private def registerEvents(): Unit = {
-		totemServiceSubscriptionHandles = if(totemServiceSubscriptionHandles.isEmpty) {
-			List(
-				eventBus.register(classOf[LocalPositionChanged],
-					gt => totemService.updateClosestTotem(gt.getTo),
-					0.0f),
-				eventBus.register(classOf[VarbitChanged],
-					vbc => totemService.onVarbitChanged(vbc),
-					0.0f)
-			)
-		} else totemServiceSubscriptionHandles
-	}
-
-	private def unregisterEvents(): Unit = {
-		val handles = totemServiceSubscriptionHandles
-		totemServiceSubscriptionHandles = List.empty
-
-		handles.foreach(sub => eventBus.unregister(sub))
-	}
-
-	@Subscribe
-	def onRegionChanged(e: LocalRegionChanged): Unit = {
-		val isCurRegValid = TotemRegions.isValid(e.currentRegion())
-		if(TotemRegions.isValid(e.previousRegion()) != isCurRegValid) {
-			(isCurRegValid match {
-				case true => registerEvents(); overlayManager.add
-				case false => unregisterEvents(); overlayManager.remove
-			}).apply(overlay)
-
-			log.debug(s"Region is ${if(isCurRegValid) "in" else "not in"} bounds, so ${if(isCurRegValid) "register" else "unregister"} totemservice event handlers\nresulting in ${totemServiceSubscriptionHandles} to track")
-		}
-	}
-
-//	@Subscribe
-//	def onGameTick(e: GameTick): Unit = {
-////		totemService.updateClosestTotem(client.getLocalPlayer())
+//	private def registerEvents(): Unit = {
+//		totemServiceSubscriptionHandles = if(totemServiceSubscriptionHandles.isEmpty) {
+//			List(
+//				eventBus.register[LocalPositionChanged](classOf[LocalPositionChanged],
+//					gt => totemService.updateClosestTotem(gt.getTo),
+//					0.0f),
+//				eventBus.register[VarbitChanged](classOf[VarbitChanged],
+//					vbc => totemService.onVarbitChanged(vbc),
+//					0.0f)
+//			)
+//		} else totemServiceSubscriptionHandles
 //	}
 //
+//	private def unregisterEvents(): Unit = {
+//		val handles = totemServiceSubscriptionHandles
+//		totemServiceSubscriptionHandles = List.empty
+//
+//		handles.foreach(sub => eventBus.unregister(sub))
+//	}
+
+	@Subscribe
+	def onLocalRegionChanged(e: LocalRegionChanged): Unit = {
+		log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}");
+		if(TotemRegions.isValid(e.getOldRegion) != TotemRegions.isValid(e.getCurRegion)) {
+			if(TotemRegions.isValid(e.getCurRegion)){
+				overlayManager.add(overlay)
+			} else {
+				overlayManager.remove(overlay)
+			}
+		}
+//		log.debug(s"Region is ${if(isCurRegValid) "in" else "not in"} bounds, so ${if(isCurRegValid) "register" else "unregister"} totemservice event handlers\nresulting in ${totemServiceSubscriptionHandles} to track")
+	}
+
+	var cachedRegionId = -1
+	@Subscribe
+	def onGameTick(e: GameTick): Unit = {
+		if(client.getGameState == GameState.LOGGED_IN) {
+			val regionId = Try(client.getLocalPlayer.getWorldLocation.getRegionID).getOrElse(-1)
+			if(regionId!= cachedRegionId) {
+				log.debug("region changed from {} to {}")
+				cachedRegionId = regionId;
+			}
+			totemService.updateClosestTotem(client.getLocalPlayer().getWorldLocation)
+		}
+	}
+	//
 //	@Subscribe
 //	def onVarbitChanged(event: VarbitChanged): Unit = {
 //		totemService.onVarbitChanged(event)

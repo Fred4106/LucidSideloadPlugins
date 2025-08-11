@@ -1,25 +1,19 @@
 package com.fredplugins.valeTotems
 
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.common.utils.WorldPointUtils
 import com.fredplugins.valeTotems.TotemVarbits.DECORATIONS
 import com.fredplugins.valeTotems.TotemVarbits.POINTS
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import ethanApiPlugin.collections.TileObjects
-import ethanApiPlugin.collections.query.TileObjectQuery
 import net.runelite.api.Client
-import net.runelite.api.Player
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.VarbitChanged
 import net.runelite.client.callback.ClientThread
 
-import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
-import scala.jdk.StreamConverters.*
 import scala.util.chaining.*
 import scala.util.{Random, Try}
-import scala.compiletime.uninitialized
 
 case class TotemState(carved: Boolean, decoration: Int, decay: Int, base: Int, animals: (Int, Int, Int), progress: (Int, Int, Int), points: Int) {
 }
@@ -47,13 +41,11 @@ object TotemState {
 
 @Singleton
 class TotemService @Inject()(val client: Client, val clientThread: ClientThread) extends ShimUtils.Logging() {
-	given Client = client
-	
-	private val state: collection.mutable.Map[Totem, TotemState]= {
+	private lazy val state: collection.mutable.Map[Totem, TotemState]= {
 		import TotemVarbits.{ANIMAL_1, ANIMAL_2, ANIMAL_3, BASE, BASE_CARVED, DECAY, LOW, MID, TOP}
 		
 		def vbValue(vb: TotemVarbit)(using totem: Totem): Int = client.getVarbitValue(vb.getRealVarbitId(totem))
-		
+
 		clientThread.runOnClientThread(() => {
 			Totems.values.map(t => {
 				given Totem = t
@@ -73,14 +65,15 @@ class TotemService @Inject()(val client: Client, val clientThread: ClientThread)
 	def onVarbitChanged(vb: VarbitChanged): Unit = {
 		val found = Totems.values.flatMap(_.isVarbitRelated(vb.getVarbitId)).headOption
 
-//		found.foreach {
-//			case (t, vbDef) => log.debug(s"${t.entryName}.${vbDef.entryName}(${vbDef.getRealVarbitId(t)}) = ${vb.getValue}")
-//		}
+		found.foreach {
+			case (t, vbDef) => log.debug(s"${t.entryName}.${vbDef.entryName}(${vbDef.getRealVarbitId(t)}) = ${vb.getValue}")
+		}
 
+		log.debug(s"TotemService.onVarbitChanged(${vb.toString}) found ${found}")
 		if(found.isEmpty) {
 			return
-		}
-//		val (totem: Totem, vbDef: TotemVarbit) = found.get
+		} else {
+
 		found.flatMap(f => Option(f._2).collect{
 			case TotemVarbits.ANIMAL_1 => TotemState.changeAnimal(1, vb.getValue)
 			case TotemVarbits.ANIMAL_2 => TotemState.changeAnimal(2, vb.getValue)
@@ -102,19 +95,12 @@ class TotemService @Inject()(val client: Client, val clientThread: ClientThread)
 					state.update(totem, nValue)
 				}
 			}
+		}
 	}
 
 	private var closestTotem: Totem = null
 
 	def updateClosestTotem(p: WorldPoint): Unit = {
-//		val wp = p.pipe(wl => {
-////			p.getWorldView.isInstance match {
-////				case true => WorldPointUtils.fromInstance(wl)
-////				case false => wl
-////			}
-//			wl
-//		})
-
 		val foundTotemObject = TileObjects.search().withId(Totems.values.map(_.baseObjId).toList *)
 			//.filter(to => to.getWorldLocation.distanceTo(p) < 15)
 			.nearestToPoint(p).toScala
@@ -126,7 +112,7 @@ class TotemService @Inject()(val client: Client, val clientThread: ClientThread)
 			closestTotem = foundTotem
 		}
 	}
-	
+
 	def getNearest: Option[Totem] = {
 		Option(closestTotem)
 	}

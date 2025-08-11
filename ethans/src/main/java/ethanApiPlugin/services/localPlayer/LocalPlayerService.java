@@ -1,7 +1,6 @@
 package ethanApiPlugin.services.localPlayer;
 
-//import com.github.calebwhiting.runelite.api.event.*
-import ch.qos.logback.classic.Level;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import ethanApiPlugin.EthanApiPlugin;
@@ -9,6 +8,7 @@ import ethanApiPlugin.services.localPlayer.events.LocalAnimationChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalInteractingChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged;
+import jdk.jfr.Event;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
@@ -17,33 +17,31 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.RuneLite;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.events.PluginChanged;
-import net.runelite.client.ui.ClientUI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 @Singleton
+@Slf4j
 public class LocalPlayerService {
-	private final static Logger log;
-	static {
-		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(LocalPlayerService.class)).setLevel(Level.DEBUG);
-		log = LoggerFactory.getLogger(LocalPlayerService.class);
-	}
-
 	private int pRegionId;
 	private int pAnimation;
 	private Actor pInteracting;
 	private WorldPoint wpDest;
 	private WorldPoint wpPos;
 
+
+//	@Inject private Client client = null;
+//	@Inject private ClientThread clientThread = null;
+//	@Inject private EventBus eventBus = null;//plugin.getInjector.getInstance(classOf[ModelOutlineRenderer])
+
+	Client client = RuneLite.getInjector().getInstance(Client.class);
+	EventBus eventBus = RuneLite.getInjector().getInstance(EventBus.class);
+
 	@Inject
-	public LocalPlayerService() {
-		reset();
-	}
+	public LocalPlayerService() {}
 
 	public void reset() {
 		this.pRegionId = -1;
@@ -57,13 +55,14 @@ public class LocalPlayerService {
 		return pRegionId;
 	}
 
-	public void onGameTick(Client client, EventBus eventBus) {
-		Player me = client.getLocalPlayer();
+	@Subscribe
+	public void onGameTick(GameTick gt) {
+		Player me = EthanApiPlugin.getClient().getLocalPlayer();
 		WorldPoint pos = Optional.ofNullable(me).map(Player::getWorldLocation).orElse(null);
 
 		int regionId = Optional.ofNullable(pos).map(WorldPoint::getRegionID).orElse(-1);//.orElse(-1).intValue();
 		if (regionId != this.pRegionId) {
-			eventBus.post(new LocalRegionChanged(this.pRegionId, this.pRegionId));
+			eventBus.post(new LocalRegionChanged(this.pRegionId, regionId));
 		}
 
 		if(isDifferent(pos, this.wpPos)) {

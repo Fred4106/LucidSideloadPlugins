@@ -291,7 +291,7 @@ class SuperClickerPlugin() extends Plugin {
 			case (_, point) => None
 		}
 
-		val nWidgetValue = EthanApiPlugin.getSelectedWidget.toScala
+		val nWidgetValue = Option(client.getSelectedWidget)
 		if(cachedWidgetValue != nWidgetValue && config.isDebugSelectedWidget) {
 			sendChatMessage("SelectedWidget"){
 				s"Changed from ${cachedWidgetValue.map(widgetToNiceString)} to ${nWidgetValue.map(widgetToNiceString)}"

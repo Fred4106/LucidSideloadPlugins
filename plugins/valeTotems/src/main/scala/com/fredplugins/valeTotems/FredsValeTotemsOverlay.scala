@@ -35,7 +35,6 @@ class FredsValeTotemsOverlay @Inject()(val client: Client, val plugin: FredsVale
 		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
 	}
 
-
 	@Subscribe
 	def onConfigChanged(e: ConfigChanged): Unit = {
 		if(e.getGroup == FredsValeTotemsConfig.GroupName) e.getKey match {
