@@ -40,7 +40,7 @@ import net.runelite.client.config.Units;
 
 import java.awt.*;
 
-@ConfigGroup(GrotesqueGuardiansConfig.GROUP)
+@ConfigGroup(value = GrotesqueGuardiansConfig.GROUP, secondaryConfig = true)
 public interface GrotesqueGuardiansConfig extends Config
 {
 	static final String GROUP = "GrotesqueGuardians";

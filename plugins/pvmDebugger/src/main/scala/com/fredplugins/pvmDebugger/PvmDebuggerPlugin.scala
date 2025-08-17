@@ -37,8 +37,7 @@ import scala.util.chaining.*
 	name = "<html><font color=\"#32C8CD\">Freds</font> Pvm Debugger</html>",
 	description = "Useful debugger for pvm",
 	tags = Array("pvm", "prayer", "helper", "maps", "debugger"),
-	hidden = false,
-	)
+	hidden = false)
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class PvmDebuggerPlugin() extends Plugin {

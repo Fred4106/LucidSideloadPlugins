@@ -33,7 +33,7 @@ import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
 
-@ConfigGroup(KrakenConfig.GROUP)
+@ConfigGroup(value = KrakenConfig.GROUP, secondaryConfig = true)
 public interface KrakenConfig extends Config
 {
 	static final String GROUP = "FredsKraken";

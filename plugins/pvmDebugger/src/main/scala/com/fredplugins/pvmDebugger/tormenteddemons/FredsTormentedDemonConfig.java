@@ -5,7 +5,7 @@ import net.runelite.client.config.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-@ConfigGroup(FredsTormentedDemonConfig.GroupName)
+@ConfigGroup(value = FredsTormentedDemonConfig.GroupName, secondaryConfig = true)
 public interface FredsTormentedDemonConfig extends Config { 
 	static final String GroupName = "FredsTormentedDemonsHelper";
 	@ConfigItem(
