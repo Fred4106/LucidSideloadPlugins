@@ -2,6 +2,7 @@ package packets;
 
 import net.runelite.api.NPC;
 import net.runelite.api.TileObject;
+import net.runelite.api.widgets.Widget;
 import packetUtils.ObfuscatedNames;
 import packetUtils.PacketDef;
 import packetUtils.PacketReflection;
@@ -13,6 +14,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.Random;
 
 import static java.awt.event.InputEvent.BUTTON1_DOWN_MASK;
@@ -84,6 +86,10 @@ public class MousePackets{
 			}
 		}
 		MousePackets.queueClickPacket();
+	}
+	public static void queueClickPacket(Widget widget) {
+		Shape bounds = Optional.ofNullable(widget).map(Widget::getBounds).orElse(null);
+		queueClickPacket(bounds);
 	}
 	public static void queueClickPacket(NPC npc) {
 		Shape hull = (npc != null) ? npc.getConvexHull() : null;

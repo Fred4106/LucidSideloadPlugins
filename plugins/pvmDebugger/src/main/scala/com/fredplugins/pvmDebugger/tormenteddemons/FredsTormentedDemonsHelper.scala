@@ -7,9 +7,9 @@ import com.fredplugins.pvmDebugger.WithPanel
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.HotkeyAction
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TORMENTED_DEMON_IDS
 import com.google.inject.Inject
-import com.lucidplugins.api.item.SlottedItem
-import com.lucidplugins.api.utils.CombatUtils
-import com.lucidplugins.api.utils.InventoryUtils
+import ethanApiPlugin.lucidplugins.api.item.SlottedItem
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
+import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
 import ethanApiPlugin.collections.Inventory
 import net.runelite.api.ChatMessageType
 import net.runelite.api.Client

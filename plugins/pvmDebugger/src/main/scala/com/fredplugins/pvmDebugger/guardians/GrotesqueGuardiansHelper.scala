@@ -11,15 +11,15 @@ import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.common.extensions.MenuExtensions.{*, given}
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
-import com.lucidplugins.api.item.SlottedItem
-import com.lucidplugins.api.utils.CombatUtils
-import com.lucidplugins.api.utils.EquipmentUtils
-import com.lucidplugins.api.utils.InteractionUtils
-import com.lucidplugins.api.utils.InventoryUtils
-import com.lucidplugins.api.utils.NpcUtils
+import ethanApiPlugin.lucidplugins.api.item.SlottedItem
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
+import ethanApiPlugin.lucidplugins.api.utils.EquipmentUtils
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
+import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
+import ethanApiPlugin.lucidplugins.api.utils.NpcUtils
 import ethanApiPlugin.collections.Inventory
 import ethanApiPlugin.collections.query.NPCQuery
-import interactionApi.InventoryInteraction
+import ethanApiPlugin.interactionApi.InventoryInteraction
 import net.runelite.api.Client
 import net.runelite.api.Menu
 import net.runelite.api.MenuAction

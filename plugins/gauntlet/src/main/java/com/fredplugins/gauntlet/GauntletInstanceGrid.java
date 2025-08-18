@@ -1,6 +1,6 @@
 package com.fredplugins.gauntlet;
 
-import com.lucidplugins.api.utils.GameObjectUtils;
+import ethanApiPlugin.lucidplugins.api.utils.GameObjectUtils;
 import lombok.Getter;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;

@@ -5,7 +5,7 @@ import com.fredplugins.pvmHelper2.NpcEvent.NpcRecord
 import com.fredplugins.pvmHelper2.PlayerEvent.PlayerRecord
 import com.fredplugins.pvmHelper2.gauntlet.GauntletSolver
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{TileObjects, Widgets}
 import net.runelite.api.coords.WorldPoint

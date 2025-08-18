@@ -1,6 +1,5 @@
 package ethanApiPlugin.collections;
 
-import com.lucidplugins.api.utils.InteractionUtils;
 import ethanApiPlugin.collections.query.ItemQuery;
 import ethanApiPlugin.EthanApiPlugin;
 import net.runelite.api.Client;
@@ -10,14 +9,11 @@ import net.runelite.api.Item;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.RuneLite;
-import net.runelite.client.eventbus.Subscribe;
 import packets.MousePackets;
 import packets.WidgetPackets;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;

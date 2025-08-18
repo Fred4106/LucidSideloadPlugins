@@ -2,7 +2,7 @@ package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.Locatable.{LocatableType, distanceTo, findSceneCord, findWorldCord}
 import com.fredplugins.common.utils.{ShimUtils, WorldPointUtils}
-import com.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InventoryUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InventoryUtils}
 import ethanApiPlugin.collections.Inventory
 import net.runelite.api.coords.{LocalPoint, WorldArea, WorldPoint}
 import net.runelite.api.events.GameTick

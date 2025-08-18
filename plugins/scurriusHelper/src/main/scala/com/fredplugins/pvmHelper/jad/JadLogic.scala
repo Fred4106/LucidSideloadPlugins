@@ -5,7 +5,7 @@ import com.fredplugins.pvmHelper.jad.TzMobType.*
 import com.fredplugins.pvmHelper.jad.{*, given}
 import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperConfig, FredsPvmHelperPanel}
 import com.google.gson.JsonObject
-import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import net.runelite.api.*
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.*
@@ -16,7 +16,7 @@ import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, Li
 import com.fredplugins.common.Locatable.{given, *}
 import java.awt.Color
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{TileObjects, Widgets}
 import net.runelite.api.{ChatMessageType, Client, GameState, GraphicsObject, InventoryID, Item, ItemContainer, NPC, Prayer, Projectile, TileObject}

@@ -6,7 +6,7 @@ import com.fredplugins.titheFarm2
 import com.fredplugins.titheFarm2.SPlantInfo.{DryPlantInfo, EmptyPlantInfo}
 import com.fredplugins.titheFarm2.TitheFarmLookup.PlantData
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.InteractionUtils
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{Inventory, TileObjects}
 import ethanApiPlugin.collections.query.ItemQuery

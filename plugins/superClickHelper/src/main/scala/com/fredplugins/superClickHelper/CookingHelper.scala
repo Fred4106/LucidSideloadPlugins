@@ -3,16 +3,15 @@ package com.fredplugins.superClickHelper
 import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getParentMenu, getTileObjectOpt, getWorldLocationOpt, isNpcAction, isRuneliteAction, isTileObjectAction, prettyString}
 import com.fredplugins.common.extensions.TextExtensions.*
 import com.fredplugins.common.extensions.WidgetExtensions.{getChildId, getChildIdx, getGroupId}
-import com.fredplugins.common.queries.InventoryItemQuery
 import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.superClickHelper.CookingHelper.cookedFishIds
 import com.fredplugins.superClickHelper.CookingHelper.rawFishIds
 import com.fredplugins.superClickHelper.CookingHelper.stoveObjIds
-import com.lucidplugins.api.item.SlottedItem
+import ethanApiPlugin.lucidplugins.api.item.SlottedItem
 import ethanApiPlugin.collections.Inventory
 import ethanApiPlugin.collections.TileItems
 import ethanApiPlugin.collections.Widgets
-import interactionApi.InventoryInteraction
+import ethanApiPlugin.interactionApi.InventoryInteraction
 import net.runelite.api.Client
 import net.runelite.api.Item
 import net.runelite.api.ItemContainer

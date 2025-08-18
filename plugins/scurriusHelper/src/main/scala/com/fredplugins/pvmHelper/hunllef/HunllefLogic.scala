@@ -7,7 +7,7 @@ import com.fredplugins.pvmHelper.hunllef.Action.{DisableOverheads, PrayMagic, Pr
 import com.fredplugins.pvmHelper.hunllef.Tornado.{ChaseTornado, RoamingTornado, isTornado}
 import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperOverlay, FredsPvmHelperPanel}
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, GameObjectUtils, InteractionUtils, InventoryUtils, MessageUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, GameObjectUtils, InteractionUtils, InventoryUtils, MessageUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.NPCs
 import ethanApiPlugin.collections.query.{NPCQuery, TileObjectQuery}

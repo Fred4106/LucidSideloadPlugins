@@ -2,7 +2,7 @@ description = "Common API"
 dependencies {
     annotationProcessor("org.projectlombok:lombok:${Dependencies.lombokVersion}")
     compileOnly("org.projectlombok:lombok:${Dependencies.lombokVersion}")
-    implementation(project(":ethans"))
+//    implementation(project(":ethans"))
 //    api(project(":lucid"))
 
 //    implementation("org.json:json:20231013")

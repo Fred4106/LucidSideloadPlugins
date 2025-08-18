@@ -32,14 +32,6 @@ public class TileObjects {
 					if (tile == null) {
 						continue;
 					}
-//					if (tile.getGroundItems() != null) {
-//						for (TileItem groundItem : tile.getGroundItems()) {
-//							if (groundItem == null) {
-//								continue;
-//							}
-//							TileItems.tileItems.add(new ETileItem(tile.getWorldLocation(), groundItem));
-//						}
-//					}
 					for (GameObject gameObject : tile.getGameObjects()) {
 						if (gameObject == null) {
 							continue;

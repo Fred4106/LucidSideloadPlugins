@@ -11,7 +11,7 @@ import com.fredplugins.superClickHelper.HallowedSepulchreData.SEPULCHRE_NPCS
 import com.fredplugins.superClickHelper.HallowedSepulchreData.SEPULCHRE_VARBITS
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import com.lucidplugins.api.utils.GameObjectUtils
+import ethanApiPlugin.lucidplugins.api.utils.GameObjectUtils
 import ethanApiPlugin.collections.query.TileObjectQuery
 import net.runelite.api.Client
 import net.runelite.api.DynamicObject

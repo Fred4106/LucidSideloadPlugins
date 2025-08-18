@@ -2,7 +2,7 @@ package com.fredplugins.titheFarm
 
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.InteractionUtils
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{Inventory, TileObjects}
 import ethanApiPlugin.collections.query.ItemQuery

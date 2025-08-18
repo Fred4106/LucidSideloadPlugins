@@ -2,22 +2,27 @@ package com.fredplugins.gauntlet;
 
 //import ethanApiPlugin.EthanApiPlugin;
 
-import ch.qos.logback.classic.Level;
 import com.fredplugins.attacktimer.AttackTimerMetronomePlugin;
 import com.fredplugins.common.ProjectileID;
+import ethanApiPlugin.interactionApi.PrayerInteraction;
+import ethanApiPlugin.lucidplugins.api.item.SlottedItem;
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils;
+import ethanApiPlugin.lucidplugins.api.utils.EquipmentUtils;
+import ethanApiPlugin.lucidplugins.api.utils.GameObjectUtils;
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils;
+import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils;
+import ethanApiPlugin.lucidplugins.api.utils.MessageUtils;
+import ethanApiPlugin.lucidplugins.api.utils.NpcUtils;
 import com.fredplugins.gauntlet.entity.Missile;
 import com.fredplugins.gauntlet.overlay.OverlayGauntlet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
-import com.lucidplugins.api.item.SlottedItem;
-import com.lucidplugins.api.utils.*;
 import com.fredplugins.gauntlet.resource.ResourceManager;
 import ethanApiPlugin.EthanApiPlugin;
-import interactionApi.PrayerInteraction;
+import ethanApiPlugin.collections.TileObjects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldArea;
@@ -544,21 +549,21 @@ public class FredGauntletPlugin extends Plugin {
 		if (room == null) {
 			return null;
 		}
-		return new GameObjectQuery().getGameObjectQuery(client).stream()
-			.filter(gameObject ->
+		return TileObjects.search().withName("Node")
+//		GameObjectQuery().getGameObjectQuery(client).stream()
+			.filter(to ->
 			{
-				final boolean isAboveBy1 = gameObject.getWorldLocation().getY() == room.getBaseY() + 1;
-				final boolean isBelowBy1 = gameObject.getWorldLocation().getY() == room.getBaseY() - GauntletInstanceGrid.ROOM_SIZE - 1;
-				final boolean isRight = gameObject.getWorldLocation().getX() == room.getBaseX() + GauntletInstanceGrid.ROOM_SIZE;
-				final boolean isLeftBy2 = gameObject.getWorldLocation().getX() == room.getBaseX() - 2;
-				final boolean isInsideRoomX = gameObject.getWorldLocation().getX() >= room.getBaseX() && gameObject.getWorldLocation().getX() <= room.getBaseX() + GauntletInstanceGrid.ROOM_SIZE;
-				final boolean isInsideRoomY = gameObject.getWorldLocation().getY() <= room.getBaseY() && gameObject.getWorldLocation().getY() >= room.getBaseY() - GauntletInstanceGrid.ROOM_SIZE;
+				final boolean isAboveBy1 = to.getWorldLocation().getY() == room.getBaseY() + 1;
+				final boolean isBelowBy1 = to.getWorldLocation().getY() == room.getBaseY() - GauntletInstanceGrid.ROOM_SIZE - 1;
+				final boolean isRight = to.getWorldLocation().getX() == room.getBaseX() + GauntletInstanceGrid.ROOM_SIZE;
+				final boolean isLeftBy2 = to.getWorldLocation().getX() == room.getBaseX() - 2;
+				final boolean isInsideRoomX = to.getWorldLocation().getX() >= room.getBaseX() && to.getWorldLocation().getX() <= room.getBaseX() + GauntletInstanceGrid.ROOM_SIZE;
+				final boolean isInsideRoomY = to.getWorldLocation().getY() <= room.getBaseY() && to.getWorldLocation().getY() >= room.getBaseY() - GauntletInstanceGrid.ROOM_SIZE;
 				return ((isAboveBy1 && isInsideRoomX) ||
 					(isBelowBy1 && isInsideRoomX) ||
 					(isLeftBy2 && isInsideRoomY) ||
-					(isRight && isInsideRoomY)) &&
-					getObjectComposition(gameObject.getId()).getName().equals("Node");
-			}).sorted((x, y) -> {
+					(isRight && isInsideRoomY));
+			}).gameObjects().stream().sorted((x, y) -> {
 				return client.getLocalPlayer().getWorldLocation().distanceTo(x.getWorldLocation()) + client.getLocalPlayer().getWorldLocation().distanceTo(y.getWorldLocation());
 			}).collect(Collectors.toList());
 	}
@@ -1023,7 +1028,7 @@ public class FredGauntletPlugin extends Plugin {
 	}
 
 	private void addSpawnedEntities() {
-		for (final GameObject gameObject : new GameObjectQuery().getGameObjectQuery(client)) {
+		for (final GameObject gameObject : TileObjects.search().gameObjects()) {
 			GameObjectSpawned gameObjectSpawned = new GameObjectSpawned();
 			gameObjectSpawned.setTile(null);
 			gameObjectSpawned.setGameObject(gameObject);

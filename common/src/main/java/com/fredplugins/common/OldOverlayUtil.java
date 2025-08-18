@@ -11,6 +11,7 @@ import net.runelite.api.Projectile;
 import net.runelite.api.Scene;
 import net.runelite.api.VarClientInt;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.gameval.VarClientID;
 import net.runelite.api.model.Jarvis;
 import net.runelite.api.widgets.Widget;
 
@@ -107,9 +108,9 @@ public class OldOverlayUtil {
 	}
 
 	public static Rectangle renderPrayerOverlay(Graphics2D graphics, Client client, Prayer prayer, Color color) {
-		Widget widget = client.getWidget(PrayerExtended.getPrayerWidgetId(prayer));
+		Widget widget = client.getWidget(PrayerExtended.getWidgetId(prayer));
 
-		if(widget == null || client.getVarbitValue(VarClientInt.INVENTORY_TAB) != InterfaceTab.PRAYER.getId()) {
+		if(widget == null || client.getVarcIntValue(VarClientID.TOPLEVEL_PANEL) != InterfaceTab.PRAYER.getId()) {
 			return null;
 		}
 

@@ -1,10 +1,15 @@
 package ethanApiPlugin.collections.query;
 
 import ethanApiPlugin.EthanApiPlugin;
+import ethanApiPlugin.collections.TileObjects;
 import ethanApiPlugin.utility.WorldAreaUtility;
 import net.runelite.api.Client;
+import net.runelite.api.DecorativeObject;
+import net.runelite.api.GameObject;
+import net.runelite.api.GroundObject;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.TileObject;
+import net.runelite.api.WallObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.RuneLite;
 import org.apache.commons.lang3.ArrayUtils;
@@ -12,12 +17,30 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TileObjectQuery {
 	private List<TileObject> tileObjects;
+	public List<GameObject> gameObjects() {
+		return tileObjects.stream().<GameObject>flatMap(to -> Stream.ofNullable(((to instanceof GameObject) ? ((GameObject) to) : null))).collect(Collectors.toList());
+	}
+	public List<DecorativeObject> decorativeObjects() {
+		return tileObjects.stream().<DecorativeObject>flatMap(to -> Stream.ofNullable(((to instanceof DecorativeObject) ? ((DecorativeObject) to) : null))).collect(Collectors.toList());
+	}
+	public List<WallObject> wallObjects() {
+		return tileObjects.stream().<WallObject>flatMap(to -> Stream.ofNullable(((to instanceof WallObject) ? ((WallObject) to) : null))).collect(Collectors.toList());
+	}
+	public List<GroundObject> groundObjects() {
+		return tileObjects.stream().<GroundObject>flatMap(to -> Stream.ofNullable(((to instanceof GroundObject) ? ((GroundObject) to) : null))).collect(Collectors.toList());
+	}
+
 	static Client client = RuneLite.getInjector().getInstance(Client.class);
 
 	public TileObjectQuery(List<TileObject> tileObjects) {
+//		this.gameObjects = new ArrayList(			tileObjects.stream().<GameObject>flatMap(to -> Stream.ofNullable(((to instanceof GameObject) ? ((GameObject) to) : null))).collect(Collectors.toList()));
+//		this.decorativeObjects = new ArrayList(		tileObjects.stream().<DecorativeObject>flatMap(to -> Stream.ofNullable(((to instanceof DecorativeObject) ? ((DecorativeObject) to) : null))).collect(Collectors.toList()));
+//		this.wallObjects = new ArrayList(			tileObjects.stream().<WallObject>flatMap(to -> Stream.ofNullable(((to instanceof WallObject) ? ((WallObject) to) : null))).collect(Collectors.toList()));
+//		this.groundObjects = new ArrayList(			tileObjects.stream().<GroundObject>flatMap(to -> Stream.ofNullable(((to instanceof GroundObject) ? ((GroundObject) to) : null))).collect(Collectors.toList()));
 		this.tileObjects = new ArrayList(tileObjects);
 	}
 

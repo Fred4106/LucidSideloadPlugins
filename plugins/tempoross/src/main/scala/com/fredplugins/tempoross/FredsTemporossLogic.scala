@@ -2,10 +2,9 @@ package com.fredplugins.tempoross
 
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.tempoross.Constants.*
-import com.lucidplugins.api.utils.{InteractionUtils, NpcUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{InteractionUtils, NpcUtils}
 import ethanApiPlugin.collections.TileObjects
-import ethanApiPlugin.pathfinding.GlobalCollisionMap
-import interactionApi.{NPCInteraction, TileObjectInteraction}
+import ethanApiPlugin.interactionApi.{NPCInteraction, TileObjectInteraction}
 import net.runelite.api.{ChatMessageType, GameObject, GameState, InventoryID, ItemID, NPC, NpcID, NullObjectID, ObjectComposition, TileObject}
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.{ChatMessage, GameObjectDespawned, GameObjectSpawned, GameStateChanged, GameTick, ItemContainerChanged, NpcDespawned, NpcSpawned, ScriptPreFired, VarbitChanged}

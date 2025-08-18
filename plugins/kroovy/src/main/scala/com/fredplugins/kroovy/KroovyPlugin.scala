@@ -4,7 +4,7 @@ import com.fredplugins.common.{Locatable, PrayerExtended}
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.kroovy.events.EventManager
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.CombatUtils
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.EthanApiPlugin
 import net.runelite.api.coords.WorldPoint
 import net.runelite.client.{Notifier, RuneLite}

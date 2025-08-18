@@ -26,11 +26,10 @@
 package com.fredplugins.demonicgorillaV2;
 
 import ch.qos.logback.classic.Level;
-import com.fredplugins.common.utils.ShimUtils$;
 import com.fredplugins.demonicgorillaV2.DemonicGorilla.AttackStyle;
 import com.google.common.collect.ImmutableSet;
-import com.lucidplugins.api.utils.CombatUtils;
-import com.lucidplugins.api.utils.InventoryUtils;
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils;
+import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils;
 import ethanApiPlugin.EthanApiPlugin;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Client;

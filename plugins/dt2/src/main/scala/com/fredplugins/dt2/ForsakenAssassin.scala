@@ -3,7 +3,7 @@ package com.fredplugins.dt2
 import com.fredplugins.dt2.ForsakenAssassin.Enums.{CloudType, ForsakenAnimation, ForsakenProjectileType}
 import com.fredplugins.dt2.ForsakenAssassin.{ForsakenAssassinId, ForsakenCloud, ForsakenProjectile}
 import com.google.inject.{Inject, Singleton}
-import com.lucidplugins.api.utils.GameObjectUtils
+import ethanApiPlugin.lucidplugins.api.utils.GameObjectUtils
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.api.events.{AnimationChanged, GameObjectDespawned, GameObjectSpawned, GameTick, NpcDespawned, NpcSpawned, ProjectileMoved}
 import net.runelite.api.{Client, NPC, Projectile, TileObject}

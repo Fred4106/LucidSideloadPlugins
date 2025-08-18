@@ -11,7 +11,7 @@ import javax.inject.Inject;
 
 import com.lucidplugins.api.spells.Spells;
 import com.lucidplugins.api.spells.WidgetInfo;
-import com.lucidplugins.api.utils.MessageUtils;
+import ethanApiPlugin.lucidplugins.api.utils.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;

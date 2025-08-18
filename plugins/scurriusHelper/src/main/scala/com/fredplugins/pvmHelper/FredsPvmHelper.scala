@@ -3,12 +3,12 @@ package com.fredplugins.pvmHelper
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
 import com.fredplugins.pvmHelper
 import com.fredplugins.pvmHelper.PvmGui.SEvent.{SNpcAnimationChanged, SNpcCompositionChanged, SNpcDespawned, SNpcSpawned}
-import com.fredplugins.pvmHelper.PvmGui.{SEvent}
+import com.fredplugins.pvmHelper.PvmGui.SEvent
 import com.fredplugins.pvmHelper.config.NamedAnimationEntry
 import com.fredplugins.pvmHelper.config.NamedAnimationEntry.decode
 import com.fredplugins.pvmHelper.scurrius.ScurriusLogic
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{TileObjects, Widgets}
 import net.runelite.api.coords.WorldPoint

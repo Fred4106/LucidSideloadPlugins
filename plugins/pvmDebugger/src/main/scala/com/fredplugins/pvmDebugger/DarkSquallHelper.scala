@@ -8,7 +8,7 @@ import com.fredplugins.pvmDebugger.DarkSquallIds.DarkSquallNpcId
 import com.fredplugins.pvmDebugger.DarkSquallIds.StrongWarriorNpcId
 import com.fredplugins.pvmDebugger.WarriorType.spell
 import com.google.inject.Inject
-import com.lucidplugins.api.utils.InteractionUtils
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.collections.ETileItem
 import ethanApiPlugin.collections.Inventory
 import net.runelite.api.Client

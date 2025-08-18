@@ -1,6 +1,8 @@
 description = "Ethans API"
 
 dependencies {
+    implementation(project(":common"))
+
     annotationProcessor("org.projectlombok:lombok:${Dependencies.lombokVersion}")
     compileOnly("org.projectlombok:lombok:${Dependencies.lombokVersion}")
     annotationProcessor("org.jetbrains:annotations:${Dependencies.jetbrainsAnnotations}")

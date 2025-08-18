@@ -8,10 +8,10 @@ import com.fredplugins.pvmHelper2.gauntlet.{RegularAttack, SwitchToMage, SwitchT
 import com.fredplugins.pvmHelper2.gauntlet.{EnterGauntlet, EnterHunllef, ExitGauntlet, ExitHunllef, HunllefAnimationEvents, TickHunllef}
 import com.fredplugins.pvmHelper2.{ClientEvent, Extractors, NpcEvent, PlayerEvent, PvmEvent, PvmHelperOverlay, PvmHelperPanel, PvmModule, gauntlet}
 import com.google.inject.{Inject, Singleton}
-import com.lucidplugins.api.utils.{CombatUtils, NpcUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.query.NPCQuery
-import interactionApi.PrayerInteraction
+import com.fredplugins.common.interactionApi.PrayerInteraction
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.api.{Actor, Client, HeadIcon, NPC, Perspective, Player, Prayer}
 import net.runelite.client.callback.ClientThread

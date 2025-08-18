@@ -4,6 +4,7 @@ import ethanApiPlugin.collections.EquipmentItemWidget;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -26,8 +27,12 @@ public class EquipmentItemQuery {
 		return this;
 	}
 
-	public EquipmentItemQuery withId(int id) {
-		items = items.stream().filter(item -> item.getEquipmentItemId() == id).collect(Collectors.toList());
+//	public EquipmentItemQuery withId(int id) {
+//		items = items.stream().filter(item -> item.getEquipmentItemId() == id).collect(Collectors.toList());
+//		return this;
+//	}
+	public EquipmentItemQuery withId(int ... ids) {
+		items = items.stream().filter(item -> ArrayUtils.contains(ids, item.getItemId())).collect(Collectors.toList());
 		return this;
 	}
 

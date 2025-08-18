@@ -1,14 +1,19 @@
 package com.fredplugins.superClickHelper
 
 import com.fredplugins.common.InterfaceTab
+import com.fredplugins.common.constants.Rune
 import com.fredplugins.common.extensions.MenuExtensions.*
 import com.fredplugins.common.extensions.TextExtensions.*
-import com.fredplugins.common.queries.InventoryItemQuery
+import com.fredplugins.common.magic.SpellIds
+import com.fredplugins.common.magic.events.BoltsEnchanted
+import com.fredplugins.common.magic.events.RunesChanged
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.InteractionUtils
-import com.lucidplugins.api.utils.InventoryUtils
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
+import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
+import com.fredplugins.common.utils.Runes
 import ethanApiPlugin.EthanApiPlugin
+import ethanApiPlugin.collections.Inventory
 import net.runelite.api.ChatMessageType
 import net.runelite.api.EnumID
 import net.runelite.api.ItemComposition
@@ -54,7 +59,7 @@ import scala.util.chaining.*
 import scala.util.Try
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
-import net.runelite.api.gameval.ItemID.{RUNE_ARROW}
+import net.runelite.api.gameval.ItemID.RUNE_ARROW
 import net.runelite.api.gameval.ItemID.{ASGARNIAN_HOP_SEED, BARLEY_SEED, BIRDHOUSE_MAGIC, BIRDHOUSE_MAHOGANY, BIRDHOUSE_MAPLE, BIRDHOUSE_NORMAL, BIRDHOUSE_OAK, BIRDHOUSE_REDWOOD, BIRDHOUSE_TEAK, BIRDHOUSE_WILLOW, BIRDHOUSE_YEW, HAMMERSTONE_HOP_SEED, JUTE_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED, YANILLIAN_HOP_SEED}
 import net.runelite.api.gameval.ObjectID.{BIRDHOUSE_1, BIRDHOUSE_2, BIRDHOUSE_3, BIRDHOUSE_4, BIRDHOUSE_MAGIC_BIRD, BIRDHOUSE_MAGIC_BUILT, BIRDHOUSE_MAGIC_FULL, BIRDHOUSE_MAHOGANY_BIRD, BIRDHOUSE_MAHOGANY_BUILT, BIRDHOUSE_MAHOGANY_FULL, BIRDHOUSE_MAPLE_BIRD, BIRDHOUSE_MAPLE_BUILT, BIRDHOUSE_MAPLE_FULL, BIRDHOUSE_NORMAL_BIRD, BIRDHOUSE_NORMAL_BUILT, BIRDHOUSE_NORMAL_FULL, BIRDHOUSE_NOT_BUILT, BIRDHOUSE_OAK_BIRD, BIRDHOUSE_OAK_BUILT, BIRDHOUSE_OAK_FULL, BIRDHOUSE_REDWOOD_BIRD, BIRDHOUSE_REDWOOD_BUILT, BIRDHOUSE_REDWOOD_FULL, BIRDHOUSE_TEAK_BIRD, BIRDHOUSE_TEAK_BUILT, BIRDHOUSE_TEAK_FULL, BIRDHOUSE_WILLOW_BIRD, BIRDHOUSE_WILLOW_BUILT, BIRDHOUSE_WILLOW_FULL, BIRDHOUSE_YEW_BIRD, BIRDHOUSE_YEW_BUILT, BIRDHOUSE_YEW_FULL}
 import net.runelite.api.gameval.ItemID.{BLACK_DRAGONHIDE_BODY, BLACK_DRAGONHIDE_CHAPS, BLACK_DRAGON_VAMBRACES, BLUE_DRAGONHIDE_BODY, BLUE_DRAGONHIDE_CHAPS, BLUE_DRAGON_VAMBRACES, RED_DRAGONHIDE_BODY, RED_DRAGONHIDE_CHAPS, RED_DRAGON_VAMBRACES}
@@ -62,9 +67,11 @@ import net.runelite.api.gameval.ItemID.{RUNE_2H_SWORD, RUNE_ARMOURED_BOOTS, RUNE
 import net.runelite.api.gameval.ItemID.{ADAMANT_2H_SWORD, ADAMANT_ARMOURED_BOOTS, ADAMANT_AXE, ADAMANT_AXE_2H, ADAMANT_BATTLEAXE, ADAMANT_CHAINBODY, ADAMANT_CLAWS, ADAMANT_DAGGER, ADAMANT_DAGGER_P, ADAMANT_DAGGER_P_, ADAMANT_DAGGER_P__, ADAMANT_FULL_HELM, ADAMANT_HALBERD, ADAMANT_KITESHIELD, ADAMANT_LONGSWORD, ADAMANT_MACE, ADAMANT_MED_HELM, ADAMANT_PICKAXE, ADAMANT_PLATEBODY, ADAMANT_PLATELEGS, ADAMANT_PLATESKIRT, ADAMANT_SCIMITAR, ADAMANT_SPEAR, ADAMANT_SPEAR_P, ADAMANT_SPEAR_P_, ADAMANT_SPEAR_P__, ADAMANT_SQ_SHIELD, ADAMANT_SWORD, ADAMNT_THROWNAXE, ADAMNT_WARHAMMER}
 import net.runelite.api.gameval.ItemID.{MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS, MITHRIL_AXE, MITHRIL_AXE_2H, MITHRIL_BATTLEAXE, MITHRIL_CHAINBODY, MITHRIL_CLAWS, MITHRIL_DAGGER, MITHRIL_DAGGER_P, MITHRIL_DAGGER_P_, MITHRIL_DAGGER_P__, MITHRIL_FULL_HELM, MITHRIL_HALBERD, MITHRIL_KITESHIELD, MITHRIL_LONGSWORD, MITHRIL_MACE, MITHRIL_MED_HELM, MITHRIL_PICKAXE, MITHRIL_PLATEBODY, MITHRIL_PLATELEGS, MITHRIL_PLATESKIRT, MITHRIL_SCIMITAR, MITHRIL_SPEAR, MITHRIL_SPEAR_P, MITHRIL_SPEAR_P_, MITHRIL_SPEAR_P__, MITHRIL_SQ_SHIELD, MITHRIL_SWORD, MITHRIL_THROWNAXE, MITHRIL_WARHAMMER}
 import net.runelite.api.gameval.ItemID.{AIR_BATTLESTAFF, EARTH_BATTLESTAFF, FIRE_BATTLESTAFF, MAGIC_LONGBOW, MAGIC_SHORTBOW, MAPLE_LONGBOW, MAPLE_SHORTBOW, WATER_BATTLESTAFF, YEW_LONGBOW, YEW_SHORTBOW}
-import net.runelite.api.gameval.ItemID.{JEWL_GOLD_BRACELET, JEWL_SAPPHIRE_BRACELET, JEWL_EMERALD_BRACELET, JEWL_RUBY_BRACELET, JEWL_DIAMOND_BRACELET, GOLD_RING, SAPPHIRE_RING, EMERALD_RING, RUBY_RING, DIAMOND_RING, GOLD_NECKLACE, SAPPHIRE_NECKLACE, EMERALD_NECKLACE, RUBY_NECKLACE, DIAMOND_NECKLACE, STRUNG_GOLD_AMULET, STRUNG_SAPPHIRE_AMULET, STRUNG_EMERALD_AMULET, STRUNG_RUBY_AMULET, STRUNG_DIAMOND_AMULET}
+import net.runelite.api.gameval.ItemID.{DIAMOND_NECKLACE, DIAMOND_RING, EMERALD_NECKLACE, EMERALD_RING, GOLD_NECKLACE, GOLD_RING, JEWL_DIAMOND_BRACELET, JEWL_EMERALD_BRACELET, JEWL_GOLD_BRACELET, JEWL_RUBY_BRACELET, JEWL_SAPPHIRE_BRACELET, RUBY_NECKLACE, RUBY_RING, SAPPHIRE_NECKLACE, SAPPHIRE_RING, STRUNG_DIAMOND_AMULET, STRUNG_EMERALD_AMULET, STRUNG_GOLD_AMULET, STRUNG_RUBY_AMULET, STRUNG_SAPPHIRE_AMULET}
 import net.runelite.api.gameval.ItemID.{ARROW_SHAFT, FEATHER, HEADLESS_ARROW, JADE_BRACELET, JADE_NECKLACE, JADE_RING, MAHOGANY_LOGS, OPAL_BRACELET, OPAL_NECKLACE, OPAL_RING, SLAYER_BROAD_ARROWHEAD, STRUNG_JADE_AMULET, STRUNG_OPAL_AMULET, STRUNG_TOPAZ_AMULET, TEAK_LOGS, TOPAZ_BRACELET, TOPAZ_NECKLACE, TOPAZ_RING, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET, UNSTRUNG_EMERALD_AMULET, UNSTRUNG_GOLD_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_ONYX_AMULET, UNSTRUNG_OPAL_AMULET, UNSTRUNG_RUBY_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_TOPAZ_AMULET, UNSTRUNG_ZENYTE_AMULET}
 import packetUtils.WidgetInfoExtended
+
+import scala.collection.immutable.HashMap
 
 @PluginDescriptor(
 	name = "<html><font color=\"#32C8CD\">Freds</font> Super Clicker</html>",
@@ -233,7 +240,10 @@ class SuperClickerPlugin() extends Plugin {
 
 
 	def search(ids: Int*): Option[WidgetItem] = {
-		new InventoryItemQuery().idEquals(ids *).result(client).asScala.toList
+		Inventory.search().withId(ids *).result.asScala.toList
+			.map(w => {
+				WidgetItem(w.getItemId, w.getItemQuantity, w.getBounds, w.getParent, w.getBounds)
+			})
 			.sortBy(u => (u.getId.min(65535).max(0) << 8) | u.getWidget.getIndex.min(255).max(0)).headOption
 	}
 	private val processedGameObjects: mutable.ListBuffer[TileObject] = mutable.ListBuffer.empty
@@ -281,7 +291,24 @@ class SuperClickerPlugin() extends Plugin {
 	}
 
 	@Subscribe
+	def onRunesChanged(event: RunesChanged): Unit = {
+		event.getChanges
+		log.debug("Runes changed {}", event)
+	}
+	@Subscribe
+	def onBoltsEnchanted(event: BoltsEnchanted): Unit = {
+		log.debug("Bolts enchanged {}", event)
+	}
+
+	var runes = Map.empty[Rune, Int]
+	@Subscribe
 	def onGameTick(event: GameTick): Unit = {
+		val nRunes = Runes.getRunes
+		if(runes != nRunes) {
+			log.debug("Runes changed from \n{} to \n{}", runes, nRunes)
+			runes = nRunes
+		}
+
 		clickedTiles.flatMapInPlace {
 			case (i, point) if i < 20 => Some((i + 1, point))
 			case (_, point) => None
@@ -570,7 +597,7 @@ class SuperClickerPlugin() extends Plugin {
 	def onPostMenuSort(postMenuSort: PostMenuSort): Unit = {
 		processedGameObjects.clear()
 		if (!client.isMenuOpen) {
-			val menuEntries   : List[MenuEntry] = client.getMenuEntries.toList
+			val menuEntries   : List[MenuEntry] = client.getMenu.getMenuEntries.toList
 			val (added, stock)                  = menuEntries.partition(e => {
 				priorityMenuEntries.contains(e)
 			})

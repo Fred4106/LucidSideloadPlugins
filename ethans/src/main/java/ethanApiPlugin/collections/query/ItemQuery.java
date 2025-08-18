@@ -9,8 +9,10 @@ import net.runelite.client.RuneLite;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -35,18 +37,19 @@ public class ItemQuery {
 	}
 
 	public ItemQuery tradeAble() {
-		items = items.stream().filter(item -> itemManager.getItemComposition(item.getItemId()).isTradeable()).collect(Collectors.toList());
-		return this;
+		return filterItem(ItemComposition::isTradeable);
 	}
 
 	public ItemQuery differenceInValueLessThan(int difference) {
-		items = items.stream().filter(item -> Math.abs(itemManager.getItemComposition(item.getItemId()).getHaPrice() - itemManager.getItemPriceWithSource(item.getItemId(), true)) < difference).collect(Collectors.toList());
-		return this;
+//		items = items.stream().filter(item -> Math.abs(itemManager.getItemComposition(item.getItemId()).getHaPrice() - itemManager.getItemPriceWithSource(item.getItemId(), true)) < difference).collect(Collectors.toList());
+		return filterItem(ic -> ic.getHaPrice() - itemManager.getItemPriceWithSource(ic.getId(), true) < difference);//.getPrice()
+//		return this;
 	}
 
 	public ItemQuery priceOver(int price) {
-		items = items.stream().filter(item -> itemManager.getItemComposition(item.getItemId()).getHaPrice() >= price).collect(Collectors.toList());
-		return this;
+//		items = items.stream().filter(item -> itemManager.getItemComposition(item.getItemId()).getHaPrice() >= price).collect(Collectors.toList());
+//		return this;
+		return filterItem(ic-> ic.getPrice() >= price);
 	}
 
 	public ItemQuery withSet(Set<Integer> ids) {
@@ -56,8 +59,13 @@ public class ItemQuery {
 		return this;
 	}
 
-	public ItemQuery withId(int id) {
-		items = items.stream().filter(item -> item.getItemId() == id).collect(Collectors.toList());
+//	public ItemQuery withId(int id) {
+//		items = items.stream().filter(item -> item.getItemId() == id).collect(Collectors.toList());
+//		return this;
+//	}
+
+	public ItemQuery withId(int ... ids) {
+		items = items.stream().filter(item -> ArrayUtils.contains(ids, item.getItemId())).collect(Collectors.toList());
 		return this;
 	}
 
@@ -112,20 +120,32 @@ public class ItemQuery {
 		return this;
 	}
 
-	public ItemQuery onlyNoted() {
-		items = items.stream().filter(this::isNoted).collect(Collectors.toList());
-		return this;
+	public ItemQuery filterItem(Predicate<ItemComposition> predicate) {
+		Function<ItemComposition, Boolean> predFunc = predicate::test;
+		return filter(predFunc
+			.compose(EthanApiPlugin.itemDefs::getUnchecked)
+			.compose(Widget::getItemId)
+			::apply
+		);
 	}
+
+	private static final Predicate<ItemComposition> stackable = ItemComposition::isStackable;
+	private static final Predicate<ItemComposition> noted = (ItemComposition i) -> i.getNote() != 1;
 
 	public ItemQuery onlyStackable() {
-		items = items.stream().filter(this::isStackable).collect(Collectors.toList());
-		return this;
+		return filterItem(stackable);
+	}
+	
+	public ItemQuery onlyNoted() {
+		return filterItem(noted);
+	}
+	
+	public ItemQuery onlyUnstackable() {
+		return filterItem(stackable.negate());
 	}
 
-
 	public ItemQuery onlyUnnoted() {
-		items = items.stream().filter(item -> !isNoted(item)).collect(Collectors.toList());
-		return this;
+		return filterItem(noted.negate());
 	}
 
 	public boolean empty() {
@@ -147,17 +167,5 @@ public class ItemQuery {
 			return Optional.ofNullable(null);
 		}
 		return Optional.ofNullable(items.get(0));
-	}
-
-	@SneakyThrows
-	public boolean isNoted(Widget item) {
-		ItemComposition itemComposition = EthanApiPlugin.itemDefs.get(item.getItemId());
-		return itemComposition.getNote() != -1;
-	}
-
-	@SneakyThrows
-	public boolean isStackable(Widget item) {
-		ItemComposition itemComposition = EthanApiPlugin.itemDefs.get(item.getItemId());
-		return itemComposition.isStackable();
 	}
 }

@@ -1,5 +1,6 @@
 package com.fredplugins.gearSwapper
 
+import ethanApiPlugin.lucidplugins.api.item.SlottedItem
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.gearSwapper.FredsGearSwapperConfig.CONFIG_GROUP as FREDS_CONFIG_GROUP
 import com.fredplugins.gearSwapper.FredsGearSwapperConfig.GearSlot
@@ -16,12 +17,11 @@ import com.google.gson.GsonBuilder
 import com.google.inject.Inject
 import com.google.inject.Provides
 import com.google.inject.Singleton
-import com.lucidplugins.api.item.SlottedItem
-import com.lucidplugins.api.utils.CombatUtils
-import com.lucidplugins.api.utils.EquipmentUtils
-import com.lucidplugins.api.utils.InteractionUtils
-import com.lucidplugins.api.utils.InventoryUtils
-import com.lucidplugins.api.utils.MessageUtils
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
+import ethanApiPlugin.lucidplugins.api.utils.EquipmentUtils
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
+import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
+import ethanApiPlugin.lucidplugins.api.utils.MessageUtils
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.Inventory
 import net.runelite.api.Client

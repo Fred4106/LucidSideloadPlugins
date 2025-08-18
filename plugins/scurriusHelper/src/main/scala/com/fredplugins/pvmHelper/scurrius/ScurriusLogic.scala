@@ -3,9 +3,9 @@ package com.fredplugins.pvmHelper.scurrius
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils}
 import com.fredplugins.pvmHelper.{BossToolTrait, FredsPvmHelperConfig, FredsPvmHelperPanel}
 import com.google.gson.JsonObject
-import com.lucidplugins.api.utils.CombatUtils
-import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
-import interactionApi.PrayerInteraction
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
+import ethanApiPlugin.interactionApi.PrayerInteraction
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.*
 import net.runelite.api.*
@@ -20,7 +20,7 @@ import scala.util.Try
 import scala.util.chaining.*
 //import com.fredplugins.pvmHelper.helpers.ScurriusLogic.{DURATION, FALLING_CEILING_GRAPHIC, SCURRIUS, SCURRIUS_PUBLIC}
 import com.google.inject.{Inject, Provides, Singleton}
-import com.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{TileObjects, Widgets}
 import net.runelite.api.{ChatMessageType, Client, GameState, GraphicsObject, InventoryID, Item, ItemContainer, NPC, Prayer, Projectile, TileObject}
