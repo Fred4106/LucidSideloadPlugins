@@ -400,6 +400,8 @@ class FredsGearSwapperPlugin() extends Plugin with KeyListener {
 				InventoryUtils.itemInteract(item.getItem.getId, "Wield")
 			} else if (InventoryUtils.itemHasAction(item.getItem.getId, "Wear")) {
 				InventoryUtils.itemInteract(item.getItem.getId, "Wear")
+			} else if (InventoryUtils.itemHasAction(item.getItem.getId, "Equip")) {
+				InventoryUtils.itemInteract(item.getItem.getId, "Equip")
 			}
 		}
 
