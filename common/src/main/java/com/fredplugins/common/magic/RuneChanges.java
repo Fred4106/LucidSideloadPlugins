@@ -1,19 +1,13 @@
 package com.fredplugins.common.magic;
 
-import com.fredplugins.common.constants.Rune;
-import com.google.common.primitives.Ints;
 import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.client.RuneLite;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Getter
 public class RuneChanges {
@@ -36,11 +30,11 @@ public class RuneChanges {
         return costMap;
     }
 
-	public Map<Rune, Integer> getRuneChanges() {
-		return Map.<Rune, Integer>ofEntries(changes.entrySet().stream().flatMap(e -> Rune.getRuneFromItemId(e.getKey()).stream().map(r -> Map.entry(r, e.getValue()))).collect(Collectors.toList()).toArray(new Map.Entry[0]));
+	public Map<OldRune, Integer> getRuneChanges() {
+		return Map.<OldRune, Integer>ofEntries(changes.entrySet().stream().flatMap(e -> OldRune.getRuneFromItemId(e.getKey()).stream().map(r -> Map.entry(r, e.getValue()))).collect(Collectors.toList()).toArray(new Map.Entry[0]));
 	}
-	public Map<Rune, Integer> getNonRuneChanges() {
-		return Map.<String, Integer>ofEntries(changes.entrySet().stream().filter(e -> Rune.getRuneFromItemId(e.getKey()).isEmpty()).map(e -> Map.entry( client.getItemDefinition(e.getKey()).getName(), e.getValue())).collect(Collectors.toList()).toArray(new Map.Entry[0]));
+	public Map<OldRune, Integer> getNonRuneChanges() {
+		return Map.<String, Integer>ofEntries(changes.entrySet().stream().filter(e -> OldRune.getRuneFromItemId(e.getKey()).isEmpty()).map(e -> Map.entry( client.getItemDefinition(e.getKey()).getName(), e.getValue())).collect(Collectors.toList()).toArray(new Map.Entry[0]));
 	}
 
 	@Override

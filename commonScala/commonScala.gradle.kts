@@ -5,7 +5,6 @@ plugins {
 }
 dependencies {
     implementation(project(":common"))
-//    implementation(project(":ethans"))
     api("org.scala-lang:scala3-library_3:${Dependencies.scalaVersion}")
 
     implementation("net.codingwell:scala-guice_3:7.0.0") {

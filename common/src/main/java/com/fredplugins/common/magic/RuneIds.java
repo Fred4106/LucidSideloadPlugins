@@ -232,7 +232,6 @@ public class RuneIds {
 		EnchantProducts.add(ItemID.NECKLACE_OF_PASSAGE5);
 		EnchantProducts.add(ItemID.EXPEDITIOUS_BRACELET);
 		EnchantProducts.add(ItemID.AMULET_OF_BOUNTY);
-
 		EnchantProducts.add(ItemID.RING_OF_RECOIL);
 		EnchantProducts.add(ItemID.GAMES_NECKLACE8);
 		EnchantProducts.add(ItemID.AMULET_OF_MAGIC);

@@ -1,9 +1,9 @@
 package com.fredplugins.superClickHelper
 
 import com.fredplugins.common.InterfaceTab
-import com.fredplugins.common.constants.Rune
 import com.fredplugins.common.extensions.MenuExtensions.*
 import com.fredplugins.common.extensions.TextExtensions.*
+import com.fredplugins.common.magic.OldRune
 import com.fredplugins.common.magic.SpellIds
 import com.fredplugins.common.magic.events.BoltsEnchanted
 import com.fredplugins.common.magic.events.RunesChanged
@@ -11,7 +11,7 @@ import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
-import com.fredplugins.common.utils.Runes
+//import com.fredplugins.common.utils.RunesUtil
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.Inventory
 import net.runelite.api.ChatMessageType
@@ -300,14 +300,14 @@ class SuperClickerPlugin() extends Plugin {
 		log.debug("Bolts enchanged {}", event)
 	}
 
-	var runes = Map.empty[Rune, Int]
+	var runes = Map.empty[OldRune, Int]
 	@Subscribe
 	def onGameTick(event: GameTick): Unit = {
-		val nRunes = Runes.getRunes
-		if(runes != nRunes) {
-			log.debug("Runes changed from \n{} to \n{}", runes, nRunes)
-			runes = nRunes
-		}
+//		val nRunes = RunesUtil..getRunes
+//		if(runes != nRunes) {
+//			log.debug("Runes changed from \n{} to \n{}", runes, nRunes)
+//			runes = nRunes
+//		}
 
 		clickedTiles.flatMapInPlace {
 			case (i, point) if i < 20 => Some((i + 1, point))

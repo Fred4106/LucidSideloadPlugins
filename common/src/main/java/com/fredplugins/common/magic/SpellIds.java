@@ -63,8 +63,7 @@ public class SpellIds {
 
         Spells.add(new SpellInfo("Water Strike", SpriteID.SPELL_WATER_STRIKE, new SpellCost(new int[] {ItemID.MIND_RUNE, ItemID.WATER_RUNE, ItemID.AIR_RUNE}, new int[] {1, 1, 1})));
         Spells.add(
-			new SpellInfo(
-				"Lvl-1 Enchant", SpriteID.SPELL_LVL_1_ENCHANT,
+			new SpellInfo("Lvl-1 Enchant", SpriteID.SPELL_LVL_1_ENCHANT,
 				new SpellCost(new int[] {ItemID.COSMIC_RUNE, ItemID.WATER_RUNE, ItemID.OPAL_RING}, new int[] {1, 1, 1}),
 				new SpellProduct(ItemID.RING_OF_RECOIL, 1),
 				new SpellProduct(ItemID.GAMES_NECKLACE8, 1),

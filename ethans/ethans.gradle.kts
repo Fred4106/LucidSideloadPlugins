@@ -2,6 +2,7 @@ description = "Ethans API"
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":commonScala"))
 
     annotationProcessor("org.projectlombok:lombok:${Dependencies.lombokVersion}")
     compileOnly("org.projectlombok:lombok:${Dependencies.lombokVersion}")

@@ -31,8 +31,6 @@ public class CastSuppliesTracker {
 	private static final int[] RUNE_POUCH_AMOUNT_VARBITS = {
 			VarbitID.RUNE_POUCH_QUANTITY_1, VarbitID.RUNE_POUCH_QUANTITY_2, VarbitID.RUNE_POUCH_QUANTITY_3, VarbitID.RUNE_POUCH_QUANTITY_4
 	};
-	private static final int FOUNTAIN_OF_RUNES_VARBIT = 4145;
-
 	final private Map<Integer, Integer> runeCount = new HashMap<>();
 	final private Set<Integer> unlimitedRunes = new HashSet<>();
 	private RuneChanges lastChanges;
@@ -308,7 +306,7 @@ public class CastSuppliesTracker {
 
 	private boolean isRelevantVarbit(int varbitId)
 	{
-		return varbitId == FOUNTAIN_OF_RUNES_VARBIT ||
+		return varbitId == VarbitID.FOUNTAIN_OF_RUNE_ACTIVE ||
 			Arrays.stream(RUNE_POUCH_RUNE_VARBITS).anyMatch(v -> v == varbitId) ||
 			Arrays.stream(RUNE_POUCH_AMOUNT_VARBITS).anyMatch(v -> v == varbitId);
 	}
