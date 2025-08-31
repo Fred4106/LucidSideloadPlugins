@@ -43,6 +43,7 @@ import net.runelite.api.Prayer;
 import net.runelite.api.Projectile;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.HitsplatApplied;
@@ -399,6 +400,16 @@ public class DemonicGorillaPlugin extends Plugin {
 	}
 
 	@Subscribe
+	private void onActorDeath(ActorDeath event) {
+		if (!atGorillas || targetGorilla == null) {
+			return;
+		}
+		if(targetGorilla.getNpc() == event.getActor()) {
+			CombatUtils.deactivatePrayers(Prayer.PIETY, Prayer.EAGLE_EYE, Prayer.PROTECT_FROM_MAGIC, Prayer.PROTECT_FROM_MELEE, Prayer.PROTECT_FROM_MISSILES);
+			targetGorilla = null;
+		}
+	}
+	@Subscribe
 	private void onNpcSpawned(NpcSpawned event) {
 		if (!atGorillas) {
 			return;
@@ -643,25 +654,34 @@ public class DemonicGorillaPlugin extends Plugin {
 							break;
 					}
 				}
-			} else if (targetGorilla.getNextPossibleAttackStyles().contains(AttackStyle.MELEE)) {
-				targetGorilla.getNextPossibleAttackStyles().stream().filter(x -> x != AttackStyle.MELEE).filter(x -> x != playerProtectedAgainst).findFirst().ifPresent(ats -> {
-					switch (ats) {
-						case MAGIC:
-							CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
-							break;
-						case RANGED:
-							CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MISSILES);
-							break;
-					}
-				});
-			} else if (playerProtectedAgainst != AttackStyle.MAGIC) {
-				CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+			} else if (targetGorilla.getNextPossibleAttackStyles().size() == 2) {
+				if (targetGorilla.getNextPossibleAttackStyles().contains(AttackStyle.MELEE)) {
+					targetGorilla.getNextPossibleAttackStyles().stream().filter(x -> x != AttackStyle.MELEE).filter(x -> x != playerProtectedAgainst).findFirst().ifPresent(ats -> {
+						switch (ats) {
+							case MAGIC:
+								CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+								break;
+							case RANGED:
+								CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MISSILES);
+								break;
+						}
+					});
+				} else if (playerProtectedAgainst != AttackStyle.MAGIC) {
+					CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+				}
+			} else {
+				if(playerProtectedAgainst != AttackStyle.MAGIC) {
+					CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MAGIC);
+				}
 			}
 
 			switch (targetGorilla.getOverheadIcon()) {
 				case MELEE:
 					if (InventoryUtils.contains(ItemID.BOW_OF_FAERDHINEN_INFINITE)) {
 						InventoryUtils.wieldItem(ItemID.BOW_OF_FAERDHINEN_INFINITE);
+					}
+					if(CombatUtils.getActiveOffense() != Prayer.EAGLE_EYE) {
+						CombatUtils.activatePrayer(Prayer.EAGLE_EYE);
 					}
 					break;
 				case RANGED:
@@ -670,6 +690,12 @@ public class DemonicGorillaPlugin extends Plugin {
 					}
 					if (InventoryUtils.contains(ItemID.DRAGON_PARRYINGDAGGER)) {
 						InventoryUtils.wieldItem(ItemID.DRAGON_PARRYINGDAGGER);
+					}
+//					if(CombatUtils.getSpecEnergy() >= 70 && !CombatUtils.isSpecEnabled()) {
+//						CombatUtils.toggleSpec();
+//					}
+					if(CombatUtils.getActiveOffense() != Prayer.PIETY) {
+						CombatUtils.activatePrayer(Prayer.PIETY);
 					}
 					break;
 				default:

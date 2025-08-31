@@ -1,11 +1,14 @@
 package ethanApiPlugin;
 
+import ch.qos.logback.classic.Level;
 import ethanApiPlugin.services.CastSuppliesTracker;
 import com.google.inject.Singleton;
 import ethanApiPlugin.collections.*;
 import ethanApiPlugin.services.RemainingCastTracker;
 import ethanApiPlugin.services.localPlayer.LocalPlayerService;
 import net.runelite.api.events.GameStateChanged;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import packetUtils.ObfuscatedNames;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -83,6 +86,13 @@ public class EthanApiPlugin extends Plugin {
 			{2, -1},
 			{2, 1}
 	};
+
+	private final static Logger log;
+	static {
+		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(EthanApiPlugin.class)).setLevel(Level.DEBUG);
+		log = LoggerFactory.getLogger(EthanApiPlugin.class);
+	}
+
 	@Inject
 	public EventBus eventBus;
 
@@ -183,106 +193,120 @@ public class EthanApiPlugin extends Plugin {
 		animation.setAccessible(false);
 		return anim;
 	}
+//
+//	public static HeadIcon headIconThruLengthEightArrays(NPC npc) throws IllegalAccessException {
+//		Class<?>[] trying = new Class<?>[]{npc.getClass(),npc.getComposition().getClass()};
+//		for (Class<?> aClass : trying) {
+//			for (Field declaredField : aClass.getDeclaredFields()) {
+//				Field[] decFields = declaredField.getType().getDeclaredFields();
+//				if(decFields.length==2){
+//					if(decFields[0].getType().isArray()&&decFields[1].getType().isArray()){
+//						for (Field decField : decFields) {
+//							decField.setAccessible(true);
+//						}
+//						Object[] array1 = (Object[]) decFields[0].get(npc);
+//						Object[] array2 = (Object[]) decFields[1].get(npc);
+//						for (Field decField : decFields) {
+//							decField.setAccessible(false);
+//						}
+//						if(array1.length==8&array2.length==8){
+//							if(decFields[0].getType()==short[].class){
+//								if((short)array1[0]==-1){
+//									return null;
+//								}
+//								return HeadIcon.values()[(short)array1[0]];
+//							}
+//							if((short)array2[0]==-1){
+//								return null;
+//							}
+//							return HeadIcon.values()[(short)array2[0]];
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return null;
+//	}
+//	@SneakyThrows
+//	public static HeadIcon getHeadIcon(NPC npc) {
+//		if(npc==null) return null;
+//		HeadIcon icon = getOldHeadIcon(npc);
+//		if(icon!=null){
+//			log.debug("Icon {} returned using oldHeadIcon", icon);
+//			return icon;
+//		}
+//		icon = getOlderHeadicon(npc);
+//		if(icon!=null){
+//			log.debug("Icon {} returned using OlderHeadicon", icon);
+//			return icon;
+//		}
+//		icon = headIconThruLengthEightArrays(npc);
+//		log.debug("Icon {} returned using headIconThruLengthEightArrays", icon);
+//		return icon;
+//	}
 
-	public static HeadIcon headIconThruLengthEightArrays(NPC npc) throws IllegalAccessException {
-		Class<?>[] trying = new Class<?>[]{npc.getClass(),npc.getComposition().getClass()};
-		for (Class<?> aClass : trying) {
-			for (Field declaredField : aClass.getDeclaredFields()) {
-				Field[] decFields = declaredField.getType().getDeclaredFields();
-				if(decFields.length==2){
-					if(decFields[0].getType().isArray()&&decFields[1].getType().isArray()){
-						for (Field decField : decFields) {
-							decField.setAccessible(true);
-						}
-						Object[] array1 = (Object[]) decFields[0].get(npc);
-						Object[] array2 = (Object[]) decFields[1].get(npc);
-						for (Field decField : decFields) {
-							decField.setAccessible(false);
-						}
-						if(array1.length==8&array2.length==8){
-							if(decFields[0].getType()==short[].class){
-								if((short)array1[0]==-1){
-									return null;
-								}
-								return HeadIcon.values()[(short)array1[0]];
-							}
-							if((short)array2[0]==-1){
-								return null;
-							}
-							return HeadIcon.values()[(short)array2[0]];
-						}
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	@SneakyThrows
 	public static HeadIcon getHeadIcon(NPC npc) {
-		if(npc==null) return null;
-		HeadIcon icon = getOldHeadIcon(npc);
-		if(icon!=null){
-			//System.out.println("Icon returned using oldHeadIcon");
-			return icon;
+		short[] spriteIds = npc.getOverheadSpriteIds(); // what a unit for this ty
+		int[] archiveIds  = npc.getOverheadArchiveIds();
+		if (spriteIds == null || archiveIds == null) {
+			return null;
 		}
-		icon = getOlderHeadicon(npc);
-		if(icon!=null){
-			//System.out.println("Icon returned using OlderHeadicon");
-			return icon;
-		}
-		//System.out.println("Icon returned using headIconThruLengthEightArrays");
-		icon = headIconThruLengthEightArrays(npc);
-		return icon;
+
+//		log.debug(" spriteIds = {}", spriteIds);
+//		log.debug("archiveIds = {}", archiveIds);
+
+
+		return HeadIcon.values()[spriteIds[0]];
 	}
 
-	@SneakyThrows
-	public static HeadIcon getOlderHeadicon(NPC npc){
-		Method getHeadIconMethod = null;
-		for (Method declaredMethod : npc.getComposition().getClass().getDeclaredMethods()) {
-			if (declaredMethod.getName().length() == 2 && declaredMethod.getReturnType() == short.class && declaredMethod.getParameterCount() == 1) {
-				getHeadIconMethod = declaredMethod;
-				getHeadIconMethod.setAccessible(true);
-				short headIcon = -1;
-				try {
-					headIcon = (short) getHeadIconMethod.invoke(npc.getComposition(), 0);
-				}catch (Exception e){
-					//nothing
-				}
-				getHeadIconMethod.setAccessible(false);
-
-				if (headIcon == -1) {
-					continue;
-				}
-				return HeadIcon.values()[headIcon];
-			}
-		}
-		return null;
-	}
-
-	@SneakyThrows
-	public static HeadIcon getOldHeadIcon(NPC npc) {
-		Method getHeadIconMethod;
-		for (Method declaredMethod : npc.getClass().getDeclaredMethods()) {
-			if (declaredMethod.getName().length() == 2 && declaredMethod.getReturnType() == short[].class && declaredMethod.getParameterCount() == 0) {
-				getHeadIconMethod = declaredMethod;
-				getHeadIconMethod.setAccessible(true);
-				short[] headIcon = null;
-				try {
-					headIcon = (short[]) getHeadIconMethod.invoke(npc);
-				} catch (Exception e) {
-					//nothing
-				}
-				getHeadIconMethod.setAccessible(false);
-
-				if (headIcon == null) {
-					continue;
-				}
-				return HeadIcon.values()[headIcon[0]];
-			}
-		}
-		return null;
-	}
+//
+//	@SneakyThrows
+//	public static HeadIcon getOlderHeadicon(NPC npc){
+//		Method getHeadIconMethod = null;
+//		for (Method declaredMethod : npc.getComposition().getClass().getDeclaredMethods()) {
+//			if (declaredMethod.getName().length() == 2 && declaredMethod.getReturnType() == short.class && declaredMethod.getParameterCount() == 1) {
+//				getHeadIconMethod = declaredMethod;
+//				getHeadIconMethod.setAccessible(true);
+//				short headIcon = -1;
+//				try {
+//					headIcon = (short) getHeadIconMethod.invoke(npc.getComposition(), 0);
+//				}catch (Exception e){
+//					//nothing
+//				}
+//				getHeadIconMethod.setAccessible(false);
+//
+//				if (headIcon == -1) {
+//					continue;
+//				}
+//				return HeadIcon.values()[headIcon];
+//			}
+//		}
+//		return null;
+//	}
+//
+//	@SneakyThrows
+//	public static HeadIcon getOldHeadIcon(NPC npc) {
+//		Method getHeadIconMethod;
+//		for (Method declaredMethod : npc.getClass().getDeclaredMethods()) {
+//			if (declaredMethod.getName().length() == 2 && declaredMethod.getReturnType() == short[].class && declaredMethod.getParameterCount() == 0) {
+//				getHeadIconMethod = declaredMethod;
+//				getHeadIconMethod.setAccessible(true);
+//				short[] headIcon = null;
+//				try {
+//					headIcon = (short[]) getHeadIconMethod.invoke(npc);
+//				} catch (Exception e) {
+//					//nothing
+//				}
+//				getHeadIconMethod.setAccessible(false);
+//
+//				if (headIcon == null) {
+//					continue;
+//				}
+//				return HeadIcon.values()[headIcon[0]];
+//			}
+//		}
+//		return null;
+//	}
 
 	@Deprecated
 	public int countItem(String str, WidgetInfo container) {
