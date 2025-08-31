@@ -65,17 +65,14 @@ public class CastSuppliesTracker {
 	}
 
 	@Subscribe
-	public void onPostClientTick(PostClientTick event)
-	{
-		if (!requiresPostUpdate)
-			return;
-
-		updateRuneCount();
-		requiresPostUpdate = false;
+	public void onPostClientTick(PostClientTick event) {
+		if (requiresPostUpdate && client.getGameState() == GameState.LOGGED_IN) {
+			updateRuneCount();
+			requiresPostUpdate = false;
+		}
 	}
 
-	public void start()
-	{
+	public void start() {
 		if(!active) {
 			active = true;
 			requiresPostUpdate = true;

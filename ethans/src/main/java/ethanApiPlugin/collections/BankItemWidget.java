@@ -1,6 +1,7 @@
 package ethanApiPlugin.collections;
 
 import ethanApiPlugin.EthanApiPlugin;
+import net.runelite.api.Client;
 import net.runelite.api.FontTypeFace;
 import net.runelite.api.Point;
 import net.runelite.api.gameval.VarbitID;
@@ -436,94 +437,50 @@ public class BankItemWidget implements Widget {
 		return null;
 	}
 
-	@Nullable
-	@Override
-	public String[] getActions() {
-		int xQuantity = EthanApiPlugin.getClient().getVarbitValue(VarbitID.BANK_REQUESTEDQUANTITY);
-		String[] actions = new String[10];
-		switch (EthanApiPlugin.getClient().getVarbitValue(VarbitID.BANK_QUANTITY_TYPE)) {
-			default:
-			case 0:
-				actions[0] = "Withdraw-1";
-				actions[1] = "Withdraw-5";
-				actions[2] = "Withdraw-10";
-				if (xQuantity > 0) {
-					actions[3] = "Withdraw-" + xQuantity;
-					actions[4] = "Withdraw-X";
-					actions[5] = "Withdraw-All";
-					actions[6] = "Withdraw-All-but-1";
-				} else {
-					actions[3] = "Withdraw-X";
-					actions[4] = "Withdraw-All";
-					actions[5] = "Withdraw-All-but-1";
-				}
-				break;
-			case 1:
-				actions[0] = "Withdraw-5";
-				actions[1] = "Withdraw-1";
-				actions[2] = "Withdraw-10";
-				if (xQuantity > 0) {
-					actions[3] = "Withdraw-" + xQuantity;
-					actions[4] = "Withdraw-X";
-					actions[5] = "Withdraw-All";
-					actions[6] = "Withdraw-All-but-1";
-				} else {
-					actions[3] = "Withdraw-X";
-					actions[4] = "Withdraw-All";
-					actions[5] = "Withdraw-All-but-1";
-				}
-				break;
-			case 2:
-				actions[0] = "Withdraw-10";
-				actions[1] = "Withdraw-1";
-				actions[2] = "Withdraw-5";
-				if (xQuantity > 0) {
-					actions[3] = "Withdraw-" + xQuantity;
-					actions[4] = "Withdraw-X";
-					actions[5] = "Withdraw-All";
-					actions[6] = "Withdraw-All-but-1";
-				} else {
-					actions[3] = "Withdraw-X";
-					actions[4] = "Withdraw-All";
-					actions[5] = "Withdraw-All-but-1";
-				}
-				break;
-			case 3:
-				// this can't ever be a thing while this is set to 0
-				actions[0] = "Withdraw-" + xQuantity;
-				actions[1] = "Withdraw-1";
-				actions[2] = "Withdraw-5";
-				actions[3] = "Withdraw-10";
-				actions[4] = "Withdraw-X";
-				actions[5] = "Withdraw-All";
-				actions[6] = "Withdraw-All-but-1";
-				break;
-			case 4:
-				actions[0] = "Withdraw-All";
-				actions[1] = "Withdraw-1";
-				actions[2] = "Withdraw-5";
-				actions[3] = "Withdraw-10";
-				if (xQuantity > 0) {
-					actions[4] = "Withdraw-" + xQuantity;
-					actions[5] = "Withdraw-X";
-					actions[6] = "Withdraw-All-but-1";
-				} else {
-					actions[4] = "Withdraw-X";
-					actions[5] = "Withdraw-All-but-1";
-				}
-				break;
-		}
+    @Nullable
+    @Override
+    public String[] getActions() {
+        Client client = EthanApiPlugin.getClient();
+        int xQuantity = client.getVarbitValue(VarbitID.BANK_REQUESTEDQUANTITY);
+        boolean bankItemOps = client.getVarbitValue(VarbitID.BANK_BANKOPS_TOGGLE_ON) == 1;
+        boolean leavePlaceholder = client.getVarbitValue(VarbitID.BANK_LEAVEPLACEHOLDERS) == 0;
+        String[] actions = new String[11];
+        switch (client.getVarbitValue(VarbitID.BANK_QUANTITY_TYPE)) {
+            default:
+            case 0:
+                actions[0] = "Withdraw-1";
+                actions[1] = null;
+                break;
+            case 1:
+                actions[0] = "Withdraw-5";
+                actions[1] = "Withdraw-1";
+                break;
+            case 2:
+                actions[0] = "Withdraw-10";
+                actions[1] = "Withdraw-1";
+                break;
+            case 3:
+                actions[0] = "Withdraw-" + xQuantity;
+                actions[1] = "Withdraw-1";
+                break;
+            case 4:
+                actions[0] = "Withdraw-All";
+                actions[1] = "Withdraw-1";
+                break;
+        }
 
-		if (EthanApiPlugin.getClient().getVarbitValue(VarbitID.BANK_LEAVEPLACEHOLDERS) == 0) {
-			actions[7] = "Placeholder";
-		}
-		// these are null normally, 7 can be placeholder
-		// actions[7] = null;
-		// actions[8] = null;
+        actions[2] = "Withdraw-5";
+        actions[3] = "Withdraw-10";
+        actions[4] = xQuantity > 0 ? "Withdraw-" + xQuantity : null;
+        actions[5] = "Withdraw-X";
+        actions[6] = "Withdraw-All";
+        actions[7] = "Withdraw-All-but-1";
+        actions[8] = bankItemOps ? "Configure-Charges" : null;
+        actions[9] = leavePlaceholder ? "Placeholder" : null;
+        actions[10] = "Examine";
 
-		actions[9] = "Examine";
-		return actions;
-	}
+        return actions;
+    }
 
 	@Override
 	public Widget createChild(int index, int type) {

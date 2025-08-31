@@ -64,6 +64,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -79,6 +80,7 @@ import java.util.stream.Collectors;
 	description = "Count demonic gorilla attacks and display their next possible attack styles",
 	tags = {"combat", "overlay", "pve", "pvm", "demonics", "gorilla", "ported", "kotori"}
 )
+@Singleton
 public class DemonicGorillaPlugin extends Plugin {
 	private final static Logger log;
 	static {
@@ -663,8 +665,8 @@ public class DemonicGorillaPlugin extends Plugin {
 					}
 					break;
 				case RANGED:
-					if (InventoryUtils.contains(ItemID.ARCLIGHT)) {
-						InventoryUtils.wieldItem(ItemID.ARCLIGHT);
+					if (InventoryUtils.contains(ItemID.EMBERLIGHT)) {
+						InventoryUtils.wieldItem(ItemID.EMBERLIGHT);
 					}
 					if (InventoryUtils.contains(ItemID.DRAGON_PARRYINGDAGGER)) {
 						InventoryUtils.wieldItem(ItemID.DRAGON_PARRYINGDAGGER);

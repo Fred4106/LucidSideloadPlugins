@@ -242,7 +242,7 @@ class SuperClickerPlugin() extends Plugin {
 	def search(ids: Int*): Option[WidgetItem] = {
 		Inventory.search().withId(ids *).result.asScala.toList
 			.map(w => {
-				WidgetItem(w.getItemId, w.getItemQuantity, w.getBounds, w.getParent, w.getBounds)
+				WidgetItem(w.getItemId, w.getItemQuantity, w.getBounds, w, w.getBounds)
 			})
 			.sortBy(u => (u.getId.min(65535).max(0) << 8) | u.getWidget.getIndex.min(255).max(0)).headOption
 	}
