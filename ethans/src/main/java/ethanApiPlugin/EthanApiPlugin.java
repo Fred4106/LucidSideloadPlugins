@@ -1,12 +1,16 @@
 package ethanApiPlugin;
 
 import ch.qos.logback.classic.Level;
+import com.fredplugins.common.PrayerExtended;
+import com.fredplugins.common.services.CastSuppliesTrackerService;
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils;
 import ethanApiPlugin.services.CastSuppliesTracker;
 import com.google.inject.Singleton;
 import ethanApiPlugin.collections.*;
 import ethanApiPlugin.services.RemainingCastTracker;
 import ethanApiPlugin.services.localPlayer.LocalPlayerService;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.gameval.VarbitID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import packetUtils.ObfuscatedNames;
@@ -33,6 +37,7 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
+import packets.WidgetPackets;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -100,10 +105,14 @@ public class EthanApiPlugin extends Plugin {
 	@Inject
 	LocalPlayerService localPlayerService;
 
+//	@Inject
+//	CastSuppliesTracker castSuppliesTracker;
+//
+//	@Inject
+//	RemainingCastTracker remainingCastTracker;
+
 	@Inject
-	CastSuppliesTracker castSuppliesTracker;
-	@Inject
-	RemainingCastTracker remainingCastTracker;
+	CastSuppliesTrackerService castSuppliesTrackerService;
 
 	public static LoadingCache<Integer, ItemComposition> itemDefs = CacheBuilder.newBuilder()
 			.maximumSize(1000)
@@ -135,10 +144,6 @@ public class EthanApiPlugin extends Plugin {
 		return player.getSkullIcon();
 	}
 
-	public static boolean isQuickPrayerActive(Prayer prayer) {
-		return false;
-//        return (client.getVarbitValue(QUICKPRAYER_SELECTED) & (int) Math.pow(2, prayer.getIndex())) == Math.pow(2, prayer.getIndex());
-	}
 
 	public static boolean isQuickPrayerEnabled() {
 		return client.getVarbitValue(QUICKPRAYER_ACTIVE) == 1;
@@ -1211,14 +1216,16 @@ public class EthanApiPlugin extends Plugin {
 	@Override
 	public void startUp() throws Exception {
 		eventBus.register(localPlayerService);
-		castSuppliesTracker.start();
-		remainingCastTracker.start(this);
+		castSuppliesTrackerService.start();
+//		castSuppliesTracker.start();
+//		remainingCastTracker.start(this);
 	}
 
 	@Override
 	public void shutDown() throws Exception {
 		eventBus.unregister(localPlayerService);
-		castSuppliesTracker.stop();
-		remainingCastTracker.stop();
+		castSuppliesTrackerService.stop();
+//		castSuppliesTracker.stop();
+//		remainingCastTracker.stop();
 	}
 }

@@ -58,4 +58,8 @@ object SRunes extends enumeratum.Enum[SRune] with ShimUtils.Logging() {
 		assert(findByIndex.contains(tpe))
 		findByIndex(tpe)
 	}
+
+	def isRuneItemId(id: Int): Boolean = {
+		values.exists(_.itemIds.contains(id))
+	}
 }

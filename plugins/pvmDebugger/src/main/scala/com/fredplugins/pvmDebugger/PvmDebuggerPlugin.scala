@@ -7,6 +7,8 @@ import com.fredplugins.pvmDebugger.kraken.KrakenConfig
 import com.fredplugins.pvmDebugger.kraken.KrakenHelper
 import com.fredplugins.pvmDebugger.moons.FredsMoonConfig
 import com.fredplugins.pvmDebugger.moons.FredsMoonHelper
+import com.fredplugins.pvmDebugger.muspah.FredsMuspahConfig
+import com.fredplugins.pvmDebugger.muspah.FredsMuspahHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
 import com.google.inject.Inject
 import com.google.inject.Provides
@@ -57,7 +59,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	//	@Inject private val krakenConfig     : KrakenConfig             = null
 	@Inject private val krakenHelper         : KrakenHelper              = null
 	@Inject private val moonHelper           : FredsMoonHelper           = null
-	@Inject private val tormentedDemonsHelper           : FredsTormentedDemonsHelper           = null
+	@Inject private val tormentedDemonsHelper           : FredsTormentedDemonsHelper = null
+	@Inject private val muspahHelper: FredsMuspahHelper                              = null
+
 	//	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
 
@@ -136,7 +140,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper)
+	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper)
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		helperModules.foreach(m => {
@@ -333,4 +337,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideKrakenConfig(configManager: ConfigManager): KrakenConfig = configManager.getConfig(classOf[KrakenConfig])
 	@Provides def provideFredsMoonConfig(configManager: ConfigManager): FredsMoonConfig = configManager.getConfig(classOf[FredsMoonConfig])
 	@Provides def provideTormentedDemonsConfig(configManager: ConfigManager): FredsTormentedDemonConfig = configManager.getConfig(classOf[FredsTormentedDemonConfig])
+	@Provides def provideMuspahConfig(configManager: ConfigManager):FredsMuspahConfig = configManager.getConfig(classOf[FredsMuspahConfig])
 }

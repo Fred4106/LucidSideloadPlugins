@@ -1,6 +1,7 @@
 package ethanApiPlugin.lucidplugins.api.utils;
 
 import ethanApiPlugin.interactionApi.PrayerInteraction;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
@@ -57,6 +58,22 @@ public class CombatUtils
         }
     }
 
+	public static void activatePrayers(Prayer ... prayers)
+	{
+		if (client.getBoostedSkillLevel(Skill.PRAYER) == 0)
+		{
+			return;
+		}
+
+		for (Prayer prayer : prayers)
+		{
+			if (!client.isPrayerActive(prayer))
+			{
+				
+				PrayerInteraction.togglePrayer(prayer);
+			}
+		}
+	}
     public static void deactivatePrayer(Prayer prayer)
     {
         if (client == null || checkPrayer(prayer) == null || client.getBoostedSkillLevel(Skill.PRAYER) == 0 || !client.isPrayerActive(checkPrayer(prayer)))

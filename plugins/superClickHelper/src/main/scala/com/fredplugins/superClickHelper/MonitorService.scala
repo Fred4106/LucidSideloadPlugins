@@ -41,14 +41,6 @@ abstract class MonitorService(val plugin: SuperClickerPlugin, level: String = "D
 		stopService()
 	}
 
-//	@Subscribe(priority = 1000.0f)
-//	final def externalPluginsChanged(event: ExternalPluginsChanged): Unit = {
-//		if (!pluginManager.getPlugins.asScala.toList.contains(plugin) && eventBus.isRegistered(this)) {
-//			log.debug("[externalPluginsChanged] Unregistering {}", name)
-//			teardown()
-//		}
-//	}
-
 	@Subscribe(priority = 1000.0f)
 	final def onPluginChanged(event: PluginChanged): Unit = {
 		if (event.getPlugin == plugin && !event.isLoaded && eventBus.isRegistered(this)) {

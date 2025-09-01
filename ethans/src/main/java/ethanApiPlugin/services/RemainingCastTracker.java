@@ -1,6 +1,7 @@
 package ethanApiPlugin.services;
 
 import ch.qos.logback.classic.Level;
+import com.fredplugins.common.extensions.MenuExtensions$;
 import com.fredplugins.common.magic.RuneChanges;
 import com.fredplugins.common.magic.RuneIds;
 import com.fredplugins.common.magic.SpellIds;
@@ -155,19 +156,28 @@ public class RemainingCastTracker {
         final MenuEntry entry = event.getMenuEntry();
         final String option = entry.getOption();
         final String target = entry.getTarget();
+		final MenuAction action = event.getMenuAction();
 
         if (option.equals("Attack"))
         {
             lastManualAttackTime = Instant.now().getEpochSecond(); // Autocast attack option
             return;
         }
-
         if (!option.equals("Cast") && !target.contains("Teleport"))
             return;
 
         final Widget widget = entry.getWidget();
         final String spellName = widget != null ?  Text.removeFormattingTags(widget.getName())
                 : Text.removeFormattingTags(target).replaceAll(" ->.*", "");
+/*		if (option.equals("Cast") || target.contains("Teleport")) {
+			log.debug("cast: option [{}], target [{}], spellName [{}], type [{}]", option, target, spellName, entry.getType());
+		} else if(option.equals("Reanimate") && target.contains("Ensouled")) {
+			log.debug("reanimate: option [{}], target [{}]", option, target);
+		} else {
+			log.debug(" failed: option [{}], target [{}], spellName [{}], type [{}]", option, target, spellName, entry.getType());
+			return;
+		}
+*/
 		log.debug("Clicked \"{}\" which found SpellInfo {}", spellName, SpellIds.getSpellByName(spellName));
         if (SpellIds.getSpellByName(spellName) != null)
             lastCastSpellName = spellName;

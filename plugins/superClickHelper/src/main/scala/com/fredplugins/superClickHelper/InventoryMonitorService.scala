@@ -112,7 +112,7 @@ class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService
 			case (s, None, None) => s"Impossible case ${s}"
 		}.pipe(seq => Option.when(seq.nonEmpty)(seq.map(s => s"  ${s}").prepended(s"Inventory changed: ${client.getTickCount}").appended(""))).map(_.mkString("\n"))
 
-		report.foreach(r => log.debug(r))
+//		report.foreach(r => log.debug(r))
 	}
 
 	@Subscribe
