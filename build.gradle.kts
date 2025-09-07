@@ -61,7 +61,7 @@ dependencies {
     implementation(projects.valeTotems)
     implementation(projects.zulrahHelper)
     implementation(projects.attackTimer)
-//    implementation(projects.customPrayers)
+    implementation(projects.customPrayers)
     implementation(projects.demonicGorilla)
     implementation(projects.dt2)
     implementation(projects.gearSwapper)

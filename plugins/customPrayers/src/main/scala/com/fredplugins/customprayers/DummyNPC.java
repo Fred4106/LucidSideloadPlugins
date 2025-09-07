@@ -382,7 +382,12 @@ public class DummyNPC implements NPC
 
     }
 
-    @Override
+	@Override
+	public int getAnimationHeightOffset() {
+		return 0;
+	}
+
+	@Override
     public WorldView getWorldView()
     {
         return null;

@@ -1,5 +1,6 @@
 package com.fredplugins.pvmDebugger.muspah
 
+import com.fredplugins.common.PrayerExtended
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -7,17 +8,21 @@ import com.fredplugins.pvmDebugger.WithOverlay
 import com.fredplugins.pvmDebugger.WithPanel
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import ethanApiPlugin.collections.NPCs
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import net.runelite.api.Client
 import net.runelite.api.GameState
 import net.runelite.api.NPC
 import net.runelite.api.Prayer
+import net.runelite.api.Skill
 import net.runelite.api.events.AnimationChanged
 import net.runelite.api.events.GameTick
 import net.runelite.api.gameval.NpcID
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
+import packets.MousePackets
+import packets.WidgetPackets
 
 import java.awt.Color
 import java.awt.Dimension
@@ -29,8 +34,121 @@ import scala.util.chaining.scalaUtilChainingOps
 @Singleton
 class FredsMuspahHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsMuspahConfig) extends HelperModule with WithPanel with WithOverlay {
 	override val moduleName: String = FredsMuspahConfig.GROUP
-
 	private def clientThread  = parent.getClientThread
+
+	private def activatePrayer(prayer: Prayer): Unit = {
+		if(client.getBoostedSkillLevel(Skill.PRAYER) <= 0) return
+
+		for {
+			p <- Option(prayer).filterNot(client.isPrayerActive)
+			isDisabled = client.getVarbitValue(p.getVarbit()) == 0
+			widget <- Option(client.getWidget(PrayerExtended.getWidgetId(p))) if isDisabled
+		} yield {
+			() => {
+				client.setVarbit(p.getVarbit(), 1)
+				MousePackets.queueClickPacket(widget)
+				WidgetPackets.queueWidgetActionPacket(1, widget.getId(), -1, -1)
+			}
+		}.apply()
+	}
+
+	def getActivePrayers: List[Prayer] = {
+		clientThread.runOnClientThread(() => {
+			Prayer.values().toList.filterNot(p => {
+				client.getVarbitValue(p.getVarbit) == 0
+			})
+		})
+	}
+
+	private def deactivatePrayer(prayer: Prayer): Unit = {
+			if (client.getBoostedSkillLevel(Skill.PRAYER) <= 0) return
+			for {
+				p <- Option(prayer).filterNot(client.isPrayerActive)
+				isDisabled = client.getVarbitValue(p.getVarbit()) == 0
+				widget <- Option(client.getWidget(PrayerExtended.getWidgetId(p))) if !isDisabled
+			} yield {
+				() => {
+					client.setVarbit(p.getVarbit(), 0)
+					MousePackets.queueClickPacket(widget)
+					WidgetPackets.queueWidgetActionPacket(1, widget.getId(), -1, -1)
+				}
+			}.apply()
+	}
+
+	def equipGear(ids: Int*): Unit = {}
+	def equipGear(string: String): Unit = {}
+
+	def meleePhase (): Unit = {
+		assert(client.isClientThread)
+		NPCs.search().withId(NpcID.MUSPAH_TELEPORT).first().toScala
+			.foreach(teleportingMuspah => {
+					if (config.tele()) {
+						ticks = -1
+						equipGear(config.rangeSwap())
+						activatePrayer(Prayer.EAGLE_EYE)
+						//					activatePrayer(config.rangeOffensivePrayer().prayer)
+					}
+					deactivatePrayer(Prayer.PROTECT_FROM_MELEE)
+			})
+
+		if(NPCs.search().withId(NpcID.MUSPAH_MELEE).first().toScala.isDefined) {
+					if (!config.rangeOnly()) {
+						equipGear(config.mageSwap())
+						//					activatePrayer(config.rangeOffensivePrayer().prayer)
+					}
+					activatePrayer(Prayer.PROTECT_FROM_MELEE)
+					activatePrayer(
+						if (config.rangeOnly()) {
+							Prayer.EAGLE_EYE
+						} else {
+							Prayer.MYSTIC_MIGHT
+						}
+					)
+		}
+	}
+//	private fun rangePhase () {
+//		if (NPCs.getFirst(NpcID.PHANTOM_MUSPAH_12082) != null) {
+//			ticks = -1
+//			if (client.isPrayerActive(Prayer.PROTECT_FROM_MISSILES))
+//				deactivatePrayer(Prayer.PROTECT_FROM_MISSILES)
+//			if (client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC))
+//				deactivatePrayer(Prayer.PROTECT_FROM_MAGIC)
+//		}
+//		if (NPCs.getFirst(NpcID.PHANTOM_MUSPAH) == null) return
+//		equipRangeGear()
+//		activatePrayer(config.rangeOffensivePrayer().prayer)
+//		if (ticks == 1 && config.flickPrayer()) {
+//			activatePrayer(Prayer.PROTECT_FROM_MISSILES)
+//		}
+//		if (ticks > 1 && config.flickPrayer()) {
+//			if (client.isPrayerActive(Prayer.PROTECT_FROM_MISSILES))
+//				deactivatePrayer(Prayer.PROTECT_FROM_MISSILES)
+//			if (client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC))
+//				deactivatePrayer(Prayer.PROTECT_FROM_MAGIC)
+//		}
+//	}
+//	private fun shieldPhase () {
+//		if (NPCs.getFirst(NpcID.PHANTOM_MUSPAH_12079) == null) {
+//			if (client.isPrayerActive(Prayer.SMITE)) {
+//				activatePrayer(Prayer.PROTECT_FROM_MISSILES)
+//			}
+//		}
+//		if (NPCs.getFirst(NpcID.PHANTOM_MUSPAH_12079) != null) {
+//			if (ticks == 1)
+//				activatePrayer(Prayer.PROTECT_FROM_MISSILES)
+//			if (client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC) && ticks == 2 && config.smiteToggle())
+//				activatePrayer(Prayer.SMITE)
+//			if (client.isPrayerActive(Prayer.PROTECT_FROM_MELEE))
+//				activatePrayer(Prayer.PROTECT_FROM_MISSILES)
+//		}
+//	}
+	
+	def finalPhase(): Unit = {
+		NPCs.search().withId(NpcID.MUSPAH_FINAL).first().toScala.foreach(finalMuspah => {
+		
+		})
+	}
+
 	private var ticks         = -1
 
 	val MUSPAH_IDS: Set[Int] = Set(NpcID.MUSPAH, NpcID.MUSPAH_MELEE, NpcID.MUSPAH_SOULSPLIT, NpcID.MUSPAH_FINAL, NpcID.MUSPAH_TELEPORT)
@@ -38,64 +156,60 @@ class FredsMuspahHelper @Inject()(override val parent: PvmDebuggerPlugin, overri
 //	var currentRoom: Option[MoonRoomEnum] = None
 //	var currentRoomChangedTick: Int = -1
 	override def init(): Unit = {
-		prayerMagicOnTick = 0
 //		currentRoom = None
 //		currentRoomChangedTick = -1
 	}
 
 	override def cleanup(): Unit = {
-		prayerMagicOnTick = 0
 //		currentRoom = None
 //		currentRoomChangedTick = -1
 	}
-	var prayerMagicOnTick = 0
-
-	@Subscribe
-	def onGameTick(gameTick: GameTick): Unit= {
-		if (client.getGameState != GameState.LOGGED_IN || client.getLocalPlayer.isDead) {
-			CombatUtils.deactivatePrayers(false)
-			prayerMagicOnTick = 0
-			return
-		}
-
-		val muspah = client.getNpcs.stream.filter((x: NPC) => MUSPAH_IDS.contains(x.getId)).findFirst.orElse(null)
-		if (muspah == null || (muspah.isDead || (muspah.getHealthRatio eq 0))) {
-			CombatUtils.deactivatePrayers(false)
-		} else {
-			log.debug(s"found muspah ${muspah.getId}")
-
-			val offensive =Option(Prayer.EAGLE_EYE) /*Option((if ((muspah.getId eq NpcID.MUSPAH) || (muspah.getId eq NpcID.MUSPAH_SOULSPLIT) || (muspah.getId eq NpcID.MUSPAH_FINAL)) {
-					Prayer.RIGOUR
-				} else if (muspah.getId eq NpcID.MUSPAH_MELEE) {
-					Prayer.AUGURY
-				} else {
-					null
-				})).map(CombatUtils.checkPrayer(_))*/
-			val defensive = Option((if (muspah.getId eq NpcID.MUSPAH_MELEE) {
-					Prayer.PROTECT_FROM_MELEE
-				} else {
-					if(prayerMagicOnTick > 0) Prayer.PROTECT_FROM_MAGIC else Prayer.PROTECT_FROM_MISSILES
-				}))
-
-			val pToActivate = List(offensive, defensive).flatten
-
-			log.debug(s"desired prayers = ${pToActivate}")
-			CombatUtils.activatePrayers(pToActivate *)
-		}
-		prayerMagicOnTick = if(prayerMagicOnTick > 0) { prayerMagicOnTick - 1} else 0
-
-//		if (muspah != null) {
-//			if (EthanApiPlugin.isQuickPrayerEnabled) InteractionHelper.togglePrayer
-//			InteractionHelper.togglePrayer
+//
+//	@Subscribe
+//	def onGameTick(gameTick: GameTick): Unit= {
+//		if (client.getGameState != GameState.LOGGED_IN || client.getLocalPlayer.isDead) {
+//			CombatUtils.deactivatePrayers(false)
+//			return
 //		}
-	}
-
-	@Subscribe
-	def onAnimationChanged(e: AnimationChanged): Unit = {
-		Option(e.getActor).collect {
-			case npc: NPC if(MUSPAH_IDS.contains(npc.getId) && npc.getAnimation == 9918) => client.getTickCount
-		}.foreach(tc => prayerMagicOnTick = 4)
-	}
+//
+//		val muspah = client.getNpcs.stream.filter((x: NPC) => MUSPAH_IDS.contains(x.getId)).findFirst.orElse(null)
+//		if (muspah == null || (muspah.isDead || (muspah.getHealthRatio eq 0))) {
+//			CombatUtils.deactivatePrayers(false)
+//		} else {
+//			log.debug(s"found muspah ${muspah.getId}")
+//
+//			val offensive =Option(Prayer.EAGLE_EYE) /*Option((if ((muspah.getId eq NpcID.MUSPAH) || (muspah.getId eq NpcID.MUSPAH_SOULSPLIT) || (muspah.getId eq NpcID.MUSPAH_FINAL)) {
+//					Prayer.RIGOUR
+//				} else if (muspah.getId eq NpcID.MUSPAH_MELEE) {
+//					Prayer.AUGURY
+//				} else {
+//					null
+//				})).map(CombatUtils.checkPrayer(_))*/
+//			val defensive = Option((if (muspah.getId eq NpcID.MUSPAH_MELEE) {
+//					Prayer.PROTECT_FROM_MELEE
+//				} else {
+//					if(prayerMagicOnTick > 0) Prayer.PROTECT_FROM_MAGIC else Prayer.PROTECT_FROM_MISSILES
+//				}))
+//
+//			val pToActivate = List(offensive, defensive).flatten
+//
+//			log.debug(s"desired prayers = ${pToActivate}")
+//			CombatUtils.activatePrayers(pToActivate *)
+//		}
+//		prayerMagicOnTick = if(prayerMagicOnTick > 0) { prayerMagicOnTick - 1} else 0
+//
+////		if (muspah != null) {
+////			if (EthanApiPlugin.isQuickPrayerEnabled) InteractionHelper.togglePrayer
+////			InteractionHelper.togglePrayer
+////		}
+//	}
+//
+//	@Subscribe
+//	def onAnimationChanged(e: AnimationChanged): Unit = {
+//		Option(e.getActor).collect {
+//			case npc: NPC if(MUSPAH_IDS.contains(npc.getId) && npc.getAnimation == 9918) => client.getTickCount
+//		}.foreach(tc => prayerMagicOnTick = 4)
+//	}
 
 	def inMuspah: Boolean = {
 		false

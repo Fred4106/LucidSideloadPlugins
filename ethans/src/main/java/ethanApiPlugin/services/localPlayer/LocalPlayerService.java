@@ -1,13 +1,16 @@
 package ethanApiPlugin.services.localPlayer;
 
 
+import com.fredplugins.common.utils.WorldPointUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import ethanApiPlugin.EthanApiPlugin;
 import ethanApiPlugin.services.localPlayer.events.LocalAnimationChanged;
+import ethanApiPlugin.services.localPlayer.events.LocalDestinationChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalInteractingChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged;
+import ethanApiPlugin.utility.WorldPointUtility;
 import jdk.jfr.Event;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
@@ -59,6 +62,7 @@ public class LocalPlayerService {
 	public void onGameTick(GameTick gt) {
 		Player me = EthanApiPlugin.getClient().getLocalPlayer();
 		WorldPoint pos = Optional.ofNullable(me).map(Player::getWorldLocation).orElse(null);
+		WorldPoint dest = Optional.ofNullable(client.getLocalDestinationLocation()).map(ldest -> WorldPoint.fromLocalInstance(client, ldest)).orElse(null);
 
 		int regionId = Optional.ofNullable(pos).map(WorldPoint::getRegionID).orElse(-1);//.orElse(-1).intValue();
 		if (regionId != this.pRegionId) {
@@ -67,6 +71,10 @@ public class LocalPlayerService {
 
 		if(isDifferent(pos, this.wpPos)) {
 			eventBus.post(new LocalPositionChanged(this.wpPos, pos));
+		}
+
+		if(isDifferent(dest, this.wpDest)) {
+			eventBus.post(new LocalDestinationChanged(this.wpDest, dest));
 		}
 
 		Actor curInteracting = Optional.ofNullable(me).map(Player::getInteracting).orElse(null);
@@ -81,6 +89,7 @@ public class LocalPlayerService {
 
 		pRegionId = regionId;
 		wpPos = pos;
+		wpDest = dest;
 		pInteracting = curInteracting;
 		pAnimation = curAnimation;
 	}

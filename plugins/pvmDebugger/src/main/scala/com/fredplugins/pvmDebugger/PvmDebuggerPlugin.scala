@@ -1,6 +1,8 @@
 package com.fredplugins.pvmDebugger
 
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlConfig
+import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlHelper
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansHelper
 import com.fredplugins.pvmDebugger.kraken.KrakenConfig
@@ -60,7 +62,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val krakenHelper         : KrakenHelper              = null
 	@Inject private val moonHelper           : FredsMoonHelper           = null
 	@Inject private val tormentedDemonsHelper           : FredsTormentedDemonsHelper = null
-	@Inject private val muspahHelper: FredsMuspahHelper                              = null
+	@Inject private val muspahHelper: FredsMuspahHelper       = null
+	@Inject private val amoxliatlHelper: FredsAmoxliatlHelper = null
 
 	//	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
@@ -140,7 +143,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper)
+	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper)
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		helperModules.foreach(m => {
@@ -338,4 +341,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideFredsMoonConfig(configManager: ConfigManager): FredsMoonConfig = configManager.getConfig(classOf[FredsMoonConfig])
 	@Provides def provideTormentedDemonsConfig(configManager: ConfigManager): FredsTormentedDemonConfig = configManager.getConfig(classOf[FredsTormentedDemonConfig])
 	@Provides def provideMuspahConfig(configManager: ConfigManager):FredsMuspahConfig = configManager.getConfig(classOf[FredsMuspahConfig])
+	@Provides def provideAmoxliatlConfig(configManager: ConfigManager):FredsAmoxliatlConfig = configManager.getConfig(classOf[FredsAmoxliatlConfig])
 }

@@ -37,7 +37,60 @@ public interface FredsMuspahConfig extends Config {
 	default boolean showKillTimers() {
 		return true;
 	}
-//
+
+	
+	@ConfigItem(
+		name = "Range Only",
+        description = "Toggle this if you only plan to use range",
+		position = 10,
+		keyName = "rangeOnly",
+		section = baseSection
+	)
+	default boolean rangeOnly() {
+		return true;
+	}
+	
+	
+
+
+	@ConfigItem(
+        keyName = "rangeTele",
+        name = "Range Teleport Phase",
+        description = "Uses range gear when muspah is teleporting",
+        position = 11,
+		section = baseSection
+    )
+    default boolean tele() {
+        return true;
+    }
+	
+	
+	@ConfigItem(
+		name = "Range Gear",
+		description = "Names or IDs of your ranged gear swap. Names match any item containing the name, meaning "
+				+ "'Dharok's platelegs' matches all degradation values. Separate by line, semicolon or "
+				+ "comma.",
+		position = 15,
+		keyName = "rangeSwap",
+		section = baseSection
+	)
+	default String rangeSwap() {
+		return "";
+	}
+
+	@ConfigItem(
+		name = "Mage Gear",
+		description = "Names or IDs of your mage gear swap. Names match any item containing the name, meaning "
+				+ "'Dharok's platelegs' matches all degradation values. Separate by line, semicolon or "
+				+ "comma.",
+		position = 16,
+		keyName = "mageSwap",
+		section = baseSection
+	)
+	default String mageSwap() {
+		return "";
+	}
+
 //	@ConfigSection(
 //		name = "Eclipse Moon",
 //		description = "Eclipse Moon Helper",
