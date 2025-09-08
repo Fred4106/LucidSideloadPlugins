@@ -1,44 +1,38 @@
 package com.fredplugins.pvmDebugger.amoxliatl
 
-import com.fredplugins.common.PrayerExtended
-import com.fredplugins.common.utils.SceneUtils
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
 import com.fredplugins.pvmDebugger.WithOverlay
 import com.fredplugins.pvmDebugger.WithPanel
 import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlHelper.Amoxliatl
-import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlHelper.NpcWrapped
 import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlHelper.UnstableIce
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import ethanApiPlugin.collections.NPCs
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.services.localPlayer.events.LocalDestinationChanged
 import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.Actor
-import net.runelite.api.ActorSpotAnim
 import net.runelite.api.Client
+import net.runelite.api.GameObject
 import net.runelite.api.GameState
-import net.runelite.api.IterableHashTable
-import net.runelite.api.Model
+import net.runelite.api.GraphicsObject
 import net.runelite.api.NPC
 import net.runelite.api.NPCComposition
-import net.runelite.api.Node
-import net.runelite.api.NpcOverrides
-import net.runelite.api.Player
+import net.runelite.api.Perspective
 import net.runelite.api.Point
 import net.runelite.api.Prayer
-import net.runelite.api.Skill
-import net.runelite.api.SpritePixels
 import net.runelite.api.WorldView
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.coords.WorldArea
 import net.runelite.api.coords.WorldPoint
-import net.runelite.api.events.ActorDeath
 import net.runelite.api.events.AnimationChanged
+import net.runelite.api.events.GameObjectDespawned
+import net.runelite.api.events.GameObjectSpawned
+import net.runelite.api.events.GameStateChanged
 import net.runelite.api.events.GameTick
+import net.runelite.api.events.GraphicsObjectCreated
 import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.gameval.AnimationID
@@ -47,17 +41,15 @@ import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import net.runelite.client.ui.overlay.components.LineComponent
+import net.runelite.client.ui.overlay.components.ProgressPieComponent
 import net.runelite.client.ui.overlay.components.TitleComponent
 import net.runelite.client.util.ColorUtil
-import packets.MousePackets
-import packets.WidgetPackets
 
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Polygon
 import java.awt.Shape
-import java.awt.image.BufferedImage
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
@@ -159,13 +151,17 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	//	private var ticks         = -1
 	private val bossData: mutable.Map[Amoxliatl, AmoxliatlData] = mutable.HashMap.empty[Amoxliatl, AmoxliatlData]
 	private val iceBlocks: mutable.Map[UnstableIce,IceData] =mutable.HashMap.empty[UnstableIce, IceData]
+	private val iceTiles: mutable.Set[GameObject] = mutable.HashSet.empty[GameObject]
+	private val dangerousTiles: mutable.HashMap[GraphicsObject, GObjectData] = mutable.HashMap.empty[GraphicsObject, GObjectData]
 
 //	var currentRoom: Option[MoonRoomEnum] = None
 //	var currentRoomChangedTick: Int = -1
 
 	override def init(): Unit = {
-		bossData.clear// = Option.empty[AmoxliatlData]
-		iceBlocks.clear// = Map.empty[UnstableIce, IceData]
+		dangerousTiles.clear()
+		iceTiles.clear()
+		bossData.clear()
+		iceBlocks.clear()
 //		currentRoom = None
 //		currentRoomChangedTick = -1
 	}
@@ -173,20 +169,65 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	override def cleanup(): Unit = {
 //		currentRoom = None
 //		currentRoomChangedTick = -1
-		bossData.clear//= Option.empty[AmoxliatlData]
-		iceBlocks.clear// = Map.empty[UnstableIce, IceData]
+		dangerousTiles.clear()
+		iceTiles.clear()
+		bossData.clear()
+		iceBlocks.clear()
 	}
+
+	case class GObjectData(spawnedTick: Int, spawnedCycle: Int, id: Int, lp: LocalPoint) {
+		def age: Int = (client.getTickCount-spawnedTick)
+	}
+
+//	var graphicsObjects: List[GObjectData] = List.empty[GObjectData]
 	@Subscribe
-	def onGameTick(gameTick: GameTick): Unit= {
-//		if(bossData.exists((amox, data) => data.spawnedTick == client.getTickCount)) {
-//			CombatUtils.activatePrayers(Prayer.PROTECT_FROM_MAGIC, Prayer.PIETY)
-//		}
+	def onGameStateChanged(event: GameStateChanged): Unit = {
+		val gameState = event.getGameState
+		if (gameState == GameState.LOADING) {
+//			dangerousTiles.clear()
+//			iceTiles.clear()
+//			bossData.clear()
+//			iceBlocks.clear()
+		}
+	}
+
+	@Subscribe
+	def onGraphicsObjectCreated(event: GraphicsObjectCreated): Unit = {
+		if (bossData.nonEmpty) {
+			val graphicsObject = event.getGraphicsObject
+			dangerousTiles.put(
+				graphicsObject,
+				GObjectData(
+					client.getTickCount,
+					client.getGameCycle,
+					graphicsObject.getId,
+					graphicsObject.getLocation
+				)
+			)
+		}
+	}
+
+	@Subscribe
+	def onGameTick(gameTick: GameTick): Unit = {
 		if(bossData.nonEmpty && !(client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC) && client.isPrayerActive(Prayer.PIETY))) {
 			CombatUtils.activatePrayers(Prayer.PROTECT_FROM_MAGIC, Prayer.PIETY)
 		}
 		if(bossData.isEmpty && (client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC) || client.isPrayerActive(Prayer.PIETY))) {
 			CombatUtils.deactivatePrayers(Prayer.PROTECT_FROM_MAGIC, Prayer.PIETY)
 		}
+
+		//dangerousTiles.toMap.keySet.filter(_.finished()).toList
+		val toRemove: List[GraphicsObject] = dangerousTiles.toList.filter((k, d) => k.finished() || d.age >=4).map(_._1)
+		val removed: List[GObjectData]                                  = toRemove.flatMap(k => dangerousTiles.remove(k))
+		removed.groupBy(_.id).flatMap((k, v) => v.map(_.age).distinct.map(a => k -> a)).toList.sortBy(e => e._1 * 1000 + e._2)
+			.foreach{
+				(spotId, age) => log.debug(s"Removed spot ${spotId} after ${age} ticks")
+			}
+		dangerousTiles.values.toList
+			.filter(x => x.spawnedTick == client.getTickCount)
+			.foreach(go => {
+				log.debug(s"Spawned spot ${go.id} @ ${go.lp.pipe(u => u.getSceneX -> u.getSceneY)}")
+			})
 	}
 
 	@Subscribe
@@ -233,17 +274,24 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		}
 	}
 
-//	@Subscribe
-//	def onActorDeath(e: ActorDeath): Unit = {
-//		e.getActor match {
-//			case Amoxliatl(amox) => log.debug(s"Amoxliatl ${amox} ${if(boss.contains(amox)) "is" else "is not"} boss died")
-//			case UnstableIce(ice) => log.debug(s"Ice ${ice} died")
-//			case _ =>
+	@Subscribe
+	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
+		if (e.getGameObject.getId == 54279) {
+			iceTiles.add(e.getGameObject)
+		}
+	}
+
+	@Subscribe
+	def onGameObjectDespawned(e: GameObjectDespawned): Unit = {
+		iceTiles.remove(e.getGameObject)
+//		if(iceTiles.contains(e.getGameObject)) {
+//			iceTiles.remove(e.getGameObject)
 //		}
-//	}
+	}
 
 	def decodeAnimationId(id: Int): String = {
 		id match {
+			case -1 => "IDLE"
 			case 11527 => "AMOXLIATL_SPAWN"
 			case 11528 => "AMOXLIATL_IDLE"
 			case 11529 => "AMOXLIATL_WALK"
@@ -294,67 +342,6 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		}
 	}
 
-	//	@Subscribe
-//	def onGameTick(gameTick: GameTick): Unit= {
-//		if (client.getGameState != GameState.LOGGED_IN || client.getLocalPlayer.isDead) {
-//			CombatUtils.deactivatePrayers(false)
-//			return
-//		}
-//
-//		val muspah = client.getNpcs.stream.filter((x: NPC) => MUSPAH_IDS.contains(x.getId)).findFirst.orElse(null)
-//		if (muspah == null || (muspah.isDead || (muspah.getHealthRatio eq 0))) {
-//			CombatUtils.deactivatePrayers(false)
-//		} else {
-//			log.debug(s"found muspah ${muspah.getId}")
-//
-//			val offensive =Option(Prayer.EAGLE_EYE) /*Option((if ((muspah.getId eq NpcID.MUSPAH) || (muspah.getId eq NpcID.MUSPAH_SOULSPLIT) || (muspah.getId eq NpcID.MUSPAH_FINAL)) {
-//					Prayer.RIGOUR
-//				} else if (muspah.getId eq NpcID.MUSPAH_MELEE) {
-//					Prayer.AUGURY
-//				} else {
-//					null
-//				})).map(CombatUtils.checkPrayer(_))*/
-//			val defensive = Option((if (muspah.getId eq NpcID.MUSPAH_MELEE) {
-//					Prayer.PROTECT_FROM_MELEE
-//				} else {
-//					if(prayerMagicOnTick > 0) Prayer.PROTECT_FROM_MAGIC else Prayer.PROTECT_FROM_MISSILES
-//				}))
-//
-//			val pToActivate = List(offensive, defensive).flatten
-//
-//			log.debug(s"desired prayers = ${pToActivate}")
-//			CombatUtils.activatePrayers(pToActivate *)
-//		}
-//		prayerMagicOnTick = if(prayerMagicOnTick > 0) { prayerMagicOnTick - 1} else 0
-//
-////		if (muspah != null) {
-////			if (EthanApiPlugin.isQuickPrayerEnabled) InteractionHelper.togglePrayer
-////			InteractionHelper.togglePrayer
-////		}
-//	}
-//
-//	@Subscribe
-//	def onAnimationChanged(e: AnimationChanged): Unit = {
-//		Option(e.getActor).collect {
-//			case npc: NPC if(MUSPAH_IDS.contains(npc.getId) && npc.getAnimation == 9918) => client.getTickCount
-//		}.foreach(tc => prayerMagicOnTick = 4)
-//	}
-
-//	def inMuspah: Boolean = {
-//		false
-////		if(client.getTickCount != currentRoomChangedTick && client.getGameState == GameState.LOGGED_IN) {
-////			val newRoomEnum = MoonRoomEnum.test(client)
-////			val curRoom     = currentRoom.map(_.toString).getOrElse("Empty")
-////			val newRoom     = newRoomEnum.map(_.toString).getOrElse("Empty")
-////			Option.unless(newRoom.equals(curRoom))(
-////				ChatMessageBuilder().append("Room changed from ").append(Color.PINK, curRoom).append(" to ").append(Color.YELLOW, newRoom)
-////				).foreach(builder => printMessage(ChatMessageType.FRIENDSCHAT, "Moons Helper", "inMoons")(builder))
-////			currentRoomChangedTick = client.getTickCount
-////			currentRoom = newRoomEnum
-////		}
-////		currentRoom.isDefined
-//	}
-
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
 		if(bossData.nonEmpty) {
 			val (amox, amoxdata) = bossData.head
@@ -386,7 +373,55 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 			val textLocation = n.getCanvasTextLocation(g, text, n.getLogicalHeight + zoffset)
 			if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, text, color)
 		}
+
+		def renderDangerousTile(tile: GObjectData, color: Color): Unit = {
+			val poly = Perspective.getCanvasTilePoly(client, tile.lp)
+			if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(color, 200))
+
+			val ppc = new ProgressPieComponent()
+			ppc.setBorderColor(Color.BLACK)
+			ppc.setFill(Color.RED)
+			ppc.setProgress((client.getGameCycle - tile.spawnedCycle).doubleValue / (30.0d * 4))
+			ppc.setDiameter(28)
+			val point = Perspective.localToCanvas(client, tile.lp, client.getTopLevelWorldView.getPlane, 20)
+			ppc.setPosition(point)
+			ppc.render(g)
+
+			val text = s"${tile.age}"
+
+			val fm      = g.getFontMetrics()
+			val bounds  = fm.getStringBounds(text, g)
+			val xOffset = point.getX() - (bounds.getWidth() / 2).toInt
+			val yOffset = point.getY() + (bounds.getHeight() / 2).toInt
+
+			val textPoint = new Point(xOffset, yOffset)
+			OverlayUtil.renderTextLocation(g, textPoint, text, Color.WHITE)
+		}
+
+		def renderIceTile(tile: GameObject, color: Color): Unit = {
+			val lp   = tile.getLocalLocation
+			val poly = Perspective.getCanvasTilePoly(client, lp)
+			if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(color, 200))
+
+//			val text = s"${tile.age}"
+
+//			val fm      = g.getFontMetrics()
+//			val bounds  = fm.getStringBounds(text, g)
+//			val xOffset = point.getX() - (bounds.getWidth() / 2).toInt;
+//			val yOffset = point.getY() + (bounds.getHeight() / 2).toInt;
+//
+//			val textPoint = new Point(xOffset, yOffset)
+//			OverlayUtil.renderTextLocation(g, textPoint, text, Color.BLACK)
+		}
+
 		if(bossData.nonEmpty) {
+			dangerousTiles.values.toList.foreach(dt => {
+				renderDangerousTile(dt, Color.ORANGE)
+			})
+			iceTiles.toList.foreach(iceTile => {
+				renderIceTile(iceTile, Color.RED)
+			})
+
 			bossData.foreach((wrapped, data) => {
 				val txt  = s"age: ${client.getTickCount - data.spawnedTick}, ticksSinceAttack: ${client.getTickCount - data.lastAttackTick}"
 				renderNpcOverlay(wrapped.wrapped, txt, Color.CYAN, 60)
