@@ -61,6 +61,28 @@ public interface FredsAmoxliatlConfig extends Config {
 	}
 
 	@ConfigItem(
+		position = 5,
+		keyName = "autoPrayMage",
+		name = "Auto Pray Mage",
+		description = "Enables the Protect from Mage prayer as needed.",
+		section = baseSection
+	)
+	default boolean autoPrayMage() {
+		return true;
+	}
+
+	@ConfigItem(
+		position = 6,
+		keyName = "autoPrayPiety",
+		name = "Auto Pray Piety",
+		description = "Enables the Piety prayer as needed.",
+		section = baseSection
+	)
+	default boolean autoPrayPiety() {
+		return true;
+	}
+
+	@ConfigItem(
 		position = 10,
 		keyName = "enablePotions",
 		name = "Use Combat Potion",

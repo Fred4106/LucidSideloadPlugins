@@ -1,5 +1,6 @@
 package com.fredplugins.pvmDebugger.amoxliatl
 
+import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -10,6 +11,7 @@ import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlHelper.UnstableIce
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
+import com.fredplugins.common.extensions.ActorExtensions.*
 import ethanApiPlugin.services.localPlayer.events.LocalDestinationChanged
 import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
@@ -70,7 +72,8 @@ object FredsAmoxliatlHelper {
 		def getInteracting: Actor = wrapped.getInteracting
 		def getHealthRatio: Int = wrapped.getHealthRatio
 		def getHealthScale: Int = wrapped.getHealthScale
-		def getWorldLocation: WorldPoint = wrapped.getWorldLocation
+		def getWorldLocation: WorldPoint = wrapped.getWorldLocation//.getWorldLocation
+		def getTemplateLocation(using client: Client): WorldPoint =  wrapped.templateLocation
 		def getLocalLocation: LocalPoint = wrapped.getLocalLocation
 		def getOrientation: Int = wrapped.getOrientation
 		def getCurrentOrientation: Int = wrapped.getCurrentOrientation
@@ -144,6 +147,7 @@ object FredsAmoxliatlHelper {
 class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsAmoxliatlConfig) extends HelperModule with WithPanel with WithOverlay {
 	override val moduleName: String = FredsAmoxliatlConfig.GROUP
 	private def clientThread  = parent.getClientThread
+	given Client = client
 
 	case class AmoxliatlData(spawnedTick: Int, lastAttackTick: Int)
 	case class IceData(spawnedTick: Int)
@@ -153,6 +157,7 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	private val iceBlocks: mutable.Map[UnstableIce,IceData] =mutable.HashMap.empty[UnstableIce, IceData]
 	private val iceTiles: mutable.Set[GameObject] = mutable.HashSet.empty[GameObject]
 	private val dangerousTiles: mutable.HashMap[GraphicsObject, GObjectData] = mutable.HashMap.empty[GraphicsObject, GObjectData]
+	private var curRegion = -1;
 
 //	var currentRoom: Option[MoonRoomEnum] = None
 //	var currentRoomChangedTick: Int = -1
@@ -162,6 +167,7 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		iceTiles.clear()
 		bossData.clear()
 		iceBlocks.clear()
+		curRegion = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
 //		currentRoom = None
 //		currentRoomChangedTick = -1
 	}
@@ -173,27 +179,16 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		iceTiles.clear()
 		bossData.clear()
 		iceBlocks.clear()
+		curRegion = -1
 	}
 
 	case class GObjectData(spawnedTick: Int, spawnedCycle: Int, id: Int, lp: LocalPoint) {
 		def age: Int = (client.getTickCount-spawnedTick)
 	}
 
-//	var graphicsObjects: List[GObjectData] = List.empty[GObjectData]
-	@Subscribe
-	def onGameStateChanged(event: GameStateChanged): Unit = {
-		val gameState = event.getGameState
-		if (gameState == GameState.LOADING) {
-//			dangerousTiles.clear()
-//			iceTiles.clear()
-//			bossData.clear()
-//			iceBlocks.clear()
-		}
-	}
-
 	@Subscribe
 	def onGraphicsObjectCreated(event: GraphicsObjectCreated): Unit = {
-		if (bossData.nonEmpty) {
+		if(curRegion == 5446){
 			val graphicsObject = event.getGraphicsObject
 			dangerousTiles.put(
 				graphicsObject,
@@ -209,81 +204,104 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
-		if(bossData.nonEmpty && !(client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC) && client.isPrayerActive(Prayer.PIETY))) {
-			CombatUtils.activatePrayers(Prayer.PROTECT_FROM_MAGIC, Prayer.PIETY)
-		}
-		if(bossData.isEmpty && (client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC) || client.isPrayerActive(Prayer.PIETY))) {
-			CombatUtils.deactivatePrayers(Prayer.PROTECT_FROM_MAGIC, Prayer.PIETY)
-		}
-
-		//dangerousTiles.toMap.keySet.filter(_.finished()).toList
-		val toRemove: List[GraphicsObject] = dangerousTiles.toList.filter((k, d) => k.finished() || d.age >=4).map(_._1)
-		val removed: List[GObjectData]                                  = toRemove.flatMap(k => dangerousTiles.remove(k))
-		removed.groupBy(_.id).flatMap((k, v) => v.map(_.age).distinct.map(a => k -> a)).toList.sortBy(e => e._1 * 1000 + e._2)
-			.foreach{
-				(spotId, age) => log.debug(s"Removed spot ${spotId} after ${age} ticks")
+		val prayers = Seq(
+			Option.when(config.autoPrayMage())(Prayer.PROTECT_FROM_MAGIC),
+			Option.when(config.autoPrayPiety())(Prayer.PIETY)
+		).flatten//.map(p => p -> client.isPrayerActive(p))
+		if (curRegion == 5446) {
+//			if(bossData.nonEmpty && !(client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC) && client.isPrayerActive(Prayer.PIETY))) {
+			if (bossData.nonEmpty && !prayers.forall(client.isPrayerActive)) {
+					CombatUtils.activatePrayers(prayers *)//Prayer.PROTECT_FROM_MAGIC, Prayer.PIETY)
 			}
-		dangerousTiles.values.toList
-			.filter(x => x.spawnedTick == client.getTickCount)
-			.foreach(go => {
-				log.debug(s"Spawned spot ${go.id} @ ${go.lp.pipe(u => u.getSceneX -> u.getSceneY)}")
-			})
+//			if(bossData.isEmpty && (client.isPrayerActive(Prayer.PROTECT_FROM_MAGIC) || client.isPrayerActive(Prayer.PIETY))) {
+			if (bossData.isEmpty && prayers.exists(client.isPrayerActive)) {
+					CombatUtils.deactivatePrayers(prayers *)//Prayer.PROTECT_FROM_MAGIC, Prayer.PIETY)
+			}
+
+			//dangerousTiles.toMap.keySet.filter(_.finished()).toList
+			val toRemove: List[GraphicsObject] = dangerousTiles.toList.filter((k, d) => k.finished() || d.age >=3).map(_._1)
+			val removed: List[GObjectData]                                  = toRemove.flatMap(k => dangerousTiles.remove(k))
+			removed.groupBy(_.id).flatMap((k, v) => v.map(_.age).distinct.map(a => k -> a)).toList.sortBy(e => e._1 * 1000 + e._2)
+				.foreach{
+					(spotId, age) => log.debug(s"Removed spot ${spotId} after ${age} ticks")
+				}
+			dangerousTiles.values.toList
+				.filter(x => x.spawnedTick == client.getTickCount)
+				.foreach(go => {
+					log.debug(s"Spawned spot ${go.id} @ ${go.lp.pipe(u => u.getSceneX -> u.getSceneY)}")
+				})
+		}
 	}
 
 	@Subscribe
 	def onLocalRegionChanged(e: LocalRegionChanged): Unit = {
 		log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}")
+		if(e.getOldRegion == 5446) {
+			dangerousTiles.clear()
+			iceTiles.clear()
+			bossData.clear()
+			iceBlocks.clear()
+		}
+		curRegion = e.getCurRegion
 	}
 
 	@Subscribe
 	def onLocalDestinationChanged(e: LocalDestinationChanged): Unit = {
-		if(bossData.nonEmpty) log.info(s"Destination changed from ${e.getFrom} to ${e.getTo}")
+		if(curRegion == 5446) log.info(s"Destination changed from ${e.getFrom} to ${e.getTo}")
 	}
 
 	@Subscribe
 	def onLocalPositionChanged(e: LocalPositionChanged): Unit = {
-		if(bossData.nonEmpty) log.info(s"Position changed from ${e.getFrom} to ${e.getTo}")
+		if(curRegion == 5446) log.info(s"Position changed from ${e.getFrom} to ${e.getTo}")
 	}
 
 	@Subscribe
 	def onNpcSpawned(e: NpcSpawned): Unit = {
-		e.getNpc match {
-			case Amoxliatl(amox) => {
-				log.debug(s"Amoxliatl ${amox} spawned at ${amox.getWorldLocation}")
-				bossData.put(amox, AmoxliatlData(client.getTickCount, client.getTickCount))
+		if(curRegion == 5446) {
+			e.getNpc match {
+				case Amoxliatl(amox) => {
+					log.debug(s"Amoxliatl ${amox} spawned at ${amox.getTemplateLocation}")
+					bossData.put(amox, AmoxliatlData(client.getTickCount, client.getTickCount))
+				}
+				case UnstableIce(ice) => {
+					log.debug(s"UnstableIce ${ice} spawned at ${ice.getTemplateLocation}")
+					iceBlocks.put(ice, IceData(client.getTickCount))
+				}
+				case _ =>
 			}
-			case UnstableIce(ice) => {
-				log.debug(s"UnstableIce ${ice} spawned at ${ice.getWorldLocation}")
-				iceBlocks.put(ice, IceData(client.getTickCount))
-			}
-			case _ =>
 		}
 	}
 	@Subscribe
 	def onNpcDespawned(e: NpcDespawned): Unit = {
-		e.getNpc match {
-			case Amoxliatl(amox) => {
-				log.debug(s"Amoxliatl ${amox} despawned at ${amox.getWorldLocation}")
-				bossData.remove(amox)
+		if(curRegion == 5446) {
+			e.getNpc match {
+				case Amoxliatl(amox) => {
+					log.debug(s"Amoxliatl ${amox} despawned at ${amox.getTemplateLocation}")
+					bossData.remove(amox)
+				}
+				case UnstableIce(ice) => {
+					log.debug(s"UnstableIce ${ice} despawned at ${ice.getTemplateLocation}")
+					iceBlocks.remove(ice)
+				}
+				case _ =>
 			}
-			case UnstableIce(ice) => {
-				log.debug(s"UnstableIce ${ice} despawned at ${ice.getWorldLocation}")
-				iceBlocks.remove(ice)
-			}
-			case _ =>
 		}
 	}
 
 	@Subscribe
 	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
-		if (e.getGameObject.getId == 54279) {
-			iceTiles.add(e.getGameObject)
+		if (curRegion == 5446) {
+			if (e.getGameObject.getId == 54279) {
+				iceTiles.add(e.getGameObject)
+			}
 		}
 	}
 
 	@Subscribe
 	def onGameObjectDespawned(e: GameObjectDespawned): Unit = {
-		iceTiles.remove(e.getGameObject)
+		if(curRegion == 5446){
+			iceTiles.remove(e.getGameObject)
+		}
 //		if(iceTiles.contains(e.getGameObject)) {
 //			iceTiles.remove(e.getGameObject)
 //		}
@@ -322,30 +340,34 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 
 	@Subscribe
 	def onAnimationChanged(e: AnimationChanged): Unit = {
-		Option(e.getActor).foreach {
-			case Amoxliatl(amox) => {
-				log.debug(s"Amoxliatl animation changed to ${decodeAnimationId(amox.getAnimation)}")
-				Option(amox.getAnimation).foreach {
-					case AnimationID.AMOXLIATL_SUMMON | AnimationID.AMOXLIATL_ATTACK | AnimationID.AMOXLIATL_POINT => bossData.updateWith(amox)(_.map(_.copy(lastAttackTick =  client.getTickCount)))
-					case AnimationID.AMOXLIATL_SPAWN => bossData.updateWith(amox)(_.map(_.copy(spawnedTick = client.getTickCount)))
-					case _ =>
+		if (curRegion == 5446) {
+			Option(e.getActor).foreach {
+				case Amoxliatl(amox) => {
+					log.debug(s"Amoxliatl animation changed to ${decodeAnimationId(amox.getAnimation)}")
+					Option(amox.getAnimation).foreach {
+						case AnimationID.AMOXLIATL_SUMMON | AnimationID.AMOXLIATL_ATTACK | AnimationID.AMOXLIATL_POINT => bossData.updateWith(amox)(_.map(_.copy(lastAttackTick =  client.getTickCount)))
+						case AnimationID.AMOXLIATL_SPAWN => bossData.updateWith(amox)(_.map(_.copy(spawnedTick = client.getTickCount)))
+						case _ =>
+					}
 				}
-			}
-			case UnstableIce(ice) => {
-				log.debug(s"UnstableIce animation changed to ${decodeAnimationId(ice.getAnimation)}")
-				Option(ice.getAnimation).foreach {
-					case AnimationID.AMOXLIATL_UNSTABLE_ICE_SPAWN => iceBlocks.updateWith(ice)(_.map(_.copy(spawnedTick = client.getTickCount)))
-					case _ =>
+				case UnstableIce(ice) => {
+					log.debug(s"UnstableIce animation changed to ${decodeAnimationId(ice.getAnimation)}")
+					Option(ice.getAnimation).foreach {
+						case AnimationID.AMOXLIATL_UNSTABLE_ICE_SPAWN => iceBlocks.updateWith(ice)(_.map(_.copy(spawnedTick = client.getTickCount)))
+						case _ =>
+					}
 				}
+				case _ =>
 			}
-			case _ =>
 		}
 	}
 
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
-		if(bossData.nonEmpty) {
-			val (amox, amoxdata) = bossData.head
-			val bossLine = LineComponent.builder().left(amox.toString).right(amoxdata.toString).rightColor(if(client.getTickCount - amoxdata.lastAttackTick > 6) Color.RED else Color.BLUE).build
+//		if(curRegion == 5446){
+			val regionLine = LineComponent.builder().left("Region").right(s"$curRegion").rightColor(if(curRegion == 5446) Color.GREEN else Color.RED).build
+			val bossLine = bossData.headOption.map((amox, amoxdata) =>{
+				LineComponent.builder().left(amox.toString).right(amoxdata.toString).rightColor(if(client.getTickCount - amoxdata.lastAttackTick > 6) Color.RED else Color.BLUE).build
+			}).toList
 
 			val iceLines = iceBlocks.toList.zipWithIndex.map((b,idx) => {
 				LineComponent.builder().left(s"Ice[${idx.toString.padTo(2, ' ')}] ${b._1.getIndex}").right(b._2.toString).leftColor(
@@ -355,15 +377,15 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 				).rightColor(ColorUtil.colorLerp(Color.RED, Color.GREEN, Math.min(1.0d, Math.max(0.0d,(client.getTickCount - b._2.spawnedTick).toDouble/15.0d)))).build
 			}).pipe(ibl => if(ibl.nonEmpty) ibl.prepended(TitleComponent.builder().text("Unstable Ice").color(Color.CYAN).build()) else ibl)
 
-			Seq(bossLine, iceLines).flatMap{
+			Seq(regionLine, bossLine, iceLines).flatMap{
 				case e: LayoutableRenderableEntity => Seq(e)
 				case le: Seq[_] => le.collect{
 					case e: LayoutableRenderableEntity => e
 				}
 			}
-		} else {
-			Seq.empty[LayoutableRenderableEntity]
-		}
+//		} else {
+//			Seq.empty[LayoutableRenderableEntity]
+//		}
 	}
 	override def renderOverlay(g: Graphics2D): Dimension = {
 		def renderNpcOverlay(n:NPC, text: String, color: Color, zoffset: Int): Unit = {
@@ -381,7 +403,7 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 			val ppc = new ProgressPieComponent()
 			ppc.setBorderColor(Color.BLACK)
 			ppc.setFill(Color.RED)
-			ppc.setProgress((client.getGameCycle - tile.spawnedCycle).doubleValue / (30.0d * 4))
+			ppc.setProgress((client.getGameCycle - tile.spawnedCycle).doubleValue / (30.0d * 3))
 			ppc.setDiameter(28)
 			val point = Perspective.localToCanvas(client, tile.lp, client.getTopLevelWorldView.getPlane, 20)
 			ppc.setPosition(point)
@@ -414,7 +436,7 @@ class FredsAmoxliatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 //			OverlayUtil.renderTextLocation(g, textPoint, text, Color.BLACK)
 		}
 
-		if(bossData.nonEmpty) {
+		if(curRegion == 5446){
 			dangerousTiles.values.toList.foreach(dt => {
 				renderDangerousTile(dt, Color.ORANGE)
 			})
