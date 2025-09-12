@@ -216,6 +216,24 @@ public class PacketDef {
 		return new PacketDef(ObfuscatedNames.RESUME_COUNTDIALOG_OBFUSCATEDNAME, writeData, writeMethods, PacketType.RESUME_COUNTDIALOG);
 	}
 
+	public static PacketDef getResumeObjDialog() {
+		String[] writeData = new String[]{ObfuscatedNames.RESUME_OBJDIALOG_WRITE1};
+		String[][] writeMethods = ObfuscatedNames.RESUME_OBJDIALOG_WRITES;
+		return new PacketDef(ObfuscatedNames.RESUME_OBJDIALOG_OBFUSCATEDNAME, writeData, writeMethods, PacketType.RESUME_OBJDIALOG);
+	}
+
+	public static PacketDef getResumeNameDialog() {
+		String[] writeData = new String[]{ObfuscatedNames.RESUME_NAMEDIALOG_WRITE1, ObfuscatedNames.RESUME_NAMEDIALOG_WRITE2};
+		String[][] writeMethods = ObfuscatedNames.RESUME_NAMEDIALOG_WRITES;
+		return new PacketDef(ObfuscatedNames.RESUME_NAMEDIALOG_OBFUSCATED_NAME, writeData, writeMethods, PacketType.RESUME_NAMEDIALOG);
+	}
+
+	public static PacketDef getResumeStringDialog() {
+		String[] writeData = new String[]{ObfuscatedNames.RESUME_STRINGDIALOG_WRITE1, ObfuscatedNames.RESUME_STRINGDIALOG_WRITE2};
+		String[][] writeMethods = ObfuscatedNames.RESUME_STRINGDIALOG_WRITES;
+		return new PacketDef(ObfuscatedNames.RESUME_STRINGDIALOG_OBFUSCATED_NAME, writeData, writeMethods, PacketType.RESUME_STRINGDIALOG);
+	}
+
 	public static PacketDef getOpHeldd() {
 		String[] writeData = new String[]{ObfuscatedNames.OPHELDD_WRITE1, ObfuscatedNames.OPHELDD_WRITE2, ObfuscatedNames.OPHELDD_WRITE3,
 				ObfuscatedNames.OPHELDD_WRITE4, ObfuscatedNames.OPHELDD_WRITE5, ObfuscatedNames.OPHELDD_WRITE6};

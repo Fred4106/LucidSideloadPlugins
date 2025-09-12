@@ -19,7 +19,6 @@ public class WidgetPackets {
 		PacketReflection.sendPacket(PacketDef.getIfButtonX(), widgetId, childId, itemId, actionFieldNo & 65535);
 	}
 
-
 	@SneakyThrows
 	public static void queueWidgetSubAction(Widget widget, String menu, String action) {
 		if (widget == null || widget.getItemId() == -1) {
@@ -96,13 +95,13 @@ public class WidgetPackets {
 
 	public static void queueWidgetOnWidget(Widget srcWidget, Widget destWidget) {
 		queueWidgetOnWidget(srcWidget.getId(), srcWidget.getIndex(), srcWidget.getItemId(),
-			destWidget.getId(), destWidget.getIndex(), destWidget.getItemId());
+				destWidget.getId(), destWidget.getIndex(), destWidget.getItemId());
 	}
 
 	public static void queueWidgetOnWidget(int sourceWidgetId, int sourceSlot, int sourceItemId,
 										   int destinationWidgetId, int destinationSlot, int destinationItemId) {
 		PacketReflection.sendPacket(PacketDef.getIfButtonT(), sourceWidgetId, sourceSlot, sourceItemId, destinationWidgetId,
-			destinationSlot, destinationItemId);
+				destinationSlot, destinationItemId);
 	}
 
 	public static void queueResumePause(int widgetId, int childId) {
@@ -113,8 +112,23 @@ public class WidgetPackets {
 		PacketReflection.sendPacket(PacketDef.getResumeCountDialog(), id);
 	}
 
+	public static void queueResumeObj(int value) {
+		PacketReflection.sendPacket(PacketDef.getResumeObjDialog(), value);
+	}
+
+
 	public static void queueDragAndDrop(Widget src, Widget dest) {
 		PacketReflection.sendPacket(PacketDef.getOpHeldd(), src.getId(), src.getIndex(),
-			src.getItemId(), dest.getId(), dest.getIndex(), dest.getItemId());
+				src.getItemId(), dest.getId(), dest.getIndex(), dest.getItemId());
+	}
+
+	public static void queueResumeName(String name) {
+		int length = name.length() + 1;
+		PacketReflection.sendPacket(PacketDef.getResumeNameDialog(), length, name);
+	}
+
+	public static void queueResumeString(String string) {
+		int length = string.length() + 1;
+		PacketReflection.sendPacket(PacketDef.getResumeStringDialog(), length, string);
 	}
 }

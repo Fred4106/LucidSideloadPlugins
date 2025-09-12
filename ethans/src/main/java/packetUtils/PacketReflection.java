@@ -11,12 +11,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 public class PacketReflection {
 	public static Client getClient(){
 		return RuneLite.getInjector().getInstance(Client.class);
 	}
-
 	public static Class loadClassFromClientClassLoader(String name){
 		try {
 			ClassLoader clientLoader = getClient().getClass().getClassLoader();
@@ -26,11 +24,9 @@ public class PacketReflection {
 		}
 		return null;
 	}
-
 	public static Class getClassWithGetPacketBufferNode(){
 		return loadClassFromClientClassLoader(ObfuscatedNames.classContainingGetPacketBufferNodeName);
 	}
-
 	public static Method getGetPacketBufferNode(){
 		try {
 			return Arrays.stream(getClassWithGetPacketBufferNode().getDeclaredMethods()).filter(m -> m.getReturnType().equals(getPacketBufferNodeClass())).collect(Collectors.toList()).get(0);
@@ -39,11 +35,9 @@ public class PacketReflection {
 		}
 		return null;
 	}
-
 	public static Class getClientPacketClass(){
 		return loadClassFromClientClassLoader(ObfuscatedNames.clientPacketClassName);
 	}
-
 	public static Field getPacketWriterField() {
 		try {
 			return getClient().getClass().getDeclaredField(ObfuscatedNames.packetWriterFieldName);
@@ -52,7 +46,6 @@ public class PacketReflection {
 		}
 		return null;
 	}
-
 	public static Class getPacketWriterClass(){
 		try {
 			Field packetWriterField = getPacketWriterField();
@@ -65,7 +58,6 @@ public class PacketReflection {
 		}
 		return null;
 	}
-
 	public static Object getIsaacObject(){
 		try {
 			Field isaacField = getPacketWriterClass().getDeclaredField(ObfuscatedNames.isaacCipherFieldName);
@@ -78,11 +70,9 @@ public class PacketReflection {
 		}
 		return null;
 	}
-
 	public static Class getIsaacClass(){
 		return getIsaacObject().getClass();
 	}
-
 	public static Class getPacketBufferNodeClass(){
 		return loadClassFromClientClassLoader(ObfuscatedNames.packetBufferNodeClassName);
 	}
@@ -110,7 +100,7 @@ public class PacketReflection {
 		if (garbageValue < 256) {
 			try {
 				packetBufferNode = getPacketBufferNode.invoke(null, fetchPacketField(def.name).get(ClientPacket),
-					isaac, Byte.parseByte(ObfuscatedNames.getPacketBufferNodeGarbageValue));
+						isaac, Byte.parseByte(ObfuscatedNames.getPacketBufferNodeGarbageValue));
 			} catch (IllegalAccessException | InvocationTargetException e) {
 				e.printStackTrace();
 			}
@@ -119,7 +109,7 @@ public class PacketReflection {
 				//System.out.println("getPacketBufferNode: "+getPacketBufferNode);
 				//System.out.println("isaac: "+isaac);
 				packetBufferNode = getPacketBufferNode.invoke(null, fetchPacketField(def.name).get(ClientPacket),
-					isaac, Short.parseShort(ObfuscatedNames.getPacketBufferNodeGarbageValue));
+						isaac, Short.parseShort(ObfuscatedNames.getPacketBufferNodeGarbageValue));
 				//System.out.println("packetBufferNode: "+packetBufferNode);
 			} catch (IllegalAccessException | InvocationTargetException e) {
 				e.printStackTrace();
@@ -127,7 +117,7 @@ public class PacketReflection {
 		} else if (garbageValue < Integer.MAX_VALUE) {
 			try {
 				packetBufferNode = getPacketBufferNode.invoke(null, fetchPacketField(def.name).get(ClientPacket),
-					isaac, Integer.parseInt(ObfuscatedNames.getPacketBufferNodeGarbageValue));
+						isaac, Integer.parseInt(ObfuscatedNames.getPacketBufferNodeGarbageValue));
 			} catch (IllegalAccessException | InvocationTargetException e) {
 				e.printStackTrace();
 			}
@@ -140,10 +130,13 @@ public class PacketReflection {
 		}
 		getPacketBufferNode.setAccessible(false);
 		List<String> params = null;
+		if (def.type == PacketType.RESUME_NAMEDIALOG || def.type == PacketType.RESUME_STRINGDIALOG) {
+			params = List.of("length", "string");
+		}
 		if (def.type == PacketType.OPHELDD) {
 			params = List.of("selectedId", "selectedChildIndex", "selectedItemId", "destId", "destChildIndex", "destItemId");
 		}
-		if (def.type == PacketType.RESUME_COUNTDIALOG) {
+		if (def.type == PacketType.RESUME_COUNTDIALOG || def.type == PacketType.RESUME_OBJDIALOG) {
 			params = List.of("var0");
 		}
 		if (def.type == PacketType.RESUME_PAUSEBUTTON) {
@@ -152,11 +145,11 @@ public class PacketReflection {
 		if (def.type == PacketType.IF_BUTTON) {
 			params = List.of("widgetId", "slot", "itemId");
 		}
-		if (def.type == PacketType.IF_BUTTONX) {
-			params = List.of("widgetId", "slot", "itemId", "opCode");
-		}
 		if (def.type == PacketType.IF_SUBOP) {
 			params = List.of("widgetId", "slot", "itemId", "menuIndex", "subActionIndex");
+		}
+		if (def.type == PacketType.IF_BUTTONX) {
+			params = List.of("widgetId", "slot", "itemId", "opCode");
 		}
 		if (def.type == PacketType.OPLOC) {
 			params = List.of("objectId", "worldPointX", "worldPointY", "ctrlDown");
@@ -172,7 +165,7 @@ public class PacketReflection {
 		}
 		if (def.type == PacketType.OPOBJT) {
 			params = List.of("objectId", "worldPointX", "worldPointY", "slot", "itemId", "widgetId",
-				"ctrlDown");
+					"ctrlDown");
 		}
 		if (def.type == PacketType.EVENT_MOUSE_CLICK) {
 			params = List.of("mouseInfo", "mouseX", "mouseY", "0");
@@ -182,11 +175,11 @@ public class PacketReflection {
 		}
 		if (def.type == PacketType.IF_BUTTONT) {
 			params = List.of("sourceWidgetId", "sourceSlot", "sourceItemId", "destinationWidgetId",
-				"destinationSlot", "destinationItemId");
+					"destinationSlot", "destinationItemId");
 		}
 		if (def.type == PacketType.OPLOCT) {
 			params = List.of("objectId", "worldPointX", "worldPointY", "slot", "itemId", "widgetId",
-				"ctrlDown");
+					"ctrlDown");
 		}
 		if (def.type == PacketType.OPPLAYERT) {
 			params = List.of("playerIndex", "itemId", "slot", "widgetId", "ctrlDown");
@@ -199,7 +192,15 @@ public class PacketReflection {
 				int index = params.indexOf(def.writeData[i]);
 				Object writeValue = objects[index];
 				for (String s : def.writeMethods[i]) {
-//                    System.out.println("Writing " + s + " " + writeValue);
+					if (s.equalsIgnoreCase("strn")) {
+						BufferMethods.writeStringCp1252NullTerminated((String) writeValue, buffer);
+						continue;
+					}
+					if (s.equalsIgnoreCase("strc")) {
+						BufferMethods.writeStringCp1252NullCircumfixed((String) writeValue, buffer);
+						continue;
+					}
+					//System.out.println("Writing " + s + " " + writeValue);
 					BufferMethods.writeValue(s, (Integer) writeValue, buffer);
 				}
 			}
@@ -264,7 +265,6 @@ public class PacketReflection {
 		}
 	}
 
-
 	static Field fetchPacketField(String name) {
 		try {
 			Class ClientPacket = getClientPacketClass();
@@ -274,7 +274,6 @@ public class PacketReflection {
 			return null;
 		}
 	}
-
 
 	private static BigInteger modInverse(BigInteger val) {
 		BigInteger shift = BigInteger.ONE.shiftLeft(32);

@@ -51,7 +51,7 @@ public class PacketUtilsPlugin extends Plugin {
     static Client staticClient;
     public static Method addNodeMethod;
     public static boolean usingClientAddNode = false;
-    public static final int CLIENT_REV = 232;
+    public static final int CLIENT_REV = 233;
     private static String loadedConfigName = "";
     @Inject
     private PluginManager pluginManager;
