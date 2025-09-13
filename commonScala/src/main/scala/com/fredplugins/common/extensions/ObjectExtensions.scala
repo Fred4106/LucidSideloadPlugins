@@ -5,6 +5,7 @@ import com.fredplugins.common.utils.WorldPointUtils
 import net.runelite.api.Animation
 import net.runelite.api.DynamicObject
 import net.runelite.api.GameObject
+import net.runelite.api.GraphicsObject
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.{Client, ObjectComposition, TileObject}
 
@@ -38,7 +39,11 @@ object ObjectExtensions {
 			WorldPointUtils.toTemplate(e.getWorldLocation)
 		}
 	}
-
+	extension (e: GraphicsObject)(using client: Client) {
+		def templateLocation: WorldPoint = {
+			WorldPointUtils.toTemplate(WorldPoint.fromLocalInstance(client, e.getLocation))
+		}
+	}
 	extension (e: TileObject)(using client: Client) {
 		def wrapped: TileObjectWrapper = TileObjectWrapper(e)
 		def composition: ObjectComposition = client.getObjectDefinition(e.getId)

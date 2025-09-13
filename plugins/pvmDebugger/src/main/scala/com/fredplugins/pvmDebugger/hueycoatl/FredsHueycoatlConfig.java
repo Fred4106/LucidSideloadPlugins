@@ -1,14 +1,15 @@
-package com.fredplugins.pvmDebugger.amoxliatl;
+package com.fredplugins.pvmDebugger.hueycoatl;
 
 import lombok.Getter;
+import net.runelite.api.Prayer;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 
-@ConfigGroup(value = FredsAmoxliatlConfig.GROUP, secondaryConfig = true)
-public interface FredsAmoxliatlConfig extends Config {
-	static final String GROUP = "FredsAmoxliatlHelper";
+@ConfigGroup(value = FredsHueycoatlConfig.GROUP, secondaryConfig = true)
+public interface FredsHueycoatlConfig extends Config {
+	static final String GROUP = "FredsHueycoatlHelper";
 
 	@Getter
 	enum CombatPotionType {
@@ -16,6 +17,28 @@ public interface FredsAmoxliatlConfig extends Config {
 		DIVINE_SUPER_ATK_PLUS_STR,
 		SUPER_COMBAT,
 		DIVINE_SUPER_COMBAT
+	}
+
+	@Getter
+	enum ProtectPrayerType {
+		PROTECT_FROM_MELEE,
+		PROTECT_FROM_MAGE,
+		PROTECT_FROM_MISSILE,
+		NONE;
+
+		public Prayer getPrayer() {
+			switch(this) {
+				case PROTECT_FROM_MAGE:
+					return Prayer.PROTECT_FROM_MAGIC;
+				case PROTECT_FROM_MELEE:
+					return Prayer.PROTECT_FROM_MELEE;
+				case PROTECT_FROM_MISSILE:
+					return Prayer.PROTECT_FROM_MISSILES;
+				case NONE:
+				default:
+					return null;
+			}
+		}
 	}
 
 	@Getter
@@ -33,7 +56,7 @@ public interface FredsAmoxliatlConfig extends Config {
 
 	@ConfigItem(
 		name = "Enabled",
-		description = "Is Amoxliatl helper enabled?",
+		description = "Is Hueycoatl helper enabled?",
 		position = 0,
 		keyName = "enabled"
 	)
@@ -62,13 +85,13 @@ public interface FredsAmoxliatlConfig extends Config {
 
 	@ConfigItem(
 		position = 5,
-		keyName = "autoPrayMage",
-		name = "Auto Pray Mage",
-		description = "Enables the Protect from Mage prayer as needed.",
+		keyName = "campPrayer",
+		name = "Prayer to Camp",
+		description = "Camps 	Protect from Mage prayer as needed.",
 		section = baseSection
 	)
-	default boolean autoPrayMage() {
-		return true;
+	default ProtectPrayerType campPrayer() {
+		return ProtectPrayerType.PROTECT_FROM_MISSILE;
 	}
 
 	@ConfigItem(

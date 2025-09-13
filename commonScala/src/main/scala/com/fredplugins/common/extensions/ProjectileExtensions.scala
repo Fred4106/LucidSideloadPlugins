@@ -1,0 +1,39 @@
+package com.fredplugins.common.extensions
+
+import com.fredplugins.common.utils.WorldPointUtils
+import net.runelite.api.Animation
+import net.runelite.api.DynamicObject
+import net.runelite.api.GameObject
+import net.runelite.api.GraphicsObject
+import net.runelite.api.coords.WorldPoint
+import net.runelite.api.Client
+import net.runelite.api.ObjectComposition
+import net.runelite.api.Projectile
+import net.runelite.api.Scene
+import net.runelite.api.TileObject
+import net.runelite.api.coords.LocalPoint
+
+object ProjectileExtensions {
+	extension(e: Projectile)(using client: Client) {
+		def templateSourceLocation: WorldPoint = {
+			WorldPointUtils.toTemplate(e.getSourcePoint)
+		}
+		def templateTargetLocation: WorldPoint = {
+			WorldPointUtils.toTemplate(e.getTargetPoint)
+		}
+		def ticksRemaining: Int = {
+			Math.floor(e.getRemainingCycles / 30.0F).toInt
+		}
+		def justSpawned: Boolean = {
+			e.getRemainingCycles == (e.getEndCycle - e.getStartCycle)
+		}
+		def hasHit: Boolean = {
+			e.getRemainingCycles <= 0
+		}
+		def localLocation: LocalPoint = {
+			val x: Int = e.getX.toInt
+			val y: Int = e.getY.toInt
+			new LocalPoint(x, y, client.getTopLevelWorldView)
+		}
+	}
+}
