@@ -1,10 +1,10 @@
 package com.fredplugins.pvmDebugger.hueycoatl
 
 import com.fredplugins.common.extensions.ActorExtensions.*
+import com.fredplugins.common.extensions.GeneralExtensions.*
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
-import com.fredplugins.common.utils.ReflectionUtils
 import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -15,10 +15,12 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.NPCs
+import ethanApiPlugin.collections.query.NPCQuery
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.Actor
 import net.runelite.api.Client
+import net.runelite.api.GameState
 import net.runelite.api.NPC
 import net.runelite.api.Perspective
 import net.runelite.api.Player
@@ -29,7 +31,6 @@ import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.AnimationChanged
 import net.runelite.api.events.GameTick
 import net.runelite.api.events.GraphicsObjectCreated
-import net.runelite.api.events.NpcChanged
 import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.events.PostHealthBarConfig
@@ -39,18 +40,19 @@ import net.runelite.api.gameval.NpcID
 import net.runelite.api.gameval.ObjectID1
 import net.runelite.api.gameval.SpotanimID
 import net.runelite.api.gameval.VarbitID
+import net.runelite.client.callback.ClientThread
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import net.runelite.client.ui.overlay.components.LineComponent
 import net.runelite.client.ui.overlay.components.ProgressPieComponent
 import net.runelite.client.ui.overlay.components.TitleComponent
-import net.runelite.client.util.ColorUtil
 import packets.MovementPackets
 
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics2D
+import java.awt.Rectangle
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import scala.annotation.unused
@@ -156,6 +158,17 @@ object HueycoatlData {
 			}).toMap
 	}
 
+	val HueyShockwaveIds = List(
+	SpotanimID.VFX_HUEY_TAIL_SLAM_SHOCKWAVE_SOUTH,
+	SpotanimID.	VFX_HUEY_TAIL_SLAM_SHOCKWAVE_WEST,
+	SpotanimID.	VFX_HUEY_TAIL_SLAM_SHOCKWAVE_NORTH,
+	SpotanimID.	VFX_HUEY_TAIL_SLAM_SHOCKWAVE_EAST,
+	SpotanimID.	VFX_HUEY_TAIL_SLAM_SHOCKWAVE_SOUTHEAST,
+	SpotanimID.	VFX_HUEY_TAIL_SLAM_SHOCKWAVE_SOUTHWEST,
+	SpotanimID.	VFX_HUEY_TAIL_SLAM_SHOCKWAVE_NORTHWEST,
+			SpotanimID.VFX_HUEY_TAIL_SLAM_SHOCKWAVE_NORTHEAST
+	)
+
 	sealed trait PillarTrait(val wp: WorldPoint, val scale: Seq[Int], val prayer: Prayer) extends enumeratum.EnumEntry {
 		def getLevel(using client: Client): Int = {
 			wp.getTile.map(_.getDecorativeObject.getId).map(scale.indexOf(_)).getOrElse(-1)
@@ -230,6 +243,51 @@ object HueycoatlData {
 				WorldPoint(1524,3270, 0)
 		)
 }
+trait DangerousTile{
+	def location: WorldPoint
+//	def dangerousOnTick: Int
+	def spawnCycle: Int
+	def finishedCycle: Int
+}
+case class WaveTile(location: WorldPoint, spawnCycle: Int, finishedCycle: Int) extends DangerousTile
+case class LightingTile(location: WorldPoint, spawnCycle: Int, finishedCycle: Int) extends DangerousTile
+
+case class HueycoatlState(projectile: Option[Projectile], pillars: Map[PillarTrait, Int], dangerousTiles: Seq[DangerousTile], npcs: Seq[NPC]) {
+		lazy val hueyHead  : Option[NPC] = npcs.find(_.getId.pipe(HueyHeadIds.contains(_)))
+		lazy val hueyBodies: Seq[NPC]    = npcs.filter(_.getId == NpcID.HUEY_BODY_PART)
+		lazy val hueyTail  : Option[NPC] = npcs.find(_.getId.pipe(Seq(NpcID.HUEY_TAIL, NpcID.HUEY_TAIL_BROKEN).contains(_)))
+
+		lazy val stage: Int = hueyHead.map(_.getId).collect {
+			case NpcID.HUEY_HEAD_RESPAWN_PLACEHOLDER | NpcID.HUEY_HEAD_DEFEATED => 0
+			case NpcID.HUEY_HEAD_INVULNERABLE => 3
+			case NpcID.HUEY_HEAD if hueyBodies.nonEmpty => 1
+			case NpcID.HUEY_HEAD if hueyTail.isEmpty => 2
+			case NpcID.HUEY_HEAD if hueyTail.isDefined => 4
+		}.getOrElse(0)
+}
+
+object HueycoatlStateFactory {
+	def create(using client: Client): Option[HueycoatlState] = {
+		Option.when(client.isClientThread && client.getGameState == GameState.LOGGED_IN) {
+			HueycoatlState(
+				client.getProjectiles.asScala.toList.filter(p => HueyProjectileIds.contains(p.getId) && Option(p.getTargetActor).contains(client.getLocalPlayer)).sortBy(_.getEndCycle).headOption,
+				Pillars.values.map { p =>
+					p -> p.getLevel
+				}.toMap,
+				client.getGraphicsObjects.asScala.toList.flatMap(go => {
+					val swo = Option.when(HueyShockwaveIds.contains(go.getId)) {
+						WaveTile(go.templateLocation, client.getGameCycle, go.getStartCycle)
+					}
+					val lso = Option.when(go.getId == SpotanimID.VFX_HUEYCOATL_PRAYER_02){
+						LightingTile(go.templateLocation, client.getGameCycle, go.getStartCycle)
+					}
+					swo.orElse(lso)
+				}),
+				NPCs.search().withId(HueyNpcIds *).result().asScala.toList
+			)
+		}
+	}
+}
 
 @Singleton
 class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsHueycoatlConfig) extends HelperModule with WithPanel with WithOverlay {
@@ -237,64 +295,62 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	private def clientThread  = parent.getClientThread
 	given Client = client
 
-	private var curRegion: Int     = -1
-	private var inFight  : Boolean = false
+	private var state: Option[HueycoatlState] = Option.empty
 
 	private var incomingProjectile: Projectile = null
 	private var pillars: Map[PillarTrait, Int] = Map.empty
 	private var stage: Int = 0
 	private var dangerousTiles: Seq[WorldPoint] = Seq.empty
-//	private var ticksSinceDangerousTiles: Int = -1
 	private var dangerousSpawnCycle: Int  = 0
 	private var dangerousSpawnTick: Int  = 0
-//	private var body
+	private var priorityTiles: Seq[WorldPoint] = Seq.empty
+	private var trackedNpcs = Seq.empty[NPC]
 
+	private def curRegion: Int = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
 	private def inRegion: Boolean = HueyRegion == curRegion
+	private def inFight: Boolean =
+		if (inRegion) clientThread.runOnClientThread(() => client.getVarbitValue(VarbitID.HUEY_IN_AREA)) == 1
+		else false
 
-//	var currentRoom: Option[MoonRoomEnum] = None
-//	var currentRoomChangedTick: Int = -1
-	override def init(): Unit = {
-		curRegion = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
-		inFight = if (inRegion) (
-			clientThread.runOnClientThread(() => client.getVarbitValue(VarbitID.HUEY_IN_AREA)) == 1
-		) else false
+	def reset(): Unit= {
 		pillars = Map.empty
 		stage = 0
 		incomingProjectile = null
 		dangerousTiles = Seq.empty
-//		ticksSinceDangerousTiles = -1
 		dangerousSpawnCycle = 0
 		dangerousSpawnTick = 0
+		priorityTiles = Seq.empty
+		trackedNpcs = NPCs.search().withId(HueyNpcIds *).result().asScala.toList.filter(_.templateLocation.getRegionID == HueyRegion)
+	}
+
+	override def init(): Unit = {
+//		curRegion = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
+//		inFight = if (inRegion) (
+//			clientThread.runOnClientThread(() => client.getVarbitValue(VarbitID.HUEY_IN_AREA)) == 1
+//		) else false
+		reset()
 	}
 
 	override def cleanup(): Unit = {
-		curRegion = -1
-		inFight = false
-		pillars = Map.empty
-		stage = 0
-		incomingProjectile = null
-		dangerousTiles = Seq.empty
-
-		dangerousSpawnTick = 0
-		//ticksSinceDangerousTiles = -1
-		dangerousSpawnCycle = 0
+//		curRegion = -1
+//		inFight = false
+		reset()
 	}
 
 	@Subscribe
 	def onGraphicsObjectCreated(e: GraphicsObjectCreated): Unit = {
 		val graphicsObject = e.getGraphicsObject
 		val name = spotAnimationIdToName.getOrElse(graphicsObject.getId, s"Unknown(${graphicsObject.getId})")
-		if(name.startsWith("VFX_HUEY_TAIL_SLAM_SHOCKWAVE") || !name.startsWith("VFX_HUEY")) return
+		if((name.startsWith("VFX_HUEY_TAIL_SLAM_SHOCKWAVE") && !name.contains("IMPACT")) || !name.startsWith("VFX_HUEY")) return
 		if(graphicsObject.templateLocation.getRegionID == HueyRegion && graphicsObject.getId == SpotanimID.VFX_HUEYCOATL_PRAYER_02) {
 			//ticksSinceDangerousTiles = 5
 			dangerousSpawnTick = client.getTickCount
 			dangerousSpawnCycle = client.getGameCycle
 			dangerousTiles = dangerousTiles.appended(graphicsObject.templateLocation)
-//			log.info(s"GraphicsObject \"${name}\" created on tick ${client.getTickCount} at ${graphicsObject.templateLocation} with animation ${Option(graphicsObject.getAnimation).map(a => a.getId -> a.getDuration).getOrElse(-1 -> 0)}")
 		}
+		log.info(s"GraphicsObject \"${name}\" created on tick ${client.getTickCount} at ${graphicsObject.templateLocation} with start cycle ${graphicsObject.getStartCycle} on cycle ${client.getGameCycle} animation ${Option(graphicsObject.getAnimation).map(a => a.getId -> a.getDuration).getOrElse(-1 -> 0)}")
 	}
 
-	val protectPrayers = Seq(Prayer.PROTECT_FROM_MELEE, Prayer.PROTECT_FROM_MAGIC, Prayer.PROTECT_FROM_MISSILES)
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
 		if(!inRegion) return
@@ -302,17 +358,17 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 			p -> p.getLevel
 		}.toMap
 
-		val hueyHead                                         = NPCs.search().withId(HueyHeadIds *).first().toScala
+		val hueyHead                                         = NPCQuery(trackedNpcs *).withId(HueyHeadIds *).first().toScala
 //		hueyHead.foreach(ReflectionUtils.getHealthbars(_))
-		val (hueyBodies: Seq[NPC], deadHueyBodies: Seq[NPC]) = HueyBodyLocations.flatMap(bl => NPCs.search().atLocation(bl).withId(NpcID.HUEY_BODY_PART_BROKEN, NpcID.HUEY_BODY_PART).first().toScala).partition(_.getId == NpcID.HUEY_BODY_PART)
-		val hueyTails: Option[NPC]                           = NPCs.search().withId(NpcID.HUEY_TAIL, NpcID.HUEY_TAIL_BROKEN).first().toScala
-		stage = hueyHead.map(_.getId).get match {
+		val (hueyBodies: Seq[NPC], deadHueyBodies: Seq[NPC]) = HueyBodyLocations.flatMap(bl => NPCQuery(trackedNpcs *).atLocation(bl).withId(NpcID.HUEY_BODY_PART_BROKEN, NpcID.HUEY_BODY_PART).first().toScala).partition(_.getId == NpcID.HUEY_BODY_PART)
+		val hueyTails: Option[NPC]                           = NPCQuery(trackedNpcs *).withId(NpcID.HUEY_TAIL, NpcID.HUEY_TAIL_BROKEN).first().toScala
+		stage = hueyHead.map(_.getId).collect{
 			case NpcID.HUEY_HEAD_RESPAWN_PLACEHOLDER | NpcID.HUEY_HEAD_DEFEATED => 0
 			case NpcID.HUEY_HEAD if hueyBodies.nonEmpty => 1
 			case NpcID.HUEY_HEAD if hueyTails.isEmpty => 2
 			case NpcID.HUEY_HEAD_INVULNERABLE => 3
 			case NpcID.HUEY_HEAD if hueyTails.nonEmpty => 4
-		}
+		}.getOrElse(0)
 
 		if(dangerousTiles.nonEmpty) {
 			val age = client.getTickCount - dangerousSpawnTick
@@ -324,7 +380,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		if(inFight) {
 			val projectilePrayOpt = Option(incomingProjectile).filter(_.ticksRemaining <= 3)
 				.flatMap(p => {
-					if(p.hasHit && p.ticksRemaining == 1) {
+					if(p.hasHit && p.ticksRemaining < 1) {
 						incomingProjectile = null
 					}
 					p.getId.pipe(HueyProjectileIds.get)
@@ -343,6 +399,33 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 				Option.when(config.autoPrayPiety() && stage > 0)(Prayer.PIETY).filterNot(client.isPrayerActive).foreach(offensivePrayer => CombatUtils.activatePrayer(offensivePrayer))
 			}
 
+			priorityTiles = (stage match {
+				case 0 => Seq.empty[WorldPoint]
+				case 1 => {
+					hueyBodies.flatMap(b => {
+						val bArea         = b.templateLocation.toWorldArea//SInteractionUtils.offset(, 1)
+						val bMeeleArea    = SInteractionUtils.offset(bArea, 1)
+						val excludePoints = SInteractionUtils.worldAreaTiles(bArea).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
+						SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
+					})
+				}
+				case 2 | 4 => {
+					hueyHead.map(_.getWorldArea).fold(List.empty[WorldPoint])(wa => {
+						val bMeeleArea    = SInteractionUtils.offset(wa, 1)
+						val excludePoints = SInteractionUtils.worldAreaTiles(wa).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
+						SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
+					})
+				}
+				case 3 => {
+					hueyTails.map(_.getWorldArea).fold(List.empty[WorldPoint])(wa => {
+						val bMeeleArea    = SInteractionUtils.offset(wa, 1)
+						val excludePoints = SInteractionUtils.worldAreaTiles(wa).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
+						SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
+					})
+				}
+			}).map(_.getTemplate)
+				.filter(SInteractionUtils.isWalkable(_))
+
 			protectPrayer match {
 				case Some(pp) => CombatUtils.activatePrayer(pp)
 				case None => CombatUtils.deactivatePrayers(true)
@@ -350,37 +433,11 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 			val destinationTile = Option(client.getLocalDestinationLocation).map(_.getTemplate).getOrElse(client.getLocalPlayer.templateLocation)
 			if(dangerousTiles.contains(destinationTile)) {
 				val playerPos = client.getLocalPlayer.templateLocation
-				val priorityTiles: Seq[WorldPoint] = (stage match {
-					case 0 => Seq.empty[WorldPoint]
-					case 1 => {
-						hueyBodies.flatMap(b => {
-							val bArea = b.getWorldArea
-							val bMeeleArea = SInteractionUtils.offset(bArea, 1)
-							val excludePoints = SInteractionUtils.worldAreaTiles(bArea).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
-							SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
-						})
-					}
-					case 2 | 4 => {
-						hueyHead.map(_.getWorldArea).fold(List.empty[WorldPoint])(wa => {
-							val bMeeleArea = SInteractionUtils.offset(wa, 1)
-							val excludePoints = SInteractionUtils.worldAreaTiles(wa).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
-							SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
-						})
-					}
-					case 3 => {
-						hueyTails.map(_.getWorldArea).fold(List.empty[WorldPoint])(wa => {
-							val bMeeleArea = SInteractionUtils.offset(wa, 1)
-							val excludePoints = SInteractionUtils.worldAreaTiles(wa).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
-							SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
-						})
-					}
-				})
-					.map(_.getTemplate).filterNot(dangerousTiles.contains(_)).flatMap(pt => {
+				priorityTiles.filterNot(dangerousTiles.contains(_)).pipe(tl => if(tl.isEmpty) SInteractionUtils.reachableTiles.map(_.getTemplate).filterNot(dangerousTiles.contains(_)) else tl).flatMap(pt => {
 						val pathResult: EthanApiPlugin.PathResult = EthanApiPlugin.canPathToTile(playerPos, pt)
 						Option.when(pathResult.isReachable)(pt -> pathResult.getDistance)
 					}).sortBy(_._2).map(_._1)
-
-					priorityTiles.headOption.foreach(safeTile => {
+					.headOption.foreach(safeTile => {
 						MovementPackets.queueMovement(safeTile)
 						log.debug(s"moving to safe tile ${safeTile} from ${playerPos}")
 					})
@@ -394,11 +451,8 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	def onLocalRegionChanged(e: LocalRegionChanged): Unit = {
 		log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}")
 		if(e.getOldRegion == HueyRegion) {
-			pillars = Map.empty
-			incomingProjectile = null
-			inFight = false
+			reset()
 		}
-		curRegion = e.getCurRegion
 	}
 
 	@Subscribe
@@ -408,7 +462,9 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		if(!name.contains("HUEY") && !name.startsWith("Unknown")) return
 		log.info(s"Varbit \"${name}\" changed to ${e.getValue}")
 		if(e.getVarbitId == VarbitID.HUEY_IN_AREA) {
-			inFight = e.getValue == 1
+			if(e.getValue == 0) {
+				reset()
+			}
 		}
 	}
 	@Subscribe
@@ -417,6 +473,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		if (!HueyNpcIds.contains(e.getNpc.getId)) return
 		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
 		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" spawned at ${e.getNpc.templateLocation}")
+		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc).appended(e.getNpc)
 	}
 	@Subscribe
 	def onNpcDespawned(e: NpcDespawned): Unit = {
@@ -424,68 +481,9 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		if (!HueyNpcIds.contains(e.getNpc.getId)) return
 		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
 		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" despawned at ${e.getNpc.templateLocation}")
+		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc)
 	}
 
-	@Subscribe
-	def onNpcChanged(e: NpcChanged): Unit = {
-		if (e.getNpc.templateLocation.getRegionID != HueyRegion) return
-		if (!HueyNpcIds.contains(e.getNpc.getId)) return
-		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
-		log.debug(s"Npc[${e.getNpc.getIndex}] at ${e.getNpc.templateLocation} changed from \"${e.getOld.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))}\" to  \"${name}\"")
-	}
-//
-//	@Subscribe
-//	def onDecorativeSpawned(e: DecorativeObjectSpawned): Unit = {
-//		if(!HueyDecorativeObjectIds.contains(e.getDecorativeObject.getId)) return;
-//		log.debug(s"Decorative object ${e.getDecorativeObject} named ${objectIdToName.getOrElse(e.getDecorativeObject.getId, s"${e.getDecorativeObject.getId}")} spawned @ ${e.getDecorativeObject.getWorldLocation.getTemplate}")
-//	}
-//
-//	@Subscribe
-//	def onDecorativeDespawned(e: DecorativeObjectDespawned): Unit = {
-//		if (!HueyDecorativeObjectIds.contains(e.getDecorativeObject.getId)) return;
-//		log.debug(s"Decorative object ${e.getDecorativeObject} named ${objectIdToName.getOrElse(e.getDecorativeObject.getId, s"${e.getDecorativeObject.getId}")} despawned @ ${e.getDecorativeObject.getWorldLocation.getTemplate}")
-//	}	@Subscribe
-//	def onNpcChanged(e: NpcChanged): Unit = {
-//		if (e.getNpc.templateLocation.getRegionID != HueyRegion) return
-//		if (!HueyNpcIds.contains(e.getNpc.getId)) return
-//		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
-//		log.debug(s"Npc[${e.getNpc.getIndex}] at ${e.getNpc.templateLocation} changed from \"${e.getOld.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))}\" to  \"${name}\"")
-//	}
-//
-//	@Subscribe
-//	def onDecorativeSpawned(e: DecorativeObjectSpawned): Unit = {
-//		if(!HueyDecorativeObjectIds.contains(e.getDecorativeObject.getId)) return;
-//		log.debug(s"Decorative object ${e.getDecorativeObject} named ${objectIdToName.getOrElse(e.getDecorativeObject.getId, s"${e.getDecorativeObject.getId}")} spawned @ ${e.getDecorativeObject.getWorldLocation.getTemplate}")
-//	}
-//
-//	@Subscribe
-//	def onDecorativeDespawned(e: DecorativeObjectDespawned): Unit = {
-//		if (!HueyDecorativeObjectIds.contains(e.getDecorativeObject.getId)) return;
-//		log.debug(s"Decorative object ${e.getDecorativeObject} named ${objectIdToName.getOrElse(e.getDecorativeObject.getId, s"${e.getDecorativeObject.getId}")} despawned @ ${e.getDecorativeObject.getWorldLocation.getTemplate}")
-//	}
-
-/*
-
-	@Subscribe
-	def onGameObjectSpawned(e: ObjectSpawned): Unit = {
-		val go = e.getGameObject
-		if(!HueyObjectIds.contains(e.getGameObject.getId)) return
-		if(go.templateLocation.getRegionID == HueyRegion) {
-			val name = go.getId.pipe(id => objectIdToName.getOrElse(id, s"Unknown(${id})"))
-			log.debug(s"Object[${go}] \"${name}\" spawned at ${go.templateLocation}")
-		}
-	}
-
-	@Subscribe
-	def onGameObjectDespawned(e: GameObjectDespawned): Unit = {
-		val go   = e.getGameObject
-		if(!HueyObjectIds.contains(e.getGameObject.getId)) return
-		if (go.templateLocation.getRegionID == HueyRegion) {
-			val name = go.getId.pipe(id => objectIdToName.getOrElse(id, s"Unknown(${id})"))
-			log.debug(s"Object[${go}] \"${name}\" despawned at ${go.templateLocation}")
-		}
-	}
-*/
 	@Subscribe
 	def onProjectileMoved(e: ProjectileMoved): Unit = {
 		val projectile: Projectile = e.getProjectile
@@ -529,7 +527,9 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 			val projectileLine = LineComponent.builder().left("Projectile").right(s"${Option(incomingProjectile).fold("Null")(_.getId.pipe(p => spotAnimationIdToName.getOrElse(p, s"Unknown(${p})")))}").rightColor(if(incomingProjectile != null) Color.GREEN else Color.RED).build
 			val stageLine = LineComponent.builder().left("Stage").right(s"${stage}").build
 			val pillarsLines = pillars.map {
-				case (p, l) => LineComponent.builder().left(p.entryName).leftColor(p.getColor).right(s"$l").rightColor(ColorUtil.colorLerp(Color.RED, Color.GREEN, (l/5.0d).pipe(v => Math.min(1.0d, Math.max(0.0d, v))))).build
+				case (p, l) => LineComponent.builder().left(p.entryName).leftColor(p.getColor).right(s"$l").rightColor(
+					Color.RED.interpolate(Color.GREEN, l/5.0)
+				).build
 			}.toList.prepended(TitleComponent.builder().text("Pillars").build())
 			Seq(regionLine, projectileLine, stageLine, pillarsLines, Seq.empty[LayoutableRenderableEntity]).flatMap{
 				case e: LayoutableRenderableEntity => Seq(e)
@@ -542,58 +542,85 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 //		}
 	}
 	override def renderOverlay(g: Graphics2D): Dimension = {
-		def renderNpcOverlay(n:NPC, text: String, color: Color, zoffset: Int): Unit = {
-			parent.getModelOutlineRenderer.drawOutline(n, 2,  color, 4)
-			val poly = n.getCanvasTilePoly
-			if (poly != null) OverlayUtil.renderPolygon(g, poly, color)
-			val textLocation = n.getCanvasTextLocation(g, text, n.getLogicalHeight + zoffset)
-			if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, text, color)
+		def renderNpcOverlay(npc: NPC, text: String, zoffset: Int, color: Color, fillAlpha: Int, outlineWidth: Int = 4, textColor: Color = Color.WHITE ): Unit = {
+			var poly = npc.getConvexHull
+			if(poly!= null) OverlayUtil.renderPolygon(g, poly, Color(0, 0, 0, 0), color.withAlpha(fillAlpha))
+			if(outlineWidth > 0) parent.getModelOutlineRenderer.drawOutline(npc, outlineWidth, color, 2)
+//			val poly = npc.getCanvasTilePoly
+//			if (poly != null) OverlayUtil.renderPolygon(g, poly, fillColor)
+			if(text != null && text.nonEmpty) {
+				val textLocation = npc.getCanvasTextLocation(g, text, npc.getLogicalHeight + zoffset)
+				if (textLocation != null) {
+					val textBounds = g.getFontMetrics.getStringBounds(text, g)
+					val offset = 4
+					val textArea = Rectangle(textBounds.getX.toInt - offset, textBounds.getY.toInt - offset, textBounds.getWidth.toInt + offset + offset, textBounds.getHeight.toInt + offset + offset)
+	//				val textArea = new Rectangle(textLocation.getX + (textBounds.getWidth / 2.0).toInt - , textLocation.getY, textBounds.getWidth.toInt, textBounds.getHeight.toInt)
+					OverlayUtil.renderPolygon(g, textArea, new Color(255 - textColor.getRed, 255 - textColor.getGreen, 255 - textColor.getBlue, fillAlpha))
+					OverlayUtil.renderTextLocation(g, textLocation, text, textColor)
+				}
+			}
 		}
 
-		def renderDangerousTile(tile: WorldPoint, color: Color): Unit = {
+		case class ProgressData(spawnTick: Int, spawnCycle: Int, maxAge: Int, pieChartColor: Color, textColor: Color){}
+		def renderTile(tile: WorldPoint, color: Color, progress: ProgressData | Null = null): Unit = {
 			val poly = Perspective.getCanvasTilePoly(client, tile.getLocalPoint)
-			if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(color, 200))
+			if (poly != null) OverlayUtil.renderPolygon(g, poly, color)
 
-			val ppc = new ProgressPieComponent()
-			ppc.setBorderColor(Color.BLACK)
-			ppc.setFill(Color.RED)
-			ppc.setProgress((client.getGameCycle - dangerousSpawnCycle).doubleValue / (30.0d * 4))
-			ppc.setDiameter(28)
-			val point = Perspective.localToCanvas(client, tile.getLocalPoint, client.getTopLevelWorldView.getPlane, 20)
-			ppc.setPosition(point)
-			ppc.render(g)
+			Option(progress).foreach{
+				case ProgressData(spawnTick, spawnCycle, maxAge, ppcColor, textColor) => {
+					val ppc = new ProgressPieComponent()
+					ppc.setBorderColor(Color.BLACK)
+					ppc.setFill(ppcColor)
+					ppc.setProgress((client.getGameCycle - spawnCycle).doubleValue / (30.0d * maxAge))
+					ppc.setDiameter(28)
+					val point = Perspective.localToCanvas(client, tile.getLocalPoint, client.getTopLevelWorldView.getPlane, 20)
+					ppc.setPosition(point)
+					ppc.render(g)
 
-			val text = s"${client.getTickCount - dangerousSpawnTick}"
+					val text = s"${client.getTickCount - spawnTick}"
 
-			val fm      = g.getFontMetrics()
-			val bounds  = fm.getStringBounds(text, g)
-			val xOffset = point.getX() - (bounds.getWidth() / 2).toInt
-			val yOffset = point.getY() + (bounds.getHeight() / 2).toInt
+					val fm      = g.getFontMetrics()
+					val bounds  = fm.getStringBounds(text, g)
+					val xOffset = point.getX() - (bounds.getWidth() / 2).toInt
+					val yOffset = point.getY() + (bounds.getHeight() / 2).toInt
 
-			val textPoint = new Point(xOffset, yOffset)
-			OverlayUtil.renderTextLocation(g, textPoint, text, Color.WHITE)
+					val textPoint = new Point(xOffset, yOffset)
+					OverlayUtil.renderTextLocation(g, textPoint, text, textColor)
+				}
+			}
 		}
-
-//		def renderIceTile(tile: GameObject, color: Color): Unit = {
-//			val lp   = tile.getLocalLocation
-//			val poly = Perspective.getCanvasTilePoly(client, lp)
-//			if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(color, 200))
-//
-////			val text = s"${tile.age}"
-//
-////			val fm      = g.getFontMetrics()
-////			val bounds  = fm.getStringBounds(text, g)
-////			val xOffset = point.getX() - (bounds.getWidth() / 2).toInt;
-////			val yOffset = point.getY() + (bounds.getHeight() / 2).toInt;
-////
-////			val textPoint = new Point(xOffset, yOffset)
-////			OverlayUtil.renderTextLocation(g, textPoint, text, Color.BLACK)
-//		}
 
 		if(inRegion){
-			dangerousTiles.foreach(dt => {
-				renderDangerousTile(dt, Color.ORANGE)
-			})
+			trackedNpcs.foreach { n =>
+				//				val id = n.getId
+				//				val name = npcIdToName(id)
+				val color = n.getId match {
+					case NpcID.HUEY_HEAD_RESPAWN_PLACEHOLDER | NpcID.HUEY_HEAD_DEFEATED => Color.GRAY
+					case NpcID.HUEY_HEAD => Color.GREEN
+					case NpcID.HUEY_HEAD_INVULNERABLE => Color.BLUE
+
+					case NpcID.HUEY_TAIL_BROKEN => Color.BLUE
+					case NpcID.HUEY_TAIL => Color.GREEN
+
+					case NpcID.HUEY_BODY_PART => Color.GREEN
+					case NpcID.HUEY_BODY_PART_BROKEN => Color.GRAY
+					case _ => Color.PINK
+				}
+
+				renderNpcOverlay(n,
+					npcIdToName(n.getId),
+					0,
+					color.withAlpha(150),
+					100,
+					4
+				)
+			}
+			priorityTiles.foreach(
+				renderTile(_, Color.CYAN.withAlpha( 150))
+			)
+			dangerousTiles.foreach(
+				renderTile(_, Color.ORANGE.withAlpha(150), ProgressData(dangerousSpawnTick, dangerousSpawnCycle, 4, Color.RED.withAlpha(150), Color.WHITE))
+			)
 //			iceTiles.toList.foreach(iceTile => {
 //				renderIceTile(iceTile, Color.RED)
 //			})
