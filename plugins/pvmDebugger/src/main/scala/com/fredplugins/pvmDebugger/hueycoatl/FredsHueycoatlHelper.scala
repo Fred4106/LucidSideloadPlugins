@@ -288,6 +288,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 			})).getOrElse(Seq.empty[WorldPoint])
 				.map(_.getTemplate)
 				.filter(reachableTiles.contains(_))
+				.filter(_.distanceTo(client.getLocalPlayer.getWorldLocation.getTemplate) < 5)
 		}
 
 		lazy val protectionPrayer: Option[Prayer] = {
@@ -398,7 +399,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 				}(a => () => CombatUtils.activatePrayer(a)).apply()
 
 				val destinationTile = Option(client.getLocalDestinationLocation).map(_.getTemplate).getOrElse(client.getLocalPlayer.templateLocation)
-				if (s.dangerousTiles.exists(_.location == destinationTile)) {
+				if (s.dangerousTiles.exists(dt => dt.location == destinationTile && dt.isInstanceOf[LightingTile])) {
 					val playerPos = client.getLocalPlayer.templateLocation
 					Option(s.priorityTiles).filter(_.nonEmpty).getOrElse(s.reachableTiles)
 						.flatMap(pt => {
@@ -535,7 +536,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 					ppc.setPosition(point)
 					ppc.render(g)
 
-					val text = s"${client.getTickCount - spawnTick}"
+					val text = s"${maxAge - (client.getTickCount - spawnTick)}"
 
 					val fm      = g.getFontMetrics()
 					val bounds  = fm.getStringBounds(text, g)
