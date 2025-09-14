@@ -16,7 +16,6 @@ object WorldPointUtils {
 		inline def range(tx: Int) = (tx until CHUNK_SIZE + tx)
 		inline def isBound(tx: Int, ty: Int, tz: Int): Boolean = range(tx).contains(worldPoint.getX) && range(ty).contains(worldPoint.getY) && worldPoint.getPlane == tz
 		val wv = client.getTopLevelWorldView
-//		if(!wv.isInstance) { log.warn("wv {} is not in an instance"); }
 		Option.when(wv.isInstance){
 			val templateChunks = wv.getInstanceTemplateChunks()
 			for {
@@ -35,10 +34,6 @@ object WorldPointUtils {
 
 		} .filter(_ != null).getOrElse(List.empty)
 	}
-	//        int templateChunkY = (templateChunk >> 3 & 0x7FF) * CHUNK_SIZE;
-	//        int templateChunkX = (templateChunk >> 14 & 0x3FF) * CHUNK_SIZE;
-	//                    int templateChunkY = (chunkData >> 3 & 0x7FF) * CHUNK_SIZE;
-	//                    int templateChunkX = (chunkData >> 14 & 0x3FF) * CHUNK_SIZE;
 
 	case class ChunkData(r: Int, x: Int, y: Int, p: Int)
 	object ChunkData {

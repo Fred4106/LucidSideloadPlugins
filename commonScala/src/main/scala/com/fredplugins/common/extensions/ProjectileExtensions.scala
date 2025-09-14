@@ -22,7 +22,7 @@ object ProjectileExtensions {
 			WorldPointUtils.toTemplate(e.getTargetPoint)
 		}
 		def ticksRemaining: Int = {
-			Math.floor(e.getRemainingCycles / 30.0F).toInt
+			(e.getRemainingCycles.toDouble / 30.0d).toInt
 		}
 		def justSpawned: Boolean = {
 			e.getRemainingCycles == (e.getEndCycle - e.getStartCycle)

@@ -28,6 +28,7 @@ import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.EventBus
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.events.ConfigChanged
+import net.runelite.client.game.NPCManager
 import net.runelite.client.input.KeyManager
 import net.runelite.client.plugins.PluginManager
 import net.runelite.client.plugins.Plugin
@@ -51,8 +52,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val client               : Client                    = null
 	@Inject private val clientThread         : ClientThread              = null
 	@Inject private val eventBus             : EventBus                  = null
-	@Inject private val chatmessageManager   : ChatMessageManager   = null
-	@Inject private val keyManager   : KeyManager           = null
+	@Inject private val chatmessageManager   : ChatMessageManager = null
+	@Inject private val npcManager   : NPCManager         = null
+	@Inject private val keyManager   : KeyManager                 = null
 	@Inject private val modelOutlineRenderer : ModelOutlineRenderer = null
 	@Inject private val pluginManager        : PluginManager             = null
 	@Inject private val configManager        : ConfigManager             = null
