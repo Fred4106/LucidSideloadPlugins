@@ -1,13 +1,24 @@
 package com.fredplugins.common.extensions
 
+import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.common.utils.WorldPointUtils
 import net.runelite.api.Client
 import net.runelite.api.Projectile
 import net.runelite.api.Tile
 import net.runelite.api.coords.LocalPoint
+import net.runelite.api.coords.WorldArea
 import net.runelite.api.coords.WorldPoint
+
 import scala.util.chaining.*
 object LocationExtensions {
+	extension (e: WorldArea) {
+		def offset(i: Int): WorldArea = {
+			SInteractionUtils.offset(e, i)
+		}
+		def tiles: Seq[WorldPoint] = SInteractionUtils.worldAreaTiles(e)
+		def corners: Seq[WorldPoint] = SInteractionUtils.worldAreaCorners(e)
+	}
+
 	extension(e: WorldPoint)(using client: Client) {
 		def getTemplate: WorldPoint = {
 			WorldPointUtils.toTemplate(e)

@@ -27,6 +27,7 @@ import net.runelite.api.Player
 import net.runelite.api.Point
 import net.runelite.api.Prayer
 import net.runelite.api.Projectile
+import net.runelite.api.coords.WorldArea
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.AnimationChanged
 import net.runelite.api.events.GameTick
@@ -249,10 +250,17 @@ trait DangerousTile{
 	def spawnCycle: Int
 	def finishedCycle: Int
 }
-case class WaveTile(location: WorldPoint, spawnCycle: Int, finishedCycle: Int) extends DangerousTile
-case class LightingTile(location: WorldPoint, spawnCycle: Int, finishedCycle: Int) extends DangerousTile
+case class WaveTile(location: WorldPoint, spawnCycle: Int, finishedCycle: Int, spawnTick: Int) extends DangerousTile
+case class LightingTile(location: WorldPoint, spawnCycle: Int, finishedCycle: Int, spawnTick: Int) extends DangerousTile
 
-case class HueycoatlState(projectile: Option[Projectile], pillars: Map[PillarTrait, Int], dangerousTiles: Seq[DangerousTile], npcs: Seq[NPC]) {
+@Singleton
+class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsHueycoatlConfig) extends HelperModule with WithPanel with WithOverlay {
+	override val moduleName: String = FredsHueycoatlConfig.GROUP
+	private def clientThread  = parent.getClientThread
+	given Client = client
+	given FredsHueycoatlConfig = config
+
+	case class HueycoatlState(projectile: Option[Projectile], pillars: Map[PillarTrait, Int], dangerousTiles: Seq[DangerousTile], npcs: Seq[NPC]) {
 		lazy val hueyHead  : Option[NPC] = npcs.find(_.getId.pipe(HueyHeadIds.contains(_)))
 		lazy val hueyBodies: Seq[NPC]    = npcs.filter(_.getId == NpcID.HUEY_BODY_PART)
 		lazy val hueyTail  : Option[NPC] = npcs.find(_.getId.pipe(Seq(NpcID.HUEY_TAIL, NpcID.HUEY_TAIL_BROKEN).contains(_)))
@@ -264,194 +272,156 @@ case class HueycoatlState(projectile: Option[Projectile], pillars: Map[PillarTra
 			case NpcID.HUEY_HEAD if hueyTail.isEmpty => 2
 			case NpcID.HUEY_HEAD if hueyTail.isDefined => 4
 		}.getOrElse(0)
-}
 
-object HueycoatlStateFactory {
-	def create(using client: Client): Option[HueycoatlState] = {
-		Option.when(client.isClientThread && client.getGameState == GameState.LOGGED_IN) {
+		lazy val reachableTiles: Seq[WorldPoint] = {
+			SInteractionUtils.reachableTiles.map(_.getTemplate).filterNot(wp => dangerousTiles.exists(dt => dt.location == wp && dt.isInstanceOf[LightingTile]))
+		}
+
+		lazy val priorityTiles : Seq[WorldPoint] = {
+			Option(stage).collect {
+				case 1 => hueyBodies
+				case 2 | 4 => hueyHead.toList
+				case 3 => hueyTail.toList
+			}.map(_.map(_.getWorldArea).flatMap(wa => {
+				wa.offset(1).pipe(x => x.tiles.diff(x.corners))
+					.diff(wa.tiles)
+			})).getOrElse(Seq.empty[WorldPoint])
+				.map(_.getTemplate)
+				.filter(reachableTiles.contains(_))
+		}
+
+		lazy val protectionPrayer: Option[Prayer] = {
+			val pprayer = projectile.filter(_ => stage > 0).filter(_.ticksRemaining <= 3).flatMap(_.getId.pipe(HueyProjectileIds.get))
+			val cprayer = Option(config.campPrayer().getPrayer).filter(_ => stage > 1)
+			pprayer.orElse(cprayer)
+		}
+
+		def withDangerousTile(dt: DangerousTile): HueycoatlState = {
+			this.copy(dangerousTiles = dangerousTiles.appended(dt))
+		}
+		def addNpc(npc: NPC): HueycoatlState = {
+			Option(npc).filter(_.getId.pipe(HueyNpcIds.contains))
+				.fold(this)(n => this.copy(npcs = npcs.appended(n)))
+		}
+		def removeNpc(npc: NPC): HueycoatlState = {
+			Option(npc).filter(npcs.contains(_))
+				.fold(this)(n => this.copy(npcs = npcs.filterNot(_ == n)))
+		}
+		def withProjectile(nProjectile: Projectile): HueycoatlState = {
+			Option.when(nProjectile != null && HueyProjectileIds.contains(nProjectile.getId) && !projectile.contains(nProjectile)) {
+				this.copy(projectile = Option(nProjectile))
+			}.getOrElse(this)
+		}
+
+		def inFight: Boolean = clientThread.runOnClientThread(() => client.getVarbitValue(VarbitID.HUEY_IN_AREA)) == 1
+
+		def tickState(using client: Client): HueycoatlState = {
+			val cycle = client.getGameCycle
+			copy(
+				pillars = Pillars.values.map(p => p -> p.getLevel).toMap,
+				dangerousTiles = dangerousTiles.filter(_.finishedCycle > cycle),
+				projectile = projectile.filterNot(p => p.hasHit && p.ticksRemaining <= 0),
+			)
+		}
+	}
+
+//	private def curRegion: Int = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
+//	private def inRegion: Boolean = HueyRegion == curRegion
+
+	def createState: Option[HueycoatlState] = {
+		Option.when(client.isClientThread && client.getGameState == GameState.LOGGED_IN && client.getLocalPlayer.getWorldLocation.getTemplate.getRegionID == HueyRegion) {
 			HueycoatlState(
 				client.getProjectiles.asScala.toList.filter(p => HueyProjectileIds.contains(p.getId) && Option(p.getTargetActor).contains(client.getLocalPlayer)).sortBy(_.getEndCycle).headOption,
 				Pillars.values.map { p =>
 					p -> p.getLevel
 				}.toMap,
-				client.getGraphicsObjects.asScala.toList.flatMap(go => {
+/*				client.getTopLevelWorldView.getGraphicsObjects.asScala.toList.flatMap(go => {
 					val swo = Option.when(HueyShockwaveIds.contains(go.getId)) {
-						WaveTile(go.templateLocation, client.getGameCycle, go.getStartCycle)
+						WaveTile(go.templateLocation, client.getGameCycle, go.getStartCycle, client.getTickCount)
 					}
 					val lso = Option.when(go.getId == SpotanimID.VFX_HUEYCOATL_PRAYER_02){
-						LightingTile(go.templateLocation, client.getGameCycle, go.getStartCycle)
+						LightingTile(go.templateLocation, client.getGameCycle, go.getStartCycle, client.getTickCount)
 					}
 					swo.orElse(lso)
-				}),
+				})*/
+				Seq.empty[DangerousTile],
 				NPCs.search().withId(HueyNpcIds *).result().asScala.toList
 			)
 		}
 	}
-}
-
-@Singleton
-class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsHueycoatlConfig) extends HelperModule with WithPanel with WithOverlay {
-	override val moduleName: String = FredsHueycoatlConfig.GROUP
-	private def clientThread  = parent.getClientThread
-	given Client = client
 
 	private var state: Option[HueycoatlState] = Option.empty
 
-	private var incomingProjectile: Projectile = null
-	private var pillars: Map[PillarTrait, Int] = Map.empty
-	private var stage: Int = 0
-	private var dangerousTiles: Seq[WorldPoint] = Seq.empty
-	private var dangerousSpawnCycle: Int  = 0
-	private var dangerousSpawnTick: Int  = 0
-	private var priorityTiles: Seq[WorldPoint] = Seq.empty
-	private var trackedNpcs = Seq.empty[NPC]
-
-	private def curRegion: Int = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
-	private def inRegion: Boolean = HueyRegion == curRegion
-	private def inFight: Boolean =
-		if (inRegion) clientThread.runOnClientThread(() => client.getVarbitValue(VarbitID.HUEY_IN_AREA)) == 1
-		else false
-
-	def reset(): Unit= {
-		pillars = Map.empty
-		stage = 0
-		incomingProjectile = null
-		dangerousTiles = Seq.empty
-		dangerousSpawnCycle = 0
-		dangerousSpawnTick = 0
-		priorityTiles = Seq.empty
-		trackedNpcs = NPCs.search().withId(HueyNpcIds *).result().asScala.toList.filter(_.templateLocation.getRegionID == HueyRegion)
-	}
-
 	override def init(): Unit = {
-//		curRegion = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
-//		inFight = if (inRegion) (
-//			clientThread.runOnClientThread(() => client.getVarbitValue(VarbitID.HUEY_IN_AREA)) == 1
-//		) else false
-		reset()
+		state = clientThread.runOnClientThread(() => createState)
 	}
 
 	override def cleanup(): Unit = {
-//		curRegion = -1
-//		inFight = false
-		reset()
+		state = Option.empty
 	}
 
 	@Subscribe
 	def onGraphicsObjectCreated(e: GraphicsObjectCreated): Unit = {
 		val graphicsObject = e.getGraphicsObject
-		val name = spotAnimationIdToName.getOrElse(graphicsObject.getId, s"Unknown(${graphicsObject.getId})")
-		if((name.startsWith("VFX_HUEY_TAIL_SLAM_SHOCKWAVE") && !name.contains("IMPACT")) || !name.startsWith("VFX_HUEY")) return
-		if(graphicsObject.templateLocation.getRegionID == HueyRegion && graphicsObject.getId == SpotanimID.VFX_HUEYCOATL_PRAYER_02) {
+		val name           = spotAnimationIdToName.getOrElse(graphicsObject.getId, s"Unknown(${graphicsObject.getId})")
+		if (!name.startsWith("VFX_HUEY")) return
+		if(graphicsObject.templateLocation.getRegionID == HueyRegion) {
 			//ticksSinceDangerousTiles = 5
-			dangerousSpawnTick = client.getTickCount
-			dangerousSpawnCycle = client.getGameCycle
-			dangerousTiles = dangerousTiles.appended(graphicsObject.templateLocation)
+			Option(
+				if(graphicsObject.getId == SpotanimID.VFX_HUEYCOATL_PRAYER_02) {
+					LightingTile(graphicsObject.templateLocation, client.getGameCycle, graphicsObject.getStartCycle, client.getTickCount)
+				} else if (HueyShockwaveIds.contains(graphicsObject.getId)) {
+					val goDuration = (graphicsObject.getStartCycle- client.getGameCycle)
+					val fakeDuration = Math.min(120, goDuration)
+					val fakeSpawnCycle = graphicsObject.getStartCycle - fakeDuration
+					val fakeSpawnTick = ((goDuration - fakeDuration) / 30.0).floor.toInt + client.getTickCount
+					WaveTile(graphicsObject.templateLocation, fakeSpawnCycle, graphicsObject.getStartCycle, fakeSpawnTick)
+				} else null
+			).foreach(dt=> {
+				state = state.map(_.withDangerousTile(dt))
+			})
 		}
 		log.info(s"GraphicsObject \"${name}\" created on tick ${client.getTickCount} at ${graphicsObject.templateLocation} with start cycle ${graphicsObject.getStartCycle} on cycle ${client.getGameCycle} animation ${Option(graphicsObject.getAnimation).map(a => a.getId -> a.getDuration).getOrElse(-1 -> 0)}")
 	}
 
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
-		if(!inRegion) return
-		pillars = Pillars.values.map { p =>
-			p -> p.getLevel
-		}.toMap
+		state = state.map(_.tickState)
+		state.foreach(s => {
+			if(!s.inFight) CombatUtils.deactivatePrayers()
+			else {
+				if(s.stage == 0) CombatUtils.deactivatePrayer(Prayer.PIETY)
+				else Option.when(config.autoPrayPiety())(Prayer.PIETY).foreach(CombatUtils.activatePrayer(_))
 
-		val hueyHead                                         = NPCQuery(trackedNpcs *).withId(HueyHeadIds *).first().toScala
-//		hueyHead.foreach(ReflectionUtils.getHealthbars(_))
-		val (hueyBodies: Seq[NPC], deadHueyBodies: Seq[NPC]) = HueyBodyLocations.flatMap(bl => NPCQuery(trackedNpcs *).atLocation(bl).withId(NpcID.HUEY_BODY_PART_BROKEN, NpcID.HUEY_BODY_PART).first().toScala).partition(_.getId == NpcID.HUEY_BODY_PART)
-		val hueyTails: Option[NPC]                           = NPCQuery(trackedNpcs *).withId(NpcID.HUEY_TAIL, NpcID.HUEY_TAIL_BROKEN).first().toScala
-		stage = hueyHead.map(_.getId).collect{
-			case NpcID.HUEY_HEAD_RESPAWN_PLACEHOLDER | NpcID.HUEY_HEAD_DEFEATED => 0
-			case NpcID.HUEY_HEAD if hueyBodies.nonEmpty => 1
-			case NpcID.HUEY_HEAD if hueyTails.isEmpty => 2
-			case NpcID.HUEY_HEAD_INVULNERABLE => 3
-			case NpcID.HUEY_HEAD if hueyTails.nonEmpty => 4
-		}.getOrElse(0)
+				s.protectionPrayer.fold {
+					() => CombatUtils.deactivatePrayers(true)
+				}(a => () => CombatUtils.activatePrayer(a)).apply()
 
-		if(dangerousTiles.nonEmpty) {
-			val age = client.getTickCount - dangerousSpawnTick
-			if(age == 4) {
-				dangerousTiles = Seq.empty
-			}
-		}
-
-		if(inFight) {
-			val projectilePrayOpt = Option(incomingProjectile).filter(_.ticksRemaining <= 3)
-				.flatMap(p => {
-					if(p.hasHit && p.ticksRemaining < 1) {
-						incomingProjectile = null
-					}
-					p.getId.pipe(HueyProjectileIds.get)
-				})
-			val campPrayerOpt = Option(config.campPrayer().getPrayer)
-
-			val protectPrayer: Option[Prayer] = stage match {
-				case 0 => Option.empty[Prayer]
-				case 1 => projectilePrayOpt
-				case 2 | 3 | 4 => projectilePrayOpt.orElse(campPrayerOpt)
-			}
-
-			if(stage == 0 && client.isPrayerActive(Prayer.PIETY)) {
-				CombatUtils.deactivatePrayers(Prayer.PIETY)
-			} else {
-				Option.when(config.autoPrayPiety() && stage > 0)(Prayer.PIETY).filterNot(client.isPrayerActive).foreach(offensivePrayer => CombatUtils.activatePrayer(offensivePrayer))
-			}
-
-			priorityTiles = (stage match {
-				case 0 => Seq.empty[WorldPoint]
-				case 1 => {
-					hueyBodies.flatMap(b => {
-						val bArea         = b.templateLocation.toWorldArea//SInteractionUtils.offset(, 1)
-						val bMeeleArea    = SInteractionUtils.offset(bArea, 1)
-						val excludePoints = SInteractionUtils.worldAreaTiles(bArea).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
-						SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
-					})
+				val destinationTile = Option(client.getLocalDestinationLocation).map(_.getTemplate).getOrElse(client.getLocalPlayer.templateLocation)
+				if (s.dangerousTiles.exists(_.location == destinationTile)) {
+					val playerPos = client.getLocalPlayer.templateLocation
+					Option(s.priorityTiles).filter(_.nonEmpty).getOrElse(s.reachableTiles)
+						.flatMap(pt => {
+							val pathResult: EthanApiPlugin.PathResult = EthanApiPlugin.canPathToTile(playerPos, pt)
+							Option.when(pathResult.isReachable)(pt -> pathResult.getDistance)
+						}).sortBy(_._2).map(_._1)
+						.headOption.foreach(safeTile => {
+							MovementPackets.queueMovement(safeTile)
+							log.debug(s"moving to safe tile ${safeTile} from ${playerPos}")
+						})
 				}
-				case 2 | 4 => {
-					hueyHead.map(_.getWorldArea).fold(List.empty[WorldPoint])(wa => {
-						val bMeeleArea    = SInteractionUtils.offset(wa, 1)
-						val excludePoints = SInteractionUtils.worldAreaTiles(wa).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
-						SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
-					})
-				}
-				case 3 => {
-					hueyTails.map(_.getWorldArea).fold(List.empty[WorldPoint])(wa => {
-						val bMeeleArea    = SInteractionUtils.offset(wa, 1)
-						val excludePoints = SInteractionUtils.worldAreaTiles(wa).appendedAll(SInteractionUtils.worldAreaCorners(bMeeleArea))
-						SInteractionUtils.worldAreaTiles(bMeeleArea).filterNot(excludePoints.contains(_))
-					})
-				}
-			}).map(_.getTemplate)
-				.filter(SInteractionUtils.isWalkable(_))
-
-			protectPrayer match {
-				case Some(pp) => CombatUtils.activatePrayer(pp)
-				case None => CombatUtils.deactivatePrayers(true)
 			}
-			val destinationTile = Option(client.getLocalDestinationLocation).map(_.getTemplate).getOrElse(client.getLocalPlayer.templateLocation)
-			if(dangerousTiles.contains(destinationTile)) {
-				val playerPos = client.getLocalPlayer.templateLocation
-				priorityTiles.filterNot(dangerousTiles.contains(_)).pipe(tl => if(tl.isEmpty) SInteractionUtils.reachableTiles.map(_.getTemplate).filterNot(dangerousTiles.contains(_)) else tl).flatMap(pt => {
-						val pathResult: EthanApiPlugin.PathResult = EthanApiPlugin.canPathToTile(playerPos, pt)
-						Option.when(pathResult.isReachable)(pt -> pathResult.getDistance)
-					}).sortBy(_._2).map(_._1)
-					.headOption.foreach(safeTile => {
-						MovementPackets.queueMovement(safeTile)
-						log.debug(s"moving to safe tile ${safeTile} from ${playerPos}")
-					})
-			}
-		} else {
-			CombatUtils.deactivatePrayers(false)
-		}
+		})
 	}
 
 	@Subscribe
 	def onLocalRegionChanged(e: LocalRegionChanged): Unit = {
 		log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}")
+		if(e.getCurRegion == HueyRegion) {
+			state = createState
+		}
 		if(e.getOldRegion == HueyRegion) {
-			reset()
+			state = Option.empty
 		}
 	}
 
@@ -462,9 +432,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		if(!name.contains("HUEY") && !name.startsWith("Unknown")) return
 		log.info(s"Varbit \"${name}\" changed to ${e.getValue}")
 		if(e.getVarbitId == VarbitID.HUEY_IN_AREA) {
-			if(e.getValue == 0) {
-				reset()
-			}
+//			if(e.getValue == 0) {}
 		}
 	}
 	@Subscribe
@@ -473,7 +441,8 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		if (!HueyNpcIds.contains(e.getNpc.getId)) return
 		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
 		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" spawned at ${e.getNpc.templateLocation}")
-		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc).appended(e.getNpc)
+		state = state.map(_.addNpc(e.getNpc))
+//		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc).appended(e.getNpc)
 	}
 	@Subscribe
 	def onNpcDespawned(e: NpcDespawned): Unit = {
@@ -481,7 +450,8 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		if (!HueyNpcIds.contains(e.getNpc.getId)) return
 		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
 		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" despawned at ${e.getNpc.templateLocation}")
-		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc)
+		state = state.map(_.removeNpc(e.getNpc))
+//		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc)
 	}
 
 	@Subscribe
@@ -492,54 +462,42 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		val name = projectile.getId.pipe(p => spotAnimationIdToName.getOrElse(p, s"Unknown($p)"))
 		if (projectile.templateSourceLocation.getRegionID == HueyRegion || projectile.templateTargetLocation.getRegionID == HueyRegion) {
 			if(projectile.justSpawned) {
-				if(incomingProjectile == null) {
-					log.debug(_: String)
-				} else {
-					log.warn(_: String)
-				}.tap(x => {
-					x.apply(s"Projectile[${projectile}] \"${name}\" from ${projectile.getTargetActor} spawned at ${projectile.templateSourceLocation} with ${projectile.ticksRemaining} ticks remaining")
-					if(incomingProjectile!=null) {
-						x.apply(s"Projectile[${incomingProjectile}] from ${incomingProjectile.getTargetActor} with ${incomingProjectile.ticksRemaining} ticks remaining and ${incomingProjectile.getRemainingCycles} cycles remaining")
-					}
-				})
-				incomingProjectile = projectile
+				state = state.map(_.withProjectile(projectile))
 			}
 		}
 	}
 
-	@Subscribe
-	def onAnimationChanged(e: AnimationChanged): Unit = {
-//		if (inRegion && inFight) {
-		if(e.getActor.templateLocation.getRegionID != HueyRegion) return
-		Option(e.getActor).collect {
-			case npc: NPC if HueyNpcIds.contains(npc.getId) => npc.getId.pipe(n => npcIdToName.getOrElse(n, s"$n").pipe(s => s"Npc(${s})")) -> npc.getAnimation
-			case player: Player if player == client.getLocalPlayer => "LocalPlayer" -> player.getAnimation
-//			case player: Player => s"Player(${player.getName})" -> player.getAnimation
-		}.map{
-			case (actorName, actorAnimationId) => actorName -> actorAnimationId.pipe(a => animationIdToName.getOrElse(a, s"Unknown(${a})"))
-		}.foreach{
-			case (actorName, animationName) => log.debug(s"AnimationChanged[${client.getTickCount}]: \"$actorName\" animation changed to \"$animationName\"")
-		}
-	}
+//	@Subscribe
+//	def onAnimationChanged(e: AnimationChanged): Unit = {
+////		if (inRegion && inFight) {
+//		if(e.getActor.templateLocation.getRegionID != HueyRegion) return
+//		Option(e.getActor).collect {
+//			case npc: NPC if HueyNpcIds.contains(npc.getId) => npc.getId.pipe(n => npcIdToName.getOrElse(n, s"$n").pipe(s => s"Npc(${s})")) -> npc.getAnimation
+//			case player: Player if player == client.getLocalPlayer => "LocalPlayer" -> player.getAnimation
+////			case player: Player => s"Player(${player.getName})" -> player.getAnimation
+//		}.map{
+//			case (actorName, actorAnimationId) => actorName -> actorAnimationId.pipe(a => animationIdToName.getOrElse(a, s"Unknown(${a})"))
+//		}.foreach{
+//			case (actorName, animationName) => log.debug(s"AnimationChanged[${client.getTickCount}]: \"$actorName\" animation changed to \"$animationName\"")
+//		}
+//	}
 
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
-			val regionLine = LineComponent.builder().left("Region").right(s"$curRegion").rightColor(if(inRegion) Color.GREEN else Color.RED).build
-			val projectileLine = LineComponent.builder().left("Projectile").right(s"${Option(incomingProjectile).fold("Null")(_.getId.pipe(p => spotAnimationIdToName.getOrElse(p, s"Unknown(${p})")))}").rightColor(if(incomingProjectile != null) Color.GREEN else Color.RED).build
-			val stageLine = LineComponent.builder().left("Stage").right(s"${stage}").build
-			val pillarsLines = pillars.map {
+		state.map(s => {
+			val projectileLine = LineComponent.builder().left("Projectile").right(s"${s.projectile.fold("Null")(_.getId.pipe(p => spotAnimationIdToName.getOrElse(p, s"Unknown(${p})")))}").rightColor(s.projectile.fold(Color.RED)(_ => Color.GREEN)).build
+			val stageLine = LineComponent.builder().left("Stage").right(s"${s.stage}").build
+			val pillarsLines = s.pillars.map {
 				case (p, l) => LineComponent.builder().left(p.entryName).leftColor(p.getColor).right(s"$l").rightColor(
 					Color.RED.interpolate(Color.GREEN, l/5.0)
 				).build
 			}.toList.prepended(TitleComponent.builder().text("Pillars").build())
-			Seq(regionLine, projectileLine, stageLine, pillarsLines, Seq.empty[LayoutableRenderableEntity]).flatMap{
-				case e: LayoutableRenderableEntity => Seq(e)
-				case le: Seq[_] => le.collect{
-					case e: LayoutableRenderableEntity => e
+			Seq(projectileLine, stageLine, pillarsLines, Seq.empty[LayoutableRenderableEntity]).flatMap{
+					case e: LayoutableRenderableEntity => Seq(e)
+					case le: Seq[_] => le.collect{
+						case e: LayoutableRenderableEntity => e
+					}
 				}
-			}
-//		} else {
-//			Seq.empty[LayoutableRenderableEntity]
-//		}
+		}).getOrElse(Seq.empty[LayoutableRenderableEntity])
 	}
 	override def renderOverlay(g: Graphics2D): Dimension = {
 		def renderNpcOverlay(npc: NPC, text: String, zoffset: Int, color: Color, fillAlpha: Int, outlineWidth: Int = 4, textColor: Color = Color.WHITE ): Unit = {
@@ -589,9 +547,8 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 				}
 			}
 		}
-
-		if(inRegion){
-			trackedNpcs.foreach { n =>
+		state.foreach(s => {
+			s.npcs.foreach { n =>
 				//				val id = n.getId
 				//				val name = npcIdToName(id)
 				val color = n.getId match {
@@ -607,7 +564,8 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 					case _ => Color.PINK
 				}
 
-				renderNpcOverlay(n,
+				renderNpcOverlay(
+					n,
 					npcIdToName(n.getId),
 					0,
 					color.withAlpha(150),
@@ -615,25 +573,22 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 					4
 				)
 			}
-			priorityTiles.foreach(
-				renderTile(_, Color.CYAN.withAlpha( 150))
+			s.priorityTiles.foreach(
+				renderTile(_, Color.CYAN.withAlpha(150))
 			)
-			dangerousTiles.foreach(
-				renderTile(_, Color.ORANGE.withAlpha(150), ProgressData(dangerousSpawnTick, dangerousSpawnCycle, 4, Color.RED.withAlpha(150), Color.WHITE))
-			)
-//			iceTiles.toList.foreach(iceTile => {
-//				renderIceTile(iceTile, Color.RED)
-//			})
-//
-//			bossData.foreach((wrapped, data) => {
-//				val txt  = s"age: ${client.getTickCount - data.spawnedTick}, ticksSinceAttack: ${client.getTickCount - data.lastAttackTick}"
-//				renderNpcOverlay(wrapped.wrapped, txt, Color.CYAN, 60)
-//			})
-//			iceBlocks.foreach((wrapped, data) => {
-//				val txt = s"age: ${client.getTickCount - data.spawnedTick}"
-//				renderNpcOverlay(wrapped.wrapped, txt, Color.BLUE, 60)
-//			})
-		}
+			s.dangerousTiles.filter(_.spawnCycle <= client.getGameCycle).foreach {
+				case LightingTile(location, spawnCycle, finishedCycle, spawnTick)=> {
+					renderTile(location, Color.ORANGE.withAlpha(150), ProgressData(spawnTick, spawnCycle, ((finishedCycle-spawnCycle) / 30.0).floor.toInt, Color.RED.withAlpha(150), Color.WHITE))
+				}
+				case WaveTile(location, spawnCycle, finishedCycle, spawnTick) => {
+//					val nSpawnCycle = (finishedCycle-120).max(spawnCycle)
+//					val spawnTickOffset = ((nSpawnCycle - spawnCycle)/30.0).floor.toInt
+//					val maxAge = ((finishedCycle - nSpawnCycle) / 30.0).floor.toInt
+					renderTile(location, Color.CYAN.withAlpha(150), ProgressData(spawnTick, spawnCycle, ((finishedCycle-spawnCycle) / 30.0).floor.toInt, Color.BLUE.withAlpha(150), Color.WHITE))
+				}
+				case _ =>
+			}
+		})
 		null.asInstanceOf[Dimension]
 	}
 }

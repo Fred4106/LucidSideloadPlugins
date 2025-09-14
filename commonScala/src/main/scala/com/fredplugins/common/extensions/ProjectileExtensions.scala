@@ -14,11 +14,11 @@ import net.runelite.api.TileObject
 import net.runelite.api.coords.LocalPoint
 
 object ProjectileExtensions {
-	extension(e: Projectile)(using client: Client) {
-		def templateSourceLocation: WorldPoint = {
+	extension(e: Projectile) {
+		def templateSourceLocation(using client: Client) : WorldPoint = {
 			WorldPointUtils.toTemplate(e.getSourcePoint)
 		}
-		def templateTargetLocation: WorldPoint = {
+		def templateTargetLocation(using client: Client) : WorldPoint = {
 			WorldPointUtils.toTemplate(e.getTargetPoint)
 		}
 		def ticksRemaining: Int = {
@@ -30,7 +30,7 @@ object ProjectileExtensions {
 		def hasHit: Boolean = {
 			e.getRemainingCycles <= 0
 		}
-		def localLocation: LocalPoint = {
+		def localLocation(using client: Client) : LocalPoint = {
 			val x: Int = e.getX.toInt
 			val y: Int = e.getY.toInt
 			new LocalPoint(x, y, client.getTopLevelWorldView)
