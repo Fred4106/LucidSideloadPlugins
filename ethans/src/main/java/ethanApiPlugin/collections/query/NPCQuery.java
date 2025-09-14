@@ -22,6 +22,10 @@ public class NPCQuery {
 		this.npcs = new ArrayList(npcs.stream().filter(Objects::nonNull).collect(Collectors.toList()));
 	}
 
+	public NPCQuery(NPC ... npcs) {
+		this(Arrays.stream(npcs).collect(Collectors.toList()));
+	}
+
 	public NPCQuery filter(Predicate<? super NPC> predicate) {
 		npcs = npcs.stream().filter(predicate).collect(Collectors.toList());
 		return this;

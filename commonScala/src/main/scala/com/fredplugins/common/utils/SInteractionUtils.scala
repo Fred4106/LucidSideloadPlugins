@@ -94,20 +94,22 @@ object SInteractionUtils {
 		math.hypot(main.getX-other.getX, main.getY-other.getY)
 	}
 
-	def offset(toOffset: WorldArea, offset: Int): WorldArea = new WorldArea(toOffset.getX - offset, toOffset.getY - offset, toOffset.getWidth + 2 * offset, toOffset.getHeight + 2 * offset, toOffset.getPlane)
+	def offset(toOffset: WorldArea, offset: Int): WorldArea = {
+		new WorldArea(toOffset.getX - offset, toOffset.getY - offset, toOffset.getWidth + 2 * offset, toOffset.getHeight + 2 * offset, toOffset.getPlane)
+	}
 
 	def worldAreaCorners(wa: WorldArea): List[WorldPoint] = {
 		List(
 			new WorldPoint(wa.getX, wa.getY, wa.getPlane),
-			new WorldPoint(wa.getX + wa.getWidth, wa.getY, wa.getPlane),
-			new WorldPoint(wa.getX, wa.getY + wa.getHeight, wa.getPlane),
-			new WorldPoint(wa.getX + wa.getWidth, wa.getY + wa.getHeight, wa.getPlane)
-		)
+			new WorldPoint(wa.getX + wa.getWidth - 1, wa.getY, wa.getPlane),
+			new WorldPoint(wa.getX, wa.getY + wa.getHeight - 1, wa.getPlane),
+			new WorldPoint(wa.getX + wa.getWidth - 1, wa.getY + wa.getHeight - 1, wa.getPlane)
+		).distinct
 	}
 
 	def worldAreaTiles(wa: WorldArea): List[WorldPoint] = {
-		(wa.getX to (wa.getX + wa.getWidth)).flatMap(x => {
-			(wa.getY to (wa.getY + wa.getHeight)).map(y => {
+		(wa.getX until (wa.getX + wa.getWidth)).flatMap(x => {
+			(wa.getY until (wa.getY + wa.getHeight)).map(y => {
 				new WorldPoint(x, y, wa.getPlane)
 			})
 		}).toList
