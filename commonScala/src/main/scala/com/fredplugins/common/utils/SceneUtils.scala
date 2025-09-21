@@ -1,5 +1,6 @@
 package com.fredplugins.common.utils
 
+import net.runelite.api.Constants
 import net.runelite.api.{Client, NPC, Player, TileObject}
 import org.slf4j.Logger
 
@@ -20,11 +21,16 @@ object SceneUtils {
 		possibleMatch
 	}
 	def findTileObject(x: Int, y: Int, id: Int)(using client: Client): Option[TileObject] = {
-		val scene = client.getTopLevelWorldView.getScene
-		val tiles = scene.getTiles
-		val tile  = tiles(client.getTopLevelWorldView.getPlane)(x)(y)
-		Option.when(tile != null) {
-//			val gameObjectOpt = tile.getGameObjects.toList.find(go => go != null && go.getId == id)
+		val extendedOffset =  (Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2
+//		val x1 = x + extendedOffset
+//		val y1 = y + extendedOffset
+		val wv = client.getTopLevelWorldView
+//		val tiles =
+
+		Option.when(x + extendedOffset < Constants.EXTENDED_SCENE_SIZE && y + extendedOffset < Constants.EXTENDED_SCENE_SIZE && x + extendedOffset >= 0 && y + extendedOffset >= 0) {
+			wv.getScene.getExtendedTiles.apply(wv.getPlane)(x + extendedOffset)(y + extendedOffset)
+		}.flatMap { tile =>
+			//			val gameObjectOpt = tile.getGameObjects.toList.find(go => go != null && go.getId == id)
 			//			val wallObjectOpt = Option(tile.getWallObject).filter(_.getId == id)
 			//			val decorativeObjectOpt = Option(tile.getDecorativeObject).filter(_.getId == id)
 			//			val groundObjectOpt = Option(tile.getGroundObject).filter(_.getId == id)
@@ -32,6 +38,6 @@ object SceneUtils {
 				val comp = client.getObjectDefinition(to.getId)
 				Option(comp.getImpostorIds).map(_.toList.appended(to.getId)).getOrElse(List(to.getId)).contains(id)
 			})
-		}.flatten
+		}
 	}
 }

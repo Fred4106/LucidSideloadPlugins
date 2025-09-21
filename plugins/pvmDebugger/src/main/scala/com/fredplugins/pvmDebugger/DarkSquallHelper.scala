@@ -1,5 +1,6 @@
 package com.fredplugins.pvmDebugger
 
+import com.fredplugins.common.extensions.LocationExtensions._
 import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.DarkSquallIds.AgileWarriorNpcId
@@ -106,6 +107,7 @@ case class InternalState(mode: Mode, warriorNpc: Option[WarriorType] = Option.em
 }
 
 class DarkSquallHelper (val client: Client) extends ShimUtils.Logging("DEBUG") {
+	given Client = client
 	var squallNpc: NPC = null
 	var lastTickState: InternalState = InternalState(Mode.Standard)
 	var curTickState: InternalState = InternalState(Mode.Standard)
@@ -172,8 +174,6 @@ class DarkSquallHelper (val client: Client) extends ShimUtils.Logging("DEBUG") {
 		val projectile   = event.getProjectile
 		val projectileId = projectile.getId
 		if(projectile.getSourcePoint != null) {
-			val loc = WorldPoint.fromLocal(
-			client.getTopLevelWorldView, projectile.getX1, projectile.getY1, projectile.getSourceLevel)
 			curTickState = curTickState.addProjectile(projectile)
 		}
 	}

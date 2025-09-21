@@ -72,14 +72,10 @@ object WorldPointUtils {
 		val chunkY = point.getY & -CHUNK_SIZE
 		val x = point.getX & (CHUNK_SIZE - 1)
 		val y = point.getY & (CHUNK_SIZE - 1)
-		rotation match {
-			case 1 =>
-				return new WorldPoint(chunkX + y, chunkY + (CHUNK_SIZE - 1 - x), point.getPlane)
-			case 2 =>
-				return new WorldPoint(chunkX + (CHUNK_SIZE - 1 - x), chunkY + (CHUNK_SIZE - 1 - y), point.getPlane)
-			case 3 =>
-				return new WorldPoint(chunkX + (CHUNK_SIZE - 1 - y), chunkY + x, point.getPlane)
-		}
-		point
+		Option(rotation).collect {
+			case 1 => new WorldPoint(chunkX + y, chunkY + (CHUNK_SIZE - 1 - x), point.getPlane)
+			case 2 => new WorldPoint(chunkX + (CHUNK_SIZE - 1 - x), chunkY + (CHUNK_SIZE - 1 - y), point.getPlane)
+			case 3 => new WorldPoint(chunkX + (CHUNK_SIZE - 1 - y), chunkY + x, point.getPlane)
+		}.getOrElse(point)
 	}
 }
