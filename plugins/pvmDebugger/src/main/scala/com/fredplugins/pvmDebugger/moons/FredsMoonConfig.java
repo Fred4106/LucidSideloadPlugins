@@ -11,7 +11,7 @@ public interface FredsMoonConfig extends Config {
 
 	@ConfigItem(
 		name = "Enabled",
-		description = "Is Kraken helper enabled?",
+		description = "Is Moons helper enabled?",
 		position = 0,
 		keyName = "enabled"
 	)

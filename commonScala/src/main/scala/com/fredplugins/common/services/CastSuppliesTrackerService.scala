@@ -123,7 +123,7 @@ class CastSuppliesTrackerService @Inject()(val client: Client, val clientThread:
 //			})//.appendedAll(x._1.toList)
 		)).filter(x => x._1.nonEmpty || (x._2 ++ x._3).nonEmpty).foreach{
 			case (delta, addedEquips, removedEquips) => {
-				log.debug("castSuppliesChange(runeDelta={}, equipablesDelta={})", delta, addedEquips.map(a => s"+${a}").toList.appendedAll(removedEquips.map(b => s"-${b}").toList))
+//				log.debug("castSuppliesChange(runeDelta={}, equipablesDelta={})", delta, addedEquips.map(a => s"+${a}").toList.appendedAll(removedEquips.map(b => s"-${b}").toList))
 //				log.debug(s"castSuppliesState(runes={}, quipables={})", State.runeCount, State.equipables)
 			}
 		}

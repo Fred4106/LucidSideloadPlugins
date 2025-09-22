@@ -14,6 +14,8 @@ import com.fredplugins.pvmDebugger.moons.FredsMoonHelper
 import com.fredplugins.pvmDebugger.muspah.FredsMuspahConfig
 import com.fredplugins.pvmDebugger.muspah.FredsMuspahHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
+import com.fredplugins.pvmDebugger.vorkath.FredsVorkathConfig
+import com.fredplugins.pvmDebugger.vorkath.FredsVorkathHelper
 import com.google.inject.Inject
 import com.google.inject.Provides
 import com.google.inject.Singleton
@@ -69,6 +71,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val muspahHelper: FredsMuspahHelper       = null
 	@Inject private val amoxliatlHelper: FredsAmoxliatlHelper = null
 	@Inject private val hueycoatlHelper: FredsHueycoatlHelper = null
+	@Inject private val vorkathHelper: FredsVorkathHelper     = null
 
 	//	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
@@ -148,7 +151,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper)
+	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, vorkathHelper)
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		helperModules.foreach(m => {
@@ -348,4 +351,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideMuspahConfig(configManager: ConfigManager):FredsMuspahConfig = configManager.getConfig(classOf[FredsMuspahConfig])
 	@Provides def provideAmoxliatlConfig(configManager: ConfigManager):FredsAmoxliatlConfig = configManager.getConfig(classOf[FredsAmoxliatlConfig])
 	@Provides def provideHueycoatlConfig(configManager: ConfigManager):FredsHueycoatlConfig = configManager.getConfig(classOf[FredsHueycoatlConfig])
+	@Provides def provideVorkathConfig(configManager: ConfigManager):FredsVorkathConfig = configManager.getConfig(classOf[FredsVorkathConfig])
 }
