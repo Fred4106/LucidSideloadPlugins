@@ -14,12 +14,32 @@ import scala.compiletime.uninitialized
 package object vorkath {
 	val VorkathRegion = 9023
 
+//	enum Phase {
+//		UNKNOWN
+//		,
+//		ACID
+//		,
+//		FIRE_BALL
+//		,
+//		SPAWN
+//	}
+
+	sealed trait VorkPhase extends enumeratum.EnumEntry {}
+	object VorkPhases extends enumeratum.Enum[VorkPhase] with ShimUtils.Logging() {
+		case object Unknown extends VorkPhase
+		case object Acid extends VorkPhase
+		case object FireBall extends VorkPhase
+		case object Spawn extends VorkPhase
+
+		override def values: IndexedSeq[VorkPhase] = findValues
+	}
+
 	sealed trait VorkAttack extends enumeratum.EnumEntry {
 		def animationId: Int
 	}
 	sealed trait VorkMeleeAttack(val animationId: Int) extends VorkAttack {}
 	sealed trait VorkRangedAttack(val animationId: Int, val projectileId: Int) extends VorkAttack {}
-	
+
 	object VorkAttacks extends enumeratum.Enum[VorkAttack] with ShimUtils.Logging() {
 		/**
 		 * Vorkath's melee attack (see VorkathPlugin#onAnimationChanged)
