@@ -1,6 +1,7 @@
 package com.fredplugins.common.extensions
 
 import com.formdev.flatlaf.util.Animator
+import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.common.utils.WorldPointUtils
 import net.runelite.api.Animation
 import net.runelite.api.DynamicObject
@@ -36,12 +37,12 @@ object ObjectExtensions {
 			}.flatten
 		}
 		def templateLocation: WorldPoint = {
-			WorldPointUtils.toTemplate(e.getWorldLocation)
+			TWorldPoint.get(e.getWorldLocation)// WorldPointUtils.toTemplate(e.getWorldLocation)
 		}
 	}
 	extension (e: GraphicsObject)(using client: Client) {
 		def templateLocation: WorldPoint = {
-			WorldPointUtils.toTemplate(WorldPoint.fromLocalInstance(client, e.getLocation))
+			TWorldPoint.get(WorldPoint.fromLocalInstance(client, e.getLocation))//WorldPointUtils.toTemplate(WorldPoint.fromLocalInstance(client, e.getLocation))
 		}
 	}
 	extension (e: TileObject)(using client: Client) {

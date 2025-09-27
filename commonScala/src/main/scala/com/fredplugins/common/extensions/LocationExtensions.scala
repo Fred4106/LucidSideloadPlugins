@@ -1,6 +1,7 @@
 package com.fredplugins.common.extensions
 
 import com.fredplugins.common.utils.SInteractionUtils
+import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.common.utils.WorldPointUtils
 import net.runelite.api.Client
 import net.runelite.api.Projectile
@@ -21,7 +22,7 @@ object LocationExtensions {
 
 	extension(e: WorldPoint)(using client: Client) {
 		def getTemplate: WorldPoint = {
-			WorldPointUtils.toTemplate(e)
+			TWorldPoint.get(e)
 		}
 		def getLocalPoint: LocalPoint = {
 			LocalPoint.fromWorld(client.getTopLevelWorldView, e.getTemplate)

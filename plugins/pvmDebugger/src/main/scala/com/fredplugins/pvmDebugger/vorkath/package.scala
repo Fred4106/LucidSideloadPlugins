@@ -12,28 +12,14 @@ import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
 package object vorkath {
+	val VorkathRegion = 9023
 
 	sealed trait VorkAttack extends enumeratum.EnumEntry {
 		def animationId: Int
 	}
 	sealed trait VorkMeleeAttack(val animationId: Int) extends VorkAttack {}
 	sealed trait VorkRangedAttack(val animationId: Int, val projectileId: Int) extends VorkAttack {}
-
-	//	public static final int DS2_VORKATH_SLEEPING = 7946;
-	//	public static final int DS2_VORKATH_WALK = 7947;
-	//	public static final int DS2_VORKATH_IDLE = 7948;
-	//	public static final int DS2_VORKATH_DEATH = 7949;
-	//	public static final int DS2_VORKATH_SPAWN = 7950;
-	//	public static final int DS2_VORKATH_ATTACK_MELEE = 7951;
-	//	public static final int DS2_VORKATH_RANGED = 7952;
-	//	public static final int DS2_VORKATH_STOMP = 7953;
-	//	public static final int DS2_VORKATH_DEFEND_UP = 7954;
-	//	public static final int DS2_VORKATH_DEFEND_IDLE = 7955;
-	//	public static final int DS2_VORKATH_DEFEND_DOWN = 7956;
-	//	public static final int DS2_VORKATH_ACID = 7957;
-	//	public static final int DS2_VORKATH_CHATHEAD_TALK = 7958;
-	//	public static final int DS2_VORKATH_PET_WALK = 7959;
-	//	public static final int DS2_VORKATH_RANGED_UP = 7960;)
+	
 	object VorkAttacks extends enumeratum.Enum[VorkAttack] with ShimUtils.Logging() {
 		/**
 		 * Vorkath's melee attack (see VorkathPlugin#onAnimationChanged)

@@ -60,6 +60,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.OptionConverters.RichOptional
+import scala.util.Try
 import scala.util.chaining.scalaUtilChainingOps
 
 @Singleton
@@ -70,7 +71,6 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 	given FredsVorkathConfig = config
 
 
-	val VorkathRegion = 9023
 	override def init(): Unit = {
 //		state = clientThread.runOnClientThread(() => createState)
 	}
@@ -105,6 +105,13 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
+		Option(client.getLocalPlayer).flatMap(lp => {
+			Try(lp.getWorldLocation.getTemplate.getRegionID).toOption
+		})
+			.filter(_ == VorkathRegion)
+			.foreach(_ =>{
+				log.debug(s"Tick: ${client.getTickCount}")
+			})
 	}
 
 	@Subscribe
@@ -128,24 +135,30 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 //		log.info(s"Varbit \"${name}\" changed to ${e.getValue}")
 //	}
 
-//	@Subscribe
-//	def onNpcSpawned(e: NpcSpawned): Unit = {
-//		if (e.getNpc.templateLocation.getRegionID != HueyRegion) return
-//		if (!HueyNpcIds.contains(e.getNpc.getId)) return
-//		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
-//		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" spawned at ${e.getNpc.templateLocation}")
-//		state = state.map(_.addNpc(e.getNpc))
-//		//		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc).appended(e.getNpc)
-//	}
-//	@Subscribe
-//	def onNpcDespawned(e: NpcDespawned): Unit = {
-//		if (e.getNpc.templateLocation.getRegionID != HueyRegion) return
-//		if (!HueyNpcIds.contains(e.getNpc.getId)) return
-//		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
-//		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" despawned at ${e.getNpc.templateLocation}")
-//		state = state.map(_.removeNpc(e.getNpc))
-//		//		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc)
-//	}
+	@Subscribe
+	def onNpcSpawned(e: NpcSpawned): Unit = {
+//		if (e.getNpc.templateLocation.getRegionID != VorkathRegion) return
+		Option(e.getNpc).map(n => n.getId -> n).filter(u => u._2.templateLocation.getRegionID == VorkathRegion)
+			.collect {
+				case (NpcID.VORKATH, loc) => "Vorkath" -> loc.templateLocation
+				case (NpcID.VORKATH_SPAWN, loc) => "Spawn" -> loc.templateLocation
+			}
+			.foreach {
+				case (name, loc) => log.debug(s"$name spawned @ $loc")
+			}
+	}
+	@Subscribe
+	def onNpcDespawned(e: NpcDespawned): Unit = {
+		Option(e.getNpc).map(n => n.getId -> n.templateLocation).filter(_._2.getRegionID == VorkathRegion)
+			.collect {
+				case (NpcID.VORKATH, loc) => "Vorkath" -> loc
+				case (NpcID.VORKATH_SPAWN, loc) => "Spawn" -> loc
+			}
+			.foreach {
+				case (name, loc) => log.debug(s"$name despawned @ $loc")
+			}
+		//		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc)
+	}
 
 	@Subscribe
 	def onProjectileMoved(e: ProjectileMoved): Unit = {
@@ -155,7 +168,6 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 				.foreach(attack => {
 					log.debug(s"ProjectileAttack ${attack} detected by ${projectile}")
 				})
-			log.debug("")
 		}
 	}
 

@@ -1,6 +1,7 @@
 package ethanApiPlugin.services.localPlayer;
 
 
+import com.fredplugins.common.utils.TWorldPoint;
 import com.fredplugins.common.utils.WorldPointUtils;
 import com.fredplugins.common.extensions.ActorExtensions;
 import com.google.inject.Inject;
@@ -63,11 +64,10 @@ public class LocalPlayerService {
 	public void onGameTick(GameTick gt) {
 		Player me = EthanApiPlugin.getClient().getLocalPlayer();
 		WorldPoint pos = Optional.ofNullable(me).map(Player::getWorldLocation)
-			.map(u ->  WorldPointUtils.toTemplate(u, client))
+			.map(TWorldPoint::get)//toTemplate(u, me.getWorldView(), client))
 			.orElse(null);
 		WorldPoint dest = Optional.ofNullable(client.getLocalDestinationLocation())
-			.map(ldest -> WorldPoint.fromLocalInstance(client, ldest))
-			.map(u ->  WorldPointUtils.toTemplate(u, client))
+			.map(ldest -> TWorldPoint.get(WorldPoint.fromLocalInstance(client, ldest)))//WorldPointUtils.toTemplate(WorldPoint.fromLocalInstance(client, ldest), client.getWorldView(ldest.getWorldView()), client))
 			.orElse(null);
 
 		int regionId = Optional.ofNullable(pos).map(WorldPoint::getRegionID).orElse(-1);//.orElse(-1).intValue();

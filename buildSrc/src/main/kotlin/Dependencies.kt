@@ -24,7 +24,8 @@
  */
 
 object Dependencies {
-    const val rlVersion = "1.11.17"
+    const val releaseVersion = "1.1.13"
+    const val rlVersion = "1.11.18"
     const val scalaVersion = "3.6.3"
     const val lombokVersion = "1.18.30"
     const val jetbrainsAnnotations = "23.0.0"

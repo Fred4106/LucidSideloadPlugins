@@ -2,6 +2,7 @@ package com.fredplugins.pvmHelper.hunllef
 
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.OldOverlayUtil.{drawOutlineAndFill, renderTextLocation}
+import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.common.utils.{SInteractionUtils, ShimUtils, WorldPointUtils}
 import com.fredplugins.pvmHelper.hunllef.Action.{DisableOverheads, PrayMagic, PrayRange}
 import com.fredplugins.pvmHelper.hunllef.Tornado.{ChaseTornado, RoamingTornado, isTornado}
@@ -60,7 +61,7 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 	private lazy val overlay: FredsPvmHelperOverlay[HunllefLogic] = new FredsPvmHelperOverlay[HunllefLogic](this) {
 		override def render()(using graphics: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
 			State.tornadoes.map(tt => {
-				val lp = WorldPointUtils.fromInstance(tt.getWorldLocation).pipe(LocalPoint.fromWorld(client, _))
+				val lp = TWorldPoint.get(tt.getWorldLocation).pipe(LocalPoint.fromWorld(client, _))
 				val polygon = Perspective.getCanvasTilePoly(client, lp)
 				tt match {
 					case tornado: ChaseTornado => (Color.blue, polygon, lp, s"${tornado.diesOnTick}")

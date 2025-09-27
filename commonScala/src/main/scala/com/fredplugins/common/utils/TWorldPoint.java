@@ -2,6 +2,8 @@ package com.fredplugins.common.utils;
 import net.runelite.api.Client;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.RuneLite;
+
 import static net.runelite.api.Constants.CHUNK_SIZE;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,10 +12,10 @@ import java.util.Collections;
 public class TWorldPoint
 {
 
-    private static Client clientRef = null;
-    public static void init(Client client) {
-        clientRef = client;
-    }
+    private static Client clientRef = RuneLite.getInjector().getInstance(Client.class);
+//    public static void init(Client client) {
+//        clientRef = client;
+//    }
     public static WorldPoint get(WorldPoint worldPoint)
     {
         assert(clientRef!=null);

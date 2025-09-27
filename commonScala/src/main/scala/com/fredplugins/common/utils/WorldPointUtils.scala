@@ -7,16 +7,28 @@ import net.runelite.api.Constants.CHUNK_SIZE
 import scala.util.chaining.*
 object WorldPointUtils {
 	private val log = ShimUtils.getLogger(getClass.getName, "DEBUG")
-
+	def toTemplate(wp: WorldPoint, wv: WorldView)(using client:Client): WorldPoint = {
+//		if(wv.isInstance) {
+//			fromInstance(wp, wv)
+//		} else {
+//			wp
+//		}
+		Option.when[WorldPoint => WorldPoint](wv.isInstance)(fromInstance(_, wv)).getOrElse(identity[WorldPoint]).apply(wp)
+	}
 	def toTemplate(wp: WorldPoint)(using client:Client): WorldPoint = {
-		Option.when[WorldPoint => WorldPoint](client.getTopLevelWorldView.isInstance)(fromInstance(_)).getOrElse(identity[WorldPoint]).apply(wp)
+		if(wp.isInScene(client) && client.isInInstancedRegion) {
+			Option(fromInstance(wp)).getOrElse(wp)
+		} else {
+			wp
+		}
+//		Option.when[WorldPoint => WorldPoint](client.isInInstancedRegion)(fromInstance(_)).getOrElse(identity[WorldPoint]).apply(wp)
 	}
 
 	def toInstance(worldPoint: WorldPoint)(using client:Client): Seq[WorldPoint] = {
 		inline def range(tx: Int) = (tx until CHUNK_SIZE + tx)
 		inline def isBound(tx: Int, ty: Int, tz: Int): Boolean = range(tx).contains(worldPoint.getX) && range(ty).contains(worldPoint.getY) && worldPoint.getPlane == tz
 		val wv = client.getTopLevelWorldView
-		Option.when(wv.isInstance){
+		Option.when(client.isInInstancedRegion){
 			val templateChunks = wv.getInstanceTemplateChunks()
 			for {
 				z <- 0 until templateChunks.length
@@ -46,18 +58,39 @@ object WorldPointUtils {
 	}
 	def fromInstance(worldPoint: WorldPoint)(using client: Client): WorldPoint = {
 		val wv = client.getTopLevelWorldView
-		val localPoint = LocalPoint.fromWorld(wv, worldPoint);
-		Option.when(localPoint != null && wv.isInstance)({
+		//		val localPoint = LocalPoint.fromWorld(client, worldPoint);
+		println(s"wp=${worldPoint}, wv{${wv.getPlane}, ${wv.getBaseX},${wv.getBaseY}, ${wv.isInstance}}")
+		Option.when(/*localPoint != null && */ client.isInInstancedRegion)({
 			extension (c: (Int, Int)) {
 				def x: Int = c._1
 				def y: Int = c._2
 			}
-			val scene: (Int, Int) = (localPoint.getSceneX, localPoint.getSceneY)
-			val chunk = ChunkData(wv.getInstanceTemplateChunks()(worldPoint.getPlane)(scene.x / CHUNK_SIZE)(scene.y / CHUNK_SIZE))
-
+			//			worldPoint.isInScene(
+			//			val scene = client.getTopLevelWorldView
+			val scene: (Int, Int) = (worldPoint.getX - wv.getBaseX, worldPoint.getY - wv.getBaseY)
+			val chunk             = ChunkData(wv.getInstanceTemplateChunks()(wv.getPlane)(scene.x / CHUNK_SIZE)(scene.y / CHUNK_SIZE))
+			//			println(chunk)
 			// calculate world point of the template// calculate world point of the template
-			rotate(WorldPoint(chunk.x + (scene.x & (CHUNK_SIZE - 1)), chunk.y + (scene.y & (CHUNK_SIZE - 1)), chunk.p), 3 - chunk.r)
-		}).get
+			rotate(WorldPoint(chunk.x + (scene.x & (CHUNK_SIZE - 1)), chunk.y + (scene.y & (CHUNK_SIZE - 1)), chunk.p), 4 - chunk.r)
+		}).orNull
+	}
+	def fromInstance(worldPoint: WorldPoint, wv: WorldView)(using client: Client): WorldPoint = {
+//		val localPoint = LocalPoint.fromWorld(client, worldPoint);
+		println(s"wp=${worldPoint}, wv{${wv.getPlane}, ${wv.getBaseX},${wv.getBaseY}, ${wv.isInstance}}")
+//		val lp = LocalPoint.fromWorld(wv, worldPoint)
+		Option.when(wv.isInstance)({
+			extension (c: (Int, Int)) {
+				def x: Int = c._1
+				def y: Int = c._2
+			}
+//			worldPoint.isInScene(
+//			val scene = client.getTopLevelWorldView
+			val scene: (Int, Int) = (worldPoint.getX - wv.getBaseX, worldPoint.getY - wv.getBaseY)
+			val chunk = ChunkData(wv.getInstanceTemplateChunks()(wv.getPlane)(scene.x / CHUNK_SIZE)(scene.y / CHUNK_SIZE))
+//			println(chunk)
+			// calculate world point of the template// calculate world point of the template
+			rotate(WorldPoint(chunk.x + (scene.x & (CHUNK_SIZE - 1)), chunk.y + (scene.y & (CHUNK_SIZE - 1)), chunk.p), 4 - chunk.r)
+		}).getOrElse(worldPoint)
 	}
 
 	/**

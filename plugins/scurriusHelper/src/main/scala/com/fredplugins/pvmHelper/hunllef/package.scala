@@ -1,6 +1,7 @@
 package com.fredplugins.pvmHelper
 
 import com.fredplugins.common.Locatable.{LocatableType, distanceTo, findSceneCord, findWorldCord}
+import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.common.utils.{ShimUtils, WorldPointUtils}
 import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InventoryUtils}
 import ethanApiPlugin.collections.Inventory
@@ -124,7 +125,7 @@ package object hunllef {
 		}
 
 		class RoamingTornado(w: NPC)(using client: Client) extends Tornado(w) {
-			def scenePos: (Int, Int) = LocalPoint.fromWorld(client, WorldPointUtils.fromInstance(w.getWorldLocation)).pipe(ll => (ll.getSceneX, ll.getSceneY))
+			def scenePos: (Int, Int) = LocalPoint.fromWorld(client, TWorldPoint.get(w.getWorldLocation)).pipe(ll => (ll.getSceneX, ll.getSceneY))
 		}
 
 		def isTornado(wrapped: NPC): Boolean = {

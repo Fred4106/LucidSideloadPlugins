@@ -1,5 +1,6 @@
 package com.fredplugins.common.extensions
 
+import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.common.utils.WorldPointUtils
 import net.runelite.api.Animation
 import net.runelite.api.DynamicObject
@@ -16,10 +17,10 @@ import net.runelite.api.coords.LocalPoint
 object ProjectileExtensions {
 	extension(e: Projectile) {
 		def templateSourceLocation(using client: Client) : WorldPoint = {
-			WorldPointUtils.toTemplate(e.getSourcePoint)
+			TWorldPoint.get(e.getSourcePoint)//, e.getSourceActor.getWorldView)
 		}
 		def templateTargetLocation(using client: Client) : WorldPoint = {
-			WorldPointUtils.toTemplate(e.getTargetPoint)
+			TWorldPoint.get(e.getTargetPoint)
 		}
 		def ticksRemaining: Int = {
 			(e.getRemainingCycles.toDouble / 30.0d).toInt

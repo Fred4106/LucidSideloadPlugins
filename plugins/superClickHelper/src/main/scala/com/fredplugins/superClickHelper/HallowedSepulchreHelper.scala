@@ -5,6 +5,7 @@ import com.fredplugins.common.extensions.TextExtensions.*
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.WidgetExtensions.*
 import com.fredplugins.common.utils.ShimUtils.Logging
+import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.common.utils.WorldPointUtils
 import com.fredplugins.superClickHelper.HallowedSepulchreData.SEPULCHRE_FLOORS
 import com.fredplugins.superClickHelper.HallowedSepulchreData.SEPULCHRE_NPCS
@@ -383,7 +384,7 @@ class HallowedSepulchreHelper(plugin: SuperClickerPlugin) extends MonitorService
 		if(client.getGameState == GameState.LOGGED_IN) {
 			val curFloor =
 				client.getLocalPlayer.getWorldLocation
-					.pipe(wp => WorldPointUtils.toTemplate(wp))//if(client.getLocalPlayer.getWorldView.isInstance) WorldPointUtils.fromInstance(wp)(using client) else wp)
+					.pipe(wp => TWorldPoint.get(wp))//if(client.getLocalPlayer.getWorldView.isInstance) WorldPointUtils.fromInstance(wp)(using client) else wp)
 					.pipe(wp => SEPULCHRE_FLOORS.indexWhere(_.contains2D(wp)))
 			if(curFloor != currentFloor) {
 				log.debug(s"Changed floor from ${currentFloor} to ${curFloor}")
