@@ -35,75 +35,95 @@ package object vorkath {
 	}
 
 	sealed trait VorkAttack extends enumeratum.EnumEntry {
+		self: VorkSpecialAttack | VorkBasicAttack =>
 		def animationId: Int
 	}
-	sealed trait VorkMeleeAttack(val animationId: Int) extends VorkAttack {}
-	sealed trait VorkRangedAttack(val animationId: Int, val projectileId: Int) extends VorkAttack {}
+	sealed transparent trait VorkBasicAttack {
+		self: VorkAttack =>
+		assert(!self.isInstanceOf[VorkSpecialAttack])
+	}
+	sealed transparent trait VorkSpecialAttack {
+		self: VorkAttack =>
+		assert(!self.isInstanceOf[VorkBasicAttack])
+	}
+	sealed transparent trait VorkMeleeAttack(val animationId: Int) extends VorkAttack {
+		self: VorkSpecialAttack | VorkBasicAttack =>
+	}
+	sealed transparent trait VorkRangedAttack(val animationId: Int, val projectileId: Int) extends VorkAttack {
+		self: VorkSpecialAttack | VorkBasicAttack =>
+	}
 
 	object VorkAttacks extends enumeratum.Enum[VorkAttack] with ShimUtils.Logging() {
 		object BasicAttack {
-			private val basicAttacks = Seq(
-				FireBreath,PrayerBreath, VenomBreath, Spike, Ice, FireBomb, FireBall, Slash
-			)
-			def unapply(v: VorkAttack): Option[VorkAttack] = {
-				Option(v).filter(basicAttacks.contains(_))
+			def unapply(v: VorkAttack): Option[VorkBasicAttack] = {
+				Option(v).collect{
+					case va: VorkBasicAttack => va
+				}
+			}
+		}
+
+		object SpecialAttack {
+			def unapply(v: VorkAttack): Option[VorkSpecialAttack] = {
+				Option(v).collect{
+					case va: VorkSpecialAttack => va
+				}
 			}
 		}
 
 		/**
 		 * Vorkath's melee attack (see VorkathPlugin#onAnimationChanged)
 		 */
-		case object Slash extends VorkMeleeAttack(AnimationID.DS2_VORKATH_ATTACK_MELEE)
+		case object Slash extends VorkMeleeAttack(AnimationID.DS2_VORKATH_ATTACK_MELEE) with VorkBasicAttack
 
 		/**
 		* Vorkath's dragon breath attack
 		*/
-		case object FireBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_DRAGONBREATH)
+		case object FireBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_DRAGONBREATH) with VorkBasicAttack
 
 		/**
 		* Vorkath's dragon breath attack causing the player's active prayers to be deactivated
 		*/
-		case object PrayerBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_PRAYER_DISABLE)
+		case object PrayerBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_PRAYER_DISABLE) with VorkBasicAttack
 
 		/**
 		* Vorkath's dragon breath attack causing the player to become poisoned with venom
 		*/
-		case object VenomBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_VENOM)
+		case object VenomBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_VENOM) with VorkBasicAttack
 
 		/**
 		* Vorkath's ranged attack
 		*/
-		case object Spike extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_RANGED)
+		case object Spike extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_RANGED) with VorkBasicAttack
 
 		/**
 		* Vorkath's magic attack
 		*/
-		case object Ice extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_MAGIC)
+		case object Ice extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_MAGIC) with VorkBasicAttack
 
 		/**
 		* Vorkath's aoe fire bomb attack (3x3 from where player was originally standing)
 		*/
-		case object FireBomb extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED_UP, ProjectileID.VORKATH_BOMB_AOE)
+		case object FireBomb extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED_UP, ProjectileID.VORKATH_BOMB_AOE) with VorkBasicAttack
 
 		/**
 		* Vorkath's aoe acid attacking, spewing acid across the instance
 		*/
-		case object Acid extends VorkRangedAttack(AnimationID.DS2_VORKATH_ACID, ProjectileID.VORKATH_POISON_POOL_AOE)
+		case object Acid extends VorkRangedAttack(AnimationID.DS2_VORKATH_ACID, ProjectileID.VORKATH_POISON_POOL_AOE) with VorkSpecialAttack
 
 		/**
 		* Vorkath's fire ball attack that is fired during the acid phase, almost every tick for 25(?) attacks total
 		*/
-		case object FireBall extends VorkRangedAttack(AnimationID.DS2_VORKATH_ACID, ProjectileID.VORKATH_TICK_FIRE_AOE)
+		case object FireBall extends VorkRangedAttack(AnimationID.DS2_VORKATH_ACID, ProjectileID.VORKATH_TICK_FIRE_AOE)with VorkSpecialAttack
 
 		/**
 		* Vorkath's dragon breath attack causing the player to be frozen during Zombified Spawn phase
 		*/
-		case object FreezeBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_ICE)
+		case object FreezeBreath extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED, ProjectileID.VORKATH_ICE)with VorkSpecialAttack
 
 		/**
 		* Vorkath's spawning of a Zombified Spawn
 		*/
-		case object ZombifiedSpawn extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED_UP, ProjectileID.VORKATH_SPAWN_AOE)
+		case object ZombifiedSpawn extends VorkRangedAttack(AnimationID.DS2_VORKATH_RANGED_UP, ProjectileID.VORKATH_SPAWN_AOE)with VorkSpecialAttack
 
 		override def values: IndexedSeq[VorkAttack] = findValues.pipe(x => {
 			val uniqueProjectiles = x.collect {

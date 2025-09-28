@@ -79,33 +79,61 @@ object Vorkath {
 class Vorkath(val npc: NPC) extends ShimUtils.Logging{
 	assert(npc != null && npc.getId == NpcID.VORKATH)
 	var lastAttack: VorkAttack = null
-	var fireballCount: Int = 0
+//	var fireballCount: Int = 0
+	var attacksCount: Int = 0
 	var currentPhase: VorkPhase = VorkPhases.Unknown
-	var nextPhase: VorkPhase = VorkPhases.Unknown
-	var lastPhase: VorkPhase = VorkPhases.Unknown
 	var attacksLeft: Int = ATTACKS_PER_SWITCH
 
-	def updatePhase(newPhase: VorkPhase): Unit = {
-		val oldLastPhase    = this.lastPhase
-		val oldCurrentPhase = this.currentPhase
-		val oldNextPhase    = this.nextPhase
-		val oldAttacksLeft  = this.attacksLeft
-		this.lastPhase = this.currentPhase
-		this.currentPhase = newPhase
-		this.nextPhase = newPhase match {
-			case VorkPhases.Acid => VorkPhases.FireBall
-			case VorkPhases.FireBall => VorkPhases.Spawn
-			case VorkPhases.Spawn => VorkPhases.Acid
-			case _ => VorkPhases.Unknown
-		}
-		if (this.currentPhase == FireBall) {
-			this.fireballCount = 0
-			this.attacksLeft = FIRE_BALL_ATTACKS
-		}
-		else this.attacksLeft = ATTACKS_PER_SWITCH
-		log.debug("[Vorkath] Update! Last Phase: {}->{}, Current Phase: {}->{}, Next Phase: {}->{}, Attacks: {}->{}", oldLastPhase, this.lastPhase, oldCurrentPhase, this.currentPhase, oldNextPhase, this.nextPhase, oldAttacksLeft, this.attacksLeft)
-	}
+	def handleAttack(attack: VorkAttack): Unit = {
+		lastAttack = attack
+		attack match {
+			case VorkAttacks.BasicAttack(a) => {
+				if(currentPhase == FireBall) {
+					currentPhase = Spawn
+					attacksLeft = ATTACKS_PER_SWITCH
+					attacksCount = 0
+				}
+				attacksLeft = (attacksLeft - 1).max(0)
+				attacksCount = attacksCount + 1
+			}
+			case VorkAttacks.SpecialAttack(a) => {
+				a match {
+					case VorkAttacks.Acid => {
+						if(currentPhase == Acid) {
+							currentPhase = FireBall; attacksLeft = FIRE_BALL_ATTACKS; attacksCount = 0
+						}
+					}
+					case VorkAttacks.FireBall => {
+						if(currentPhase != FireBall) {
+								currentPhase = FireBall
+								attacksLeft = FIRE_BALL_ATTACKS
+								attacksCount = 0
+						}
+						attacksCount += 1
+						attacksLeft = (attacksLeft - 1).max(0)
 
+						if(attacksLeft == 0) {
+							currentPhase = Spawn
+							attacksLeft = ATTACKS_PER_SWITCH;
+							attacksCount = 0
+						}
+					}
+					case VorkAttacks.FreezeBreath => {
+						if(currentPhase != Spawn) {
+							currentPhase =  Spawn
+							attacksLeft = 0
+							attacksCount = 0
+						}
+					}
+					case VorkAttacks.ZombifiedSpawn => {
+						currentPhase = Acid
+						attacksCount = 0
+						attacksLeft = ATTACKS_PER_SWITCH
+					}
+				}
+			}
+		}
+	}
 }
 @Singleton
 class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsVorkathConfig, val localPlayerService: LocalPlayerService) extends HelperModule with WithPanel with WithOverlay {
@@ -240,28 +268,36 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 			VorkAttacks.getAttackByProjectileId(projectile.getId)
 				.foreach(attack => {
 					val v = vorkath.get
-					attack match {
-						case VorkAttacks.BasicAttack(a) => {
-							if( a== FireBall) {
-								if(v.currentPhase != FireBall) {
-									v.updatePhase(FireBall)
-								}
-								v.fireballCount = v.fireballCount + 1
-								v.attacksLeft = (v.attacksLeft - 1).max(0)
-							} else {
-								if(v.attacksLeft == 0) {
-									v.updatePhase(v.nextPhase)
-								}
-								v.attacksLeft = (v.attacksLeft - 1).max(0)
-							}
-						}
-						case VorkAttacks.Acid => v.updatePhase(Acid); v.attacksLeft = 0
-//						case VorkAttacks.FireBall =>
-						case VorkAttacks.FreezeBreath | VorkAttacks.ZombifiedSpawn => v.updatePhase(Spawn); v.attacksLeft = 0
-//						case VorkAttacks.ZombifiedSpawn => v.updatePhase(v.nextPhase)
-					}
-					v.lastAttack = attack
-					log.debug(s"ProjectileAttack ${attack} detected by ${projectile}")
+					v.handleAttack(attack)
+//					attack match {
+//						case VorkAttacks.BasicAttack(a) => {
+////							if( a== FireBall) {
+////								if(v.currentPhase != FireBall) {
+////									v.updatePhase(FireBall)
+////								}
+////								v.fireballCount = v.fireballCount + 1
+////								v.attacksLeft = (v.attacksLeft - 1).max(0)
+////							} else {
+//								if(v.attacksLeft == 0) {
+//									v.updatePhase(v.nextPhase)
+//								}
+//								v.attacksLeft = (v.attacksLeft - 1).max(0)
+////							}
+//						}
+//						case VorkAttacks.FireBall => {
+//							if(v.currentPhase != FireBall) {
+//								v.updatePhase(FireBall)
+//							}
+//							v.fireballCount = v.fireballCount+1
+//							v.attacksLeft = (v.attacksLeft-1).max(0)
+//						}
+//						case VorkAttacks.Acid => v.updatePhase(Acid); v.attacksLeft = 0
+////						case VorkAttacks.FireBall =>
+//						case VorkAttacks.FreezeBreath | VorkAttacks.ZombifiedSpawn => v.updatePhase(Spawn); v.attacksLeft = 0
+////						case VorkAttacks.ZombifiedSpawn => v.updatePhase(v.nextPhase)
+//					}
+//					v.lastAttack = attack
+//					log.debug(s"ProjectileAttack ${attack} detected by ${projectile}")
 				})
 		}
 	}
@@ -272,24 +308,23 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 		if (!Option(e.getActor).map(_.templateLocation).map(_.getRegionID).contains(VorkathRegion)) return
 //		if (inRegion && inFight) {
 //			if(e.getActor.templateLocation.getRegionID != HueyRegion) return
+		if(!vorkath.exists(_.npc == e.getActor)) return
+
+		val model = vorkath.get
 		Option(e.getActor).foreach {
 			case vork: NPC if vork.getId == NpcID.VORKATH && vorkath.exists(_.npc == vork) => {
 				val possibleAttacks = VorkAttacks.getPossibleAttacks(vork.getAnimation)
-				if(possibleAttacks.size == 1) {
-					possibleAttacks.headOption.foreach {
-						case Slash => {
-							if (vorkath.get.attacksLeft == 0) {
-								vorkath.get.updatePhase(vorkath.get.nextPhase)
-							}
-							vorkath.get.attacksLeft = (vorkath.get.attacksLeft - 1).max(0)
-							vorkath.get.lastAttack =  Slash
-						}
-					}
-				} else if(possibleAttacks.size > 1) {
-					log.debug(s"Vorkath ${vork} has these possible attacks ${possibleAttacks}")
-				} else {
-					log.debug(s"Vorkath ${vork} animation changed to ${vork.getAnimation}")
+				possibleAttacks.foreach{
+					case a: VorkMeleeAttack => model.handleAttack(a)
+					case b: VorkRangedAttack => //model.handlePossibleAttack(a)
 				}
+//				if(possibleAttacks.size == 1) {
+//
+//				} else if(possibleAttacks.size > 1) {
+//					log.debug(s"Vorkath ${vork} has these possible attacks ${possibleAttacks}")
+//				} else {
+//					log.debug(s"Vorkath ${vork} animation changed to ${vork.getAnimation}")
+//				}
 			}
 			case vork: NPC if vork.getId == NpcID.VORKATH_SLEEPING => {
 				log.debug(s"Sleeping Vorkath ${vork} animation changed to ${vork.getAnimation}")
