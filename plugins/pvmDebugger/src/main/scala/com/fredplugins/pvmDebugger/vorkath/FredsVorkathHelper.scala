@@ -11,6 +11,8 @@ import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
 import com.fredplugins.pvmDebugger.WithOverlay
 import com.fredplugins.pvmDebugger.WithPanel
+import com.fredplugins.pvmDebugger.vorkath.VorkAttacks.FreezeBreath
+import com.fredplugins.pvmDebugger.vorkath.VorkAttacks.Slash
 import com.fredplugins.pvmDebugger.vorkath.VorkPhases.Acid
 import com.fredplugins.pvmDebugger.vorkath.VorkPhases.FireBall
 import com.fredplugins.pvmDebugger.vorkath.VorkPhases.Spawn
@@ -54,6 +56,7 @@ import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import net.runelite.client.ui.overlay.components.LineComponent
 import net.runelite.client.ui.overlay.components.ProgressPieComponent
 import net.runelite.client.ui.overlay.components.TitleComponent
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import packets.MovementPackets
 
 import java.awt.Color
@@ -76,6 +79,7 @@ object Vorkath {
 class Vorkath(val npc: NPC) extends ShimUtils.Logging{
 	assert(npc != null && npc.getId == NpcID.VORKATH)
 	var lastAttack: VorkAttack = null
+	var fireballCount: Int = 0
 	var currentPhase: VorkPhase = VorkPhases.Unknown
 	var nextPhase: VorkPhase = VorkPhases.Unknown
 	var lastPhase: VorkPhase = VorkPhases.Unknown
@@ -94,8 +98,10 @@ class Vorkath(val npc: NPC) extends ShimUtils.Logging{
 			case VorkPhases.Spawn => VorkPhases.Acid
 			case _ => VorkPhases.Unknown
 		}
-		if (this.currentPhase == FireBall) this.attacksLeft = FIRE_BALL_ATTACKS
-		else if (this.currentPhase == Acid || this.currentPhase == Spawn) this.attacksLeft = 0
+		if (this.currentPhase == FireBall) {
+			this.fireballCount = 0
+			this.attacksLeft = FIRE_BALL_ATTACKS
+		}
 		else this.attacksLeft = ATTACKS_PER_SWITCH
 		log.debug("[Vorkath] Update! Last Phase: {}->{}, Current Phase: {}->{}, Next Phase: {}->{}, Attacks: {}->{}", oldLastPhase, this.lastPhase, oldCurrentPhase, this.currentPhase, oldNextPhase, this.nextPhase, oldAttacksLeft, this.attacksLeft)
 	}
@@ -109,15 +115,17 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 	given FredsVorkathConfig = config
 
 	var vorkath: Option[Vorkath] = Option.empty[Vorkath]
-
+	var projectiles: List[Projectile] = List.empty[Projectile]
 
 	override def init(): Unit = {
 		vorkath = Option.empty[Vorkath]
+		projectiles = List.empty
 //		state = clientThread.runOnClientThread(() => createState)
 	}
 
 	override def cleanup(): Unit = {
 		vorkath  = Option.empty[Vorkath]
+		projectiles = List.empty
 //		state = Option.empty
 	}
 
@@ -151,11 +159,19 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 			return
 		}
 
+		if(!client.getLocalPlayer.getWorldView.isInstance) {
+			vorkath = Option.empty[Vorkath]
+			projectiles = List.empty[Projectile]
+			return
+		}
+
 		if(vorkath.isEmpty) {
 			vorkath = client.getNpcs.asScala.toList.find(npc => {
 				npc.templateLocation.getRegionID == VorkathRegion && npc.getId == NpcID.VORKATH
 			}).map(Vorkath(_))
 		}
+
+		projectiles = projectiles.filterNot(_.hasHit)
 
 		if(vorkath.nonEmpty) {
 			log.debug(s"Tick: ${client.getTickCount}")
@@ -164,6 +180,10 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 
 	@Subscribe
 	def onLocalRegionChanged(e: LocalRegionChanged): Unit = {
+		if(e.getOldRegion == VorkathRegion) {
+			vorkath = Option.empty
+			projectiles = List.empty
+		}
 		if(e.getOldRegion == VorkathRegion || e.getCurRegion == VorkathRegion) {
 			log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}")
 		}
@@ -195,8 +215,12 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 //				case (name, loc) => log.debug(s"$name spawned @ $loc")
 //			}
 //	}
-//	@Subscribe
-//	def onNpcDespawned(e: NpcDespawned): Unit = {
+	@Subscribe
+	def onNpcDespawned(e: NpcDespawned): Unit = {
+		if(vorkath.exists(_.npc == e.getNpc)) {
+			vorkath = None
+		}
+	}
 //		Option(e.getNpc).map(n => n.getId -> n.templateLocation).filter(_._2.getRegionID == VorkathRegion)
 //			.collect {
 //				case (NpcID.VORKATH, loc) => "Vorkath" -> loc
@@ -211,21 +235,32 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 	@Subscribe
 	def onProjectileMoved(e: ProjectileMoved): Unit = {
 		val projectile: Projectile = e.getProjectile
-		if (vorkath.isDefined && (e.getProjectile.templateSourceLocation.getRegionID == VorkathRegion || e.getProjectile.templateTargetLocation.getRegionID == VorkathRegion) && projectile.justSpawned) {
+		if (vorkath.isDefined && !projectiles.contains(projectile) && (e.getProjectile.templateSourceLocation.getRegionID == VorkathRegion || e.getProjectile.templateTargetLocation.getRegionID == VorkathRegion) && projectile.justSpawned) {
+			projectiles = projectiles.appended(projectile)
 			VorkAttacks.getAttackByProjectileId(projectile.getId)
 				.foreach(attack => {
 					val v = vorkath.get
 					attack match {
-						case VorkAttacks.Acid => v.updatePhase(Acid)
-						case VorkAttacks.FireBall => v.updatePhase(FireBall)
-						case VorkAttacks.FreezeBreath => v.updatePhase(Spawn)
-						case VorkAttacks.ZombifiedSpawn => v.updatePhase(Spawn)
-						case a if v.attacksLeft > 0 => v.attacksLeft = v.attacksLeft - 1
-						case a => {
-							v.updatePhase(v.nextPhase)
-							v.attacksLeft = v.attacksLeft - 1
+						case VorkAttacks.BasicAttack(a) => {
+							if( a== FireBall) {
+								if(v.currentPhase != FireBall) {
+									v.updatePhase(FireBall)
+								}
+								v.fireballCount = v.fireballCount + 1
+								v.attacksLeft = (v.attacksLeft - 1).max(0)
+							} else {
+								if(v.attacksLeft == 0) {
+									v.updatePhase(v.nextPhase)
+								}
+								v.attacksLeft = (v.attacksLeft - 1).max(0)
+							}
 						}
+						case VorkAttacks.Acid => v.updatePhase(Acid); v.attacksLeft = 0
+//						case VorkAttacks.FireBall =>
+						case VorkAttacks.FreezeBreath | VorkAttacks.ZombifiedSpawn => v.updatePhase(Spawn); v.attacksLeft = 0
+//						case VorkAttacks.ZombifiedSpawn => v.updatePhase(v.nextPhase)
 					}
+					v.lastAttack = attack
 					log.debug(s"ProjectileAttack ${attack} detected by ${projectile}")
 				})
 		}
@@ -238,9 +273,19 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 //		if (inRegion && inFight) {
 //			if(e.getActor.templateLocation.getRegionID != HueyRegion) return
 		Option(e.getActor).foreach {
-			case vork: NPC if vork.getId == NpcID.VORKATH => {
+			case vork: NPC if vork.getId == NpcID.VORKATH && vorkath.exists(_.npc == vork) => {
 				val possibleAttacks = VorkAttacks.getPossibleAttacks(vork.getAnimation)
-				if(possibleAttacks.nonEmpty) {
+				if(possibleAttacks.size == 1) {
+					possibleAttacks.headOption.foreach {
+						case Slash => {
+							if (vorkath.get.attacksLeft == 0) {
+								vorkath.get.updatePhase(vorkath.get.nextPhase)
+							}
+							vorkath.get.attacksLeft = (vorkath.get.attacksLeft - 1).max(0)
+							vorkath.get.lastAttack =  Slash
+						}
+					}
+				} else if(possibleAttacks.size > 1) {
 					log.debug(s"Vorkath ${vork} has these possible attacks ${possibleAttacks}")
 				} else {
 					log.debug(s"Vorkath ${vork} animation changed to ${vork.getAnimation}")
@@ -275,13 +320,30 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 					Color.RED
 				}
 			).build
+			val lastAttack = LineComponent.builder().left("Last Attack").right(s"${v.lastAttack}").rightColor(
+				v.lastAttack match {
+					case null => Color.RED
+					case VorkAttacks.Slash => Color.BLACK
+					case VorkAttacks.FireBreath => new Color(255, 162, 32);
+					case VorkAttacks.PrayerBreath => Color.magenta
+					case VorkAttacks.VenomBreath => new Color(0x63, 0x99, 0x34)//Color.GREEN.darker().darker()
+					case VorkAttacks.Spike => new Color(0x00, 0xe8, 0x6D)
+					case VorkAttacks.Ice => new Color(0, 201, 255)
+					case VorkAttacks.FireBomb => new Color(255, 80, 0);
+					case VorkAttacks.Acid => new Color(0, 255, 0)
+					case VorkAttacks.FireBall => new Color(255, 120, 0);
+					case VorkAttacks.FreezeBreath => new Color(40, 255, 255)
+					case VorkAttacks.ZombifiedSpawn => Color.gray
+				}
+			).build
+
 //			val stageLine = LineComponent.builder().left("Stage").right(s"${s.stage}").build
 //			val pillarsLines = s.pillars.map {
 //				case (p, l) => LineComponent.builder().left(p.entryName).leftColor(p.getColor).right(s"$l").rightColor(
 //					Color.RED.interpolate(Color.GREEN, l/5.0)
 //				).build
 //			}.toList.prepended(TitleComponent.builder().text("Pillars").build())
-			Seq(vorkathLine, phase, atkleft, Seq.empty[LayoutableRenderableEntity]).flatMap{
+			Seq(vorkathLine, phase, atkleft, lastAttack, Seq.empty[LayoutableRenderableEntity]).flatMap{
 				case e: LayoutableRenderableEntity => Seq(e)
 				case le: Seq[_] => le.collect{
 					case e: LayoutableRenderableEntity => e
@@ -290,6 +352,8 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 		}.getOrElse(Seq.empty[LayoutableRenderableEntity])
 	}
 	override def renderOverlay(g: Graphics2D): Dimension = {
+		given Graphics2D = g
+		given ModelOutlineRenderer = parent.getModelOutlineRenderer
 		vorkath.foreach(v => {
 			OverlayUtil.renderActorOverlay(g, v.npc, s"${v.currentPhase} + ${v.attacksLeft}",
 				v.currentPhase match {
@@ -299,6 +363,25 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 					case VorkPhases.Spawn => Color.BLUE
 				})
 		})
+		projectiles.flatMap(p => Option(p).zip(VorkAttacks.getAttackByProjectileId(p.getId)))
+			.foreach((a, b) => {
+				val (projectileColor) = b match {
+					case VorkAttacks.FireBreath => new Color(255, 162, 32)
+					case VorkAttacks.PrayerBreath => Color.magenta
+					case VorkAttacks.VenomBreath => new Color(0x63, 0x99, 0x34)//Color.GREEN.darker().darker()
+					case VorkAttacks.Spike => new Color(0x00, 0xe8, 0x6D)
+					case VorkAttacks.Ice => new Color(0, 201, 255)
+					case VorkAttacks.FireBomb => new Color(255, 80, 0);
+					case VorkAttacks.Acid => new Color(0, 255, 0)
+					case VorkAttacks.FireBall => new Color(255, 120, 0);
+					case VorkAttacks.FreezeBreath => new Color(40, 255, 255)
+					case VorkAttacks.ZombifiedSpawn => Color.gray
+				}
+				import com.fredplugins.common.overlays
+				overlays.renderProjectileOverlay(a, b.entryName)(2, 2, projectileColor)
+				overlays.renderTileOverlay(a.getTargetPoint, s"${a.ticksRemaining}", projectileColor, false)
+			})
+
 //		state.foreach(s => {
 //			s.npcs.foreach { n =>
 //				//				val id = n.getId

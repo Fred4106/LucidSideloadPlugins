@@ -41,6 +41,15 @@ package object vorkath {
 	sealed trait VorkRangedAttack(val animationId: Int, val projectileId: Int) extends VorkAttack {}
 
 	object VorkAttacks extends enumeratum.Enum[VorkAttack] with ShimUtils.Logging() {
+		object BasicAttack {
+			private val basicAttacks = Seq(
+				FireBreath,PrayerBreath, VenomBreath, Spike, Ice, FireBomb, FireBall, Slash
+			)
+			def unapply(v: VorkAttack): Option[VorkAttack] = {
+				Option(v).filter(basicAttacks.contains(_))
+			}
+		}
+
 		/**
 		 * Vorkath's melee attack (see VorkathPlugin#onAnimationChanged)
 		 */
