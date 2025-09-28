@@ -202,7 +202,7 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 		projectiles = projectiles.filterNot(_.hasHit)
 
 		if(vorkath.nonEmpty) {
-			log.debug(s"Tick: ${client.getTickCount}")
+//			log.debug(s"Tick: ${client.getTickCount}")
 		}
 	}
 
