@@ -29,6 +29,26 @@ public interface SuperClickHelperConfig extends Config
 		return true;
 	}
 
+
+	@ConfigSection(
+		name = "Cooking",
+		description = "One click cooking settings",
+		position = 1
+	)
+	String COOKING_SECTION = "Cooking";
+
+	@ConfigItem(
+		position = 0,
+		keyName = "isCookingEnabled",
+		name = "Enabled",
+		description = "Enables the CookingHelper module.",
+		section = COOKING_SECTION
+	)
+	default boolean isCookingEnabled()
+	{
+		return true;
+	}
+
 //	@Alpha
 //	@ConfigItem(
 //		position = 2,
@@ -81,7 +101,7 @@ public interface SuperClickHelperConfig extends Config
 		position = 8
 	)
 	String HALLOWED_SEPULCHRE_SECTION = "Hallowed Sepulchre";
-		@ConfigItem(
+	@ConfigItem(
 		keyName = "hallowedSepulchrePanel",
 		name = "Enable Hallowed Sepulchre Panel",
 		description = "enables debug panel for hallowed sepulchre",
@@ -89,6 +109,18 @@ public interface SuperClickHelperConfig extends Config
 		section = HALLOWED_SEPULCHRE_SECTION
 	)
 	default boolean isHallowedSepulchrePanel()
+	{
+		return true;
+	}
+
+		@ConfigItem(
+		keyName = "hallowedSepulchreOverlay",
+		name = "Enable Hallowed Sepulchre Overlay",
+		description = "enables debug overlay for hallowed sepulchre",
+		position = 1,
+		section = HALLOWED_SEPULCHRE_SECTION
+	)
+	default boolean isHallowedSepulchreOverlay()
 	{
 		return true;
 	}

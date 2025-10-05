@@ -67,6 +67,7 @@ dependencies {
     implementation(projects.gearSwapper)
     implementation(projects.gauntlet)
     implementation(projects.giantsFoundry)
+    implementation(projects.hallowedHelper)
 //    implementation(projects.kroovy)
     implementation(projects.layoutHelper)
     implementation(projects.mixology)

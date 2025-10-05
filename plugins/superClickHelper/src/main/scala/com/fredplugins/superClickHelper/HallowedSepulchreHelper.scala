@@ -392,7 +392,9 @@ class HallowedSepulchreHelper(plugin: SuperClickerPlugin) extends MonitorService
 					overlayManager.remove(HallowedSepulchreOverlay)
 					overlayManager.remove(HallowedSepulchrePanel)
 				} else {
-					overlayManager.add(HallowedSepulchreOverlay)
+					if(config.isHallowedSepulchreOverlay) {
+						overlayManager.add(HallowedSepulchreOverlay)
+					}
 					if(config.isHallowedSepulchrePanel) {
 						overlayManager.add(HallowedSepulchrePanel)
 					}
@@ -425,6 +427,10 @@ class HallowedSepulchreHelper(plugin: SuperClickerPlugin) extends MonitorService
 				case "hallowedSepulchrePanel" => {
 					if(config.isHallowedSepulchrePanel && currentFloor > -1) overlayManager.add(HallowedSepulchrePanel)
 					else overlayManager.remove(HallowedSepulchrePanel)
+				}
+				case "hallowedSepulchreOverlay" => {
+					if(config.isHallowedSepulchreOverlay && currentFloor > -1) overlayManager.add(HallowedSepulchreOverlay)
+					else overlayManager.remove(HallowedSepulchreOverlay)
 				}
 				case _ => 
 			}

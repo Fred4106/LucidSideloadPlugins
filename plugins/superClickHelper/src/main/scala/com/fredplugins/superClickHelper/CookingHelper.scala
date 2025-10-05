@@ -74,7 +74,7 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 
 	@Subscribe()
 	def onGameTick(event: GameTick): Unit = {
-		updateInventoryCache()
+		if(plugin.config.isCookingEnabled) updateInventoryCache()
 	}
 
 	private var dropFishIndex: Int    = 0
@@ -82,39 +82,41 @@ class CookingHelper(plugin: SuperClickerPlugin, client: Client, clientThread: Cl
 
 	@Subscribe(priority = -20)
 	def onMenuEntryAdded(menuEntryAdded: MenuEntryAdded): Unit = {
-		val entryToModify: Option[MenuEntry] = Option(menuEntryAdded.getMenuEntry).filter(me => me.getTileObjectOpt.exists(_.getId.pipe(stoveObjIds.contains)) && TextUtil.standardize(me.getOption).equalsIgnoreCase("Cook"))
-		entryToModify.foreach(me => {
-			val parent = me.getParentMenu
-			if (rawFishCached.size - dropFishIndex > 1) {
-//				parent.getMenuEntries.indexOf(me)
-//				parent.removeMenuEntry(me)
-//				val toChange = parent.getMenuEntries
-//				val toChangeIdx = toChange.indexOf(me)
-//				toChange(toChangeIdx) = parent.crea
-				parent.createMenuEntry(-1).setType(MenuAction.RUNELITE).setOption("Drop".colored(Color.PINK)).onClick(event => {
-					if(InventoryInteraction.useItem(w => new SlottedItem(w.getItemId, w.getItemQuantity, w.getChildIdx()).equals(rawFishCached.dropRight(dropFishIndex).last), "Drop")){
-						dropFishIndex += 1
-						plugin.sendChatMessage("Cooking Helper")(event.prettyString())
-					}
-				}).tap(plugin.priorityMenuEntries.addOne)
-			} else if(rawFishCached.size - dropFishIndex == 1 || didPickup) {
-				val oldOptionRecolored = me.getOption.pipe(TextUtil.removeTags).colored(Color.ORANGE)
-				val oldCallback = me.onClick()
-				me.setOption(oldOptionRecolored).onClick(event => {
-					if(oldCallback != null) oldCallback.accept(event)
-					plugin.sendChatMessage("Cooking Helper")(event.prettyString())
-				})
-			} else {
-				val groundItemRaw = TileItems.search().filter(t => rawFishIds.contains(t.getTileItem.getId)).nearestToPlayer().toScala
-				if(groundItemRaw.nonEmpty && rawFishCached.isEmpty) {
-					parent.createMenuEntry(-1).setType(MenuAction.RUNELITE).setOption("Pick up".colored(Color.PINK)).onClick(event => {
-						groundItemRaw.get.interact(false)
-						didPickup = true
-						plugin.sendChatMessage("Cooking Helper")(event.prettyString())
+		if(plugin.config.isCookingEnabled) {
+			val entryToModify: Option[MenuEntry] = Option(menuEntryAdded.getMenuEntry).filter(me => me.getTileObjectOpt.exists(_.getId.pipe(stoveObjIds.contains)) && TextUtil.standardize(me.getOption).equalsIgnoreCase("Cook"))
+			entryToModify.foreach(me => {
+				val parent = me.getParentMenu
+				if (rawFishCached.size - dropFishIndex > 1) {
+	//				parent.getMenuEntries.indexOf(me)
+	//				parent.removeMenuEntry(me)
+	//				val toChange = parent.getMenuEntries
+	//				val toChangeIdx = toChange.indexOf(me)
+	//				toChange(toChangeIdx) = parent.crea
+					parent.createMenuEntry(-1).setType(MenuAction.RUNELITE).setOption("Drop".colored(Color.PINK)).onClick(event => {
+						if(InventoryInteraction.useItem(w => new SlottedItem(w.getItemId, w.getItemQuantity, w.getChildIdx()).equals(rawFishCached.dropRight(dropFishIndex).last), "Drop")){
+							dropFishIndex += 1
+							plugin.sendChatMessage("Cooking Helper")(event.prettyString())
+						}
 					}).tap(plugin.priorityMenuEntries.addOne)
+				} else if(rawFishCached.size - dropFishIndex == 1 || didPickup) {
+					val oldOptionRecolored = me.getOption.pipe(TextUtil.removeTags).colored(Color.ORANGE)
+					val oldCallback = me.onClick()
+					me.setOption(oldOptionRecolored).onClick(event => {
+						if(oldCallback != null) oldCallback.accept(event)
+						plugin.sendChatMessage("Cooking Helper")(event.prettyString())
+					})
+				} else {
+					val groundItemRaw = TileItems.search().filter(t => rawFishIds.contains(t.getTileItem.getId)).nearestToPlayer().toScala
+					if(groundItemRaw.nonEmpty && rawFishCached.isEmpty) {
+						parent.createMenuEntry(-1).setType(MenuAction.RUNELITE).setOption("Pick up".colored(Color.PINK)).onClick(event => {
+							groundItemRaw.get.interact(false)
+							didPickup = true
+							plugin.sendChatMessage("Cooking Helper")(event.prettyString())
+						}).tap(plugin.priorityMenuEntries.addOne)
+					}
 				}
-			}
-		})
+			})
+		}
 	}
 //
 //	@Subscribe(priority = -20)
