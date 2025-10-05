@@ -136,7 +136,7 @@ class PvmDebuggerPlugin() extends Plugin {
 		if (gameStateCached != event.getGameState) {
 			debugPanel.publish(SGameStateChanged(gameStateCached, event.getGameState))
 			gameStateCached = event.getGameState
-			log.debug(s"GameState changed to ${event.getGameState}")
+			log.info(s"GameState changed to ${event.getGameState}")
 		}
 		//		if ((event.getGameState == GameState.LOGIN_SCREEN) || (event.getGameState == GameState.HOPPING)) {
 		//			log.debug("highlightedObjects.clear"); //highlightedObjects.clear

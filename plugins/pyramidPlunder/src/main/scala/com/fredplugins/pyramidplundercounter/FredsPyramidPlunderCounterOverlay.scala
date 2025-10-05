@@ -1,9 +1,17 @@
 package com.fredplugins.pyramidplundercounter
 
+import com.fredplugins.common.extensions.ActorExtensions.*
+import com.fredplugins.common.extensions.GeneralExtensions.*
+import com.fredplugins.common.extensions.ObjectExtensions.*
+import com.fredplugins.common.extensions.ProjectileExtensions.*
+import com.fredplugins.common.extensions.LocationExtensions.*
+import com.fredplugins.common.overlays.renderGameObjectOverlay
 import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlayBak, renderTileOverlay, withFont}
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.common.{OldOverlayUtil, overlays}
 import com.google.inject.{Inject, Singleton}
+import ethanApiPlugin.collections.TileObjects
+import net.runelite.api.GameState
 import net.runelite.api.Perspective.localToCanvas
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.{Client, Point}
@@ -23,7 +31,7 @@ import scala.jdk.CollectionConverters.{IteratorHasAsScala, ListHasAsScala}
 import java.awt.{Color, Dimension, Font, Graphics2D, Rectangle}
 import scala.util.chaining.*
 @Singleton
-class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin: FredsPyramidPlunderCounterPlugin, val config: FredsPyramidPlunderCounterConfig, val eventbus: EventBus) extends OverlayPanel(plugin) {
+class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin: FredsPyramidPlunderCounterPlugin, val config: FredsPyramidPlunderCounterConfig, val modelOutlineRenderer: ModelOutlineRenderer, val eventbus: EventBus) extends OverlayPanel(plugin) {
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	setPosition(OverlayPosition.TOP_LEFT)
 	setPreferredSize(new Dimension(200, 100))
@@ -46,69 +54,29 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 		}
 	}
 
+	def renderOverlay(using graphics: Graphics2D, modelOutlineRenderer: ModelOutlineRenderer, client: Client): Unit = {
+		if(client.getGameState == GameState.LOGGED_IN && PyramidPlunderHelper.isInPyramidPlunder) {
+			TileObjects.search().gameObjects().asScala.toList
+				.flatMap(go => UrnStates.getUrnState(go).map(x => x -> go))
+				.foreach {
+					//gameObject: GameObject, text: String)(outlineThickness:Int, feather: Int, borderColor: Color, dashed: Boolean)(
+					case (state, obj) => renderGameObjectOverlay(obj, state.entryName)(2, 1, state.color, false)
+				}
+		}
+	}
+
 	override def render(graphics: Graphics2D): Dimension = {
 		given Graphics2D = graphics
-//		given ModelOutlineRenderer = modelOutlineRenderer
+		given ModelOutlineRenderer = modelOutlineRenderer
 		given Client = client
-		withFont(Cache.cachedFont) {
-//			if(config.isDebugClicks) {
-//				val (npcs, tiles)  = plugin.getClickedState
-//
-//				tiles.foreach {
-//					case (i, point) => {
-//						val x   = point.getX - client.getTopLevelWorldView.getBaseX
-//						val y   = point.getY - client.getTopLevelWorldView.getBaseY
-//						val txt = s"${i.toString.padTo(4, ' ')}($x,$y)"
-//						renderTileOverlay(point, txt, ColorUtil.colorWithAlpha(Color.BLUE, 128 - ((112d / 100) * i).toInt), true)
-//					}
-//				}
-//
-//				npcs.foreach {
-//					case (i, n) => {
-////						val x   = point.getX - client.getTopLevelWorldView.getBaseX
-////						val y   = point.getY - client.getTopLevelWorldView.getBaseY
-//						val txt = s"${i.toString.padTo(4, ' ')}(${n.getLocalLocation.getSceneX},${n.getLocalLocation.getSceneY}) = ${n.getName}"
-//						OverlayUtil.renderActorOverlay(summon[Graphics2D], n, txt, ColorUtil.colorWithAlpha(Color.BLUE, 128 - ((112d / 100) * i).toInt))
-//					}
-//				}
-//			}
-		}
+		renderOverlay
 //		def elems: collection.mutable.ArrayBuffer[LayoutableRenderableEntity]/*java.util.List[LayoutableRenderableEntity]*/ = panelComponent.getChildren.asScala
-
-//		if(PyramidPlunderHelper.isInPyramidPlunder) {
-//			if (config.showChestsLooted) elems.addOne(LineComponent
-//																							 .builder
-//																							 .left("Total Chests Looted:")
-//																							 .right(String.format("%d", plugin.chestLooted))
-//																							 .build)
-//
-//			if (config.showSarcoLooted) elems.addOne(LineComponent
-//																							.builder
-//																							.left("Total Sarcophagi Looted:")
-//																							.right(String.format("%d", plugin.sarcoLooted))
-//																							.build)
-//
-//			if (config.showChance) elems.addOne(LineComponent
-//																				 .builder
-//																				 .left("% Chance of at least one Sceptre:")
-//																				 .right(String.format("%f", plugin.dryChance * 100))
-//																				 .build)
-//			elems.addOne(LineComponent
-//										 .builder
-//										 .left("UsingChestOrSarco = ")
-//										 .right(s"${plugin.usingChestOrSarco}")
-//										 .build)
-//			elems.addOne(LineComponent
-//										 .builder
-//										 .left("UsingSpearTrap = ")
-//										 .right(s"${plugin.usingSpearTrap}")
-//										 .build)
 
 		plugin.currentRoom.collect(room => {
 			LineComponent
 				.builder
 				.left(s"Room ${room}")
-				.right(s"${room.percentageOds}")
+				.right(s"1/${room.baseRate}")
 				.build
 		}).foreach(panelComponent.getChildren.add(_))
 //		elems.addOne()

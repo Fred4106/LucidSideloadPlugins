@@ -4,6 +4,7 @@ import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getWorldLoca
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pyramidplundercounter.PyramidPlunderHelper.getCurrentFloor
 import com.fredplugins.pyramidplundercounter.PyramidPlunderHelper.isInPyramidPlunder
+import com.fredplugins.pyramidplundercounter.RoomEnum.Lobby
 import com.google.gson.Gson
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
@@ -87,7 +88,7 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 				.getOrElse(a)
 		}).build().stripTrailing().stripSuffix(",").stripSuffix("<br>")
 	}
-
+	
 	override protected def startUp(): Unit = {
 		currentRoom = Option.empty
 		stateLines = List.empty
@@ -104,105 +105,20 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 		currentRoom = Option.empty
 		stateLines = List.empty
 	}
-//
-//	var cachedVarbitValues: Map[Int, Int]= HashMap.empty
-//	val toMonitor  : List[Int]        = List(
-//		//NTK_SARCOPHAGUS_PUSH, NTK_TRAP_ACTIVE,
-//		NTK_PLAYER_TIMER_COUNT,
-//		NTK_ROOM_NUMBER,
-//		NTK_CURRENT_ROOM_LEVEL,
-//																					 NTK_SARCOPHAGUS_STATE, NTK_GOLDEN_CHEST_STATE,
-//																					 NTK_DOOR1_STATE, NTK_DOOR2_STATE, NTK_DOOR3_STATE, NTK_DOOR4_STATE,
-////																					 NTK_OUTSIDE_DOOR1_STATE, NTK_OUTSIDE_DOOR2_STATE, NTK_OUTSIDE_DOOR3_STATE, NTK_OUTSIDE_DOOR4_STATE
-//																					 )
-//	var stateLines : List[(String, (Int, Int))] = List.empty
-//	val varbitNames: Map[Int, String] = toMonitor.map(vid => classOf[VarbitID].getDeclaredFields.find(f => vid == f.get(null)).map(f => (vid, f.getName.stripPrefix("NTK_"))).getOrElse((vid, s"${vid}"))).toMap
 
-//	@Subscribe
-//	def onGameTick(gameTick: GameTick): Unit = {
-//		cachedVarbitValues = toMonitor.flatMap(vid => {
-//			val toUpdate = Option(vid).map(j => (j, client.getVarbitValue(j), cachedVarbitValues.applyOrElse(j, _ => 0)))
-//																.filter{
-//																	case (_, nVal, oVal) => nVal != oVal
-//																}
-//			toUpdate
-////																.filter(j => cachedVarbitValues.contains(j._1) && j._2 != cachedVarbitValues(j._1))
-////			toUpdate.foreach{
-////				case (vid, o, n) => {
-////					cachedVarbitValues = cachedVarbitValues.updated(vid, n)
-////				}
-////			}
-////			oldOpt.map(o => (o, client.getVarbitValue(vid))).filter{}
-////			val nValue =
-////			cachedVarbitValues = cachedVarbitValues.updated(vid, @nValue)
-//		}).foldLeft(cachedVarbitValues){
-//			case (acm, (vid, nVal, oVal)) => {
-//				val message = buildMessage(
-//					s"${varbitNames(vid)}",
-//					("vbitId", vid),
-//					("delta", (oVal -> nVal))
-//				)
-//				val line    = client.addChatMessage(ChatMessageType.CLAN_GUEST_CHAT, "Gametick", message, "PPC")
-//				acm.updated(vid, nVal)
-//			}
-//		}
-//
-//
-////		if (cachedVarbitValues.keySet.toList.filterNot().isEmpty) {
-////			cachedVarbitValues = toMonitor.map(vid => (vid, client.getVarbitValue(vid))).toMap
-////		}
-//		if (!loadedSession && client.getGameState == GameState.LOGGED_IN) {
-////			importData1
-//			loadedSession = true
-//		}
-//		if (!savedOutside) {
-//			val username = client.getLocalPlayer.getName
-//			if (username != null) {
-//				//exportData(new File(DATA_FOLDER, username + ".json"))
-//				savedOutside = true
-//			}
-//		}
-//		stateLines = varbitNames.toList.map {
-//			case (vid, vStr) => (vStr, (vid, cachedVarbitValues(vid)))
-//		}.sortBy(_._1)
-////		toMonitor.map(i =
-////
-//	}
-//
-//	@Subscribe def onStatChanged(statChanged: StatChanged): Unit = {
-//		if (isInPyramidPlunder) {
-//			if (statChanged.getSkill eq Skill.THIEVING) {
-//				if (usingSpearTrap) usingSpearTrap = false
-//				else if (usingChestOrSarco) {
-//					chestLooted += 1
-//					val chance = getCurrentFloor.map(_.percentageOds)
-//																			.getOrElse(0.0d) //sceptreChance.get(client.getVarbitValue(Varbits.PYRAMID_PLUNDER_ROOM))
-//					totalChance *= (1 - chance)
-//					dryChance = 1 - totalChance
-//					val baseChanceModifier = client.getRealSkillLevel(Skill.THIEVING) * 25
-//					//					val realPetChance      = petBaseChance.get(client.getVarbitValue(Varbits
-//					//																																										 .PYRAMID_PLUNDER_ROOM)) - baseChanceModifier
-//					//					val petChance          = 1.0D / realPetChance
-//					//					totalPetChance *= (1 - petChance)
-//					//					petDryChance = 1 - totalPetChance
-//					usingChestOrSarco = false
-//					savedOutside = false
-//				}
-//			} else if (usingChestOrSarco && (statChanged.getSkill eq Skill.STRENGTH)) {
-//				sarcoLooted += 1
-//				val chance = getCurrentFloor.map(_.percentageOds).getOrElse(0.0d)
-//				totalChance *= (1 - chance)
-//				dryChance = 1 - totalChance
-//				usingChestOrSarco = false
-//				savedOutside = false
-//			}
-//		}
-//	}
-//
-//	@Subscribe def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
-//		if (isInPyramidPlunder) {
-//			val isCC_OP: Boolean = (menuOptionClicked.getMenuAction == MenuAction.CC_OP)
-//			var temp = menuOptionClicked.getMenuAction
+	@Subscribe
+	def onMenuEntryAdded(event: MenuEntryAdded): Unit = {
+		if (isInPyramidPlunder) {
+			log.debug("added: {}", event.getMenuEntry)
+		}
+	}
+
+	@Subscribe
+	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
+		if (isInPyramidPlunder) {
+			log.debug("clicked: {}", menuOptionClicked.getMenuEntry)
+			val isCC_OP: Boolean = (menuOptionClicked.getMenuAction == MenuAction.CC_OP)
+			var temp = menuOptionClicked.getMenuAction
 //			(menuOptionClicked.getMenuTarget match {
 //				case PyramidPlunderHelper.GRAND_GOLD_CHEST_TARGET =>  usingChestOrSarco = true
 //				case PyramidPlunderHelper.SARCOPHAGUS_TARGET =>   usingChestOrSarco = true
@@ -213,8 +129,8 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 //					}
 //				}
 //			})
-//		}
-//	}
+		}
+	}
 //
 //	@Subscribe def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
 //		if (isInPyramidPlunder) {
@@ -230,21 +146,20 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 
 	@Subscribe
 	def onGameTick(e: GameTick): Unit = {
-//	def onVarbitChanged(event: VarbitChanged): Unit = {
-//		if(event.getVarbitId == NTK_ROOM_NUMBER || ){
-			val n = getCurrentFloor
-			log.debug("current floor is {}, but was {}", n, currentRoom)
-			Option((currentRoom, n)).collect {
-				case (Some(old), Some(newer)) if(old != newer) => s"Changed from ${old} to ${newer}"
-				case (Some(old), None) => s"Exited from ${old}"
-				case (None, Some(newer)) => s"Entered to ${newer}"
-			}.foreach(u => {
-				log.debug(s"${u}")//${u._1} [${u._2._2}, ${u._2._2}]")
-//				state
-//				stateLines = stateLines.prepended(u).take(8)
-			})
-			currentRoom = n
-//		}
+		val n = getCurrentFloor
+//			log.debug("current floor is {}, but was {}", n, currentRoom)
+		Option((currentRoom, n)).collect {
+			case (Some(old), Some(newer)) if(old != newer) => s"Changed from ${old} to ${newer}"
+			case (Some(old), None) => s"Exited from ${old}"
+			case (None, Some(newer)) => s"Entered to ${newer}"
+		}.foreach(u => {
+			log.debug(s"${u}")
+		})
+		currentRoom = n
+
+		if(currentRoom.exists(_ != Lobby)) {
+			
+		}
 	}
 //	@Subscribe
 //	def onVarbitChanged(event: VarbitChanged): Unit = {
