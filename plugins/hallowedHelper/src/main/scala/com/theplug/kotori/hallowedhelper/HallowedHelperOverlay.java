@@ -25,6 +25,8 @@
  */
 package com.theplug.kotori.hallowedhelper;
 
+import com.fredplugins.common.api.WorldRegion;
+import com.fredplugins.common.api.WorldRegion$;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.*;
@@ -45,6 +47,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -569,29 +572,104 @@ class HallowedHelperOverlay extends Overlay
         }
     }
 
+	public void render_object_server_tiles(Graphics2D graphics, WorldRegion worldRegion, Color color)
+    {
+        WorldView wv = client.getTopLevelWorldView();
+        if (wv == null)
+        {
+            return;
+        }
+		for (Polygon polygon : worldRegion.polygons(client)) {
+			drawStrokeAndFill(graphics, color, config.ServerTileFill(),
+                1.0f, polygon);
+		}
+    }
+	public void render_object_server_tiles(Graphics2D graphics, WorldPoint worldlocation1, WorldPoint worldLocation2, Color color)
+    {
+        WorldView wv = client.getTopLevelWorldView();
+        if (wv == null)
+        {
+            return;
+        }
+
+        final LocalPoint localPoint = LocalPoint.fromWorld(wv, worldlocation1);
+        if (localPoint == null)
+        {
+            return;
+        }
+        final LocalPoint localPoint2 = LocalPoint.fromWorld(wv, worldLocation2);
+        if (localPoint2 == null)
+        {
+            return;
+        }
+
+        Polygon polygon = Perspective.getCanvasTilePoly(client, localPoint, localPoint2, 0);
+
+        if (polygon == null)
+        {
+            return;
+        }
+
+        drawStrokeAndFill(graphics, color, config.ServerTileFill(),
+                1.0f, polygon);
+    }
     public void render_arrow_point(NPC arrow, Graphics2D graphics)
     {
         int arrow_orientation = arrow.getOrientation();
         int orientation = (arrow_orientation / 512);
+		WorldPoint wp1 = null;
+		WorldPoint wp2 = null;
+		WorldRegion wr = null;
         switch(orientation)
         {
             case 0:
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , -1);
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , -2);
+				wr =new WorldRegion.SimpleRegion(arrow.getWorldLocation().dy(-3), 1, 3);
+				wp1 = arrow.getWorldLocation().dy(-1);
+				wp2 = arrow.getWorldLocation().dy(-3);
+//				render_object_server_tiles(graphics, arrow.getWorldLocation().dy(-1),arrow.getWorldLocation().dy(-3), Color.YELLOW);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , -1);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , -2);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , -3);
                 break;
             case 1:
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, -1 , 0);
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, -2 , 0);
+				wr = new WorldRegion.SimpleRegion(arrow.getWorldLocation().dx(-3), 3,1);
+				wp1 = arrow.getWorldLocation().dx(-1);
+				wp2 = arrow.getWorldLocation().dx(-3);
+//				render_object_server_tiles(graphics, arrow.getWorldLocation().dx(-1),arrow.getWorldLocation().dx(-3), Color.YELLOW);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, -1 , 0);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, -2 , 0);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, -3 , 0);
                 break;
             case 2:
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , 1);
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , 2);
+				wr = new WorldRegion.SimpleRegion(arrow.getWorldLocation().dy(1), 1, 3);
+				wp1 = arrow.getWorldLocation().dy(1);
+				wp2 = arrow.getWorldLocation().dy(3);
+//				render_object_server_tiles(graphics, arrow.getWorldLocation().dy(1),arrow.getWorldLocation().dy(3), Color.YELLOW);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , 1);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 , 2);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 0 ,3);
                 break;
             case 3:
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 1 , 0);
-                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 2 , 0);
+				wr = new WorldRegion.SimpleRegion(arrow.getWorldLocation().dx(1), 3, 1);
+				wp1 = arrow.getWorldLocation().dx(1);
+				wp2 = arrow.getWorldLocation().dx(3);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 1 , 0);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 2 , 0);
+//                render_object_server_tile(graphics, arrow.getWorldLocation(), Color.YELLOW, 3 , 0);
                 break;
         }
+		if(wr == null) return;
+		if(wp1 == null || wp2 == null) {
+			return ;
+		}
+		if(wr.contains(wp1) && wr.contains(wp2)) {
+			log.debug("wr {} contains points {} and {}", wr, wp1, wp2);
+			render_object_server_tiles(graphics, wr, Color.yellow);/*.polygons(client)*/
+		} else {
+			log.warn("wr {} with points {} does not contain points {} and {}", wr, wr.worldPoints(), wp1, wp2);
+			render_object_server_tiles(graphics, wr, Color.blue);/*.polygons(client)*/
+			render_object_server_tiles(graphics,wp1, wp2, Color.YELLOW);
+		}
     }
 
     public void render_arrows(Graphics2D graphics)

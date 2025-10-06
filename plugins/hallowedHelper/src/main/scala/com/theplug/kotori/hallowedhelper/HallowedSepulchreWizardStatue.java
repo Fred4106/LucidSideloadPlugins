@@ -9,77 +9,77 @@ import net.runelite.api.GameObject;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 class HallowedSepulchreWizardStatue
 {
-    @NonNull
-    @EqualsAndHashCode.Include
-    private final GameObject gameObject;
+	@NonNull
+	@EqualsAndHashCode.Include
+	private final GameObject gameObject;
 
-    private int ticksUntilNextAnimation = -20;
+	private int ticksUntilNextAnimation = -20;
 
-    private final int animationId;
+	private final int animationId;
 
-    private final int animationTickSpeed;
+	private final int animationTickSpeed;
 
-    private int maxTick = -1;
+	private int maxTick = -1;
 
 
-    private static final int WIZARD_STATUE_ANIM_FIRE_DANGER = 8656;
-    private boolean danger = false;
+	private static final int WIZARD_STATUE_ANIM_FIRE_DANGER = 8656;
+	private boolean danger = false;
 
-    public int maxTickperfloor(int floor)
-    {
-        if (floor == 3)
-        {
-            if (maxTick == -1)
-            {
-                return -12;
-            }
-        }
-        else if(floor < 3)//2 and 1
-        {
-            return -4;
-        }
-        return maxTick;
-    }
+	public int maxTickperfloor(int floor)
+	{
+		if (floor == 3)
+		{
+			if (maxTick == -1)
+			{
+				return -12;
+			}
+		}
+		else if(floor < 3)//2 and 1
+		{
+			return -4;
+		}
+		return maxTick;
+	}
 
-    void updateTicksUntilNextAnimation()
-    {
-        if (ticksUntilNextAnimation >= 0)
-        {
-            /*
-            if(ticksUntilNextAnimation == 1)
-            {
-                danger = false;
-            }*/
-            ticksUntilNextAnimation--;
-        }
-        else
-        {
-            int animation = getAnimation();
-            /*
-            if(animation == WIZARD_STATUE_ANIM_FIRE_DANGER)
-            {
-                danger = true;
-            }*/
-            if (animation == animationId)
-            {
-                if(ticksUntilNextAnimation != -20)
-                {
-                    maxTick = ticksUntilNextAnimation;
-                }
-                ticksUntilNextAnimation = animationTickSpeed;
-            }
-            else
-            {
-                if(ticksUntilNextAnimation > -20) {
-                    ticksUntilNextAnimation--;
-                }
-            }
-        }
-    }
+	void updateTicksUntilNextAnimation()
+	{
+		if (ticksUntilNextAnimation >= 0)
+		{
+			/*
+			if(ticksUntilNextAnimation == 1)
+			{
+				danger = false;
+			}*/
+			ticksUntilNextAnimation--;
+		}
+		else
+		{
+			int animation = getAnimation();
+			/*
+			if(animation == WIZARD_STATUE_ANIM_FIRE_DANGER)
+			{
+				danger = true;
+			}*/
+			if (animation == animationId)
+			{
+				if(ticksUntilNextAnimation != -20)
+				{
+					maxTick = ticksUntilNextAnimation;
+				}
+				ticksUntilNextAnimation = animationTickSpeed;
+			}
+			else
+			{
+				if(ticksUntilNextAnimation > -20) {
+					ticksUntilNextAnimation--;
+				}
+			}
+		}
+	}
 
-    int getAnimation()
-    {
-        final DynamicObject dynamicObject = (DynamicObject) gameObject.getRenderable();
-        return dynamicObject.getAnimation() == null ? -1 : dynamicObject.getAnimation().getId();
-    }
+	int getAnimation()
+	{
+		final DynamicObject dynamicObject = (DynamicObject) gameObject.getRenderable();
+		return dynamicObject.getAnimation() == null ? -1 : dynamicObject.getAnimation().getId();
+	}
 }

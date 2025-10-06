@@ -67,7 +67,6 @@ package object overlays {
 	}
 	def renderGameObjectOverlay(gameObject: GameObject, text: String)(outlineThickness:Int, feather: Int, borderColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
 		modelOutlineRenderer.drawOutline(gameObject, outlineThickness, borderColor.darker, feather)
-		gameObject.getLocalLocation
 //		Option(gameObject.getConvexHull).foreach(s => {
 //			OverlayUtil.renderPolygon(g, s, borderColor.brighter(), ColorUtil.colorWithAlpha(borderColor, 16), getStroke(1, dashed))
 //		})
@@ -141,6 +140,32 @@ package object overlays {
 
 //		val textLocation = Perspective.getCanvasTextLocation(client, g, localPoint, text, 0)
 	}
+
+//	if (text == null)
+//		{
+//			return null;
+//		}
+//
+//		var wv = client.getWorldView(localLocation.getWorldView());
+//		if (wv == null)
+//		{
+//			return null;
+//		}
+//
+//		int plane = wv.getPlane();
+//
+//		Point p = localToCanvas(client, localLocation, plane, zOffset);
+//
+//		if (p == null)
+//		{
+//			return null;
+//		}
+//
+//		FontMetrics fm = graphics.getFontMetrics();
+//		Rectangle2D bounds = fm.getStringBounds(text, graphics);
+//		int xOffset = p.getX() - (int) (bounds.getWidth() / 2);
+//
+//		return new Point(xOffset, p.getY());
 	def getCanvasTextLocation(localLocation: LocalPoint, text: String, zOffset: Int)(using graphics: Graphics2D, client: Client): (Int, Int, Rectangle2D) = {
 		if (text == null) return null
 		val wv = client.getWorldView(localLocation.getWorldView)

@@ -25,7 +25,11 @@ import static net.runelite.api.Constants.TILE_FLAG_BRIDGE;
 import static net.runelite.client.ui.overlay.OverlayUtil.renderPolygon;
 
 public class OldOverlayUtil {
-	private static int getHeight(@Nonnull Scene scene, int localX, int localY, int plane)
+	public static int getHeight(@Nonnull Client client, @Nonnull LocalPoint localPoint){
+		var wv = client.getWorldView(localPoint.getWorldView());//( => j.get)
+		return getHeight(wv.getScene(), localPoint.getX(), localPoint.getY(), wv.getPlane());
+	}
+	public static int getHeight(@Nonnull Scene scene, int localX, int localY, int plane)
 	{
 		int sceneX = (localX >> Perspective.LOCAL_COORD_BITS) + ((Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2);
 		int sceneY = (localY >> Perspective.LOCAL_COORD_BITS) + ((Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2);
