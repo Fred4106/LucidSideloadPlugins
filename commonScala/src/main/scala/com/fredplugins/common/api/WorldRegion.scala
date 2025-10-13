@@ -29,7 +29,9 @@ sealed trait WorldRegion(val worldPoints: Seq[WorldPoint]) {
 	def contains(wp: WorldPoint): Boolean = worldPoints.contains(wp)
 
 	def polygons(using client: Client): Array[Polygon] = {
+		log.debug("worldPoints: {}", worldPoints)
 		var borderEdges =  worldPoints.flatMap(_.edges).pipe(alledges => alledges.filter(e => alledges.count(_ == e) == 1))
+		log.debug(borderEdges.mkString("borderEdges: [\n\t", ", \n\t", "\n\t]\n"))
 		val polygons = scala.collection.mutable.ListBuffer.empty[Polygon]
 		var touchedEdges: List[((Int, Int), (Int, Int))] = List.empty
 		val ordered = scala.collection.mutable.ListBuffer.empty[(Int,Int)]

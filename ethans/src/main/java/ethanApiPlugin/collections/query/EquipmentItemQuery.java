@@ -1,6 +1,7 @@
 package ethanApiPlugin.collections.query;
 
 import ethanApiPlugin.collections.EquipmentItemWidget;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
@@ -17,7 +18,7 @@ public class EquipmentItemQuery {
 		this.items = new ArrayList(items);
 	}
 
-	public EquipmentItemQuery filter(Predicate<? super Widget> predicate) {
+	public EquipmentItemQuery filter(Predicate<EquipmentItemWidget> predicate) {
 		items = items.stream().filter(predicate).collect(Collectors.toList());
 		return this;
 	}
@@ -32,7 +33,7 @@ public class EquipmentItemQuery {
 //		return this;
 //	}
 	public EquipmentItemQuery withId(int ... ids) {
-		items = items.stream().filter(item -> ArrayUtils.contains(ids, item.getItemId())).collect(Collectors.toList());
+		items = items.stream().filter(item -> ArrayUtils.contains(ids, item.getEquipmentItemId())).collect(Collectors.toList());
 		return this;
 	}
 
@@ -54,6 +55,11 @@ public class EquipmentItemQuery {
 
 	public EquipmentItemQuery idInList(List<Integer> ids) {
 		items = items.stream().filter(item -> ids.contains(item.getEquipmentItemId())).collect(Collectors.toList());
+		return this;
+	}
+
+	public EquipmentItemQuery slotIs(EquipmentInventorySlot slot) {
+		items = items.stream().filter(item -> item.getEquipmentIndex() == slot.getSlotIdx()).collect(Collectors.toList());
 		return this;
 	}
 

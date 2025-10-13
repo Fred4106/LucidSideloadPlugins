@@ -3,6 +3,7 @@ package ethanApiPlugin.lucidplugins.api.utils;
 import ethanApiPlugin.collections.Equipment;
 import ethanApiPlugin.collections.EquipmentItemWidget;
 import ethanApiPlugin.lucidplugins.api.item.SlottedItem;
+import net.runelite.api.EquipmentInventorySlot;
 import packets.MousePackets;
 import packets.WidgetPackets;
 import net.runelite.api.Client;
@@ -28,36 +29,21 @@ public class EquipmentUtils
 
     public static List<SlottedItem> getAll(Predicate<SlottedItem> filter)
     {
-        return Equipment.search().result().stream().map(equipmentItemWidget -> new SlottedItem(equipmentItemWidget.getEquipmentItemId(), equipmentItemWidget.getItemQuantity(), equipmentItemWidget.getEquipmentIndex())).filter(filter).collect(Collectors.toList());
+        return Equipment.search().result().stream().map(equipmentItemWidget -> new SlottedItem(equipmentItemWidget.getEquipmentItemId(), equipmentItemWidget.getEquipmentItemQty(), equipmentItemWidget.getEquipmentIndex())).filter(filter).collect(Collectors.toList());
     }
 
-    public static Item getItemInSlot(int slot) {
-        Optional<EquipmentItemWidget> weaponWidget = Equipment.search().filter(item -> {
-            EquipmentItemWidget iw = (EquipmentItemWidget) item;
-            return iw.getEquipmentIndex() == slot;
-        }).first();
-
-        return weaponWidget.map(equipmentItemWidget -> new Item(equipmentItemWidget.getEquipmentItemId(), equipmentItemWidget.getItemQuantity())).orElse(null);
+    public static Item getItemInSlot(EquipmentInventorySlot slot) {
+        return Equipment.search().slotIs(slot).first().map(EquipmentItemWidget::getEquipmentItem).orElse(new Item(-1, 0));
     }
 
     public static Item getWepSlotItem()
     {
-        Optional<EquipmentItemWidget> weaponWidget = Equipment.search().filter(item -> {
-            EquipmentItemWidget iw = (EquipmentItemWidget) item;
-            return iw.getEquipmentIndex() == 3;
-        }).first();
-
-        return weaponWidget.map(equipmentItemWidget -> new Item(equipmentItemWidget.getEquipmentItemId(), equipmentItemWidget.getItemQuantity())).orElse(null);
+		return getItemInSlot(EquipmentInventorySlot.WEAPON);
     }
 
     public static Item getShieldSlotItem()
     {
-        Optional<EquipmentItemWidget> weaponWidget = Equipment.search().filter(item -> {
-            EquipmentItemWidget iw = (EquipmentItemWidget) item;
-            return iw.getEquipmentIndex() == 5;
-        }).first();
-
-        return weaponWidget.map(equipmentItemWidget -> new Item(equipmentItemWidget.getEquipmentItemId(), equipmentItemWidget.getItemQuantity())).orElse(null);
+        return getItemInSlot(EquipmentInventorySlot.SHIELD);
     }
 
     public static boolean contains(int id)
@@ -79,7 +65,7 @@ public class EquipmentUtils
 
     public static void removeWepSlotItem()
     {
-        Widget itemWidget = Equipment.search().indexIs(3).first().orElse(null);
+        EquipmentItemWidget itemWidget = Equipment.search().slotIs(EquipmentInventorySlot.WEAPON).first().orElse(null);
 
         if (itemWidget != null)
         {

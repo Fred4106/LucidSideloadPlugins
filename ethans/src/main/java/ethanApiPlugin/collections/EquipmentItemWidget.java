@@ -1,6 +1,9 @@
 package ethanApiPlugin.collections;
 
 import ethanApiPlugin.EthanApiPlugin;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.Item;
 import packets.MousePackets;
 import packets.WidgetPackets;
 import net.runelite.api.FontTypeFace;
@@ -10,21 +13,29 @@ import net.runelite.api.widgets.Widget;
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import java.awt.*;
+import java.util.Optional;
 
 
+@Slf4j
 public class EquipmentItemWidget implements Widget {
 	String name;
 	String[] actions;
 	int packedId;
-	static final int EQUIPMENT_INVENTORY_ITEMS_CONTAINER = 25362449;
-	int equipmentItemId;
 	int index;
+	EquipmentInventorySlot slot;
 
-	EquipmentItemWidget(String name, int itemId, int packedId, int index, String[] actions) {
-		this.equipmentItemId = itemId;
-		this.name = name;
-		this.actions = actions;
-		this.packedId = packedId;
+//	static final int EQUIPMENT_INVENTORY_ITEMS_CONTAINER = 25362449;
+	Item equipmentItem;
+
+	EquipmentItemWidget(Item item, Widget wrapped, EquipmentInventorySlot slot, int index) {
+		assert item != null;
+		assert wrapped != null;
+//		assert slot != null;
+		this.name = wrapped.getName();
+		this.actions = wrapped.getActions();
+		this.packedId = wrapped.getId();
+		this.equipmentItem = item;
+		this.slot = slot;
 		this.index = index;
 	}
 
@@ -35,11 +46,21 @@ public class EquipmentItemWidget implements Widget {
 	}
 
 	public int getEquipmentItemId() {
-		return equipmentItemId;
+		return Optional.ofNullable(equipmentItem).map(Item::getId).orElse(-1);
 	}
 
+	public Item getEquipmentItem() {
+		return equipmentItem;
+	}
 	public int getEquipmentIndex() {
 		return index;
+	}
+	public EquipmentInventorySlot getEquipmentSlot() {
+		return slot;
+	}
+
+	public int getEquipmentItemQty() {
+		return Optional.ofNullable(equipmentItem).map(Item::getQuantity).orElse(0);
 	}
 
 	@Override
@@ -106,7 +127,6 @@ public class EquipmentItemWidget implements Widget {
 
 	@Override
 	public void setChildren(Widget[] children) {
-
 	}
 
 	@Override
@@ -131,7 +151,6 @@ public class EquipmentItemWidget implements Widget {
 
 	@Override
 	public void setRelativeX(int x) {
-
 	}
 
 	@Override
@@ -146,7 +165,6 @@ public class EquipmentItemWidget implements Widget {
 
 	@Override
 	public void setForcedPosition(int x, int y) {
-
 	}
 
 	@Override
@@ -331,7 +349,7 @@ public class EquipmentItemWidget implements Widget {
 
 	@Override
 	public int getItemId() {
-		return equipmentItemId;
+		return getEquipmentItemId();
 	}
 
 	@Override
@@ -341,7 +359,7 @@ public class EquipmentItemWidget implements Widget {
 
 	@Override
 	public int getItemQuantity() {
-		return 1;
+		return getEquipmentItemQty();
 	}
 
 	@Override
@@ -812,6 +830,5 @@ public class EquipmentItemWidget implements Widget {
 
 	@Override
 	public void setOnVarTransmitListener(Object... args) {
-
 	}
 }

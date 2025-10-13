@@ -11,6 +11,7 @@ import net.runelite.api.ItemComposition;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
+import org.apache.commons.lang3.ArrayUtils;
 import packets.MousePackets;
 import packets.WidgetPackets;
 
@@ -274,10 +275,19 @@ public class InventoryUtils
     {
         return Arrays.stream(client.getItemDefinition(itemId).getInventoryActions()).anyMatch(a -> a != null && a.equalsIgnoreCase(action));
     }
-
+    public static boolean itemHasAction(int itemId, String ... actions)
+    {
+        return Arrays.stream(client.getItemDefinition(itemId).getInventoryActions()).anyMatch(a -> a != null && Arrays.stream(actions).anyMatch(ta-> ta.equalsIgnoreCase(a)));
+    }
     public static boolean itemInteract(int itemId, String action)
     {
         return InventoryInteraction.useItem(itemId, action);
+    }
+
+	public static boolean itemInteract(int itemId, String ... actions)
+    {
+		return InventoryInteraction.useItem(itemId, actions);
+//        return Arrays.stream(client.getItemDefinition(itemId).getInventoryActions()).anyMatch(a -> a != null && Arrays.stream(actions).anyMatch(ta-> ta.equalsIgnoreCase(a)));
     }
 
     public static void castAlchemyOnItem(int id, boolean highAlchemy)
@@ -413,7 +423,10 @@ public class InventoryUtils
 
     public static boolean wieldItem(int id)
     {
-        return itemInteract(id, "Wield");
+		if(InventoryUtils.itemHasAction(id, "Wield", "Wear", "Equip")) {
+			return InventoryUtils.itemInteract(id, "Wield", "Wear", "Equip");
+		}
+		return false;
     }
 
     public static int count(String name)
