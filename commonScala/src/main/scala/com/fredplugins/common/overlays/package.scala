@@ -86,7 +86,7 @@ package object overlays {
 
 	def renderProjectileOverlay(projectile: Projectile, text: String)(outlineThickness: Int, feather: Int, borderColor: Color)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
 		val lp = LocalPoint(projectile.getX.toInt, projectile.getY.toInt, -1)
-		modelOutlineRenderer.drawModelOutline(projectile.getModel, lp.getX, lp.getY, projectile.getZ.toInt, 0, outlineThickness,  borderColor, feather)
+		modelOutlineRenderer.drawModelOutline(client.getTopLevelWorldView, projectile.getModel, lp.getX, lp.getY, projectile.getZ.toInt, 0, outlineThickness,  borderColor, feather)
 		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(lp, text, 0))).foreach {
 			case (str, strLoc@(x, y, b)) => {
 				val padding = 5

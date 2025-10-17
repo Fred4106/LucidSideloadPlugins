@@ -151,7 +151,7 @@ public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 				final NPC npc = (NPC) event.getActor();
 				eventFired(EventType.ANIMATION_CHANGED, animId, npc.getInteracting() == client.getLocalPlayer(), npc);
 			} else {
-				eventFired(EventType.ANIMATION_CHANGED, animId, event.getActor() == client.getLocalPlayer());
+				fakeEventFired(EventType.ANIMATION_CHANGED, animId, event.getActor() == client.getLocalPlayer());
 			}
 
 			animationsThisTick.add(animId);
@@ -181,7 +181,7 @@ public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 		int npcId = event.getNpc().getId();
 
 		if(!npcsDespawnedThisTick.contains(npcId)) {
-			eventFired(EventType.NPC_DESPAWNED, npcId, false);
+			fakeEventFired(EventType.NPC_DESPAWNED, npcId, false);
 			npcsDespawnedThisTick.add(npcId);
 		}
 	}
@@ -210,7 +210,7 @@ public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 
 		int projectileId = event.getProjectile().getId();
 		if(!projectilesSpawnedThisTick.contains(projectileId) || config.allowDuplicateProjectileEvents()) {
-			eventFired(EventType.PROJECTILE_SPAWNED, projectileId, event.getProjectile().getTarget().equals(client.getLocalPlayer().getLocalLocation()) || event.getProjectile().getInteracting() == client.getLocalPlayer());
+			fakeEventFired(EventType.PROJECTILE_SPAWNED, projectileId, event.getProjectile().getTarget().equals(client.getLocalPlayer().getLocalLocation()) || event.getProjectile().getInteracting() == client.getLocalPlayer());
 			projectilesSpawnedThisTick.add(projectileId);
 		}
 	}
@@ -220,7 +220,7 @@ public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 		int graphicsId = event.getGraphicsObject().getId();
 
 		if(!graphicsCreatedThisTick.contains(graphicsId) || config.allowDuplicateGraphicsEvents()) {
-			eventFired(EventType.GRAPHICS_CREATED, graphicsId, event.getGraphicsObject().getLocation().equals(client.getLocalPlayer().getLocalLocation()));
+			fakeEventFired(EventType.GRAPHICS_CREATED, graphicsId, event.getGraphicsObject().getLocation().equals(client.getLocalPlayer().getLocalLocation()));
 			graphicsCreatedThisTick.add(graphicsId);
 		}
 	}
@@ -230,7 +230,7 @@ public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 		int objectId = event.getGameObject().getId();
 
 		if(!gameObjectsSpawnedThisTick.contains(objectId)) {
-			eventFired(EventType.GAME_OBJECT_SPAWNED, objectId, false);
+			fakeEventFired(EventType.GAME_OBJECT_SPAWNED, objectId, false);
 			gameObjectsSpawnedThisTick.add(objectId);
 		}
 	}
@@ -339,7 +339,7 @@ public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 			for(SlottedItem slottedItem : equippedItems) {
 				String name = client.getItemDefinition(slottedItem.getItem().getId()).getName();
 				if(!lastEquipmentList.contains(name)) {
-					eventFired(EventType.ITEM_EQUIPPED, slottedItem.getItem().getId(), false);
+					fakeEventFired(EventType.ITEM_EQUIPPED, slottedItem.getItem().getId(), false);
 				}
 			}
 			lastEquipmentList.clear();
@@ -412,7 +412,7 @@ public class FredsCustomPrayersPlugin extends Plugin implements KeyListener {
 		}
 	}
 
-	private void eventFired(EventType type, int id, boolean isTargetingPlayer) {
+	private void fakeEventFired(EventType type, int id, boolean isTargetingPlayer) {
 		eventFired(type, id, isTargetingPlayer, DUMMY_NPC);
 	}
 

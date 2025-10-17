@@ -393,7 +393,12 @@ public class DummyNPC implements NPC
         return null;
     }
 
-    @Override
+	@Override
+	public LocalPoint getCameraFocus() {
+		return null;
+	}
+
+	@Override
     public int getCombatLevel()
     {
         return 0;
