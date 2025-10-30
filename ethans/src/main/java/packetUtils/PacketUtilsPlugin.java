@@ -51,7 +51,7 @@ public class PacketUtilsPlugin extends Plugin {
 	static Client staticClient;
 	public static Method addNodeMethod;
 	public static boolean usingClientAddNode = false;
-	public static final int CLIENT_REV = 234;
+	public static final int CLIENT_REV = 235;
 	private static String loadedConfigName = "";
 	@Inject
 	private PluginManager pluginManager;
@@ -278,14 +278,18 @@ public class PacketUtilsPlugin extends Plugin {
 		String mostUsedMethod = methodCalls.stream()
 				.filter(str -> !str.contains("** while"))
 				.collect(Collectors.groupingBy(str -> str, Collectors.counting()))
-				.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-				.findFirst().get().getKey();
+				.entrySet().stream().min(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+				.get().getKey();
+		System.out.println("Most used method: \""+mostUsedMethod+"\"");
 		if (mostUsedMethod.contains("client")) {
 			usingClientAddNode = true;
 		} else {
 			String[] split = mostUsedMethod.split("\\.");
 			Class<?> addNodeClassName = client.getClass().getClassLoader().loadClass(split[0]);
 			for (Method declaredMethod : addNodeClassName.getDeclaredMethods()) {
+				if (declaredMethod.getParameterCount() == 0) {
+					continue;
+				}
 				if (declaredMethod.getName().equals(split[1]) && declaredMethod.getParameterTypes()[0].getSimpleName().equals(ObfuscatedNames.packetWriterClassName)) {
 					addNodeMethod = declaredMethod;
 				}

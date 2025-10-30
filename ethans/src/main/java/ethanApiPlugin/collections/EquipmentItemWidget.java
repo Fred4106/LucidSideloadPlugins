@@ -609,6 +609,28 @@ public class EquipmentItemWidget implements Widget {
 	}
 
 	@Override
+	public boolean isFlippedVertically() {
+		return false;
+	}
+
+	@Override
+	public void setFlippedVertically(boolean flip) {
+
+	}
+	
+	@Override
+	public boolean isFlippedHorizontally() {
+		return false;
+	}
+	
+	@Override
+	public void setFlippedHorizontally(boolean flip) {
+
+	}
+
+
+
+	@Override
 	public boolean getTextShadowed() {
 		return false;
 	}
