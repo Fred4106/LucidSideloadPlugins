@@ -12,7 +12,7 @@ public class UITeleport extends UIComponent
 
 	private boolean locked;
 
-	private UIMarker teleportButton;
+	private UIButton teleportButton;
 	private UIHotkey hotkeyButton;
 	private UILabel label;
 
@@ -22,7 +22,7 @@ public class UITeleport extends UIComponent
 		this.setOnHoverListener(this::onHover);
 		this.setOnLeaveListener(this::onLeave);
 
-		this.teleportButton = new UIMarker(teleport);
+		this.teleportButton = new UIButton(teleport);
 	}
 
 	@Override

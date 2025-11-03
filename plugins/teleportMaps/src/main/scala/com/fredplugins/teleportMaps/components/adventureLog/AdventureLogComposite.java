@@ -51,39 +51,54 @@ public class AdventureLogComposite implements IMap
 			case MENU_SETUP_SCRIPT_ID:
 			{
 				String title = (String) client.getObjectStack()[client.getObjectStackSize() - 1];
-				log.info("found title {}", title);
+
 				for (IAdventureMap map: this.adventureLogMaps)
 				{
-					if (!map.matchesTitle(title))
+					if (!map.isActive())
 						continue;
 
-					// To avoid the default adventure log list flashing on the screen briefly, always hide it upfront.
-					setAdventureLogWidgetsHidden(new int[] {
-						AdventureLog.CONTAINER,
-						AdventureLog.LIST,
-						AdventureLog.SCROLLBAR
-					}, true);
+					boolean response = map.matchesTitle(title);
 
-					this.clientThread.invokeLater(() ->
+					if (response)
 					{
-						Widget adventureLogContainer = this.client.getWidget(ComponentID.ADVENTURE_LOG_CONTAINER);
-						if (adventureLogContainer == null)
-							return;
-
+						// To avoid the default adventure log list flashing on the screen briefly, always hide it upfront.
 						setAdventureLogWidgetsHidden(new int[] {
-							AdventureLog.CONTAINER
-						}, false);
+							AdventureLog.CONTAINER,
+							AdventureLog.LIST,
+							AdventureLog.SCROLLBAR
+						}, true);
 
-						map.buildInterface(adventureLogContainer);
-					});
-					break;
+						this.clientThread.invokeLater(() ->
+						{
+							Widget adventureLogContainer = this.client.getWidget(ComponentID.ADVENTURE_LOG_CONTAINER);
+							if (adventureLogContainer == null)
+								return;
 
+							setAdventureLogWidgetsHidden(new int[] {
+								AdventureLog.CONTAINER
+							}, false);
+
+							map.buildInterface(adventureLogContainer);
+						});
+						break;
+					}
 				}
 				break;
 			}
 			default:
 				return;
 		}
+	}
+
+	@Override
+	public boolean isActive()
+	{
+		for (IAdventureMap map : this.adventureLogMaps)
+		{
+			if (map.isActive())
+				return true;
+		}
+		return false;
 	}
 
 	protected void setAdventureLogWidgetsHidden(int[] childIDs, boolean hidden)

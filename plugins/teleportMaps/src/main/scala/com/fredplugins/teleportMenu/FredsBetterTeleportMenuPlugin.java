@@ -40,7 +40,7 @@ import net.runelite.client.util.Text;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Freds Better Teleport Menu",
+	name = "<html><font color=\"#32C8CD\">Freds</font> Better Teleport Menu</html>",
 	description = "Customize hotkeys for the Spirit Tree/Jewelery box/Portal nexus layout/Diary/Construction cape interfaces & enlarge league menus",
 	tags = {"poh","jewelery","cape","diary","tele","port","nexus","hotkey","keybind","ancient","names","disable","strikethrough","league","clue compass","fairys flight","bank heist"},
 	conflicts = {"Better Teleport Menu"}

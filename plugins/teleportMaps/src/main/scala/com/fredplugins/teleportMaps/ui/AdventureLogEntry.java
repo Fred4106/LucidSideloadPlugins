@@ -9,7 +9,6 @@ public class AdventureLogEntry<T extends AdventureLogEntryDefinition>
 {
 	private Widget widget;
 	private T definition;
-	@Getter
 	private String keyShortcut;
 
 	public AdventureLogEntry(T definition, Widget widget, String shortcut)

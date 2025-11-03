@@ -138,7 +138,7 @@ class TeleMenu
 //			this.bind = defaultMultiBind();
 //		}
 
-		disabled = disable != null && plugin.getConfig().hideDisabled() && displayText.startsWith("<str>");
+		disabled = disable != null && plugin.getConfig().hideDisabled() && (displayText.startsWith("<str>") || displayText.startsWith("<col=5f5f5f>"));
 		if (disabled)
 		{
 			disable.run();

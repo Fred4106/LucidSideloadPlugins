@@ -1,17 +1,14 @@
 package com.fredplugins.teleportMaps.definition;
 
-import lombok.Data;
 import lombok.Getter;
-import lombok.Value;
 
-@Data
+@Getter
 public class HotKeyDefinition
 {
-	private int x = -1;
-	private int y = -1;
-
-	public HotKeyDefinition(int x, int y){
-		this.x = x;
-		this.y = y;
-	}
+	@Getter
+	static private int width = 20;
+	@Getter
+	static private int height = 20;
+	private int x;
+	private int y;
 }

@@ -6,7 +6,7 @@ import net.runelite.api.widgets.WidgetTextAlignment;
 
 public class UILabel extends UIComponent
 {
-	protected static final int HOTKEY_LABEL_COLOR = 0x322805; /*322805*/
+	protected static final int HOTKEY_LABEL_COLOR = 3287045; /*322805*/
 
 	private String hotkey;
 	private String labelText;

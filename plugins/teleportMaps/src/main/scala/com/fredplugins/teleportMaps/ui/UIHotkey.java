@@ -1,20 +1,10 @@
 package com.fredplugins.teleportMaps.ui;
 
-import lombok.Getter;
-import net.runelite.api.FontTypeFace;
 import net.runelite.api.widgets.Widget;
-
-import java.awt.*;
 
 public class UIHotkey extends UIComponent
 {
 	private boolean visible = true;
-
-	public FontTypeFace getHotkeyFont() {
-		return label.getWidget().getFont();
-	}
-
-	@Getter
 	private UILabel label;
 
 	public UIHotkey(Widget backgroundWidget, Widget labelWidget)

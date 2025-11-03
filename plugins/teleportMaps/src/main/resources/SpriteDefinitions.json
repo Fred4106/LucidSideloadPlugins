@@ -1,22 +1,342 @@
 [
   {
+    "spriteId": -19000,
+    "fileName": "/SpiritTreeMap/SpiritTreeMap.png"
+  },
+  {
+    "spriteId": -19001,
+    "fileName": "/SpiritTreeMap/House.png"
+  },
+  {
+    "spriteId": -19002,
+    "fileName": "/HotKeyCircle.png"
+  },
+  {
+    "spriteId": -19100,
+    "fileName": "/SpiritTreeMap/Default.png"
+  },
+  {
+    "spriteId": -19101,
+    "fileName": "/SpiritTreeMap/DefaultOutlined.png"
+  },
+  {
+    "spriteId": -19102,
+    "fileName": "/SpiritTreeMap/DefaultDisabled.png"
+  },
+  {
+    "spriteId": -19103,
+    "fileName": "/SpiritTreeMap/DefaultSelected.png"
+  },
+  {
+    "spriteId": -19110,
+    "fileName": "/SpiritTreeMap/FarmingGuild.png"
+  },
+  {
+    "spriteId": -19111,
+    "fileName": "/SpiritTreeMap/FarmingGuildOutlined.png"
+  },
+  {
+    "spriteId": -19112,
+    "fileName": "/SpiritTreeMap/FarmingGuildSelected.png"
+  },
+  {
+    "spriteId": -19120,
+    "fileName": "/SpiritTreeMap/Hosidius.png"
+  },
+  {
+    "spriteId": -19121,
+    "fileName": "/SpiritTreeMap/HosidiusOutlined.png"
+  },
+  {
+    "spriteId": -19122,
+    "fileName": "/SpiritTreeMap/HosidiusSelected.png"
+  },
+  {
+    "spriteId": -19130,
+    "fileName": "/SpiritTreeMap/Prifddinas.png"
+  },
+  {
+    "spriteId": -19131,
+    "fileName": "/SpiritTreeMap/PrifddinasOutlined.png"
+  },
+  {
+    "spriteId": -19132,
+    "fileName": "/SpiritTreeMap/PrifddinasSelected.png"
+  },
+  {
+    "spriteId": -19140,
+    "fileName": "/SpiritTreeMap/TreeGnomeStronghold.png"
+  },
+  {
+    "spriteId": -19141,
+    "fileName": "/SpiritTreeMap/TreeGnomeStrongholdOutlined.png"
+  },
+  {
+    "spriteId": -19142,
+    "fileName": "/SpiritTreeMap/TreeGnomeStrongholdSelected.png"
+  },
+  {
+    "spriteId": -19150,
+    "fileName": "/SpiritTreeMap/KhazardBattlefield.png"
+  },
+  {
+    "spriteId": -19151,
+    "fileName": "/SpiritTreeMap/KhazardBattlefieldOutlined.png"
+  },
+  {
+    "spriteId": -19152,
+    "fileName": "/SpiritTreeMap/KhazardBattlefieldSelected.png"
+  },
+  {
+    "spriteId": -19160,
+    "fileName": "/SpiritTreeMap/PoisonWaste.png"
+  },
+  {
+    "spriteId": -19161,
+    "fileName": "/SpiritTreeMap/PoisonWasteOutlined.png"
+  },
+  {
+    "spriteId": -19162,
+    "fileName": "/SpiritTreeMap/PoisonWasteSelected.png"
+  },
+  {
+    "spriteId": -19170,
+    "fileName": "/SpiritTreeMap/TreeGnomeVillage.png"
+  },
+  {
+    "spriteId": -19171,
+    "fileName": "/SpiritTreeMap/TreeGnomeVillageOutlined.png"
+  },
+  {
+    "spriteId": -19172,
+    "fileName": "/SpiritTreeMap/TreeGnomeVillageSelected.png"
+  },
+  {
+    "spriteId": -19180,
+    "fileName": "/SpiritTreeMap/Etceteria.png"
+  },
+  {
+    "spriteId": -19181,
+    "fileName": "/SpiritTreeMap/EtceteriaOutlined.png"
+  },
+  {
+    "spriteId": -19182,
+    "fileName": "/SpiritTreeMap/EtceteriaSelected.png"
+  },
+  {
+    "spriteId": -19190,
+    "fileName": "/SpiritTreeMap/Brimhaven.png"
+  },
+  {
+    "spriteId": -19191,
+    "fileName": "/SpiritTreeMap/BrimhavenOutlined.png"
+  },
+  {
+    "spriteId": -19192,
+    "fileName": "/SpiritTreeMap/BrimhavenSelected.png"
+  },
+  {
+    "spriteId": -19200,
+    "fileName": "/SpiritTreeMap/PortSarim.png"
+  },
+  {
+    "spriteId": -19201,
+    "fileName": "/SpiritTreeMap/PortSarimOutlined.png"
+  },
+  {
+    "spriteId": -19202,
+    "fileName": "/SpiritTreeMap/PortSarimSelected.png"
+  },
+  {
+    "spriteId": -19300,
+    "fileName": "/MushtreeMap/FossilIslandMapWithCompass.png"
+  },
+  {
+    "spriteId": -19301,
+    "fileName": "/MushtreeMap/Mushtree.png"
+  },
+  {
+    "spriteId": -19302,
+    "fileName": "/MushtreeMap/MushtreeHighlighted.png"
+  },
+  {
+    "spriteId": -19303,
+    "fileName": "/MushtreeMap/MushtreeDisabled.png"
+  },
+  {
+    "spriteId": -19304,
+    "fileName": "/MushtreeMap/MushtreeSelected.png"
+  },
+  {
+    "spriteId": -19400,
+    "fileName": "/XericsMap/XericsMap.png"
+  },
+  {
+    "spriteId": -19401,
+    "fileName": "/XericsMap/Xerics.png"
+  },
+  {
+    "spriteId": -19402,
+    "fileName": "/XericsMap/XericsOutlined.png"
+  },
+  {
+    "spriteId": -19403,
+    "fileName": "/XericsMap/XericsDisabled.png"
+  },
+  {
+    "spriteId": -19501,
+    "fileName": "/MinecartMap/minecart.png"
+  },
+  {
+    "spriteId": -19502,
+    "fileName": "/MinecartMap/minecartOutlined.png"
+  },
+  {
+    "spriteId": -19503,
+    "fileName": "/MinecartMap/minecartDisabled.png"
+  },
+  {
+    "spriteId": -19504,
+    "fileName": "/MinecartMap/minecartSelected.png"
+  },
+  {
+    "spriteId": -19600,
+    "fileName": "/WildernessObeliskMap/WildernessMap.png"
+  },
+  {
+    "spriteId": -19601,
+    "fileName": "/WildernessObeliskMap/ObeliskDisabled.png"
+  },
+  {
+    "spriteId": -19610,
+    "fileName": "/WildernessObeliskMap/level13.png"
+  },
+  {
+    "spriteId": -19611,
+    "fileName": "/WildernessObeliskMap/level13Outlined.png"
+  },
+  {
+    "spriteId": -19612,
+    "fileName": "/WildernessObeliskMap/level13Selected.png"
+  },
+  {
+    "spriteId": -19620,
+    "fileName": "/WildernessObeliskMap/level19.png"
+  },
+  {
+    "spriteId": -19621,
+    "fileName": "/WildernessObeliskMap/level19Outlined.png"
+  },
+  {
+    "spriteId": -19622,
+    "fileName": "/WildernessObeliskMap/level19Selected.png"
+  },
+  {
+    "spriteId": -19630,
+    "fileName": "/WildernessObeliskMap/level27.png"
+  },
+  {
+    "spriteId": -19631,
+    "fileName": "/WildernessObeliskMap/level27Outlined.png"
+  },
+  {
+    "spriteId": -19632,
+    "fileName": "/WildernessObeliskMap/level27Selected.png"
+  },
+  {
+    "spriteId": -19640,
+    "fileName": "/WildernessObeliskMap/level35.png"
+  },
+  {
+    "spriteId": -19641,
+    "fileName": "/WildernessObeliskMap/level35Outlined.png"
+  },
+  {
+    "spriteId": -19642,
+    "fileName": "/WildernessObeliskMap/level35Selected.png"
+  },
+  {
+    "spriteId": -19650,
+    "fileName": "/WildernessObeliskMap/level44.png"
+  },
+  {
+    "spriteId": -19651,
+    "fileName": "/WildernessObeliskMap/level44Outlined.png"
+  },
+  {
+    "spriteId": -19652,
+    "fileName": "/WildernessObeliskMap/level44Selected.png"
+  },
+  {
+    "spriteId": -19660,
+    "fileName": "/WildernessObeliskMap/level50.png"
+  },
+  {
+    "spriteId": -19661,
+    "fileName": "/WildernessObeliskMap/level50Outlined.png"
+  },
+  {
+    "spriteId": -19662,
+    "fileName": "/WildernessObeliskMap/level50Selected.png"
+  },
+  {
     "spriteId": -19700,
-    "fileName": "/ClueCompass/HotKeyCircle.png"
+    "fileName": "/SkillsNecklaceMap/SkillsNecklaceMap.png"
   },
   {
-    "spriteId": -19701,
-    "fileName": "/ClueCompass/ClueCompassMap.png"
-  },
-    {
-    "spriteId": -19702,
-    "fileName": "/ClueCompass/Xerics.png"
+    "spriteId": -19710,
+    "fileName": "/SkillsNecklaceMap/WoodcuttingGuild.png"
   },
   {
-    "spriteId": -19703,
-    "fileName": "/ClueCompass/XericsOutlined.png"
+    "spriteId": -19711,
+    "fileName": "/SkillsNecklaceMap/WoodcuttingGuildOutlined.png"
   },
   {
-    "spriteId": -19704,
-    "fileName": "/ClueCompass/XericsDisabled.png"
+    "spriteId": -19712,
+    "fileName": "/SkillsNecklaceMap/WoodcuttingGuildDisabled.png"
+  },
+  {
+    "spriteId": -19720,
+    "fileName": "/SkillsNecklaceMap/FarmingGuild.png"
+  },
+  {
+    "spriteId": -19721,
+    "fileName": "/SkillsNecklaceMap/FarmingGuildOutlined.png"
+  },
+  {
+    "spriteId": -19722,
+    "fileName": "/SkillsNecklaceMap/FarmingGuildDisabled.png"
+  },
+  {
+    "spriteId": -19730,
+    "fileName": "/SkillsNecklaceMap/FishingGuild.png"
+  },
+  {
+    "spriteId": -19731,
+    "fileName": "/SkillsNecklaceMap/FishingGuildOutlined.png"
+  },
+  {
+    "spriteId": -19740,
+    "fileName": "/SkillsNecklaceMap/MiningGuild.png"
+  },
+  {
+    "spriteId": -19741,
+    "fileName": "/SkillsNecklaceMap/MiningGuildOutlined.png"
+  },
+  {
+    "spriteId": -19750,
+    "fileName": "/SkillsNecklaceMap/CraftingGuild.png"
+  },
+  {
+    "spriteId": -19751,
+    "fileName": "/SkillsNecklaceMap/CraftingGuildOutlined.png"
+  },
+  {
+    "spriteId": -19760,
+    "fileName": "/SkillsNecklaceMap/CookingGuild.png"
+  },
+  {
+    "spriteId": -19761,
+    "fileName": "/SkillsNecklaceMap/CookingGuildOutlined.png"
   }
 ]
