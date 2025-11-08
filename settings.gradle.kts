@@ -16,7 +16,7 @@ include(":commonScala")
 //"titheFarm"
 //"kroovy"
 
-val x = listOf("customPrayers", "alchBlocker", "gearSwapper", "recolorCG", "pyramidPlunder", "zulrahHelper", "attackTimer", "demonicGorilla", "dt2",  "gauntlet", "giantsFoundry",  "hallowedHelper", "layoutHelper", "mixology", "pvmDebugger", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm2", "superClickHelper", "valeTotems")
+val x = listOf("customPrayers", "alchBlocker", "gearSwapper", "recolorCG", "scriptMaster", "pyramidPlunder", "zulrahHelper", "attackTimer", "demonicGorilla", "dt2",  "gauntlet", "giantsFoundry",  "hallowedHelper", "layoutHelper", "mixology", "pvmDebugger", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm2", "superClickHelper", "valeTotems")
 x.forEach {xm->
     include(xm)
 }

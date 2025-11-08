@@ -60,6 +60,7 @@ dependencies {
     implementation(projects.commonScala)
     implementation(projects.alchBlocker)
     implementation(projects.pyramidPlunder)
+    implementation(projects.scriptMaster)
     implementation(projects.recolorCG)
     implementation(projects.valeTotems)
     implementation(projects.zulrahHelper)
