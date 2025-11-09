@@ -26,6 +26,7 @@
 package com.fredplugins.demonicgorillaV2;
 
 import ch.qos.logback.classic.Level;
+import com.fredplugins.common.utils.WorldAreaExtended$;
 import com.fredplugins.demonicgorillaV2.DemonicGorilla.AttackStyle;
 import com.google.common.collect.ImmutableSet;
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils;
@@ -559,7 +560,7 @@ public class DemonicGorillaPlugin extends Plugin {
 				// distance before attacking its target.
 
 				if (mp != null && mp.getLastWorldArea() != null && gorilla.getLastWorldArea() != null) {
-					WorldArea predictedNewArea = WorldAreaExtended.calculateNextTravellingPoint(
+					WorldArea predictedNewArea = WorldAreaExtended$.MODULE$.calculateNextTravellingPoint(
 						client, gorilla.getLastWorldArea(), mp.getLastWorldArea(), true, x ->
 						{
 							// Gorillas can't normally walk through other gorillas

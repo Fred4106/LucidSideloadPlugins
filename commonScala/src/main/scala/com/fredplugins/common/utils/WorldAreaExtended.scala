@@ -1,4 +1,4 @@
-package com.fredplugins.demonicgorillaV2
+package com.fredplugins.common.utils
 
 import net.runelite.api.Client
 import net.runelite.api.Constants
@@ -7,6 +7,7 @@ import net.runelite.api.WorldView
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.coords.WorldArea
 import net.runelite.api.coords.WorldPoint
+
 import java.util.function.Predicate
 
 object WorldAreaExtended {

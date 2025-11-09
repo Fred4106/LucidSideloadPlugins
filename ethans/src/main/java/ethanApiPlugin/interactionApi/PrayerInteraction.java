@@ -37,6 +37,10 @@ public class PrayerInteraction {
 			togglePrayer(prayer);
 		}
 	}
+	
+	public static boolean isActive(Prayer p) {
+		return EthanApiPlugin.getClient().isPrayerActive(p);
+	}
 	public static void flickPrayers(Prayer... prayers){
 		Arrays.stream(Prayer.values()).forEach((prayer) -> {
 			setPrayerState(prayer,false);

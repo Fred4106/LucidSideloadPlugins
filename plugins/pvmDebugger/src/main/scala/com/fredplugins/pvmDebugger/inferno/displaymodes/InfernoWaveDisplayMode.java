@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Owain van Brakel <https://github.com/Owain94>
+ * Copyright (c) 2018, Jordan Atwood <jordan.atwood423@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package com.fredplugins.pvmDebugger.inferno.displaymodes;
 
-object Dependencies {
-    const val releaseVersion = "1.1.16"
-    const val rlVersion = "1.12.4-SNAPSHOT"
-    const val scalaVersion = "3.7.3"
-    const val lombokVersion = "1.18.30"
-    const val jetbrainsAnnotations = "23.0.0"
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+public enum InfernoWaveDisplayMode
+{
+	CURRENT("Current wave"),
+	NEXT("Next wave"),
+	BOTH("Both"),
+	NONE("None");
+
+	private final String name;
+
+	@Override
+	public String toString()
+	{
+		return name;
+	}
 }
