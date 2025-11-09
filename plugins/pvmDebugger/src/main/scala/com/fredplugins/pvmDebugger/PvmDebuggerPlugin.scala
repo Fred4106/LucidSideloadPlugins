@@ -7,6 +7,8 @@ import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansHelper
 import com.fredplugins.pvmDebugger.hueycoatl.FredsHueycoatlConfig
 import com.fredplugins.pvmDebugger.hueycoatl.FredsHueycoatlHelper
+import com.fredplugins.pvmDebugger.inferno.FredsInfernoConfig
+import com.fredplugins.pvmDebugger.inferno.FredsInfernoHelper
 import com.fredplugins.pvmDebugger.kraken.KrakenConfig
 import com.fredplugins.pvmDebugger.kraken.KrakenHelper
 import com.fredplugins.pvmDebugger.moons.FredsMoonConfig
@@ -32,6 +34,7 @@ import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.EventBus
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.events.ConfigChanged
+import net.runelite.client.game.ItemManager
 import net.runelite.client.game.NPCManager
 import net.runelite.client.input.KeyManager
 import net.runelite.client.plugins.PluginManager
@@ -39,6 +42,7 @@ import net.runelite.client.plugins.Plugin
 import net.runelite.client.plugins.PluginDependency
 import net.runelite.client.plugins.PluginDescriptor
 import net.runelite.client.ui.overlay.OverlayManager
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
 
@@ -61,6 +65,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val keyManager   : KeyManager                 = null
 	@Inject private val modelOutlineRenderer : ModelOutlineRenderer = null
 	@Inject private val pluginManager        : PluginManager             = null
+	@Inject private val itemManager          : ItemManager             = null
+	@Inject private val infoBoxManager          : InfoBoxManager             = null
 	@Inject private val configManager        : ConfigManager             = null
 	@Inject private val notifier             : Notifier                  = null
 	@Inject private val overlayManager       : OverlayManager            = null
@@ -73,6 +79,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val muspahHelper: FredsMuspahHelper       = null
 	@Inject private val amoxliatlHelper: FredsAmoxliatlHelper = null
 	@Inject private val hueycoatlHelper: FredsHueycoatlHelper = null
+	@Inject private val infernoHelper: FredsInfernoHelper = null
 	@Inject private val vorkathHelper: FredsVorkathHelper = null
 	@Inject private val titansHelper: FredsTitanHelper    = null
 
@@ -90,6 +97,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	def getOverlayManager: OverlayManager = overlayManager
 	def getConfig: FredsPvmDebuggerConfig = pvmDebuggerConfig
 	def getPluginManager: PluginManager = pluginManager
+	def getItemManager: ItemManager = itemManager
+	def getInfoBoxManager: InfoBoxManager = infoBoxManager
 	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
 
 	//	//region types
@@ -356,4 +365,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideHueycoatlConfig(configManager: ConfigManager):FredsHueycoatlConfig = configManager.getConfig(classOf[FredsHueycoatlConfig])
 	@Provides def provideVorkathConfig(configManager: ConfigManager):FredsVorkathConfig = configManager.getConfig(classOf[FredsVorkathConfig])
 	@Provides def provideTitansConfig(configManager: ConfigManager):FredsTitanConfig = configManager.getConfig(classOf[FredsTitanConfig])
+	@Provides def provideInfernoConfig(configManager: ConfigManager):FredsInfernoConfig = configManager.getConfig(classOf[FredsInfernoConfig])
 }

@@ -47,101 +47,111 @@ public interface FredsInfernoConfig extends Config
 	@ConfigSection(
 		name = "Prayer",
 		description = "Configuration options for prayer",
-		position = 0
+		position = 1
 	)
 	String PrayerSection = "Prayer";
 
 	@ConfigSection(
 		name = "Safespots",
 		description = "Configuration options for Safespots",
-		position = 1
+		position = 2
 	)
 	String SafespotsSection = "Safespots";
 
 	@ConfigSection(
 		name = "Waves",
 		description = "Configuration options for Waves",
-		position = 2
+		position = 3
 	)
 	String WavesSection = "Waves";
 
 	@ConfigSection(
 		name = "Extra",
 		description = "Configuration options for Extras",
-		position = 3
+		position = 4
 	)
 	String ExtraSection = "Extra";
 
 	@ConfigSection(
 		name = "Nibblers",
 		description = "Configuration options for Nibblers",
-		position = 4
+		position = 5
 	)
 	String NibblersSection = "Nibblers";
 
 	@ConfigSection(
 		name = "Bats",
 		description = "Configuration options for Bats",
-		position = 5
+		position = 6
 	)
 	String BatsSection = "Bats";
 
 	@ConfigSection(
 		name = "Blobs",
 		description = "Configuration options for Blobs",
-		position = 6
+		position = 7
 	)
 	String BlobsSection = "Blobs";
 
 	@ConfigSection(
 		name = "Meleers",
 		description = "Configuration options for Meleers",
-		position = 7
+		position = 8
 	)
 	String MeleersSection = "Meleers";
 
 	@ConfigSection(
 		name = "Rangers",
 		description = "Configuration options for Rangers",
-		position = 8
+		position = 9
 	)
 	String RangersSection = "Rangers";
 
 	@ConfigSection(
 		name = "Magers",
 		description = "Configuration options for Magers",
-		position = 9
+		position = 10
 	)
 	String MagersSection = "Magers";
 
 	@ConfigSection(
 		name = "Jad",
 		description = "Configuration options for Jad",
-		position = 10
+		position = 11
 	)
 	String JadSection = "Jad";
 
 	@ConfigSection(
 		name = "Jad Healers",
 		description = "Configuration options for Jad Healers",
-		position = 11
+		position = 12
 	)
 	String JadHealersSection = "Jad Healers";
 
 	@ConfigSection(
 		name = "Zuk",
 		description = "Configuration options for Zuk",
-		position = 12
+		position = 13
 	)
 	String ZukSection = "Zuk";
 
 	@ConfigSection(
 		name = "Zuk Healers",
 		description = "Configuration options for Zuk Healers",
-		position = 13
+		position = 14
 	)
 	String ZukHealersSection = "Zuk Healers";
 
+	@ConfigItem(
+		name = "Enabled",
+		description = "Is Inferno helper enabled?",
+		position = 0,
+		keyName = "enabled"
+	)
+	default boolean enabled()
+	{
+		return false;
+	}
 
 	@ConfigItem(
 		position = 0,

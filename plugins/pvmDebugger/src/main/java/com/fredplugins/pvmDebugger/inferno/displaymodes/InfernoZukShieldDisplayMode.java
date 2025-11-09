@@ -3,16 +3,17 @@ package com.fredplugins.pvmDebugger.inferno.displaymodes;
 import lombok.AccessLevel;
 import lombok.Getter;
 
-@Getter(AccessLevel.PACKAGE)
-public enum InfernoSafespotDisplayMode
+@Getter
+public enum InfernoZukShieldDisplayMode
 {
 	OFF("Off"),
-	INDIVIDUAL_TILES("Individual tiles"),
-	AREA("Area (lower fps)");
+	LIVE("Live (follow shield)"),
+	PREDICT("Predict"),
+	LIVEPLUSPREDICT("Live and Predict");
 
 	final private String name;
 
-	InfernoSafespotDisplayMode(String name)
+	InfernoZukShieldDisplayMode(String name)
 	{
 		this.name = name;
 	}
