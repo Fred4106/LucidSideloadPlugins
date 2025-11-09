@@ -349,7 +349,6 @@ public interface FredsTormentedDemonConfig extends Config {
 	enum CombatPotionType {
 		SUPER_COMBAT,
 		DIVINE_SUPER_COMBAT
-
 	}
 
 	@Getter

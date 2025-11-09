@@ -52,6 +52,6 @@ public enum InfernoNpcAttack {
 			}
 		}
 
-		return null;
+		return UNKNOWN;
 	}
 }

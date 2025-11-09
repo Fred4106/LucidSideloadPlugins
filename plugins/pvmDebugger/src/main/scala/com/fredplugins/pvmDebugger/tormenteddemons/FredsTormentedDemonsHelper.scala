@@ -3,14 +3,24 @@ package com.fredplugins.pvmDebugger.tormenteddemons
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
+import com.fredplugins.pvmDebugger.WithOverlay
 import com.fredplugins.pvmDebugger.WithPanel
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.HotkeyAction
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TORMENTED_DEMON_IDS
+import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TORMENTED_DEMON_REGION_IDS
+
+import com.fredplugins.common.extensions.ActorExtensions.*
+import com.fredplugins.common.extensions.GeneralExtensions.*
+import com.fredplugins.common.extensions.ObjectExtensions.*
+import com.fredplugins.common.extensions.ProjectileExtensions.*
+import com.fredplugins.common.extensions.LocationExtensions.*
+
 import com.google.inject.Inject
 import ethanApiPlugin.lucidplugins.api.item.SlottedItem
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
 import ethanApiPlugin.collections.Inventory
+import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
 import net.runelite.api.NPC
@@ -26,12 +36,16 @@ import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.config.Keybind
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.input.KeyListener
+import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import net.runelite.client.ui.overlay.components.LineComponent
 import org.slf4j.Logger
 
 import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics2D
 import java.awt.event.KeyEvent
+import java.lang.reflect.Modifier
 import scala.jdk.CollectionConverters.*
 import java.util.stream.Collectors
 import scala.collection.mutable
@@ -43,7 +57,11 @@ import scala.compiletime.uninitialized
 
 object FredsTormentedDemons {
 	lazy val client: Client = RuneLite.getInjector().getInstance[Client](classOf[Client])
-	val TORMENTED_DEMON_IDS: Seq[Int] = List(NpcID.TORMENTED_DEMON_1, NpcID.TORMENTED_DEMON_2)
+	val TORMENTED_DEMON_IDS: Seq[Int] = List(
+		NpcID.TORMENTED_DEMON_1, NpcID.TORMENTED_DEMON_2,
+		NpcID.INVISIBLE_TORMENTED_DEMON_1, NpcID.INVISIBLE_TORMENTED_DEMON_2
+	)
+	val TORMENTED_DEMON_REGION_IDS: Seq[Int] = List(16196, 16197, 16452, 16453)
 
 	enum HotkeyAction(val op: (FredsTormentedDemonConfig => Keybind)) {
 		case DodgeFireball extends HotkeyAction(_.dodgeFireballHotkey())
@@ -62,7 +80,7 @@ object FredsTormentedDemons {
 		}
 	}
 }
-class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsTormentedDemonConfig) extends HelperModule with WithPanel {
+class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsTormentedDemonConfig) extends HelperModule with WithPanel with WithOverlay {
 	override val moduleName: String = "FredsTormentedDemonsHelper"
 //	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	private var targetDemon: Option[NPC] = Option.empty
@@ -161,7 +179,12 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 		targetDemon = Option.empty
 		client.getTopLevelWorldView.npcs().asScala.toList.filter(n => TORMENTED_DEMON_IDS.contains(n.getId)).foreach(n => demons.put(n, FredsTormentedDemons.TormentedDemonData(n.getAnimation, n.getPoseAnimation, n.getWorldLocation)))
 		findNewTarget()
-		parent.getKeyManager.registerKeyListener(internalKeyListener)
+		if(inRegion()) parent.getKeyManager.registerKeyListener(internalKeyListener)
+	}
+
+	def inRegion(): Boolean = {
+		Option(client.getLocalPlayer).map(_.getWorldLocation).map(_.getTemplate).map(_.getRegionID)
+			.exists(rid => TORMENTED_DEMON_REGION_IDS.contains(rid))
 	}
 
 	def findNewTarget(): Unit = {
@@ -189,25 +212,52 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 //			client.setMenuEntries(newMenuEntries.toArray[MenuEntry])
 //		}
 //	}
+
+	private lazy val npcIdToNameMap: Map[Int, String] = {
+		classOf[net.runelite.api.gameval.NpcID].getDeclaredFields.toList
+			.filter(_.getType == Integer.TYPE)
+			.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
+			.map(f => {
+				f.getInt(null) -> f.getName
+			}).toMap
+	}
+	def getNpcName(id: Int): String = npcIdToNameMap.getOrElse(id, s"Npc(${id})")
+
 	@Subscribe
 	def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
-		Option(npcSpawned.getNpc).filter(n => TORMENTED_DEMON_IDS.contains(n.getId))
-			.map(n => n -> FredsTormentedDemons.TormentedDemonData(n.getAnimation, n.getPoseAnimation, n.getWorldLocation)).foreach{
-				case (npc, data) =>
-					demons.put(npc, data)
-					log.debug("Added demons[{}] = {}", npc, data)
-			}
+		if(inRegion()) {
+			Option(npcSpawned.getNpc).filterNot(n => TORMENTED_DEMON_IDS.contains(n.getId))
+				.foreach(n => {
+					val msg = new ChatMessageBuilder()
+						.append(Color.blue, s"${getNpcName(n.getId)}")
+						.append(" spawned at ")
+						.append(Color.green, s"${n.getWorldLocation}")
+						.append(".")
+					parent.getClientThread.invoke(() => {
+						printMessage(ChatMessageType.FRIENDSCHAT, "Tormented", "NpcSpawned")(msg)
+					})
+				})
+
+			Option(npcSpawned.getNpc).filter(n => TORMENTED_DEMON_IDS.contains(n.getId))
+				.map(n => n -> FredsTormentedDemons.TormentedDemonData(n.getAnimation, n.getPoseAnimation, n.getWorldLocation)).foreach{
+					case (npc, data) =>
+						demons.put(npc, data)
+						log.debug("Added demons[{}] = {}", npc, data)
+				}
+		}
 	}
 
 	@Subscribe
 	def onNpcDespawned(npcDespawned: NpcDespawned): Unit = {
-//		val npc = npcDespawned.getNpc
-		Option(npcDespawned.getNpc).filter(n => TORMENTED_DEMON_IDS.contains(n.getId)).flatMap(n => demons.remove(n).map(d => n -> d))
-			.foreach{
-				case (npc, data) => log.debug("Removed demons[{}] = {}", npc, data)
+		if(inRegion()) {
+	//		val npc = npcDespawned.getNpc
+			Option(npcDespawned.getNpc).filter(n => TORMENTED_DEMON_IDS.contains(n.getId)).flatMap(n => demons.remove(n).map(d => n -> d))
+				.foreach{
+					case (npc, data) => log.debug("Removed demons[{}] = {}", npc, data)
+				}
+			if(targetDemon.contains(npcDespawned.getNpc)) {
+				targetDemon = Option.empty[NPC]
 			}
-		if(targetDemon.contains(npcDespawned.getNpc)) {
-			targetDemon = Option.empty[NPC]
 		}
 	}
 
@@ -221,18 +271,43 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 	
 	@Subscribe
 	def onGameTick(e: GameTick): Unit = {
-		demons.mapValuesInPlace {
-			case (npc, data) => data.update(npc)
-		}
+		if(inRegion()) {
+			demons.mapValuesInPlace {
+				case (npc, data) => data.update(npc)
+			}
 
-		if(targetDemon.exists(_.isDead)) {
-			CombatUtils.deactivatePrayers(false)
-			log.debug("Finished killing target demon {} with data {}", targetDemon.get, demons(targetDemon.get))
-			targetDemon = Option.empty
-		}
+			if(targetDemon.exists(_.isDead)) {
+				CombatUtils.deactivatePrayers(false)
+				log.debug("Finished killing target demon {} with data {}", targetDemon.get, demons(targetDemon.get))
+				targetDemon = Option.empty
+			}
 
-		if(targetDemon.isEmpty) {
-			findNewTarget()
+			if(targetDemon.isEmpty) {
+				findNewTarget()
+			}
+		}
+	}
+	@Subscribe
+	def onRegionChanged(event: LocalRegionChanged): Unit = {
+		if(!TORMENTED_DEMON_REGION_IDS.contains(event.getCurRegion) && !TORMENTED_DEMON_REGION_IDS.contains(event.getOldRegion)) {
+			return
+		}
+		val msg = new ChatMessageBuilder()
+			.append("Region changed from ")
+			.append(Color.blue, s"${event.getOldRegion}")
+			.append(" to ")
+			.append(Color.green, s"${event.getCurRegion}")
+			.append(".")
+		parent.getClientThread.invoke(() => {
+			printMessage(ChatMessageType.FRIENDSCHAT, "Tormented", "Region")(msg)
+		})
+		if(!TORMENTED_DEMON_REGION_IDS.contains(event.getCurRegion)) {
+			targetDemon = None
+			demons.clear()
+			parent.getKeyManager.unregisterKeyListener(internalKeyListener)
+		}
+		if(!TORMENTED_DEMON_REGION_IDS.contains(event.getOldRegion) && TORMENTED_DEMON_REGION_IDS.contains(event.getCurRegion)) {
+			parent.getKeyManager.registerKeyListener(internalKeyListener)
 		}
 	}
 
@@ -253,5 +328,24 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 					})
 					.build()
 			}).getOrElse(Seq.empty[LayoutableRenderableEntity])
+	}
+	override def renderOverlay(g: Graphics2D): Dimension = {
+		def renderNpcOverlay(n: NPC, text: String, color: Color, zoffset: Int): Unit = {
+			parent.getModelOutlineRenderer.drawOutline(n, 2, color, 4)
+			val poly = n.getCanvasTilePoly
+			if (poly != null) OverlayUtil.renderPolygon(g, poly, color)
+			val textLocation = n.getCanvasTextLocation(g, text, n.getLogicalHeight + zoffset)
+			if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, text, color)
+		}
+		if(demons.nonEmpty) {
+			demons.foreach {
+				case (npc, data) => {
+					val text = s"anim: ${data.animation}, pose: ${data.poseAnimation}"
+					val color = if(targetDemon.contains(npc)) Color.GREEN else Color.RED
+					renderNpcOverlay(npc, text, color, 0)
+				}
+			}
+		}
+		null.asInstanceOf[Dimension]
 	}
 }

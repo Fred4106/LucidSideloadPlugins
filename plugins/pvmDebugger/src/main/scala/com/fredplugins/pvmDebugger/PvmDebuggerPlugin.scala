@@ -20,6 +20,8 @@ import com.fredplugins.pvmDebugger.titans.FredsTitanHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
 import com.fredplugins.pvmDebugger.vorkath.FredsVorkathConfig
 import com.fredplugins.pvmDebugger.vorkath.FredsVorkathHelper
+import com.fredplugins.pvmDebugger.yama.FredsYamaConfig
+import com.fredplugins.pvmDebugger.yama.FredsYamaHelper
 import com.google.inject.Inject
 import com.google.inject.Provides
 import com.google.inject.Singleton
@@ -36,6 +38,7 @@ import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.events.ConfigChanged
 import net.runelite.client.game.ItemManager
 import net.runelite.client.game.NPCManager
+import net.runelite.client.game.SpriteManager
 import net.runelite.client.input.KeyManager
 import net.runelite.client.plugins.PluginManager
 import net.runelite.client.plugins.Plugin
@@ -65,8 +68,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val keyManager   : KeyManager                 = null
 	@Inject private val modelOutlineRenderer : ModelOutlineRenderer = null
 	@Inject private val pluginManager        : PluginManager             = null
-	@Inject private val itemManager          : ItemManager             = null
-	@Inject private val infoBoxManager          : InfoBoxManager             = null
+	@Inject private val itemManager          : ItemManager       = null
+	@Inject private val spriteManager          : SpriteManager     = null
+	@Inject private val infoBoxManager          : InfoBoxManager = null
 	@Inject private val configManager        : ConfigManager             = null
 	@Inject private val notifier             : Notifier                  = null
 	@Inject private val overlayManager       : OverlayManager            = null
@@ -82,6 +86,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val infernoHelper: FredsInfernoHelper = null
 	@Inject private val vorkathHelper: FredsVorkathHelper = null
 	@Inject private val titansHelper: FredsTitanHelper    = null
+	@Inject private val yamaHelper: FredsYamaHelper = null
 
 	//	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
@@ -98,6 +103,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	def getConfig: FredsPvmDebuggerConfig = pvmDebuggerConfig
 	def getPluginManager: PluginManager = pluginManager
 	def getItemManager: ItemManager = itemManager
+	def getSpriteManager: SpriteManager = spriteManager
 	def getInfoBoxManager: InfoBoxManager = infoBoxManager
 	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
 
@@ -163,7 +169,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, vorkathHelper, titansHelper)
+	lazy val helperModules: Seq[HelperModule] = List(krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
 		helperModules.foreach(m => {
@@ -366,4 +372,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideVorkathConfig(configManager: ConfigManager):FredsVorkathConfig = configManager.getConfig(classOf[FredsVorkathConfig])
 	@Provides def provideTitansConfig(configManager: ConfigManager):FredsTitanConfig = configManager.getConfig(classOf[FredsTitanConfig])
 	@Provides def provideInfernoConfig(configManager: ConfigManager):FredsInfernoConfig = configManager.getConfig(classOf[FredsInfernoConfig])
+	@Provides def provideYamaConfig(configManager: ConfigManager):FredsYamaConfig = configManager.getConfig(classOf[FredsYamaConfig])
 }
