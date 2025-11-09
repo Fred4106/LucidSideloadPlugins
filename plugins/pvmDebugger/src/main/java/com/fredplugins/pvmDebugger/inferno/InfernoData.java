@@ -19,6 +19,10 @@ public class InfernoData {
 	public static final int BLOB_DEATH_TICKS     = 3;
 	public static final int BLOB_DEATH_ANIMATION = 7584;
 	public static final int FILL_START_ALPHA     = 255;
-	
+	public static final long SPAWN_DURATION = 210; // 3 minutes 30 seconds
+	public static final long SPAWN_DURATION_INCREMENT = 105; // 1 minute 45 seconds
+	public static final long SPAWN_DURATION_WARNING = 120; // 2 minutes before next respawn
+	public static final long SPAWN_DURATION_DANGER = 30; // 30 seconds before next respawn
+
 	private InfernoData() {}
 }

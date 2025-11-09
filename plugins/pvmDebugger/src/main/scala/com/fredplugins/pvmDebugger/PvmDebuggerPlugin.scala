@@ -36,6 +36,7 @@ import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.events.ConfigChanged
 import net.runelite.client.game.ItemManager
 import net.runelite.client.game.NPCManager
+import net.runelite.client.game.SpriteManager
 import net.runelite.client.input.KeyManager
 import net.runelite.client.plugins.PluginManager
 import net.runelite.client.plugins.Plugin
@@ -65,8 +66,9 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val keyManager   : KeyManager                 = null
 	@Inject private val modelOutlineRenderer : ModelOutlineRenderer = null
 	@Inject private val pluginManager        : PluginManager             = null
-	@Inject private val itemManager          : ItemManager             = null
-	@Inject private val infoBoxManager          : InfoBoxManager             = null
+	@Inject private val itemManager          : ItemManager       = null
+	@Inject private val spriteManager          : SpriteManager     = null
+	@Inject private val infoBoxManager          : InfoBoxManager = null
 	@Inject private val configManager        : ConfigManager             = null
 	@Inject private val notifier             : Notifier                  = null
 	@Inject private val overlayManager       : OverlayManager            = null
@@ -98,6 +100,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	def getConfig: FredsPvmDebuggerConfig = pvmDebuggerConfig
 	def getPluginManager: PluginManager = pluginManager
 	def getItemManager: ItemManager = itemManager
+	def getSpriteManager: SpriteManager = spriteManager
 	def getInfoBoxManager: InfoBoxManager = infoBoxManager
 	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
 
