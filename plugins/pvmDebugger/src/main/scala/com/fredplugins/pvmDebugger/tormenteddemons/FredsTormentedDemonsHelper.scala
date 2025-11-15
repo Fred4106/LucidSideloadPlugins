@@ -155,7 +155,7 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 
 	def buildData(n: NPC): TormentedDemonData = {
 		FredsTormentedDemons.TormentedDemonData(
-			0, 6, EthanApiPlugin.getHeadIcon(n) match {
+			0, 7, EthanApiPlugin.getHeadIcon(n) match {
 				case HeadIcon.RANGED => AttackStyle.RANGE
 				case HeadIcon.MAGIC => AttackStyle.MAGE
 				case _ => AttackStyle.MELEE
@@ -326,16 +326,16 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 			}
 		}).foreach {
 			case (npc, data) if npc.getAnimation ==  AnimationID.LUC2_UNDEAD_DEMON_MELEE=> {
-				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 6, attackStyle = Set(MELEE)))
+				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 7, attackStyle = Set(MELEE)))
 			}
 			case (npc, data) if npc.getAnimation == AnimationID.LUC2_UNDEAD_DEMON_SPARE_RIBS => {
-				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 6, attackStyle = Set(RANGE)))
+				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 7, attackStyle = Set(RANGE)))
 			}
 			case (npc, data) if npc.getAnimation == AnimationID.LUC2_UNDEAD_DEMON_FIREY_BALLS => {
-				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 6, attackStyle = Set(MAGE)))
+				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 7, attackStyle = Set(MAGE)))
 			}
 			case (npc, data) if npc.getAnimation == AnimationID.LUC2_UNDEAD_DEMON_EXPLOSION_FIRE => {
-				demons.update(npc, data.copy(attackCount = 0, ticksUntilAttack = 6, attackStyle = AttackStyle.values.toSet.filterNot(s => data.attackStyle.contains(s))))
+				demons.update(npc, data.copy(attackCount = 0, ticksUntilAttack = 7, attackStyle = AttackStyle.values.toSet.diff(data.attackStyle)))
 			}
 			case (npc, data) =>
 		}
