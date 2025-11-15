@@ -8,14 +8,19 @@ import com.fredplugins.pvmDebugger.WithPanel
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.HotkeyAction
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TORMENTED_DEMON_IDS
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TORMENTED_DEMON_REGION_IDS
-
 import com.fredplugins.common.extensions.ActorExtensions.*
+import com.fredplugins.common.extensions.GeneralExtensions
 import com.fredplugins.common.extensions.GeneralExtensions.*
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
-
+import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle
+import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle.MAGE
+import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle.MELEE
+import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle.RANGE
+import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TormentedDemonData
 import com.google.inject.Inject
+import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.lucidplugins.api.item.SlottedItem
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
@@ -23,13 +28,16 @@ import ethanApiPlugin.collections.Inventory
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
+import net.runelite.api.HeadIcon
 import net.runelite.api.NPC
 import net.runelite.api.Prayer
 import net.runelite.api.coords.WorldPoint
+import net.runelite.api.events.AnimationChanged
 import net.runelite.api.events.GameTick
 import net.runelite.api.events.InteractingChanged
 import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
+import net.runelite.api.gameval.AnimationID
 import net.runelite.api.gameval.NpcID
 import net.runelite.client.RuneLite
 import net.runelite.client.chat.ChatMessageBuilder
@@ -63,30 +71,14 @@ object FredsTormentedDemons {
 	)
 	val TORMENTED_DEMON_REGION_IDS: Seq[Int] = List(16196, 16197, 16452, 16453)
 
-	enum HotkeyAction(val op: (FredsTormentedDemonConfig => Keybind)) {
-		case DodgeFireball extends HotkeyAction(_.dodgeFireballHotkey())
-		case SwapMelee extends HotkeyAction(_.swapMeleeGearHotkey())
-		case SwapRange extends HotkeyAction(_.swapRangeGearHotkey())
-		case SwapMagic extends HotkeyAction(_.swapMageGearHotkey())
+
+	enum AttackStyle(val protectionPrayer: Prayer) {
+		case RANGE extends AttackStyle(Prayer.PROTECT_FROM_MISSILES)
+		case MAGE extends AttackStyle(Prayer.PROTECT_FROM_MAGIC)
+		case MELEE extends AttackStyle(Prayer.PROTECT_FROM_MELEE)
 	}
 
-	case class TormentedDemonData(animation: Int, poseAnimation: Int, location: WorldPoint) {
-		def update(npc: NPC): TormentedDemonData = {
-			val n = TormentedDemonData(npc.getAnimation, npc.getPoseAnimation, npc.getWorldLocation)
-			if(animation != n.animation) {
-
-			}
-			n
-		}
-	}
-}
-class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsTormentedDemonConfig) extends HelperModule with WithPanel with WithOverlay {
-	override val moduleName: String = "FredsTormentedDemonsHelper"
-//	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
-	private var targetDemon: Option[NPC] = Option.empty
-	private var blockingHotkey: Option[HotkeyAction] = Option.empty[HotkeyAction]
-
-	private def swap(itemList: Seq[String], swapFirstHalf: Boolean): Unit = {
+	private def swap(itemList: Array[String], swapFirstHalf: Boolean): Unit = {
 		val validItems: Seq[SlottedItem] = for {
 			item <- itemList
 			slottedItem <- Inventory.search.nameContains(item.strip)
@@ -118,27 +110,56 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 		}
 	}
 
-	private def doAction(e: HotkeyAction): Unit = {
-		Option(e).collect[(String, String, ChatMessageBuilder, () => Unit)] {
-			case HotkeyAction.DodgeFireball => ("Tormented", "Dodge Fireball", new ChatMessageBuilder().append("Moving from ").append(Color.red, "fireball").append("."), () => {})
-			case HotkeyAction.SwapMelee => ("Tormented", "Swap Melee", new ChatMessageBuilder().append("Swapping to ").append(Color.orange, "melee").append(" gear."), () => {if(config.useMeleeStyle()) {
+	enum HotkeyAction(val op: (FredsTormentedDemonConfig => Keybind), val color: Color, val action: (FredsTormentedDemonConfig => (() => Unit))) {
+		case DodgeFireball extends HotkeyAction(_.dodgeFireballHotkey(), Color.red, config => () => {})
+		case SwapMelee extends HotkeyAction(_.swapMeleeGearHotkey(), Color.orange, config => () => {
+			if (config.useMeleeStyle()) {
 				swap(config.meleeGear().split(','), false)
-				if(config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.PIETY)
-			}})
-			case HotkeyAction.SwapRange => ("Tormented", "Swap Range", new ChatMessageBuilder().append("Swapping to ").append(Color.green, "range").append(" gear."), () => {if(config.useRangeStyle()) {
-				swap(config.rangeGear().split(','), false)
-				if(config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.EAGLE_EYE)
-			}})
-			case HotkeyAction.SwapMagic => ("Tormented", "Swap Mage", new ChatMessageBuilder().append("Swapping to ").append(Color.blue, "magic").append(" gear."), () => {if(config.useMagicStyle()) {
-				swap(config.magicGear().split(','), false)
-				if(config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.MYSTIC_MIGHT)
-			}})
-		}.map[Runnable] {
-			case (group, sender, msg, action) => () => {
-				printMessage(ChatMessageType.FRIENDSCHAT, group, sender)(msg)
-				action()
+				if (config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.PIETY)
 			}
-		}.foreach(r => parent.getClientThread.invoke(r))
+		})
+		case SwapRange extends HotkeyAction(_.swapRangeGearHotkey(), Color.green, config => () => {
+			if (config.useRangeStyle()) {
+				swap(config.rangeGear().split(','), false)
+				if (config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.EAGLE_EYE)
+			}
+		})
+		case SwapMagic extends HotkeyAction(_.swapMageGearHotkey(), Color.blue, config => () => {
+			if (config.useMagicStyle()) {
+				swap(config.magicGear().split(','), false)
+				if (config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.MYSTIC_MIGHT)
+			}
+		})
+
+		private def message: ChatMessageBuilder = {
+			new ChatMessageBuilder().append("Running action \"").append(this.color, s"${this}").append("\".")
+		}
+
+		def run(module: FredsTormentedDemonsHelper): Unit = {
+			val actionFunc = action(module.config)
+			module.parent.getClientThread.invoke(() => {
+				actionFunc()
+				module.printMessage(ChatMessageType.FRIENDSCHAT, "Tormented", "Action")(message)
+			})
+		}
+	}
+
+	case class TormentedDemonData(attackCount: Int, ticksUntilAttack: Int, protectingStyle: AttackStyle, attackStyle: Set[AttackStyle], animationId: Int) {
+	}
+}
+class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsTormentedDemonConfig) extends HelperModule with WithPanel with WithOverlay {
+	override val moduleName: String = "FredsTormentedDemonsHelper"
+//	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	private var targetDemon: Option[NPC] = Option.empty
+	private var blockingHotkey: Option[HotkeyAction] = Option.empty[HotkeyAction]
+
+	def buildData(n: NPC): TormentedDemonData = {
+		FredsTormentedDemons.TormentedDemonData(
+			0, 6, EthanApiPlugin.getHeadIcon(n) match {
+				case HeadIcon.RANGED => AttackStyle.RANGE
+				case HeadIcon.MAGIC => AttackStyle.MAGE
+				case _ => AttackStyle.MELEE
+			}, Set(AttackStyle.MAGE, AttackStyle.RANGE, AttackStyle.MELEE), n.getAnimation)
 	}
 
 	private val internalKeyListener = new KeyListener {
@@ -148,7 +169,17 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 				val foundHotkeyEnum = HotkeyAction.values.find(v => v.op(config).matches(e))
 				blockingHotkey = foundHotkeyEnum.tapEach(a => {
 					e.consume()
-					doAction(a)
+					a.run(FredsTormentedDemonsHelper.this)
+//					Option(a).collect[(String, String, ChatMessageBuilder)] {
+//						case HotkeyAction.DodgeFireball => ("Tormented", "Dodge Fireball", new ChatMessageBuilder().append("Moving from ").append(Color.red, "fireball").append("."))
+//						case HotkeyAction.SwapMelee => ("Tormented", "Swap Melee", new ChatMessageBuilder().append("Swapping to ").append(Color.orange, "melee").append(" gear."))
+//						case HotkeyAction.SwapRange => ("Tormented", "Swap Range", new ChatMessageBuilder().append("Swapping to ").append(Color.green, "range").append(" gear."))
+//						case HotkeyAction.SwapMagic => ("Tormented", "Swap Mage", new ChatMessageBuilder().append("Swapping to ").append(Color.blue, "magic").append(" gear."))
+//					}.zip(Option(a).map(_.action(config))).map[Runnable] {
+//						case ((group, sender, msg), action) => () => {
+//							printMessage(ChatMessageType.FRIENDSCHAT, group, sender)(msg)
+//						}
+//					}.foreach(r => parent.getClientThread.invoke(r))
 				}).headOption
 //				if(foundHotkeyEnum.isDefined) {
 //					doAction(foundHotkeyEnum.get)
@@ -177,7 +208,7 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 //		npcs.map(n => new NpcSpawned(n)).foreach(onNpcSpawned(_))
 		demons.clear()
 		targetDemon = Option.empty
-		client.getTopLevelWorldView.npcs().asScala.toList.filter(n => TORMENTED_DEMON_IDS.contains(n.getId)).foreach(n => demons.put(n, FredsTormentedDemons.TormentedDemonData(n.getAnimation, n.getPoseAnimation, n.getWorldLocation)))
+		client.getTopLevelWorldView.npcs().asScala.toList.filter(n => TORMENTED_DEMON_IDS.contains(n.getId)).foreach(n => demons.put(n, buildData(n)))
 		findNewTarget()
 		if(inRegion()) parent.getKeyManager.registerKeyListener(internalKeyListener)
 	}
@@ -222,6 +253,15 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 			}).toMap
 	}
 	def getNpcName(id: Int): String = npcIdToNameMap.getOrElse(id, s"Npc(${id})")
+	private lazy val animationIdToNameMap: Map[Int, String] = {
+		classOf[net.runelite.api.gameval.AnimationID].getDeclaredFields.toList
+			.filter(_.getType == Integer.TYPE)
+			.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
+			.map(f => {
+				f.getInt(null) -> f.getName
+			}).toMap
+	}
+	def getAnimationName(id: Int): String = animationIdToNameMap.getOrElse(id, s"Animation(${id})")
 
 	@Subscribe
 	def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
@@ -239,7 +279,7 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 				})
 
 			Option(npcSpawned.getNpc).filter(n => TORMENTED_DEMON_IDS.contains(n.getId))
-				.map(n => n -> FredsTormentedDemons.TormentedDemonData(n.getAnimation, n.getPoseAnimation, n.getWorldLocation)).foreach{
+				.map(n => n -> buildData(n)).foreach{
 					case (npc, data) =>
 						demons.put(npc, data)
 						log.debug("Added demons[{}] = {}", npc, data)
@@ -266,14 +306,60 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 //		if(event.getSource
 //	}
 
-//	@Subscribe
-//	def onAnimationChanged(e: AnimationChanged)
+	@Subscribe
+	def onAnimationChanged(e: AnimationChanged): Unit = {
+		Option(e.getActor).collect {
+			case npc: NPC if demons.contains(npc) => npc -> demons(npc)
+		}.tap(x => {
+			x.foreach {
+				case (npc, data) => {
+					val msg = new ChatMessageBuilder()
+						.append("Animation changed from ")
+						.append(Color.blue, s"${getAnimationName(data.animationId)}")
+						.append(" to ")
+						.append(Color.green, s"${getAnimationName(npc.getAnimation)}")
+						.append(".")
+					parent.getClientThread.invoke(() => {
+						printMessage(ChatMessageType.FRIENDSCHAT, "Tormented", "AnimationChanged")(msg)
+					})
+				}
+			}
+		}).foreach {
+			case (npc, data) if npc.getAnimation ==  AnimationID.LUC2_UNDEAD_DEMON_MELEE=> {
+				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 6, attackStyle = Set(MELEE)))
+			}
+			case (npc, data) if npc.getAnimation == AnimationID.LUC2_UNDEAD_DEMON_SPARE_RIBS => {
+				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 6, attackStyle = Set(RANGE)))
+			}
+			case (npc, data) if npc.getAnimation == AnimationID.LUC2_UNDEAD_DEMON_FIREY_BALLS => {
+				demons.update(npc, data.copy(attackCount = data.attackCount + 1, ticksUntilAttack = 6, attackStyle = Set(MAGE)))
+			}
+			case (npc, data) if npc.getAnimation == AnimationID.LUC2_UNDEAD_DEMON_EXPLOSION_FIRE => {
+				demons.update(npc, data.copy(attackCount = 0, ticksUntilAttack = 6, attackStyle = AttackStyle.values.toSet.filterNot(s => data.attackStyle.contains(s))))
+			}
+			case (npc, data) =>
+		}
+	}
 	
 	@Subscribe
 	def onGameTick(e: GameTick): Unit = {
 		if(inRegion()) {
 			demons.mapValuesInPlace {
-				case (npc, data) => data.update(npc)
+				case (npc, data) => {
+//						val x = Option(npc.getAnimation).filterNot(_ == data.animationId).collect {
+//							case AnimationID.LUC2_UNDEAD_DEMON_MELEE => data.attackStyle.filter(_ == AttackStyle.MELEE)
+//							case _ => data.attackStyle.filter(_ == AttackStyle.RANGE)
+//							case _ => data.attackStyle.filter(_ == AttackStyle.MAGE)
+//							case _ => AttackStyle.values.filterNot(s => data.attackStyle.contains(s)).toSet
+//							case _ =>
+//						}
+					//val n = buildData(npc)//TormentedDemonData(npc.getAnimation, npc.getPoseAnimation, npc.getWorldLocation)
+					data.copy(ticksUntilAttack = Math.max(data.ticksUntilAttack-1, 0), animationId = npc.getAnimation, protectingStyle = EthanApiPlugin.getHeadIcon(npc) match {
+						case HeadIcon.RANGED => AttackStyle.RANGE
+						case HeadIcon.MAGIC => AttackStyle.MAGE
+						case _ => AttackStyle.MELEE
+					})
+				}
 			}
 
 			if(targetDemon.exists(_.isDead)) {
@@ -340,7 +426,7 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 		if(demons.nonEmpty) {
 			demons.foreach {
 				case (npc, data) => {
-					val text = s"anim: ${data.animation}, pose: ${data.poseAnimation}"
+					val text = s"attackCount: ${data.attackCount}, ticksUntilAttack: ${data.ticksUntilAttack}, anim: ${getAnimationName(data.animationId)}, protecting: ${data.protectingStyle}"
 					val color = if(targetDemon.contains(npc)) Color.GREEN else Color.RED
 					renderNpcOverlay(npc, text, color, 0)
 				}
