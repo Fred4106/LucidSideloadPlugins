@@ -11,12 +11,44 @@ import net.runelite.api.{Client, GameObject, Perspective, Point}
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import net.runelite.client.util.ColorUtil
+import org.locationtech.jts as jts
+import org.locationtech.jts.geom.{Geometry as JtsGeometry, Point as JtsPoint, Polygon as JtsPolygon, Coordinate as JtsCoordinate}
+
+import java.awt.Polygon
+//import org.locationtech.jts.geom.Polygon => JtsPolygon
 
 import java.awt.geom.Rectangle2D
 import java.awt.{BasicStroke, Color, Font, FontMetrics, Graphics2D, Rectangle, Shape}
 import scala.util.chaining.*
 
 package object overlays {
+	def toJtsGeometry(shape:Polygon): JtsGeometry = {
+		val coords: Seq[JtsCoordinate] = (0 until shape.npoints).toList.map(i => Point(shape.xpoints(i),shape.ypoints(i)))
+			.map(toJtsCoord)
+			.pipe{a=>
+				if(a.size > 2) a.appended(a.head)
+				else Seq.empty[JtsCoordinate]
+			}
+		jts.geom.GeometryFactory().createPolygon(coords.toArray)
+	}
+	def toJtsCoord(point: Point): JtsCoordinate = {
+		jts.geom.Coordinates.create(2).tap(c => {c.setX(point.getX); c.setY(point.getY)})
+	}
+	def toJtsPoint(point: Point): JtsPoint = {
+		jts.geom.GeometryFactory().createPoint(toJtsCoord(point))
+	}
+
+	def toPoint(coord: JtsCoordinate): Point = {
+		Point(coord.getX.toInt, coord.getY.toInt)
+	}
+	def toPoint(point: JtsPoint): Point = {
+		toPoint(point.getCoordinate)
+	}
+
+	def toPolygon(poly: JtsGeometry): Shape = {
+		jts.awt.ShapeWriter().toShape(poly)
+	}
+
 	def withFont[A1](font: Font)(x: => A1)(using g: Graphics2D): Unit = {
 		val oldFont = g.getFont
 		g.setFont(font)

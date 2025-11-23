@@ -29,6 +29,8 @@ import net.runelite.client.ui.{ClientToolbar, NavigationButton}
 import net.runelite.client.ui.overlay.OverlayManager
 
 import javax.inject.Singleton
+import javax.script.ScriptEngine
+import javax.script.ScriptEngineManager
 
 @PluginDescriptor(
 	name = "<html><font color=\"#CDA400\">Plugin Master</font></html>",
@@ -74,9 +76,13 @@ class ScriptMasterPlugin() extends Plugin with ShimUtils.Logging("DEBUG") {
 		}
 	}
 
+	lazy val engine: ScriptEngine = {
+		ScriptEngineManager().getEngineByName("Scala REPL")
+	}
 	override def startUp(): Unit = {
 		assert(initialize());
 		log.debug("startup!");
+		engine
 	}
 
 	override def shutDown(): Unit = {
@@ -99,6 +105,7 @@ class ScriptMasterPlugin() extends Plugin with ShimUtils.Logging("DEBUG") {
 			case Some(COMPILE_SIGNEL -> true) => {
 				configManager.setConfiguration[Boolean](GROUP, COMPILE_SIGNEL, false);
 				log.debug("Compile signal detected!");
+				log.debug("result {}", engine.eval(config.sourceCode()))
 			}
 			case _ =>
 		}

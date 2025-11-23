@@ -67,6 +67,7 @@ dependencies {
     implementation(projects.attackTimer)
     implementation(projects.customPrayers)
     implementation(projects.demonicGorilla)
+    implementation(projects.devkit)
     implementation(projects.dt2)
     implementation(projects.gearSwapper)
     implementation(projects.gauntlet)

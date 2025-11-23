@@ -2,6 +2,7 @@ description = "Common API"
 dependencies {
     annotationProcessor("org.projectlombok:lombok:${Dependencies.lombokVersion}")
     compileOnly("org.projectlombok:lombok:${Dependencies.lombokVersion}")
+    api("org.locationtech.jts:jts-core:1.20.0")
 //    implementation(project(":ethans"))
 //    api(project(":lucid"))
 

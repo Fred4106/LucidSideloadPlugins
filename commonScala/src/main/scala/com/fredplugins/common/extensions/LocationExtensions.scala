@@ -62,7 +62,7 @@ object LocationExtensions extends  ShimUtils.Logging() {
 			TWorldPoint.get(e)
 		}
 		def packed: Int = {
-			(e.getX & 16383) | ((e.getY & 16383) << 14) | (e.getPlane << 28)
+			((e.getX & 16383) << 14) | (e.getY & 16383) | ((e.getPlane & 0x3) << 28)
 		}
 	}
 	extension (e: LocalPoint)(using client: Client) {
