@@ -2,7 +2,6 @@ package com.fredplugins
 
 import net.runelite.api.coords.WorldPoint
 import com.fredplugins.common.api.WorldRegion
-import com.fredplugins.devkit.ConfigKeyParser.term
 import com.fredplugins.common.extensions.ActorExtensions.*
 import com.fredplugins.common.extensions.GeneralExtensions.*
 import com.fredplugins.common.extensions.ObjectExtensions.*

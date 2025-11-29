@@ -79,6 +79,7 @@ dependencies {
 //    implementation(projects.mta)
     implementation(projects.pvmDebugger)
 //    implementation(projects.pvmHelper)
+    implementation(projects.sailingHelper)
     implementation(projects.scurriusHelper)
     implementation(projects.teleportMaps)
     implementation(projects.tempoross)
