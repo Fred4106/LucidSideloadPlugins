@@ -5,6 +5,7 @@ import net.runelite.client.config.ConfigGroup
 import net.runelite.client.config.ConfigItem
 import net.runelite.client.config.ConfigSection
 
+import scala.compiletime.constValue
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import scala.jdk.StreamConverters.*
@@ -12,6 +13,10 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
+object Sections {
+	inline val WorldRegion = constValue["World Region"]
+//	inline val WorldRegion = constValue["World Region"]
+}
 @ConfigGroup(value = GROUP)
 trait DevkitConfig extends Config {
 	@ConfigSection(
@@ -19,14 +24,14 @@ trait DevkitConfig extends Config {
 		description = "Change world region setttings",
 		position = 1
 	)
-	val WorldRegionSection: "World Region" = "World Region"
+	def WorldRegionSection: String = Sections.WorldRegion
 
 	@ConfigItem(
 		name = "Regions",
 		description = "String containing the world regions to debug.",
 		position = 0,
 		keyName = "regions",
-		section = WorldRegionSection
+		section = Sections.WorldRegion
 	)
 	def regions: String = ""
 	@ConfigItem(
@@ -34,7 +39,7 @@ trait DevkitConfig extends Config {
 		description = "Id of the cache for openrs2.org/api.",
 		position = 1,
 		keyName = "cacheId",
-		section = WorldRegionSection
+		section = Sections.WorldRegion
 	)
 	def cacheId: Int = 2341
 
@@ -43,7 +48,7 @@ trait DevkitConfig extends Config {
 		description = "Region id to test on",
 		position = 2,
 		keyName = "testRegion",
-		section = WorldRegionSection
+		section = Sections.WorldRegion
 	)
 	def testRegion: Int = 16196
 
@@ -52,7 +57,7 @@ trait DevkitConfig extends Config {
 		description = "test region result",
 		position = 3,
 		keyName = "testRegionResult",
-		section = WorldRegionSection
+		section = Sections.WorldRegion
 	)
 	def testRegionResult: String = ""
 }

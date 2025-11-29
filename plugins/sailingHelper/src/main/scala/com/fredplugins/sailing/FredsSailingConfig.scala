@@ -1,6 +1,8 @@
 package com.fredplugins.sailing
 
 
+import com.fredplugins.sailing.FredsSailingConfig.Barracuda
+import com.fredplugins.sailing.FredsSailingConfig.Overlay
 import net.runelite.client.config.Alpha
 import net.runelite.client.config.Config
 import net.runelite.client.config.ConfigGroup
@@ -19,6 +21,8 @@ import scala.compiletime.uninitialized
 
 object FredsSailingConfig {
 	inline val GROUP            : "FredsSailing" = constValue["FredsSailing"]
+	inline val Barracuda = constValue["Barracuda"]
+	inline val Overlay = constValue["Overlay"]
 }
 
 @ConfigGroup(value = FredsSailingConfig.GROUP)
@@ -30,13 +34,13 @@ trait FredsSailingConfig extends Config {
 		position = 60,
 		closedByDefault = false
 	)
-	val barracuda_section: String = "Barracuda"
+	def barracuda_section: String = Barracuda
 
 	@ConfigItem(
 		keyName = "barracudaHighlightLostCrates",
 		name = "Highlight Crates",
 		description = "Highlight lost crates that need to be collected during Barracuda Trials.",
-		section = "Barracuda",
+		section = Barracuda,
 		position = 1
 	)
 	def barracudaHighlightLostCrates(): Boolean = true
@@ -45,7 +49,7 @@ trait FredsSailingConfig extends Config {
 		keyName = "barracudaHighlightLostCratesColour",
 		name = "Crate Colour",
 		description = "The colour to highlight lost crates.",
-		section = "Barracuda",
+		section = Barracuda,
 		position = 2
 	)
 	@Alpha
@@ -58,7 +62,7 @@ trait FredsSailingConfig extends Config {
 		description = "Overlay settings",
 		position = 100
 	)
-	val overlay_section: String = "Overlay"
+	def overlay_section: String = Overlay
 
 	@Range(min = 6, max = 32)
 	@ConfigItem(
@@ -66,7 +70,7 @@ trait FredsSailingConfig extends Config {
 		name = "Font Size",
 		description = "sets font size for overlay",
 		position = 0,
-		section = "Overlay"
+		section = Overlay
 	)
 	def getFontSize(): Int = 14
 
@@ -75,7 +79,7 @@ trait FredsSailingConfig extends Config {
 		name = "Bold Font",
 		description = "sets bold font for overlay",
 		position = 1,
-		section = "Overlay"
+		section = Overlay
 	)
 	def getFontBold(): Boolean = true
 	//endregion
