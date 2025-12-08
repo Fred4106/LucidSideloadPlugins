@@ -36,6 +36,11 @@ object ObjectExtensions {
 				case d: DynamicObject => Option(d.getAnimation)
 			}.flatten
 		}
+		def animationFrameAndCycleOpt: Option[(Int, Int)] = {
+			Option(e.getRenderable).collect {
+				case d: DynamicObject => Option(d.getAnimFrame -> d.getAnimCycle)
+			}.flatten
+		}
 		def templateLocation: WorldPoint = {
 			TWorldPoint.get(e.getWorldLocation)// WorldPointUtils.toTemplate(e.getWorldLocation)
 		}

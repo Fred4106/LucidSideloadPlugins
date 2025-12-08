@@ -1,6 +1,7 @@
 package com.fredplugins.sailing
 
 import com.google.inject.Inject
+import com.google.inject.Singleton
 import net.runelite.api.Actor
 import net.runelite.api.Client
 import net.runelite.api.GameObject
@@ -17,6 +18,7 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
+@Singleton
 class SailingUtils(client: Client, config: FredsSailingConfig){
 	def isSailing: Boolean = {
 		Option(client.getLocalPlayer).exists(lp => !lp.getWorldView.isTopLevel)
@@ -43,6 +45,14 @@ class SailingUtils(client: Client, config: FredsSailingConfig){
 		val wv     = player.getWorldView
 		if (wv.isTopLevel) return player.getLocalLocation
 		client.getTopLevelWorldView.worldEntities.byIndex(wv.getId).transformToMainWorld(client.getLocalPlayer.getLocalLocation)
+	}
+
+	def getObjectsInPlayerWorldView: List[GameObject] = {
+		val player = client.getLocalPlayer
+		val wv     = player.getWorldView
+
+		wv.getScene.getExtendedTiles()(wv.getPlane).flatten.toList
+			.flatMap(t => Option(t).map(_.getGameObjects.toList.filter(o => Option(o).map(_.getId).exists(_ != -1))).getOrElse(List.empty[GameObject]))
 	}
 
 	def getTopLevelWorldPoint: WorldPoint = WorldPoint.fromLocal(client, getTopLevelLocalPoint)

@@ -1,16 +1,30 @@
 package com.fredplugins.sailing.features
 
+
+import com.fredplugins.common.extensions.ActorExtensions.*
+import com.fredplugins.common.extensions.GeneralExtensions.*
+import com.fredplugins.common.extensions.ObjectExtensions.*
+import com.fredplugins.common.extensions.ProjectileExtensions.*
+import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.sailing.PluginLifecycleComponent
 import com.fredplugins.sailing.SailingUtils
 import com.fredplugins.sailing.model.Boat
 import com.fredplugins.sailing.model.CargoHoldTier
+import com.fredplugins.sailing.model.SubFacility
+import com.fredplugins.sailing.model.Facility
+import com.fredplugins.sailing.model.Facilities
 import com.fredplugins.sailing.model.HelmTier
 import com.fredplugins.sailing.model.HullTier
 import com.fredplugins.sailing.model.SailTier
 import com.fredplugins.sailing.model.SalvagingHookTier
 import com.google.inject.Inject
+import ethanApiPlugin.collections.TileObjects
+import ethanApiPlugin.collections.query.TileObjectQuery
 import net.runelite.api.Client
+import net.runelite.api.GameObject
+import net.runelite.api.Tile
+import net.runelite.api.TileObject
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.events.GameObjectDespawned
 import net.runelite.api.events.GameObjectSpawned
@@ -32,6 +46,7 @@ import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 import java.awt.{Color, Dimension, Graphics2D}
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 class BoatTracker @Inject()(
 	private val client: Client,
@@ -42,6 +57,8 @@ class BoatTracker @Inject()(
 	private var currentSpeed: Int = 0
 	private var lastValidAngle: Int   = -1
 	private var lastPoint: LocalPoint = uninitialized
+
+	private var facilities: Map[GameObject, SubFacility] = Map.empty[GameObject, SubFacility]
 
 	override def shutDown(): Unit = {
 		trackedBoats.clear()
@@ -118,6 +135,7 @@ class BoatTracker @Inject()(
 				}
 			}
 	}
+
 	@Subscribe
 	def onGameTick(e: GameTick): Unit = {
 		Option.when(utils.isSailing)(getBoat).flatten match {
@@ -136,11 +154,36 @@ class BoatTracker @Inject()(
 						})
 				}
 				lastPoint = current
+				val lpwv = client.getLocalPlayer.getWorldView
+
+//				val tiles     = lpwv.getScene.getTiles
+//				val flatTiles = {
+//					val b = new ListBuffer[Tile]
+//					for (z <- tiles.indices) {
+//						for (x <- tiles(z).indices) {
+//							for (y <- tiles(z)(x).indices) {
+//								val t = tiles(z)(x)(y)
+//								if(t != null) {
+//									b.addOne(t)
+//								}
+//							}
+//						}
+//					}
+//					b.toList
+//				}
+
+//				log.debug("tiles: {}", flatTiles)
+
+				val gobjs = utils.getObjectsInPlayerWorldView
+
+				facilities = gobjs.flatMap(to => Facilities.getForObj(to).map(fst => to -> fst))
+					.toMap
 			}
 			case None => {
 				lastPoint = null
 				currentSpeed = 0
 				lastValidAngle = -1
+				facilities = Map.empty[GameObject, SubFacility]
 			}
 		}
 	}
@@ -213,6 +256,29 @@ class BoatTracker @Inject()(
 					.right(s"${angle}")
 					.build
 			)
+
+			given Client = client
+			val facilitiesLines: Seq[LayoutableRenderableEntity] = facilities.toList
+				.flatMap((go, subfacility) => {
+					val animStr = go.animationOpt.map(_.getId).zip(go.animationFrameAndCycleOpt).map {
+						case (animId: Int, (animFrame: Int, animCycle: Int)) => s"\nAnim(id: ${animId}, frame: ${animFrame}, cycle: ${animCycle})"
+					}.map(str => LineComponent.builder.left("").right(str).build)
+
+					Seq(
+						LineComponent.builder
+							.left(subfacility.parent.entryName + "." + subfacility.entryName)
+							.right(s"id: ${go.getId}, pos: ${go.getWorldLocation.dx(-go.getWorldView.getBaseX).dy(-go.getWorldView.getBaseY)}")
+							.build
+					).appendedAll(animStr.toList)
+				})
+				.pipe(fl => {
+					fl.prependedAll(
+						Option.when[LayoutableRenderableEntity](fl.nonEmpty)(TitleComponent.builder.text("Facilities").build()).toSeq
+					)
+				})
+
+			facilitiesLines.foreach(add)
+
 			super.render(graphics)
 		})
 	}
