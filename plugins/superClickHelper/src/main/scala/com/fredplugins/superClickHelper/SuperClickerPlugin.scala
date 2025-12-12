@@ -328,17 +328,37 @@ class SuperClickerPlugin() extends Plugin {
 		blockTopLevelSwitch = blockTopLevelSwitch - 1
 	}
 
-	private def findSpell(group: Int, id: Int): Option[(Int, ((Int, ItemComposition), (Int, Widget)))] = {
+	private def findSpell(group: Int, id: Int): Option[Widget] = {
 		spellsWidgetTable.toList.find(e => {
 			val (egroup, eid) = e._2._2._2.getId.pipe(eid => WidgetInfoExtended.TO_GROUP(eid) -> WidgetInfoExtended.TO_CHILD(eid))
 			egroup == group && eid == id
-		})
+		}).map(_._2._2._2)
 	}
 
 
 	private object OPAL_JEWELRY {
 		def unapply(id: Int): Boolean = {
-					List(OPAL_RING, OPAL_NECKLACE, STRUNG_OPAL_AMULET, OPAL_BRACELET).contains(id)
+			List(OPAL_RING, OPAL_NECKLACE, STRUNG_OPAL_AMULET, OPAL_BRACELET).contains(id)
+		}
+	}
+	private object SAPPHIRE_JEWELRY {
+		def unapply(id: Int): Boolean = {
+			List(SAPPHIRE_RING, SAPPHIRE_NECKLACE, STRUNG_SAPPHIRE_AMULET, JEWL_SAPPHIRE_BRACELET).contains(id)
+		}
+	}
+	private object RUBY_JEWELRY {
+		def unapply(id: Int): Boolean = {
+			List(RUBY_RING, RUBY_NECKLACE, STRUNG_RUBY_AMULET, JEWL_RUBY_BRACELET).contains(id)
+		}
+	}
+	private object EMERALD_JEWELRY {
+		def unapply(id: Int): Boolean = {
+			List(EMERALD_RING, EMERALD_NECKLACE, STRUNG_EMERALD_AMULET, JEWL_EMERALD_BRACELET).contains(id)
+		}
+	}
+	private object DIAMOND_JEWELRY {
+		def unapply(id: Int): Boolean = {
+			List(DIAMOND_RING, DIAMOND_NECKLACE, STRUNG_DIAMOND_AMULET, JEWL_DIAMOND_BRACELET).contains(id)
 		}
 	}
 	private object JADE_JEWELRY {
@@ -419,15 +439,19 @@ class SuperClickerPlugin() extends Plugin {
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
 			val inventoryItemWidget = me.getWidget
 			Option(me.getItemId).collect{
-				case MAHOGANY_LOGS | TEAK_LOGS if(findSpell(218, 133).exists(u => List(1975, 581).contains(u._2._2._2.getSpriteId))) => findSpell(218, 133)
-				case OPAL_JEWELRY() if(findSpell(218,13).exists(u => List(18, 1765).contains(u._2._2._2.getSpriteId))) => findSpell(218, 13)
-				case JADE_JEWELRY() if(findSpell(218,24).exists(u => List(28, 1766).contains(u._2._2._2.getSpriteId))) => findSpell(218, 24)
-				case TOPAZ_JEWELRY() if(findSpell(218,37).exists(u => List(1767 , 39).contains(u._2._2._2.getSpriteId))) => findSpell(218, 37)
-				case UNSTRUNG_JEWELRY() if(findSpell(218,126).exists(u => List(1954, 550).contains(u._2._2._2.getSpriteId)))  => findSpell(218, 126)
-				case Alchable() if(findSpell(218,44).exists(u => List(41, 1781).contains(u._2._2._2.getSpriteId))) => findSpell(218, 44)
+				case MAHOGANY_LOGS | TEAK_LOGS if findSpell(218, 133).exists(w => List(581, 1975).contains(w.getSpriteId)) => findSpell(218, 133).zip(Some(3))
+				case OPAL_JEWELRY() if findSpell(218,13).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(218, 13).zip(Some(2))
+				case SAPPHIRE_JEWELRY() if findSpell(218,13).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(218, 13).zip(Some(2))
+				case JADE_JEWELRY() if findSpell(218,24).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(218, 24).zip(Some(2))
+				case EMERALD_JEWELRY() if findSpell(218,24).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(218, 24).zip(Some(2))
+				case TOPAZ_JEWELRY() if findSpell(218,37).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(218, 37).zip(Some(2))
+				case RUBY_JEWELRY() if findSpell(218,37).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(218, 37).zip(Some(2))
+				case DIAMOND_JEWELRY() if findSpell(218,46).exists(u => List(1768 , 43).contains(u.getSpriteId)) => findSpell(218, 46).zip(Some(2))
+				case UNSTRUNG_JEWELRY() if findSpell(218,126).exists(u => List(1954, 550).contains(u.getSpriteId))  => findSpell(218, 126).zip(Some(3))
+				case Alchable() if findSpell(218,44).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(218, 44).zip(Some(3))
 			}.flatten.collect {//(u  => u)//)//(iid => iid.)
 //				case (a, (b, (c, d))) => a
-				case (unkown1, (unknown2, (cid, w))) => {
+				case (w, d) => {
 //					val inventoryItemWidget = findItem
 					client.getMenu.createMenuEntry(-1)
 						.setOption("Cast".colored(Color.BLUE))
@@ -438,7 +462,7 @@ class SuperClickerPlugin() extends Plugin {
 //						.setParam1(cid)
 //					.onClick(e => {
 						.onClick(e => {
-							blockTopLevelSwitch = 3
+							blockTopLevelSwitch = d
 							clientThread.invokeLater(() => {
 								InteractionUtils.useWidgetOnWidget(w, inventoryItemWidget)
 							})
