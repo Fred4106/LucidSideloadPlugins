@@ -9,7 +9,7 @@ import java.awt.*;
 
 @ConfigGroup(FredsTemporossConfig.GroupName)
 public interface FredsTemporossConfig extends Config {
-	final String GroupName = "superClickHelper";
+	final String GroupName = "FredsTempoross";
 	// Sections
 	@ConfigSection(
 			name = "Fire",

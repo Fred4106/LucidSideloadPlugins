@@ -14,7 +14,7 @@ object Constants {
 	val VARB_IS_TETHERED        = 11895
 	val VARB_REWARD_POOL_NUMBER = 11936
 
-	val TEMPOROSS_REGION                                           = 12078
+	val TEMPOROSS_REGION                                           = 12076
 //	val UNKAH_REWARD_POOL_REGION = 12588
 //	val UNKAH_BOAT_REGION        = 12332
 	val UNKAH_REGIONS: List[Int] = List(12588, 12332)
