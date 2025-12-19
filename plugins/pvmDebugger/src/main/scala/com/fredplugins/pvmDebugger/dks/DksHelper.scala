@@ -119,7 +119,7 @@ class DksHelper @Inject()(override val parent: PvmDebuggerPlugin, override val c
 	}
 
 	object Prime extends KingWrapper {
-		override def npcId: Int = NpcID.DAGCAVE_RANGED_BOSS
+		override def npcId: Int = NpcID.DAGCAVE_MAGIC_BOSS
 		override def attackAnimationId: Int = AnimationID.DAGANNOTH_MEGANOTH_ATTACK_RANGE
 		override def attackStyle: AttackStyle = AttackStyle.Range
 		override def weakAgainst: AttackStyle = AttackStyle.Melee
@@ -133,7 +133,7 @@ class DksHelper @Inject()(override val parent: PvmDebuggerPlugin, override val c
 	}
 
 	object Supreame extends KingWrapper {
-		override def npcId: Int = NpcID.DAGCAVE_MAGIC_BOSS
+		override def npcId: Int = NpcID.DAGCAVE_RANGED_BOSS
 		override def attackAnimationId: Int = AnimationID.DAGANNOTH_MEGANOTH_ATTACK_MAGE
 		override def attackStyle: AttackStyle = AttackStyle.Magic
 		override def weakAgainst: AttackStyle = AttackStyle.Range
