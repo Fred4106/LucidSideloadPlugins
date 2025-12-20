@@ -279,7 +279,7 @@ public enum AnimationData {
 
 	public static boolean isManualCasting(AnimationData animationData) {
 		// This check ensures we don't treat staff animations which are magic attacks as a "manual cast".
-		if(animationData.spellbook != null && animationData != null) {
+		if(animationData != null && animationData.spellbook != null) {
 			// We tell a manual cast by the animation data:
 			return animationData.attackStyle == AttackStyle.MAGIC &&
 					spellBookAnimations.get(animationData.spellbook).contains(animationData);
