@@ -17,7 +17,6 @@ import scala.collection.immutable.List$;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Extension
 @PluginDescriptor(
         name = "<html><font color=\"#32C8CD\">Freds</font> Layout Helper</html>",
         enabledByDefault = false,

@@ -1,0 +1,147 @@
+package com.fred4106.improvedCharges.item.listeners;
+
+import net.runelite.api.MenuEntry;
+import net.runelite.api.events.MenuEntryAdded;
+import com.fred4106.improvedCharges.item.ChargedItemBase;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.TriggerBase;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.utils.ReplaceTarget;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ListenerOnMenuEntryAdded extends ListenerBase {
+    public ListenerOnMenuEntryAdded(final Provider provider, final ChargedItemBase chargedItem) {
+        super(provider, chargedItem);
+    }
+
+    public void trigger(final MenuEntryAdded event) {
+        for (final TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(triggerBase, event)) {
+                continue;
+            };
+            final OnMenuEntryAdded trigger = (OnMenuEntryAdded) triggerBase;
+            boolean triggerUsed = false;
+
+            if (trigger.replaceOption.isPresent()) {
+                event.getMenuEntry().setOption(trigger.replaceOption.get());
+                triggerUsed = true;
+            }
+
+            if (trigger.replaceOptionConsumer.isPresent()) {
+                try {
+                    event.getMenuEntry().setOption(trigger.replaceOptionConsumer.get().call());
+                    triggerUsed = true;
+                } catch (final Exception ignored) {}
+            }
+
+            if (trigger.replaceTargets.isPresent()) {
+                for (final ReplaceTarget replaceTarget : trigger.replaceTargets.get()) {
+                    if (event.getTarget().contains(replaceTarget.target)) {
+                        event.getMenuEntry().setTarget(event.getTarget().replaceAll(replaceTarget.target, replaceTarget.replace));
+                        triggerUsed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (trigger.replaceTargetDynamically.isPresent() && event.getTarget().contains(trigger.replaceTargetDynamically.get().target)) {
+                try {
+                    event.getMenuEntry().setTarget(event.getTarget().replaceAll(trigger.replaceTargetDynamically.get().target, trigger.replaceTargetDynamically.get().replace.call()));
+                } catch (final Exception ignored) {}
+                triggerUsed = true;
+            }
+
+            if (trigger.hide.isPresent() && trigger.menuEntryOption.isPresent()) {
+                final List<MenuEntry> newMenuEntries = new ArrayList<>();
+
+                for (final MenuEntry entry : provider.client.getMenuEntries()) {
+                    if (!entry.getOption().equals(trigger.menuEntryOption.get())) {
+                        newMenuEntries.add(entry);
+                    }
+                }
+
+                provider.client.setMenuEntries(newMenuEntries.toArray(new MenuEntry[0]));
+                triggerUsed = true;
+            }
+
+            if (super.trigger(trigger)) {
+                triggerUsed = true;
+            }
+
+            if (triggerUsed) return;
+        }
+    }
+
+    public boolean isValidTrigger(final TriggerBase triggerBase, final MenuEntryAdded event) {
+        if (!(triggerBase instanceof OnMenuEntryAdded)) return false;
+        final OnMenuEntryAdded trigger = (OnMenuEntryAdded) triggerBase;
+
+        // Check base triggers to avoid calling impostor id getters on client.
+        impostorIdsTargetCheck: if (trigger.replaceImpostorIds.isPresent() && trigger.onMenuTarget.isPresent()) {
+            for (final String target : trigger.onMenuTarget.get()) {
+                if (event.getTarget().contains(target)) {
+                    break impostorIdsTargetCheck;
+                }
+            }
+
+            if (!super.isValidTrigger(trigger)) {
+                return false;
+            }
+        }
+
+        // Item id check.
+        if (!trigger.replaceImpostorIds.isPresent()) {
+            boolean idCheck = false;
+
+            for (final TriggerItem item : chargedItem.items) {
+                if (item.itemId == event.getMenuEntry().getItemId()) {
+                    idCheck = true;
+                    break;
+                }
+            }
+
+            if (!idCheck) {
+                return false;
+            }
+        }
+
+        // Hide config check.
+        if (trigger.hide.isPresent() && !provider.config.hideDestroyMenuEntries()) {
+            return false;
+        }
+
+        // Menu entry option check.
+        if (trigger.menuEntryOption.isPresent() && !event.getOption().equals(trigger.menuEntryOption.get())) {
+            return false;
+        }
+
+        // Menu target replace check.
+        menuReplaceTargetsCheck: if (trigger.replaceTargets.isPresent()) {
+            for (final ReplaceTarget replaceTarget: trigger.replaceTargets.get()) {
+                if (event.getTarget().contains(replaceTarget.target)) {
+                    break menuReplaceTargetsCheck;
+                }
+            }
+
+            return false;
+        }
+
+        // Menu replace impostor id check.
+        replaceImpostorIdCheck: if (trigger.replaceImpostorIds.isPresent()) {
+            for (final int impostorId : trigger.replaceImpostorIds.get()) {
+                try {
+                    if (provider.client.getObjectDefinition(event.getMenuEntry().getIdentifier()).getImpostor().getId() == impostorId) {
+                        break replaceImpostorIdCheck;
+                    }
+                } catch (final Exception ignored) {}
+            }
+
+            return false;
+        }
+
+        return super.isValidTrigger(trigger);
+    }
+}
