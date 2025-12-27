@@ -47,6 +47,9 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
             new StorableItem(ItemId.JUNIPER_LOGS).checkName("Juniper logs"),
             new StorableItem(ItemId.BARK).checkName("Bark"),
             new StorableItem(ItemId.BLISTERWOOD_LOGS).checkName("Blisterwood logs"),
+			new StorableItem(ItemId.CAMPHOR_LOGS).checkName("Camphor logs"),
+			new StorableItem(ItemId.IRONWOOD_LOGS).checkName("Ironwood logs"),
+			new StorableItem(ItemId.ROSEWOOD_LOGS).checkName("Rosewood logs"),
 
             // Forestry kit.
             new StorableItem(ItemId.ANIMAINFUSED_BARK),
@@ -83,6 +86,9 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
             ItemId.BLISTERWOOD_LOGS,
             ItemId.MAGIC_LOGS,
             ItemId.REDWOOD_LOGS,
+            ItemId.CAMPHOR_LOGS,
+            ItemId.IRONWOOD_LOGS,
+            ItemId.ROSEWOOD_LOGS
         }, 28);
 
         this.items = new TriggerItem[]{
@@ -208,7 +214,7 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
                 lastLogs = Optional.of(new StorageItem(ItemId.ACHEY_TREE_LOGS, 1));
                 storage.add(lastLogs);
                 infernalQuantityTracker++;
-            }).requiredItem(ItemId.LOG_BASKET_OPEN),
+            }).requiredItem(ItemId.FORESTRY_BASKET_OPEN),
 
             // Chop.
             new OnChatMessage("You get (?<logs>some .+).").matcherConsumer(m -> {
@@ -285,7 +291,10 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
                     "Arctic pine logs",
                     "Yew logs",
                     "Magic logs",
-                    "Redwood logs"
+                    "Redwood logs",
+                    "Camphor logs",
+                    "Ironwood logs",
+                    "Rosewood logs"
             ).consumer(this::buildBeehive),
             new OnChatMessage("Well done, you've completed a beehive. The bees can now be safely rehomed.").consumer(() -> {
                 if (lastLogUsedFromBasketForBeehive.isPresent()) {
@@ -398,6 +407,9 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
         storage.put(ItemId.JUNIPER_LOGS, 0);
         storage.put(ItemId.BARK, 0);
         storage.put(ItemId.BLISTERWOOD_LOGS, 0);
+        storage.put(ItemId.CAMPHOR_LOGS, 0);
+        storage.put(ItemId.IRONWOOD_LOGS, 0);
+        storage.put(ItemId.ROSEWOOD_LOGS, 0);
     }
 
     private int getLogsInBasket() {
@@ -421,6 +433,9 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
                 case ItemId.JUNIPER_LOGS:
                 case ItemId.BARK:
                 case ItemId.BLISTERWOOD_LOGS:
+                case ItemId.CAMPHOR_LOGS:
+                case ItemId.IRONWOOD_LOGS:
+                case ItemId.ROSEWOOD_LOGS:
                     logs += storageItem.getQuantity();
                     break;
             }
@@ -454,7 +469,7 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
         final int[] logsInOrderToUse = new int[]{
                 ItemId.LOGS, ItemId.ACHEY_TREE_LOGS, ItemId.OAK_LOGS, ItemId.WILLOW_LOGS,
                 ItemId.TEAK_LOGS, ItemId.MAPLE_LOGS, ItemId.MAHOGANY_LOGS, ItemId.ARCTIC_PINE_LOGS,
-                ItemId.YEW_LOGS, ItemId.MAGIC_LOGS, ItemId.REDWOOD_LOGS
+                ItemId.YEW_LOGS, ItemId.MAGIC_LOGS, ItemId.REDWOOD_LOGS, ItemId.CAMPHOR_LOGS, ItemId.IRONWOOD_LOGS, ItemId.ROSEWOOD_LOGS
         };
 
         for (final int logsId : logsInOrderToUse) {
