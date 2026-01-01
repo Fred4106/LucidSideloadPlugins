@@ -122,4 +122,8 @@ public final class ProjectileID
     public static final int PORAZDIR_ENERGY_BALL = 1514;
 
     public static final int ZALCANO_PROJECTILE_FIREBALL = 1728;
+
+    public static final int GRYPHON_RANGED_PROJECTILE = 3459;
+    public static final int GRYPHON_RANGED_IMPACT = 3460;
+    public static final int GRYPHON_SPIT_PROJECTILE = 3461;
 }

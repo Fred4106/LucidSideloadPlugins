@@ -17,6 +17,8 @@ import com.fredplugins.pvmDebugger.moons.FredsMoonConfig
 import com.fredplugins.pvmDebugger.moons.FredsMoonHelper
 import com.fredplugins.pvmDebugger.muspah.FredsMuspahConfig
 import com.fredplugins.pvmDebugger.muspah.FredsMuspahHelper
+import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneConfig
+import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneHelper
 import com.fredplugins.pvmDebugger.titans.FredsTitanConfig
 import com.fredplugins.pvmDebugger.titans.FredsTitanHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
@@ -89,7 +91,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val infernoHelper: FredsInfernoHelper     = null
 	@Inject private val vorkathHelper: FredsVorkathHelper = null
 	@Inject private val titansHelper: FredsTitanHelper    = null
-	@Inject private val yamaHelper: FredsYamaHelper = null
+	@Inject private val yamaHelper: FredsYamaHelper             = null
+	@Inject private val shellsbaneHelper: FredsShellsbaneHelper = null
 
 	//	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
@@ -172,7 +175,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List(shellsbaneHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -378,4 +381,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideInfernoConfig(configManager: ConfigManager):FredsInfernoConfig = configManager.getConfig(classOf[FredsInfernoConfig])
 	@Provides def provideYamaConfig(configManager: ConfigManager):FredsYamaConfig = configManager.getConfig(classOf[FredsYamaConfig])
 	@Provides def provideDksConfig(configManager: ConfigManager): DksConfig = configManager.getConfig(classOf[DksConfig])
+	@Provides def provideShellsBane(configManager: ConfigManager): FredsShellsbaneConfig = configManager.getConfig(classOf[FredsShellsbaneConfig])
 }

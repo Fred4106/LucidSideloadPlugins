@@ -78,8 +78,17 @@ public class C_ForestryKit extends ChargedItemWithStorage {
                 storage.removeAndPrioritizeInventory(ItemId.FORESTERS_RATION, 1);
             }),
 
-            // Nature offering used.
-            new OnChatMessage("The nature offerings enabled you to chop an extra log").consumer(() -> {
+//            // Nature offering used.
+//            new OnChatMessage("The nature offerings enabled you to chop an extra log").consumer(() -> {
+//                storage.removeAndPrioritizeInventory(ItemId.NATURE_OFFERINGS, 1);
+//            }),
+
+            // Achey tree.
+            new OnChatMessage("You get some logs.").onMenuTarget("Achey Tree").consumer(() -> {
+                storage.removeAndPrioritizeInventory(ItemId.NATURE_OFFERINGS, 1);
+            }),
+
+            new OnChatMessage("You get (?<logs>some .+).").matcherConsumer(m -> {
                 storage.removeAndPrioritizeInventory(ItemId.NATURE_OFFERINGS, 1);
             }),
 
