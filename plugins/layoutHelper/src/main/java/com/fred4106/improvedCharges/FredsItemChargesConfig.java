@@ -3559,6 +3559,17 @@ public interface FredsItemChargesConfig extends Config {
 		return ChargeId.UNKNOWN;
 	}
 
+
+	@ConfigItem(
+		keyName = PLANK_SACK + _STORAGE,
+		name = PLANK_SACK + _STORAGE,
+		description = PLANK_SACK + _STORAGE,
+		section = debug
+	)
+	default String getPlankSackStorage() {
+		return "";
+	}
+
 	@ConfigItem(
 		keyName = SLAYER_STAFF_E,
 		name = SLAYER_STAFF_E,

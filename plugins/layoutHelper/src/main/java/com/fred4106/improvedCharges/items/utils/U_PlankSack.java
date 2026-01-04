@@ -45,15 +45,40 @@ public class U_PlankSack extends ChargedItemWithStorage {
             new OnChatMessage("Your sack is currently empty.").emptyStorage(),
 
             // Check.
-            new OnChatMessage("Basic planks: (?<regular>.+), Oak planks: (?<oak>.+), Teak planks: (?<teak>.+), Mahogany planks: (?<mahogany>.+), Camphor planks: (?<camphor>.+), Ironwood planks: (?<ironwood>.+), Rosewood planks: (?<rosewood>.+)").matcherConsumer(m -> {
-                storage.clear();
-                storage.put(ItemId.PLANK, Integer.parseInt(m.group("regular")));
-                storage.put(ItemId.OAK_PLANK, Integer.parseInt(m.group("oak")));
-                storage.put(ItemId.TEAK_PLANK, Integer.parseInt(m.group("teak")));
-                storage.put(ItemId.MAHOGANY_PLANK, Integer.parseInt(m.group("mahogany")));
-                storage.put(ItemId.CAMPHOR_PLANK, Integer.parseInt(m.group("camphor")));
-                storage.put(ItemId.IRONWOOD_PLANK, Integer.parseInt(m.group("ironwood")));
-                storage.put(ItemId.ROSEWOOD_PLANK, Integer.parseInt(m.group("rosewood")));
+//            new OnChatMessage("Basic planks: (?<regular>.+), Oak planks: (?<oak>.+), Teak planks: (?<teak>.+), Mahogany planks: (?<mahogany>.+), Camphor planks: (?<camphor>.+), Ironwood planks: (?<ironwood>.+), Rosewood planks: (?<rosewood>.+)").matcherConsumer(m -> {
+//                storage.clear();
+//                storage.put(ItemId.PLANK, Integer.parseInt(m.group("regular")));
+//                storage.put(ItemId.OAK_PLANK, Integer.parseInt(m.group("oak")));
+//                storage.put(ItemId.TEAK_PLANK, Integer.parseInt(m.group("teak")));
+//                storage.put(ItemId.MAHOGANY_PLANK, Integer.parseInt(m.group("mahogany")));
+//                storage.put(ItemId.CAMPHOR_PLANK, Integer.parseInt(m.group("camphor")));
+//                storage.put(ItemId.IRONWOOD_PLANK, Integer.parseInt(m.group("ironwood")));
+//                storage.put(ItemId.ROSEWOOD_PLANK, Integer.parseInt(m.group("rosewood")));
+//            }),
+
+            new OnChatMessage("(?<wood>Basic|Oak|Teak|Mahogany|Camphor|Ironwood|Rosewood) planks: (?<qty>.+)").matcherConsumer(m -> {
+                String tpe = m.group("wood");
+                int qty = Integer.parseInt(m.group("qty"));
+                int itemId = -1;
+                System.out.println("Parsed type=\""+ tpe + "\" and qty="+qty+".");
+                if(tpe.equals("Basic")) {
+                    itemId = ItemId.PLANK;
+                } else if(tpe.equals("Oak")) {
+                    itemId = ItemId.OAK_PLANK;
+                } else if(tpe.equals("Teak")) {
+                    itemId = ItemId.TEAK_PLANK;
+                } else if(tpe.equals("Mahogany")) {
+                    itemId = ItemId.MAHOGANY_PLANK;
+                } else if(tpe.equals("Camphor")) {
+                    itemId = ItemId.CAMPHOR_PLANK;
+                } else if(tpe.equals("Ironwood")) {
+                    itemId = ItemId.IRONWOOD_PLANK;
+                } else if(tpe.equals("Rosewood")) {
+                    itemId = ItemId.ROSEWOOD_PLANK;
+                }
+                if(itemId != -1) {
+                    storage.clearAndPut(itemId, qty);
+                }
             }),
 
             // Empty to inventory.
