@@ -64,7 +64,6 @@ public class BankInteraction {
                 || quantitySet == amount) {
             MousePackets.queueClickPacket();
             WidgetPackets.queueWidgetAction(item, "Withdraw-" + amount);
-            WidgetPackets.queueResumeCount(amount);
             return;
         }
 

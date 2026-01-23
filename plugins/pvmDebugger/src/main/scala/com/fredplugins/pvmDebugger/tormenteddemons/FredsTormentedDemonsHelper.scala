@@ -121,7 +121,7 @@ object FredsTormentedDemons {
 		case SwapRange extends HotkeyAction(_.swapRangeGearHotkey(), Color.green, config => () => {
 			if (config.useRangeStyle()) {
 				swap(config.rangeGear().split(','), false)
-				if (config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.EAGLE_EYE)
+				if (config.enableOffensivePrayer()) CombatUtils.activatePrayer(Prayer.DEADEYE)
 			}
 		})
 		case SwapMagic extends HotkeyAction(_.swapMageGearHotkey(), Color.blue, config => () => {
@@ -219,15 +219,19 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 	}
 
 	def findNewTarget(): Unit = {
-		val interactingWithOpt   = Option(client.getLocalPlayer).flatMap(lp => Option(lp.getInteracting)).flatMap[NPC](a => Try(a.asInstanceOf[NPC]).toOption)
-		val interactingWithDemon = interactingWithOpt.filterNot(_.isDead).flatMap(interactingWith => {
-			demons.find(n => n._1 == interactingWith)
-		})
-		interactingWithDemon.foreach {
-			case (npc, data) => {
-				log.debug("Found new target demon {} with data {}", npc, data)
-				targetDemon = Some(npc)
+		if(client.isClientThread) {
+			val interactingWithOpt   = Option(client.getLocalPlayer).flatMap(lp => Option(lp.getInteracting)).flatMap[NPC](a => Try(a.asInstanceOf[NPC]).toOption)
+			val interactingWithDemon = interactingWithOpt.filterNot(_.isDead).flatMap(interactingWith => {
+				demons.find(n => n._1 == interactingWith)
+			})
+			interactingWithDemon.foreach {
+				case (npc, data) => {
+					log.debug("Found new target demon {} with data {}", npc, data)
+					targetDemon = Some(npc)
+				}
 			}
+		} else {
+			parent.getClientThread.invoke(() => findNewTarget())
 		}
 	}
 //	@Subscribe(priority = -9)

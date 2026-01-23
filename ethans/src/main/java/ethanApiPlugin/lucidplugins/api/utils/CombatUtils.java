@@ -220,7 +220,7 @@ public class CombatUtils
 
     public static Prayer getActiveOffense()
     {
-        final Prayer[] offensives = new Prayer[] {Prayer.MYSTIC_LORE, Prayer.MYSTIC_MIGHT, Prayer.AUGURY, Prayer.HAWK_EYE, Prayer.EAGLE_EYE, Prayer.RIGOUR, Prayer.ULTIMATE_STRENGTH, Prayer.CHIVALRY, Prayer.PIETY};
+        final Prayer[] offensives = new Prayer[] {Prayer.MYSTIC_LORE, Prayer.MYSTIC_MIGHT, Prayer.MYSTIC_VIGOUR, Prayer.AUGURY, Prayer.HAWK_EYE, Prayer.EAGLE_EYE, Prayer.DEADEYE, Prayer.RIGOUR, Prayer.ULTIMATE_STRENGTH, Prayer.CHIVALRY, Prayer.PIETY};
 
         for (Prayer off : offensives)
         {
