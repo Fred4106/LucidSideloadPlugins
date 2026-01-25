@@ -110,7 +110,8 @@ public class FredsDialogueAssistantPlugin extends Plugin
 
 			if (isHighlighted || isLocked)
 			{
-				client.createMenuEntry(-1)
+				client.getMenu().createMenuEntry(-1)
+//				client.createMenuEntry(-1)
 						.setOption("Reset Option")
 						.setTarget("")
 						.setType(MenuAction.RUNELITE)
@@ -119,7 +120,8 @@ public class FredsDialogueAssistantPlugin extends Plugin
 
 			if (!isLocked)
 			{
-				client.createMenuEntry(-1)
+				client.getMenu().createMenuEntry(-1)
+//				client.createMenuEntry(-1)
 						.setOption("Lock Option")
 						.setTarget("")
 						.setType(MenuAction.RUNELITE)
@@ -128,7 +130,8 @@ public class FredsDialogueAssistantPlugin extends Plugin
 
 			if (!isHighlighted)
 			{
-				client.createMenuEntry(-1)
+				client.getMenu().createMenuEntry(-1)
+//				client.createMenuEntry(-1)
 						.setOption("Highlight Option")
 						.setTarget("")
 						.setType(MenuAction.RUNELITE)
@@ -165,7 +168,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		final String targStr = Text.standardize(menuEntry.getTarget());
 		final String tOptStr = Text.standardize(menuEntry.getOption());
 
-		log.debug("targ={}, option={}", targStr, tOptStr);
+		log.trace("targ={}, option={}", targStr, tOptStr);
 		if(widget==null) {
 			return;
 		}

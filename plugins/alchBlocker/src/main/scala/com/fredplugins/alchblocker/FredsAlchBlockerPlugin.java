@@ -17,6 +17,7 @@ import com.google.inject.Provides;
 
 import ethanApiPlugin.EthanApiPlugin;
 import net.runelite.api.Client;
+import net.runelite.api.Menu;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.Scene;
@@ -253,7 +254,8 @@ public class FredsAlchBlockerPlugin extends Plugin {
 
 					final String itemName = w.getName();
 
-					client.createMenuEntry(idx)
+					client.getMenu().createMenuEntry(idx)
+//					client.createMenuEntry(idx)
 						.setOption(config.listType() == ListType.BLACKLIST ? "Blacklist Alchemy" : "Whitelist Alchemy")
 						.setTarget(itemName)
 						.setType(MenuAction.RUNELITE)

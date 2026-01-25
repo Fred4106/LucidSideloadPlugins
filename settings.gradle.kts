@@ -10,13 +10,39 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 include(":ethans")
 include(":common")
 include(":commonScala")
-//"customPrayers"
-//"mta"
-//"pvmHelper"
-//"titheFarm"
-//"kroovy"
 
-val x = listOf("customPrayers", "alchBlocker", "dialogAssist", "gearSwapper", "recolorCG", "scriptMaster", "pyramidPlunder", "zulrahHelper", "attackTimer", "demonicGorilla", "devkit", "dt2",  "gauntlet", "giantsFoundry",  "hallowedHelper", "layoutHelper", "mixology", "pvmDebugger", "sailingHelper", "scurriusHelper", "teleportMaps", "tempoross", "titheFarm2", "superClickHelper", "valeTotems")
+val x = listOf(
+    "alchBlocker",
+    "attackTimer",
+    "customPrayers",
+    "demonicGorilla",
+    "devkit",
+    "dialogAssist",
+    "dt2",
+    "dynamicHighlights",
+    "gauntlet",
+    "gearSwapper",
+    "giantsFoundry",
+    "hallowedHelper",
+    // "kroovy",
+    "layoutHelper",
+    "mixology",
+    // "mta",
+    "pvmDebugger",
+    // "pvmHelper",
+    "pyramidPlunder",
+    "recolorCG",
+    "sailingHelper",
+    "scriptMaster",
+    "scurriusHelper",
+    "superClickHelper",
+    "teleportMaps",
+    "tempoross",
+    // "titheFarm",
+    "titheFarm2",
+    "valeTotems",
+    "zulrahHelper"
+)
 x.forEach {xm->
     include(xm)
 }

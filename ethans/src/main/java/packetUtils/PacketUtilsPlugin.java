@@ -1,6 +1,7 @@
 package packetUtils;
 
 //import com.google.archivepatcher.applier.FileByFileV1DeltaApplier;
+import ch.qos.logback.classic.Level;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import lombok.SneakyThrows;
@@ -55,6 +56,10 @@ public class PacketUtilsPlugin extends Plugin {
 	private static String loadedConfigName = "";
 	@Inject
 	private PluginManager pluginManager;
+
+	static {
+		((ch.qos.logback.classic.Logger) log).setLevel(Level.DEBUG);
+	}
 
 	@Provides
 	public PacketUtilsConfig getConfig(ConfigManager configManager) {
@@ -223,9 +228,9 @@ public class PacketUtilsPlugin extends Plugin {
 		int length = versionSplits.length;
 
 		if ((length > 0 && Integer.parseInt(versionSplits[0]) > 1 || (length > 1) && (Integer.parseInt(versionSplits[1]) > 10) )|| (length > 2 && Integer.parseInt(versionSplits[2]) > 34)) {
-//            String v = versionSplits[0] + "." + versionSplits[1] + "." + (Integer.parseInt(versionSplits[2])-((wasSnapshot)?1:0));
-//            String url = "https://repo.runelite.net/net/runelite/injected-client/" + v + "/injected-client-" + v + ".jar";
-			String url = "https://repo.runelite.net/net/runelite/injected-client/" + version + "/injected-client-" + version + ".jar";
+			String v = versionSplits[0] + "." + versionSplits[1] + "." + (Integer.parseInt(versionSplits[2])-((wasSnapshot)?1:0));
+			String url = "https://repo.runelite.net/net/runelite/injected-client/" + v + "/injected-client-" + v + ".jar";
+			log.debug("Using injected client version \"{}\" from version string \"{}\"", v, version);
 			URL injectedURL = new URL(url);
 			log.info("Downloading injected client from " + injectedURL);
 			try (InputStream clientStream = injectedURL.openStream()) {

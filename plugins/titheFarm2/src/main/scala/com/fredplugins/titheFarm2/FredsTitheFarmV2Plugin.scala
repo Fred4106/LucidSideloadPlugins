@@ -152,7 +152,7 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 			val addWaterPatchEntry    : Option[Client => MenuEntry] = addWaterPart1(menuEntryAdded.getMenuEntry).map {
 				case (w, patch) => {
 					(c: Client) => {
-						c.createMenuEntry(-1)
+						c.getMenu().createMenuEntry(-1)
 							.setOption("Water " + ColorUtil.wrapWithColorTag("Watering Can", Color.BLUE))
 							.setTarget(ColorUtil.wrapWithColorTag(s"${c.getObjectDefinition(patch.getId).getName} patch", Color.YELLOW))
 							.setType(MenuAction.RUNELITE)
@@ -170,7 +170,7 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 				case (w, patch) => {
 					(c: Client) => {
 						val patchName = c.getObjectDefinition(patch.getId).getName
-						c.createMenuEntry(-1)
+						c.getMenu().createMenuEntry(-1)
 							.setOption("Plant " + ColorUtil.wrapWithColorTag(s"${c.getItemDefinition(w.getItemId).getName}", Color.GREEN))
 							.setTarget(ColorUtil.wrapWithColorTag(s"${patchName} patch", Color.YELLOW))
 							.setType(MenuAction.RUNELITE)
