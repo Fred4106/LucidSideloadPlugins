@@ -1,0 +1,60 @@
+package com.fredplugins.dynamicHighlights
+
+import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters.*
+import scala.jdk.StreamConverters.*
+import scala.util.chaining.*
+import scala.util.{Random, Try}
+
+import scala.compiletime.uninitialized
+
+object TestFilterStrings {
+	val preabmle: String =
+		"""#define RED "ffff0000"
+			|#define GREEN "ff00ff00"
+			|#define BLUE "ff0000ff"
+			|#define CYAN "ff00ffff"
+			|#define MAGENTA "ffff00ff"
+			|#define YELLOW "ffffff00"
+			|#define WHITE "ffffffff"
+			|#define BLACK "ff000000"
+			|
+			|#define BRONZE "ff5b462a"
+			|#define BLURITE "ff8f90d8"
+			|#define IRON "ff635c5b"
+			|#define ELEMENTAL "ff70119f"
+			|#define SILVER "ffa8a8b4"
+			|#define STEEL "ff908686"
+			|#define GOLD "ffd8b01a"
+			|#define LOVAKITE "ff641509"
+			|#define MITHRIL "ff4c4c70"
+			|#define LUNAR "ff727b72"
+			|#define ADAMANT "ff506450"
+			|#define RUNITE "ff516d78"
+			|
+			|#define GROUNDITEMS_INSANE "ffff66b2"
+			|#define GROUNDITEMS_HIGH "ffff9600"
+			|#define GROUNDITEMS_MEDIUM "ff99ff99"
+			|#define GROUNDITEMS_LOW "ff66b2ff"
+			|
+			|#define HIGHLIGHT(_name, _color) if (name:_name) { color = _color; }
+			|#define HIDE(_name) if (name:_name) { hidden = true; }
+			|
+			|#define RARE(_name, _color) if (name:_name) { color = _color; borderColor = _color; }
+			|#define RARE2(_name, _color) if (name:_name) { color = _color; borderColor = _color; backgroundColor = "80000000"; showLootbeam = true; }
+			|
+			|#define TEXTACCENT_SHADOW  1
+			|#define TEXTACCENT_OUTLINE 2
+			|#define TEXTACCENT_NONE    3
+			|
+			|#define FONTTYPE_NORMAL 1
+			|#define FONTTYPE_LARGER 2
+			|#define FONTTYPE_BOLD   3
+			|
+			|#define OWNERSHIP_NONE  0
+			|#define OWNERSHIP_SELF  1
+			|#define OWNERSHIP_OTHER 2
+			|#define OWNERSHIP_GROUP 3
+			|
+			|""".stripMargin
+}

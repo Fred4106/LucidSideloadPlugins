@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.Objects;
 
 @PluginDescriptor(
 	name = "<html><font color=\"#32C8CD\">Freds</font> Dynamic Highlighter</html>",
@@ -51,7 +51,7 @@ public class FredsDynamicHighlightsPlugin extends Plugin
 //	private final static Type MAP_TYPE = new TypeToken<Map<Integer, String>>(){}.getType();
 
 
-	public final ConfigAdapter<Map<Integer, String>> ca1 = new ConfigAdapter<>(this, "Int2StrMap", new TypeToken<Map<Integer, String>>(){}, () -> new HashMap<Integer, String>(Map.of(1, "Bob", 3, "Jim", 5, "Elmo")));
+	public final ConfigAdapter<Map<Integer, String>> ca1 = new ConfigAdapter<>(this, "Int2StrMap", new TypeToken<Map<Integer, String>>(){}, HashMap::new);
 	private Map<Integer, String> ca1Data = null;
 
 	@Override
@@ -66,14 +66,13 @@ public class FredsDynamicHighlightsPlugin extends Plugin
 		ca1Data = null;
 	}
 
-
-
 	@Subscribe
 	public void onPlayerSpawned(PlayerSpawned event) {
 		Player p = event.getPlayer();
-		if(p == client.getLocalPlayer()) return;
-		log.debug("Player({}, {}) spawned", p.getId(), p.getName());
-		ca1Data.put(p.getId(), p.getName());
+		if(!Objects.equals(client.getLocalPlayer(), p)) {
+			log.debug("Player({}, {}) spawned", p.getId(), p.getName());
+			ca1Data.put(p.getId(), p.getName());
+		}
 	}
 
 	@Subscribe
