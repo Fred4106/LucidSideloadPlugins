@@ -12,22 +12,11 @@ import scala.util.parsing.combinator.RegexParsers
 
 object LexerTest extends App {
 
-	TestFilterStrings.preabmle
 
-	val tokens:List[WorkflowToken] =List(
-		LitStr("bob"),
-		LitInt(5),
-		Identifier("bob"),
-		List_Start(),
-		LitTrue(), Comma(), LitFalse(), Comma(), LitStr("bob"), Comma(), LitInt(7),
-		List_End(),
-		StmtEnd(),
-		Newline()
-	)
-
-	tokens.foreach(t => {
-		println(s"${t}.prettyPrint = ${t.prettyPrint}")
+	val res = lexer.FilterLexer.run(TestFilterStrings.realFilter)
+	res.get.foreach(t => {
+		println(s"${t.pos}  |  ${t}")
 	})
 
-	tokens.foldLeft("")((a, b) => {a.appendedAll(b.prettyPrint)}).pipe(_.appendedAll("\n\"").prependedAll("\"\n")).tap(println)
+//	tokens.foldLeft("")((a, b) => {a.appendedAll(b.prettyPrint)}).pipe(_.appendedAll("\n\"").prependedAll("\"\n")).tap(println)
 }
