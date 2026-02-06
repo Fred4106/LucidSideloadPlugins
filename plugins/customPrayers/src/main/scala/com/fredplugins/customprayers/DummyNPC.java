@@ -9,6 +9,7 @@ import net.runelite.api.NPCComposition;
 import net.runelite.api.Node;
 import net.runelite.api.NpcOverrides;
 import net.runelite.api.Point;
+import net.runelite.api.Renderable;
 import net.runelite.api.SpritePixels;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
@@ -385,6 +386,11 @@ public class DummyNPC implements NPC
 	@Override
 	public int getAnimationHeightOffset() {
 		return 0;
+	}
+
+	@Override
+	public int getRenderMode() {
+		return Renderable.RENDERMODE_DEFAULT;
 	}
 
 	@Override
