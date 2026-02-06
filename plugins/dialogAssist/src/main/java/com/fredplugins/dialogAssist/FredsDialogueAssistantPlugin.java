@@ -1,6 +1,7 @@
 package com.fredplugins.dialogAssist;
 
 import ch.qos.logback.classic.Level;
+import com.fredplugins.common.extensions.MenuExtensions$;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
 import javax.inject.Inject;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 import static net.runelite.http.api.RuneLiteAPI.GSON;
 
 @PluginDescriptor(
-	name = "Freds Dialogue Assistant",
+	name = "<html><font color=\"#32C8CD\">Freds</font> Dialogue Assistant</html>",
 	description = "Highlight and lock NPC dialogue options.",
 	tags = "dialogue, dialog, assistant, npc, chat, options, lock, highlight"
 )
@@ -159,20 +160,32 @@ public class FredsDialogueAssistantPlugin extends Plugin
 //			log.debug("[interact - no set] last id: null");
 		}
 	}
-
-	@Subscribe
+	@Subscribe(priority = 10)
+	private void onMenuOptionClickedFirst(MenuOptionClicked event)
+	{
+		final MenuEntry menuEntry = event.getMenuEntry();
+		log.debug("{}", MenuExtensions$.MODULE$.niceString(menuEntry));
+	}
+	@Subscribe(priority = 0)
 	private void onMenuOptionClicked(MenuOptionClicked event)
 	{
 		final MenuEntry menuEntry = event.getMenuEntry();
 		final Widget widget = menuEntry.getWidget();
 		final String targStr = Text.standardize(menuEntry.getTarget());
 		final String tOptStr = Text.standardize(menuEntry.getOption());
-
-		log.trace("targ={}, option={}", targStr, tOptStr);
-		if(widget==null) {
-			return;
+		final String wOptStr;
+		if(widget!= null) {
+			int wg = (widget.getId() >>> 16);
+			int wc = (widget.getId() & 0xFFFF);
+			int wIdx = widget.getIndex();
+			String wText = widget.getText();
+			wOptStr = "" + wg + ":" + wc + "[" + wIdx + "]=\"" + wText + "\"";
+		} else {
+			wOptStr = "null";
 		}
-		if (widget.getId() >>> 16 == InterfaceID.LUNAR_CONTACT_NPC || targStr.equalsIgnoreCase("NPC Contact")) {
+
+		log.trace("targ={}, option={}, widget={}", targStr, tOptStr, wOptStr);
+		if ((widget != null && widget.getId() >>> 16 == InterfaceID.LUNAR_CONTACT_NPC) || targStr.equalsIgnoreCase("NPC Contact")) {
 			lastInteractionId=-1;
 			switch(tOptStr) {
 				case "aya":

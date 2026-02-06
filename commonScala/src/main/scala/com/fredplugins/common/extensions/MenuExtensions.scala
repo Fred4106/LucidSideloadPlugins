@@ -88,5 +88,9 @@ object MenuExtensions {
 			)
 			messageParts.fold("")(_.appendedAll(_))
 		}
+		
+		def niceString(): String = {
+			s"${e.getType.name()}(id=${e.getIdentifier}, params=${(e.getParam0, e.getParam1)}, option=\"${Text.standardize(e.getOption)}\", target=\"${Text.standardize(e.getTarget)}\")"
+		}
 	}
 }
