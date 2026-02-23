@@ -160,16 +160,11 @@ public class FredsDialogueAssistantPlugin extends Plugin
 //			log.debug("[interact - no set] last id: null");
 		}
 	}
-	@Subscribe(priority = 10)
-	private void onMenuOptionClickedFirst(MenuOptionClicked event)
-	{
-		final MenuEntry menuEntry = event.getMenuEntry();
-		log.debug("{}", MenuExtensions$.MODULE$.niceString(menuEntry));
-	}
 	@Subscribe(priority = 0)
 	private void onMenuOptionClicked(MenuOptionClicked event)
 	{
 		final MenuEntry menuEntry = event.getMenuEntry();
+		final String niceMenuClickedString =  MenuExtensions$.MODULE$.niceString(menuEntry);
 		final Widget widget = menuEntry.getWidget();
 		final String targStr = Text.standardize(menuEntry.getTarget());
 		final String tOptStr = Text.standardize(menuEntry.getOption());
@@ -197,6 +192,12 @@ public class FredsDialogueAssistantPlugin extends Plugin
 				case "mazchna":
 					lastInteractionId=NpcID.SLAYER_MASTER_2_MAZCHNA;
 					break;
+				case "vannaka":
+					lastInteractionId=NpcID.SLAYER_MASTER_3;
+					break;
+				case "chaeldar":
+					lastInteractionId=NpcID.SLAYER_MASTER_4;
+					break;
 				case "duradel":
 					lastInteractionId=NpcID.SLAYER_MASTER_5_DURADEL;
 					break;
@@ -215,7 +216,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 				default:
 					break;
 			}
-			log.debug("[menu clicked] last id: {} (\"{}\")", lastInteractionId, NPC_ID_TO_NAME_MAP.getOrDefault(lastInteractionId, "UNKNOWN"));
+			log.debug("[menu clicked] {}\n\t\"{}\" last id: {} (\"{}\")", niceMenuClickedString, tOptStr, lastInteractionId, NPC_ID_TO_NAME_MAP.getOrDefault(lastInteractionId, "UNKNOWN"));
 			return;
 		}
 
