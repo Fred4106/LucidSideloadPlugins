@@ -3,6 +3,8 @@ package com.fredplugins.pvmDebugger
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlConfig
 import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlHelper
+import com.fredplugins.pvmDebugger.cerberus.CerberusConfig
+import com.fredplugins.pvmDebugger.cerberus.CerberusHelper
 import com.fredplugins.pvmDebugger.dks.DksConfig
 import com.fredplugins.pvmDebugger.dks.DksHelper
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
@@ -93,6 +95,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val titansHelper: FredsTitanHelper    = null
 	@Inject private val yamaHelper: FredsYamaHelper             = null
 	@Inject private val shellsbaneHelper: FredsShellsbaneHelper = null
+	@Inject private val cerbHelper: CerberusHelper              = null
+
 
 	//	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
@@ -175,7 +179,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(shellsbaneHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List(shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -382,4 +386,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideYamaConfig(configManager: ConfigManager):FredsYamaConfig = configManager.getConfig(classOf[FredsYamaConfig])
 	@Provides def provideDksConfig(configManager: ConfigManager): DksConfig = configManager.getConfig(classOf[DksConfig])
 	@Provides def provideShellsBane(configManager: ConfigManager): FredsShellsbaneConfig = configManager.getConfig(classOf[FredsShellsbaneConfig])
+	@Provides def provideCerbConfig(configManager: ConfigManager): CerberusConfig = configManager.getConfig(classOf[CerberusConfig])
 }
