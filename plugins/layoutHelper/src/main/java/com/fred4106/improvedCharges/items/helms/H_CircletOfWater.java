@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class H_CircletOfWater extends ChargedItem {
     public H_CircletOfWater(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.CIRCLET_OF_WATER, ItemId.CIRCLET_OF_WATER, provider);
@@ -17,7 +19,7 @@ public class H_CircletOfWater extends ChargedItem {
             new TriggerItem(ItemId.CIRCLET_OF_WATER).needsToBeEquipped(),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Protect from heat.
             new OnChatMessage("Your circlet protects you from the desert heat.").decreaseCharges(1),
 
@@ -34,7 +36,7 @@ public class H_CircletOfWater extends ChargedItem {
             new OnChatMessage("The banker charges your Circlet of water using (?<waterrune>.+)x Water rune.").matcherConsumer(m -> {
                 final int waterRunes = Integer.parseInt(m.group("waterrune"));
                 increaseCharges(waterRunes / 5);
-            }),
-        };
+            })
+        ));
     }
 }

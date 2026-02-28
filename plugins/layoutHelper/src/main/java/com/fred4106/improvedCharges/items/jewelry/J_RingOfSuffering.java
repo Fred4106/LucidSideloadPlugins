@@ -11,6 +11,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_RingOfSuffering extends ChargedItemWithStatus {
     public J_RingOfSuffering(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.RING_OF_SUFFERING, ItemId.RING_OF_SUFFERING_UNCHARGED, provider);
@@ -26,7 +28,7 @@ public class J_RingOfSuffering extends ChargedItemWithStatus {
             new TriggerItem(ItemId.RING_OF_SUFFERING_IMBUED_PVP).needsToBeEquipped(),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check
             new OnChatMessage("Your ring currently has (?<charges>.+) recoil charges? remaining. The recoil effect is currently enabled.").setDynamicallyCharges().onItemClick().activate(),
             new OnChatMessage("Your ring currently has (?<charges>.+) recoil charges? remaining. The recoil effect is currently disabled.").setDynamicallyCharges().onItemClick().deactivate(),
@@ -47,7 +49,7 @@ public class J_RingOfSuffering extends ChargedItemWithStatus {
             new OnChatMessage("The banker charges your Ring of suffering.* using (?<ringofrecoil>.+)x Ring of recoil.").matcherConsumer(m -> {
                 final int ringOfRecoils = Integer.parseInt(m.group("ringofrecoil"));
                 increaseCharges(ringOfRecoils * 40);
-            }),
-        };
+            })
+        ));
     }
 }

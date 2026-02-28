@@ -14,6 +14,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 import static com.fred4106.improvedCharges.store.enums.HitsplatTarget.ENEMY;
 
 public class W_Arclight extends ChargedItem {
@@ -27,7 +29,7 @@ public class W_Arclight extends ChargedItem {
             new TriggerItem(ItemId.ARCLIGHT_UNCHARGED).fixedCharges(0),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             new OnChatMessage("Your arclight has (?<charges>.+) charges?( left)?.").setDynamicallyCharges(),
             new OnChatMessage("Your arclight can perform (?<charges>.+) more attacks.").setDynamicallyCharges(),
             new OnChatMessage("Your arclight has degraded.").setFixedCharges(0),
@@ -44,7 +46,7 @@ public class W_Arclight extends ChargedItem {
             }),
             new OnHitsplatApplied(ENEMY, HitsplatGroup.SUCCESSFUL).isEquipped().consumer(() -> {
                 attacked = false;
-            }),
-        };
+            })
+        ));
     }
 }

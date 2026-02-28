@@ -14,6 +14,8 @@ import com.fred4106.improvedCharges.store.ids.AnimationId;
 import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class U_QuetzalWhistle extends ChargedItem {
     public U_QuetzalWhistle(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.QUETZAL_WHISTLE, ItemId.QUETZAL_WHISTLE_BASIC, provider);
@@ -24,7 +26,7 @@ public class U_QuetzalWhistle extends ChargedItem {
             new TriggerItem(ItemId.QUETZAL_WHISTLE_PERFECTED).maxCharges(50),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your quetzal whistle has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
 
@@ -65,6 +67,6 @@ public class U_QuetzalWhistle extends ChargedItem {
                     }
                 }
             })
-        };
+        ));
     }
 }

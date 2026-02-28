@@ -7,6 +7,8 @@ import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.AnimationId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class W_CrawsBow extends ChargedItem {
     public W_CrawsBow(final Provider provider) {
         this(com.fred4106.improvedCharges.Constants.CRAWS_BOW, ItemId.CRAWS_BOW_UNCHARGED, provider);
@@ -20,7 +22,7 @@ public class W_CrawsBow extends ChargedItem {
     protected W_CrawsBow(final String configKey, final int itemId, final Provider provider) {
         super(configKey, itemId, provider);
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your bow has (?<charges>.+) charges? left powering it.").onItemClick().setDynamicallyCharges(),
 
@@ -31,7 +33,7 @@ public class W_CrawsBow extends ChargedItem {
             new OnChatMessage("You add( a further)? .* revenant ether to your weapon, giving it a total of (?<charges>.+) charges.").onItemClick().setDynamicallyCharges(),
 
             // Attack.
-            new OnAnimationChanged(AnimationId.HUMAN_BOW).isEquipped().decreaseCharges(1),
-        };
+            new OnAnimationChanged(AnimationId.HUMAN_BOW).isEquipped().decreaseCharges(1)
+        ));
     }
 }

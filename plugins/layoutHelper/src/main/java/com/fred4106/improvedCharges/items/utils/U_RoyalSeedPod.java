@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class U_RoyalSeedPod extends ChargedItem {
     public U_RoyalSeedPod(Provider provider) {
         super(com.fred4106.improvedCharges.Constants.ROYAL_SEED_POD, ItemId.ROYAL_SEED_POD, provider);
@@ -17,12 +19,12 @@ public class U_RoyalSeedPod extends ChargedItem {
             new TriggerItem(ItemId.ROYAL_SEED_POD).fixedCharges(ChargeId.UNLIMITED),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Unify teleport.
             new OnMenuEntryAdded("Commune").replaceOption("Teleport"),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 }

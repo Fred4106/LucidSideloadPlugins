@@ -2,7 +2,7 @@ package com.fred4106.improvedCharges.items.capes;
 
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.Constants;
-import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
@@ -11,11 +11,13 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 
-public class C_Coffin extends ChargedItemWithStorage {
+public class C_Coffin extends ChargedItemWithStorageEmptyable {
     public C_Coffin(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.COFFIN, ItemId.GOLD_COFFIN, provider);
+        super(Constants.COFFIN, ItemId.GOLD_COFFIN, provider);
         this.storage = storage.storableItems(
             new StorableItem(ItemId.LOAR_REMAINS).checkName("Loar"),
             new StorableItem(ItemId.PHRIN_REMAINS).checkName("Phrin"),
@@ -39,7 +41,7 @@ public class C_Coffin extends ChargedItemWithStorage {
             new TriggerItem(ItemId.GOLD_COFFIN_OPEN).maxCharges(28),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Add remains to coffin.
             new OnChatMessage("You put the (?<remains>.+) remains into your open coffin.").matcherConsumer(m -> {
                 storage.add(getStorageItemFromName(m.group("remains"), 1));
@@ -64,7 +66,7 @@ public class C_Coffin extends ChargedItemWithStorage {
 
             // Use shades on coffin and vice versa.
             new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onUseChargedItemOnStorageItem(storage.getStorableItems()),
-            new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onUseStorageItemOnChargedItem(storage.getStorableItems()),
-        };
+            new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onUseStorageItemOnChargedItem(storage.getStorableItems())
+        ));
     }
 }

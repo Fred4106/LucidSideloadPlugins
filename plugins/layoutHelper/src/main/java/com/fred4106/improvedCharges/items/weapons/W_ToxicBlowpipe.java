@@ -15,6 +15,7 @@ import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
 import java.awt.Color;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -42,7 +43,7 @@ public class W_ToxicBlowpipe extends ChargedItemWithStorage {
             new StorableItem(ItemId.DRAGON_DART).checkName("Dragon dart")
         );
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check without darts.
             new OnChatMessage("Darts: None\\. Scales: (?<scales>.+) \\(.*\\).").matcherConsumer(m -> {
                 final StorageItem scales = new StorageItem(ItemId.ZULRAH_SCALES, FredsItemChargesPlugin.getNumberFromCommaString(m.group("scales")));
@@ -111,8 +112,8 @@ public class W_ToxicBlowpipe extends ChargedItemWithStorage {
                         storage.remove(item.getId(), 1);
                     }
                 }
-            }),
-        };
+            })
+        ));
     }
 
     @Override

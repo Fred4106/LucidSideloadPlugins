@@ -12,6 +12,7 @@ import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,9 +48,9 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
             new StorableItem(ItemId.JUNIPER_LOGS).checkName("Juniper logs"),
             new StorableItem(ItemId.BARK).checkName("Bark"),
             new StorableItem(ItemId.BLISTERWOOD_LOGS).checkName("Blisterwood logs"),
-			new StorableItem(ItemId.CAMPHOR_LOGS).checkName("Camphor logs"),
-			new StorableItem(ItemId.IRONWOOD_LOGS).checkName("Ironwood logs"),
-			new StorableItem(ItemId.ROSEWOOD_LOGS).checkName("Rosewood logs"),
+            new StorableItem(ItemId.CAMPHOR_LOGS).checkName("Camphor logs"),
+            new StorableItem(ItemId.IRONWOOD_LOGS).checkName("Ironwood logs"),
+            new StorableItem(ItemId.ROSEWOOD_LOGS).checkName("Rosewood logs"),
 
             // Forestry kit.
             new StorableItem(ItemId.ANIMAINFUSED_BARK),
@@ -96,7 +97,7 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
             new TriggerItem(ItemId.FORESTRY_BASKET_OPEN),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // View contents.
             new OnItemContainerChanged(ItemContainerId.FORESTRY_KIT).itemsConsumer(storageItems -> {
                 storage.put(ItemId.ANIMAINFUSED_BARK, storageItems.count(ItemId.ANIMAINFUSED_BARK));
@@ -315,8 +316,8 @@ public class C_ForestryBasket extends ChargedItemWithStorage {
                     storage.remove(lastLogs.get().getId(), 1);
                     infernalQuantityTracker--;
                 }
-            }).requiredItem(ItemId.FORESTRY_BASKET_OPEN),
-        };
+            }).requiredItem(ItemId.FORESTRY_BASKET_OPEN)
+        ));
     }
 
     private void purchaseFromFriendlyForesterShop(final int amountToBuy) {

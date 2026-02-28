@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_CelestialRing extends ChargedItem {
     public J_CelestialRing(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.CELESTIAL_RING, ItemId.CELESTIAL_RING, provider);
@@ -19,7 +21,7 @@ public class J_CelestialRing extends ChargedItem {
             new TriggerItem(ItemId.CELESTIAL_SIGNET).needsToBeEquipped()
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Charge.
             new OnChatMessage("You add .+ charges? to your Celestial (ring|signet). It now has (?<charges>.+) charges?.").setDynamicallyCharges(),
             new OnChatMessage("You add (?<charges>.+) charges? to your Celestial (ring|signet).").setDynamicallyCharges(),
@@ -38,6 +40,6 @@ public class J_CelestialRing extends ChargedItem {
                 final int stardust = Integer.parseInt(m.group("stardust"));
                 increaseCharges(stardust);
             })
-        };
+        ));
     }
 }

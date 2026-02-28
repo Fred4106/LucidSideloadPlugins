@@ -3,13 +3,15 @@ package com.fred4106.improvedCharges.items.utils;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import net.runelite.api.Skill;
 import com.fred4106.improvedCharges.FredsItemChargesPlugin;
-import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
-public class U_CoalBag extends ChargedItemWithStorage {
+import java.util.List;
+
+public class U_CoalBag extends ChargedItemWithStorageEmptyable {
     public U_CoalBag(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.COAL_BAG, ItemId.COAL_BAG, provider);
         this.storage = storage
@@ -21,7 +23,7 @@ public class U_CoalBag extends ChargedItemWithStorage {
             new TriggerItem(ItemId.COAL_BAG),
             new TriggerItem(ItemId.COAL_BAG_OPEN),
         };
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check or empty.
             new OnChatMessage("The coal bag is( now)? empty.").emptyStorage(),
 
@@ -72,7 +74,7 @@ public class U_CoalBag extends ChargedItemWithStorage {
             }),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 }

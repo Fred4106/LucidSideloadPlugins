@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_TridentOfTheSwamp extends ChargedItem {
     public W_TridentOfTheSwamp(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.TRIDENT_OF_THE_SWAMP, ItemId.TRIDENT_OF_THE_SWAMP, provider);
@@ -18,7 +20,7 @@ public class W_TridentOfTheSwamp extends ChargedItem {
             new TriggerItem(ItemId.TRIDENT_OF_THE_SWAMP),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Ran out of charges.
             new OnChatMessage("Your Trident of the swamp has run out of charges.").setFixedCharges(0),
 
@@ -38,7 +40,7 @@ public class W_TridentOfTheSwamp extends ChargedItem {
             new OnChatMessage("The banker charges your Trident of the swamp using (?<deathrune>.+)x Death rune.*").matcherConsumer(m -> {
                 final int deathRunes = Integer.parseInt(m.group("deathrune"));
                 increaseCharges(deathRunes);
-            }),
-        };
+            })
+        ));
     }
 }

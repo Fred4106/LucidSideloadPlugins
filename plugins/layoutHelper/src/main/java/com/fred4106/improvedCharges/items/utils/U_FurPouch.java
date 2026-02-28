@@ -1,5 +1,7 @@
 package com.fred4106.improvedCharges.items.utils;
 
+import com.fred4106.improvedCharges.Constants;
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.store.*;
 import net.runelite.api.Skill;
 import com.fred4106.improvedCharges.FredsItemChargesPlugin;
@@ -10,12 +12,14 @@ import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
+
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.BANK;
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 
-public class U_FurPouch extends ChargedItemWithStorage {
+public class U_FurPouch extends ChargedItemWithStorageEmptyable {
     public U_FurPouch(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.FUR_POUCH, ItemId.FUR_POUCH_SMALL, provider);
+        super(Constants.FUR_POUCH, ItemId.FUR_POUCH_SMALL, provider);
         this.storage = storage.storableItems(
             // Tracking.
             new StorableItem(ItemId.POLAR_KEBBIT_FUR),
@@ -48,7 +52,7 @@ public class U_FurPouch extends ChargedItemWithStorage {
             new TriggerItem(ItemId.FUR_POUCH_LARGE_OPEN).maxCharges(28),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Empty.
             new OnChatMessage("Your fur pouch is currently holding 0 fur.").emptyStorage(),
             new OnChatMessage("Your fur pouch is empty.").emptyStorage(),
@@ -114,7 +118,7 @@ public class U_FurPouch extends ChargedItemWithStorage {
             }),
             new OnXpDrop(Skill.HUNTER, 156).hasChatMessage("You retrieve the falcon as well as the fur of the dead kebbit.").requiredItem(ItemId.FUR_POUCH_SMALL_OPEN, ItemId.FUR_POUCH_MEDIUM_OPEN, ItemId.FUR_POUCH_LARGE_OPEN).consumer(() -> {
                 storage.add(ItemId.DASHING_KEBBIT_FUR, 1);
-            }),
-        };
+            })
+        ));
     }
 }

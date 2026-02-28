@@ -1,5 +1,6 @@
 package com.fred4106.improvedCharges.items.utils;
 
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import net.runelite.api.Skill;
 import com.fred4106.improvedCharges.FredsItemChargesPlugin;
@@ -9,10 +10,12 @@ import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
+
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.BANK;
 
-public class U_GemBag extends ChargedItemWithStorage {
+public class U_GemBag extends ChargedItemWithStorageEmptyable {
     public U_GemBag(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.GEM_BAG, ItemId.GEM_BAG, provider);
         this.items = new TriggerItem[]{
@@ -28,7 +31,7 @@ public class U_GemBag extends ChargedItemWithStorage {
             new StorableItem(ItemId.UNCUT_DRAGONSTONE).checkName("Dragonstone")
         );
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Empty to bank or inventory.
             new OnChatMessage("The gem bag is( now)? empty.").emptyStorage(),
 
@@ -90,7 +93,7 @@ public class U_GemBag extends ChargedItemWithStorage {
             new OnMenuEntryAdded("Empty").replaceOption(FredsItemChargesPlugin.menuOptionEmptyToBank).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 }

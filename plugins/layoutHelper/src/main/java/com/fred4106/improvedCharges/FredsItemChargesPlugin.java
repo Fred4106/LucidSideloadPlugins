@@ -64,14 +64,6 @@ import java.util.*;
 )
 @Singleton
 public class FredsItemChargesPlugin extends Plugin implements KeyListener, MouseListener, MouseWheelListener {
-	private final String pluginMessage =
-		"<colHIGHLIGHT>Item Charges Improved<br>" +
-		"<colHIGHLIGHT>* Craw's bow and webweaver bow added.<br>" +
-		"<colHIGHLIGHT>* Blazing blowpipe added.<br>" +
-		"<colHIGHLIGHT>* Infernal axe added.<br>" +
-		"<colHIGHLIGHT>* Fixes for skull sceptre, fish barrel, plank sack."
-	;
-
 	@Inject
 	private Client client;
 
@@ -140,6 +132,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 		store = new Store(client, itemManager, configManager);
 		provider = new Provider(client, clientThread, pluginManager, configManager, itemManager, infoBoxManager, chatMessageManager, tooltipManager, notifier, this, config, store, gson);
 
+
 		chargedItems = new ChargedItemBase[]{
 			// Crystal armor set
 			new A_CrystalBody(provider),
@@ -200,7 +193,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new J_RingOfSuffering(provider),
 			new J_SkillsNecklace(provider),
 			new J_XericsTalisman(provider),
-
+			new J_SailorsAmulet(provider),
 			// Potions
 			new P_Absorption(provider),
 			new P_Agility(provider),
@@ -216,6 +209,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new P_AntipoisonMix(provider),
 			new P_Antivenom(provider),
 			new P_AntivenomPlus(provider),
+			new P_ArmadylBrew(provider),
 			new P_Attack(provider),
 			new P_AttackMix(provider),
 			new P_Bastion(provider),
@@ -240,13 +234,16 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new P_ExtendedAntifire(provider),
 			new P_ExtendedAntifireMix(provider),
 			new P_ExtendedAntivenom(provider),
+			new P_ExtendedStamina(provider),
 			new P_ExtendedSuperAntifire(provider),
 			new P_ExtendedSuperAntifireMix(provider),
+			new P_ExtremeEnergy(provider),
 			new P_Fishing(provider),
 			new P_FishingMix(provider),
 			new P_ForgottenBrew(provider),
 			new P_Goading(provider),
 			new P_GuthixBalance(provider),
+			new P_HaemostaticDressing(provider),
 			new P_Hunter(provider),
 			new P_HuntingMix(provider),
 			new P_Magic(provider),
@@ -290,6 +287,8 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new P_SuperDefenceMix(provider),
 			new P_SuperEnergy(provider),
 			new P_SuperEnergyMix(provider),
+			new P_SuperFishing(provider),
+			new P_SuperHunting(provider),
 			new P_SuperMagic(provider),
 			new P_SuperRanging(provider),
 			new P_SuperRestore(provider),
@@ -548,7 +547,8 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 				customMenuOptionClicked.eventId != 65540 && // Special event check for log basket
 				customMenuOptionClicked.eventId != 65538 && // Special event check for forestry basket
 				customMenuOptionClicked.eventId != 131074 && // Special event check for forestry basket
-				customMenuOptionClicked.eventId != 131076 // Special event check for forestry basket
+				customMenuOptionClicked.eventId != 131076 && // Special event check for forestry basket
+				customMenuOptionClicked.eventId != 327684 // Sailor's amulet - Deepfin Point
 			) ||
 			// Start use by clicking on item.
 			customMenuOptionClicked.option.equals("Use") && customMenuOptionClicked.action.equals("WIDGET_TARGET") ||

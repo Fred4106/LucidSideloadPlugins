@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class S_KharedstMemoirs extends ChargedItem {
     public S_KharedstMemoirs(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.KHAREDSTS_MEMOIRS, ItemId.KHAREDSTS_MEMOIRS, provider);
@@ -18,7 +20,7 @@ public class S_KharedstMemoirs extends ChargedItem {
             new TriggerItem(ItemId.BOOK_OF_THE_DEAD)
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             new OnChatMessage("You add an entry to Kharedst's Memoirs.").increaseCharges(20),
 
             // Teleport.
@@ -43,7 +45,7 @@ public class S_KharedstMemoirs extends ChargedItem {
             new OnMenuEntryAdded("Reminisce").replaceOption("Teleport"),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 }

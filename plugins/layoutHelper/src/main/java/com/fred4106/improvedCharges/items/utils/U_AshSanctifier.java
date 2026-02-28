@@ -11,13 +11,15 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class U_AshSanctifier extends ChargedItemWithStatus {
     public U_AshSanctifier(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.ASH_SANCTIFIER, ItemId.ASH_SANCTIFIER, provider);
         this.items = new TriggerItem[]{
             new TriggerItem(ItemId.ASH_SANCTIFIER),
         };
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("(The|Your) ash sanctifier has (?<charges>.+) charges?( left)?. It has been deactivated").setDynamicallyCharges().deactivate(),
             new OnChatMessage("(The|Your) ash sanctifier has (?<charges>.+) charges?( left)?. It is active").setDynamicallyCharges().activate(),
@@ -39,7 +41,7 @@ public class U_AshSanctifier extends ChargedItemWithStatus {
             new OnChatMessage("The banker charges your Ash sanctifier using (?<deathrune>.+)x Death rune.").matcherConsumer(m -> {
                 final int deathRunes = Integer.parseInt(m.group("deathrune"));
                 increaseCharges(deathRunes * 10);
-            }),
-        };
+            })
+        ));
     }
 }

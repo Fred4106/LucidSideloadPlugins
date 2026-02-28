@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_DodgyNecklace extends ChargedItem {
     public J_DodgyNecklace(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.DODGY_NECKLACE, ItemId.DODGY_NECKLACE, provider);
@@ -17,7 +19,7 @@ public class J_DodgyNecklace extends ChargedItem {
             new TriggerItem(ItemId.DODGY_NECKLACE).needsToBeEquipped(),
         };
         
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your dodgy necklace has (?<charges>.+) charges? left.").setDynamicallyCharges(),
 
@@ -30,7 +32,7 @@ public class J_DodgyNecklace extends ChargedItem {
             // Break.
             new OnChatMessage("The necklace shatters. Your next dodgy necklace will start afresh from (?<charges>.+) charges.").setDynamicallyCharges(),
 
-            new OnWidgetLoaded(219, 1, 0).text("Status: (?<charges>.+) charges? left.").setDynamically().onItemClick(),
-        };
+            new OnWidgetLoaded(219, 1, 0).text("Status: (?<charges>.+) charges? left.").setDynamically().onItemClick()
+        ));
     }
 }

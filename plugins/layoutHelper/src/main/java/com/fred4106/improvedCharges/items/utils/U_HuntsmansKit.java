@@ -12,6 +12,8 @@ import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
+
 public class U_HuntsmansKit extends ChargedItemWithStorage {
     public U_HuntsmansKit(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.HUNTSMANS_KIT, ItemId.HUNTSMANS_KIT, provider);
@@ -61,7 +63,7 @@ public class U_HuntsmansKit extends ChargedItemWithStorage {
             new StorableItem(ItemId.IMPLING_JAR)
         );
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Fill from inventory.
             new OnItemContainerChanged(ItemContainerId.INVENTORY).fillStorageFromInventory().onMenuOption("Fill", FredsItemChargesPlugin.menuOptionFillFromInventory),
 
@@ -76,8 +78,8 @@ public class U_HuntsmansKit extends ChargedItemWithStorage {
             new OnMenuEntryAdded("Use").replaceOptionConsumer(() -> getMenuOptionForUse()).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
 
             // Hide destroy option.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 
     private String getMenuOptionForUse() {

@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 class ExplorersRingStorageItemId {
     public static final int TELEPORTS = -1000;
     public static final int ALCHEMY = -1001;
@@ -31,7 +33,7 @@ public class J_ExplorersRing extends ChargedItemWithStorageMultipleCharges {
             new TriggerItem(ItemId.EXPLORERS_RING_4),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Use.
             new OnVarbitChanged(Varbits.EXPLORER_RING_ALCHS).consumer(() -> updateStorage()),
             new OnVarbitChanged(Varbits.EXPLORER_RING_RUNENERGY).consumer(() -> updateStorage()),
@@ -66,8 +68,8 @@ public class J_ExplorersRing extends ChargedItemWithStorageMultipleCharges {
                 storage.put(ExplorersRingStorageItemId.ALCHEMY, 30);
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 3);
                 storage.put(ExplorersRingStorageItemId.TELEPORTS, ChargeId.UNLIMITED);
-            }),
-        };
+            })
+        ));
     }
 
     private void updateStorage() {

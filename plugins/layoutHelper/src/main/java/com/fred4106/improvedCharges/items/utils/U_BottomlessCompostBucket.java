@@ -11,6 +11,7 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.fred4106.improvedCharges.FredsItemChargesPlugin.getNumberFromCommaString;
@@ -29,7 +30,7 @@ public class U_BottomlessCompostBucket extends ChargedItemWithStorage {
             new TriggerItem(ItemId.BOTTOMLESS_COMPOST_BUCKET),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your bottomless compost bucket is currently holding one use of (?<type>.+) ?compost.").matcherConsumer(m -> {
                 storage.clearAndPut(getStorageItemFromName(m.group("type"), 1));
@@ -98,8 +99,8 @@ public class U_BottomlessCompostBucket extends ChargedItemWithStorage {
                 if (getCompostType().isPresent()) {
                     storage.add(getCompostType().get().getId(), 2);
                 }
-            }),
-        };
+            })
+        ));
     }
 
     private Optional<StorageItem> getCompostType() {

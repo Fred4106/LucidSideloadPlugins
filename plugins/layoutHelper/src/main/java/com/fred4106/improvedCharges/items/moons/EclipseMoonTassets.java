@@ -7,6 +7,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class EclipseMoonTassets extends _MoonItem {
     public EclipseMoonTassets(
         final Provider provider
@@ -19,12 +21,12 @@ public class EclipseMoonTassets extends _MoonItem {
             new TriggerItem(ItemId.ECLIPSE_MOON_TASSETS_BROKEN).fixedCharges(0),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your Eclipse moon tassets has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
 
             // In combat.
-            new OnCombat(90).isEquipped().decreaseCharges(1),
-        };
+            new OnCombat(90).isEquipped().decreaseCharges(1)
+        ));
     }
 }

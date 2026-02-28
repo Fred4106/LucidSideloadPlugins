@@ -840,6 +840,13 @@ public interface FredsItemChargesConfig extends Config {
 	}
 
 	@ConfigItem(
+		keyName =  SAILORS_AMULET + _INFOBOX,
+		name = "Sailors' Amulet",
+		description = "",
+		section = infoboxes
+	) default boolean sailorsAmuletInfobox() { return true; }
+
+	@ConfigItem(
 		keyName = CHRONICLE + _INFOBOX,
 		name = "Chronicle",
 		description = "",
@@ -2688,6 +2695,13 @@ public interface FredsItemChargesConfig extends Config {
 	}
 
 	@ConfigItem(
+		keyName =  SAILORS_AMULET + _OVERLAY,
+		name = "Sailors' Amulet",
+		description = "",
+		section = overlays
+	) default boolean sailorsAmuletOverlay() { return true; }
+
+	@ConfigItem(
 		keyName = ALCHEMISTS_AMULET + _OVERLAY,
 		name = "Alchemist's amulet",
 		description = "",
@@ -3148,6 +3162,13 @@ public interface FredsItemChargesConfig extends Config {
 	default int getXericsTalismanCharges() {
 		return ChargeId.UNKNOWN;
 	}
+
+	@ConfigItem(
+		keyName = SAILORS_AMULET,
+		name = SAILORS_AMULET,
+		description = SAILORS_AMULET,
+		section = debug
+	) default int getSailorsAmuletCharges() { return ChargeId.UNKNOWN; }
 
 	@ConfigItem(
 		keyName = DRAGONFIRE_SHIELD,

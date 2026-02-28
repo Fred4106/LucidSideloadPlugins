@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class U_Ectophial extends ChargedItem {
     public U_Ectophial(Provider provider) {
         super(com.fred4106.improvedCharges.Constants.ECTOPHIAL, ItemId.ECTOPHIAL, provider);
@@ -17,9 +19,9 @@ public class U_Ectophial extends ChargedItem {
             new TriggerItem(ItemId.ECTOPHIAL).fixedCharges(1),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Unify teleport.
-            new OnMenuEntryAdded("Empty").replaceOption("Teleport"),
-        };
+            new OnMenuEntryAdded("Empty").replaceOption("Teleport")
+        ));
     }
 }

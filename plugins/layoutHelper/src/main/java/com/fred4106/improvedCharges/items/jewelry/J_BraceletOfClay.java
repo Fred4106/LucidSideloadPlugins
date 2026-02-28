@@ -10,6 +10,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_BraceletOfClay extends ChargedItem {
     public J_BraceletOfClay(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.BRACELET_OF_CLAY, ItemId.BRACELET_OF_CLAY, provider);
@@ -18,7 +20,7 @@ public class J_BraceletOfClay extends ChargedItem {
             new TriggerItem(ItemId.BRACELET_OF_CLAY).needsToBeEquipped(),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("You can mine (?<charges>.+) more pieces? of soft clay before your bracelet crumbles to dust.").setDynamicallyCharges(),
 
@@ -41,7 +43,7 @@ public class J_BraceletOfClay extends ChargedItem {
             }),
 
             // Crumbles.
-            new OnChatMessage("Your bracelet of clay crumbles to dust.").setFixedCharges(28),
-        };
+            new OnChatMessage("Your bracelet of clay crumbles to dust.").setFixedCharges(28)
+        ));
     }
 }

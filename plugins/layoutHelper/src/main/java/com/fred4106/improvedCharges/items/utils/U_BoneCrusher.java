@@ -11,6 +11,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class U_BoneCrusher extends ChargedItemWithStatus {
     public U_BoneCrusher(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.BONECRUSHER, ItemId.BONECRUSHER, provider);
@@ -20,7 +22,7 @@ public class U_BoneCrusher extends ChargedItemWithStatus {
             new TriggerItem(ItemId.BONECRUSHER_NECKLACE)
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("The bonecrusher( necklace)? has no charges.").setFixedCharges(0),
             new OnChatMessage("The bonecrusher( necklace)? has one charge.").setFixedCharges(1),
@@ -50,7 +52,7 @@ public class U_BoneCrusher extends ChargedItemWithStatus {
             }),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 }

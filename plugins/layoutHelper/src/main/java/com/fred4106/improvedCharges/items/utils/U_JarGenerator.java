@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class U_JarGenerator extends ChargedItem {
     public U_JarGenerator(final Provider provider) {
         super(Constants.JAR_GENERATOR, ItemId.JAR_GENERATOR, provider);
@@ -16,12 +18,12 @@ public class U_JarGenerator extends ChargedItem {
             new TriggerItem(ItemId.JAR_GENERATOR)
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check or use.
             new OnChatMessage("You have (?<charges>.+) charges left in your jar generator.").setDynamicallyCharges(),
 
             // Crumbles.
-            new OnChatMessage("Your jar generator runs out of charges and disappears.").setFixedCharges(100),
-        };
+            new OnChatMessage("Your jar generator runs out of charges and disappears.").setFixedCharges(100)
+        ));
     }
 }

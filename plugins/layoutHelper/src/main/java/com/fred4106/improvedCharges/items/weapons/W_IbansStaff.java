@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_IbansStaff extends ChargedItem {
     public W_IbansStaff(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.IBANS_STAFF, ItemId.IBANS_STAFF, provider);
@@ -19,12 +21,12 @@ public class W_IbansStaff extends ChargedItem {
             new TriggerItem(ItemId.IBANS_STAFF_UPGRADED),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("You have (?<charges>.+) charges left on the staff.").setDynamicallyCharges().onItemClick(),
 
             // Attack.
-            new OnGraphicChanged(87).isEquipped().decreaseCharges(1),
-        };
+            new OnGraphicChanged(87).isEquipped().decreaseCharges(1)
+        ));
     }
 }

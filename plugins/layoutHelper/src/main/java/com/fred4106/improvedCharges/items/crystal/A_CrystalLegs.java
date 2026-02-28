@@ -10,6 +10,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 import static com.fred4106.improvedCharges.store.enums.HitsplatTarget.SELF;
 
 public class A_CrystalLegs extends ChargedItem {
@@ -35,9 +37,9 @@ public class A_CrystalLegs extends ChargedItem {
             new TriggerItem(ItemId.CRYSTAL_LEGS_AMLODD_INACTIVE).fixedCharges(0),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             new OnChatMessage("Your crystal legs has (?<charges>.+) charges? remaining").setDynamicallyCharges().onItemClick(),
             new OnHitsplatApplied(SELF, HitsplatGroup.SUCCESSFUL).isEquipped().decreaseCharges(1)
-        };
+        ));
     }
 }

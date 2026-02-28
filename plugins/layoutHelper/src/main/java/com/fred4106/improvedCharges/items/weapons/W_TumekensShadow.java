@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_TumekensShadow extends ChargedItem {
     public W_TumekensShadow(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.TUMEKENS_SHADOW, ItemId.TUMEKENS_SHADOW, provider);
@@ -18,7 +20,7 @@ public class W_TumekensShadow extends ChargedItem {
             new TriggerItem(ItemId.TUMEKENS_SHADOW),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Tumeken's shadow( only)? has (?<charges>.+) charges? (remaining|left)").setDynamicallyCharges(),
 
@@ -38,7 +40,7 @@ public class W_TumekensShadow extends ChargedItem {
             new OnChatMessage("The banker charges your Tumeken's shadow using (?<soulrune>.+)x Soul rune").matcherConsumer(m -> {
                 final int soulRunes = Integer.parseInt(m.group("soulrune"));
                 increaseCharges(soulRunes / 2);
-            }),
-        };
+            })
+        ));
     }
 }

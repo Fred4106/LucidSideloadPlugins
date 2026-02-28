@@ -10,6 +10,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_BryophytasStaff extends ChargedItem {
     public W_BryophytasStaff(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.BRYOPHYTAS_STAFF, ItemId.BRYOPHYTAS_STAFF, provider);
@@ -19,7 +21,7 @@ public class W_BryophytasStaff extends ChargedItem {
             new TriggerItem(ItemId.BRYOPHYTAS_STAFF)
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("The nature staff has (?<charges>.+) charges?.").setDynamicallyCharges(),
 
@@ -92,7 +94,7 @@ public class W_BryophytasStaff extends ChargedItem {
             ).decreaseCharges(2),
             new OnXpDrop(Skill.MAGIC).isEquipped().onMenuOption("Cast").onMenuTarget(
                 "Geomancy"
-            ).decreaseCharges(3),
-        };
+            ).decreaseCharges(3)
+        ));
     }
 }

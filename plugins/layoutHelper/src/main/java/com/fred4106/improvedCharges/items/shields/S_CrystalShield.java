@@ -11,6 +11,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class S_CrystalShield extends ChargedItem {
     public S_CrystalShield(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.CRYSTAL_SHIELD, ItemId.CRYSTAL_SHIELD_DEGRADED, provider);
@@ -20,12 +22,12 @@ public class S_CrystalShield extends ChargedItem {
             new TriggerItem(ItemId.CRYSTAL_SHIELD_DEGRADED),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your crystal shield has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
 
             // Get hit.
             new OnHitsplatApplied(HitsplatTarget.SELF, HitsplatGroup.SUCCESSFUL).moreThanZeroDamage().isEquipped().decreaseCharges(1)
-        };
+        ));
     }
 }

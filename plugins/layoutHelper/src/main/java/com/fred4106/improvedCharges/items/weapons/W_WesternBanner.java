@@ -7,6 +7,8 @@ import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_WesternBanner extends ChargedItem {
     public W_WesternBanner(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.WESTERN_BANNER, ItemId.WESTERN_BANNER_3, provider);
@@ -16,7 +18,7 @@ public class W_WesternBanner extends ChargedItem {
             new TriggerItem(ItemId.WESTERN_BANNER_4).fixedCharges(ChargeId.UNLIMITED),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Teleport.
             new OnMenuOptionClicked("Teleport").hasItemId(ItemId.WESTERN_BANNER_3).setFixedCharges(0),
 
@@ -24,7 +26,7 @@ public class W_WesternBanner extends ChargedItem {
             new OnChatMessage("You have already used your available teleports for today. Try again tomorrow after the standard has recharged.").onItemClick().setFixedCharges(0),
 
             // Daily reset.
-            new OnResetDaily().requiredItem(ItemId.WESTERN_BANNER_3).setFixedCharges(1),
-        };
+            new OnResetDaily().requiredItem(ItemId.WESTERN_BANNER_3).setFixedCharges(1)
+        ));
     }
 }

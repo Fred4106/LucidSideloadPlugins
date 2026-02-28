@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_AmuletOfGlory extends ChargedItem {
     public J_AmuletOfGlory(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.AMULET_OF_GLORY, ItemId.AMULET_OF_GLORY, provider);
@@ -31,7 +33,7 @@ public class J_AmuletOfGlory extends ChargedItem {
             new TriggerItem(ItemId.AMULET_OF_GLORY_TRIMMED_6).fixedCharges(6),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check
             new OnChatMessage("Your Alchemist's amulet has (?<charges>.+) charges left.").setDynamicallyCharges(),
 
@@ -51,7 +53,7 @@ public class J_AmuletOfGlory extends ChargedItem {
             new OnChatMessage("The banker charges your Alchemist's amulet using (?<amulets>.+)x Amulet of chemistry.*").matcherConsumer(m -> {
                 final int amuletsOfChemistry = Integer.parseInt(m.group("amulets"));
                 increaseCharges(amuletsOfChemistry * 10);
-            }),
-        };
+            })
+        ));
     }
 }

@@ -12,6 +12,7 @@ import com.fred4106.improvedCharges.store.ids.ItemId;
 import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 public class J_EscapeCrystal extends ChargedItemWithStatus {
     private Instant instantToTeleport = Instant.now();
@@ -25,7 +26,7 @@ public class J_EscapeCrystal extends ChargedItemWithStatus {
             new TriggerItem(ItemId.ESCAPE_CRYSTAL).quantityCharges().hideOverlay(),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Activate / Deactivate.
             new OnVarbitChanged(VarbitID.TELEPORT_CRYSTAL_AFK_MODE).varbitValueConsumer(value -> {
                 if (value == 1) {
@@ -60,8 +61,8 @@ public class J_EscapeCrystal extends ChargedItemWithStatus {
             // Leave Gauntlet detection.
             new OnChatMessage("(You leave the Gauntlet.|Your reward awaits you in the nearby chest.)").consumer(() -> {
                 inGauntletWithEscapeCrystal = false;
-            }),
-        };
+            })
+        ));
     }
 
     private void resetIdleTimer() {

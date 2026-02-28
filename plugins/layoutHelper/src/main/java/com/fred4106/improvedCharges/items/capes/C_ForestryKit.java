@@ -10,6 +10,7 @@ import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
@@ -47,7 +48,7 @@ public class C_ForestryKit extends ChargedItemWithStorage {
             new TriggerItem(ItemId.FORESTRY_KIT),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // View contents.
             new OnItemContainerChanged(ItemContainerId.FORESTRY_KIT).updateStorage(),
 
@@ -121,8 +122,8 @@ public class C_ForestryKit extends ChargedItemWithStorage {
             }),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 
     private void purchaseFromFriendlyForesterShop(final int amountToBuy) {

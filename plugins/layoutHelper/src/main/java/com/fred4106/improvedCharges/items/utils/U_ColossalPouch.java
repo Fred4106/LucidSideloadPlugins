@@ -1,10 +1,10 @@
 package com.fred4106.improvedCharges.items.utils;
 
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.store.*;
 import net.runelite.api.Skill;
 import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.FredsItemChargesPlugin;
-import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.item.triggers.*;
@@ -13,12 +13,13 @@ import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Optional;
 
 import static com.fred4106.improvedCharges.FredsItemChargesPlugin.getNumberFromWordRepresentation;
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 
-public class U_ColossalPouch extends ChargedItemWithStorage {
+public class U_ColossalPouch extends ChargedItemWithStorageEmptyable {
     public U_ColossalPouch(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.COLOSSAL_POUCH, ItemId.COLOSSAL_POUCH, provider);
         this.storage = storage.storableItems(
@@ -33,7 +34,7 @@ public class U_ColossalPouch extends ChargedItemWithStorage {
             new TriggerItem(ItemId.COLOSSAL_POUCH_DEGRADED),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Empty.
             new OnChatMessage("There is no essence in this pouch.").emptyStorage(),
 
@@ -72,13 +73,13 @@ public class U_ColossalPouch extends ChargedItemWithStorage {
 
             // Decay.
             new OnChatMessage("Your pouch has decayed through use.").onMenuOption("Fill").consumer(() -> {
-                provider.configManager.setConfiguration(Constants.GROUP, com.fred4106.improvedCharges.Constants.COLOSSAL_POUCH_DECAY_COUNT, provider.config.getColossalPouchDecayCount() + 1);
+                provider.configManager.setConfiguration(Constants.GROUP, Constants.COLOSSAL_POUCH_DECAY_COUNT, provider.config.getColossalPouchDecayCount() + 1);
                 storage.setMaximumTotalQuantity(getPouchCapacity());
             }),
 
             // Repair.
             new OnChatMessage("Fine. A simple transfiguration spell should resolve things for you.").consumer(() -> {
-                provider.configManager.setConfiguration(Constants.GROUP, com.fred4106.improvedCharges.Constants.COLOSSAL_POUCH_DECAY_COUNT, 0);
+                provider.configManager.setConfiguration(Constants.GROUP, Constants.COLOSSAL_POUCH_DECAY_COUNT, 0);
                 storage.setMaximumTotalQuantity(getPouchCapacity());
             }),
 
@@ -122,8 +123,8 @@ public class U_ColossalPouch extends ChargedItemWithStorage {
             // Set maximum charges on level up
             new OnStatChanged(Skill.RUNECRAFT).consumer(() -> {
                 storage.setMaximumTotalQuantity(getPouchCapacity());
-            }),
-        };
+            })
+        ));
     }
 
     private String getMenuOptionForUse() {

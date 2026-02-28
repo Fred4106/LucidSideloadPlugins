@@ -10,6 +10,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_Camulet extends ChargedItem {
     public J_Camulet(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.CAMULET, ItemId.CAMULET, provider);
@@ -18,7 +20,7 @@ public class J_Camulet extends ChargedItem {
             new TriggerItem(ItemId.CAMULET),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your Camulet has one charge left.").setFixedCharges(1),
             new OnChatMessage("Your Camulet has (?<charges>.+) charges left.").setDynamicallyCharges(),
@@ -36,7 +38,7 @@ public class J_Camulet extends ChargedItem {
             new OnMenuEntryAdded("Check-charge").replaceOption("Check"),
 
             // Replace rub
-            new OnMenuEntryAdded("Rub").replaceOption("Teleport"),
-        };
+            new OnMenuEntryAdded("Rub").replaceOption("Teleport")
+        ));
     }
 }

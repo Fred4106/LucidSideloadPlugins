@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_RingOfForging extends ChargedItem {
     public J_RingOfForging(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.RING_OF_FORGING, ItemId.RING_OF_FORGING, provider);
@@ -16,7 +18,7 @@ public class J_RingOfForging extends ChargedItem {
             new TriggerItem(ItemId.RING_OF_FORGING).needsToBeEquipped()
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Break full.
             new OnChatMessage("The ring is fully charged. There would be no point in breaking it.").onMenuOption("Break").onMenuTarget("Ring of forging").setFixedCharges(140),
 
@@ -27,7 +29,7 @@ public class J_RingOfForging extends ChargedItem {
             new OnChatMessage("You retrieve a bar of iron.").decreaseCharges(1),
 
             // Break.
-            new OnChatMessage("The ring shatters. Your next ring of forging will start afresh from (?<charges>.+) charges.").setDynamicallyCharges(),
-        };
+            new OnChatMessage("The ring shatters. Your next ring of forging will start afresh from (?<charges>.+) charges.").setDynamicallyCharges()
+        ));
     }
 }

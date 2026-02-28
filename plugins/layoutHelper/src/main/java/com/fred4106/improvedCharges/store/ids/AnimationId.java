@@ -7,6 +7,7 @@ public final class AnimationId {
     public static final int HUMAN_SPEAR_SPIKE = AnimationID.HUMAN_SPEAR_SPIKE;
     public static final int HUMAN_SWORD_SLASH = AnimationID.HUMAN_SWORD_SLASH;
     public static final int HUMAN_SWORD_STAB = AnimationID.HUMAN_SWORD_STAB;
+    public static final int HUMAN_HALBERD_SPECIAL = AnimationID.DRAGON_HALBERD_SPECIAL_ATTACK;
     public static final int HUMAN_BOW = AnimationID.HUMAN_BOW;
     public static final int CHUGGING_BARREL_DRINK = AnimationID.PREPOT_DEVICE_DRINK_FULL;
     public static final int SLAYER_STAFF_CAST = AnimationID.SLAYER_MAGICDART_CAST;

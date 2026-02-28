@@ -6,6 +6,8 @@ import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_RingOfTheElements extends ChargedItem {
     public J_RingOfTheElements(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.RING_OF_THE_ELEMENTS, ItemId.RING_OF_THE_ELEMENTS, provider);
@@ -15,7 +17,7 @@ public class J_RingOfTheElements extends ChargedItem {
             new TriggerItem(ItemId.RING_OF_THE_ELEMENTS_UNCHARGED).fixedCharges(0),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Teleport.
             new OnVarbitChanged(13707).setDynamically(),
 
@@ -26,7 +28,7 @@ public class J_RingOfTheElements extends ChargedItem {
             new OnMenuEntryAdded("Last Destination").replaceOption("Air Altar").replaceTarget("Ring of the elements", "").varbitCheck(13708, 1),
             new OnMenuEntryAdded("Last Destination").replaceOption("Water Altar").replaceTarget("Ring of the elements", "").varbitCheck(13708, 2),
             new OnMenuEntryAdded("Last Destination").replaceOption("Earth Altar").replaceTarget("Ring of the elements", "").varbitCheck(13708, 3),
-            new OnMenuEntryAdded("Last Destination").replaceOption("Fire Altar").replaceTarget("Ring of the elements", "").varbitCheck(13708, 4),
-        };
+            new OnMenuEntryAdded("Last Destination").replaceOption("Fire Altar").replaceTarget("Ring of the elements", "").varbitCheck(13708, 4)
+        ));
     }
 }

@@ -6,6 +6,8 @@ import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_WarpedSceptre extends ChargedItem {
     public W_WarpedSceptre(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.WARPED_SCEPTRE, ItemId.WARPED_SCEPTRE, provider);
@@ -15,7 +17,7 @@ public class W_WarpedSceptre extends ChargedItem {
             new TriggerItem(ItemId.WARPED_SCEPTRE)
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Charge additional.
             new OnChatMessage("You add an additional .+ charges? to your warped sceptre. It now has (?<charges>.+) charges in total.").setDynamicallyCharges(),
 
@@ -38,7 +40,7 @@ public class W_WarpedSceptre extends ChargedItem {
             new OnChatMessage("The banker charges your Warped sceptre using (?<chaosrune>.+)x Chaos rune, and .+x Earth rune.*").matcherConsumer(m -> {
                 final int chaosRunes = Integer.parseInt(m.group("chaosrune"));
                 increaseCharges(chaosRunes / 2);
-            }),
-        };
+            })
+        ));
     }
 }

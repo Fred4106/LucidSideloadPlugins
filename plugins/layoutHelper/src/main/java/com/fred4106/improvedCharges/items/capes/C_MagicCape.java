@@ -6,6 +6,8 @@ import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class C_MagicCape extends ChargedItem {
     public C_MagicCape(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.MAGIC_CAPE, ItemId.MAGIC_CAPE, provider);
@@ -15,7 +17,7 @@ public class C_MagicCape extends ChargedItem {
             new TriggerItem(ItemId.MAGIC_CAPE_TRIMMED)
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // After spellbook swap.
             new OnChatMessage("You have changed your spellbook (?<used>.+)/(?<total>.+) times today.").setDifferenceCharges(),
 
@@ -23,7 +25,7 @@ public class C_MagicCape extends ChargedItem {
             new OnWidgetLoaded(219, 1, 0).text("Choose spellbook: \\((?<charges>.+)/5 left\\)").setDynamically(),
 
             // Daily reset.
-            new OnResetDaily().setFixedCharges(5),
-        };
+            new OnResetDaily().setFixedCharges(5)
+        ));
     }
 }

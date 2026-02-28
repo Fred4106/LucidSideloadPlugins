@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class U_GricollersCan extends ChargedItem {
     public U_GricollersCan(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.GRICOLLERS_CAN, ItemId.GRICOLLERS_CAN, provider);
@@ -17,7 +19,7 @@ public class U_GricollersCan extends ChargedItem {
             new TriggerItem(ItemId.GRICOLLERS_CAN),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Watering can charges remaining: (?<charges>.+)%").setDynamicallyCharges().onItemClick(),
 
@@ -28,7 +30,7 @@ public class U_GricollersCan extends ChargedItem {
             new OnChatMessage("You fill the watering can").onItemClick().setFixedCharges(1000),
 
             // Water.
-            new OnGraphicChanged(410).decreaseCharges(1),
-        };
+            new OnGraphicChanged(410).decreaseCharges(1)
+        ));
     }
 }

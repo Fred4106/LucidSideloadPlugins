@@ -12,6 +12,8 @@ import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
+
 public class U_TackleBox extends ChargedItemWithStorage {
     public U_TackleBox(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.TACKLE_BOX, ItemId.TACKLE_BOX, provider);
@@ -84,7 +86,7 @@ public class U_TackleBox extends ChargedItemWithStorage {
             new TriggerItem(ItemId.TACKLE_BOX),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Fill from inventory.
             new OnItemContainerChanged(ItemContainerId.INVENTORY).fillStorageFromInventory().onMenuOption("Fill", FredsItemChargesPlugin.menuOptionFillFromInventory),
 
@@ -102,8 +104,8 @@ public class U_TackleBox extends ChargedItemWithStorage {
             new OnMenuEntryAdded("Use").replaceOptionConsumer(() -> getMenuOptionForUse()).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 
     private String getMenuOptionForUse() {

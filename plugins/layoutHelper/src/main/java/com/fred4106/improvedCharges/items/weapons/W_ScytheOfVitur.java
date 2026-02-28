@@ -11,6 +11,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_ScytheOfVitur extends ChargedItem {
     public W_ScytheOfVitur(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.SCYTHE_OF_VITUR, ItemId.SCYTHE_OF_VITUR, provider);
@@ -24,7 +26,7 @@ public class W_ScytheOfVitur extends ChargedItem {
             new TriggerItem(ItemId.SANGUINE_SCYTHE_OF_VITUR_UNCHARGED).fixedCharges(0),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your (Holy s|Sanguine s|[Ss])cythe (of vitur )?has (?<charges>.+) charges (remaining|left).").setDynamicallyCharges(),
 
@@ -35,7 +37,7 @@ public class W_ScytheOfVitur extends ChargedItem {
             new OnChatMessage("You apply (?<charges>.+) charges to your (Holy s|Sanguine s|S)cythe of vitur.").setDynamicallyCharges(),
 
             // Attack.
-            new OnHitsplatApplied(HitsplatTarget.ENEMY, HitsplatGroup.SUCCESSFUL).moreThanZeroDamage().oncePerGameTick().isEquipped().decreaseCharges(1),
-        };
+            new OnHitsplatApplied(HitsplatTarget.ENEMY, HitsplatGroup.SUCCESSFUL).moreThanZeroDamage().oncePerGameTick().isEquipped().decreaseCharges(1)
+        ));
     }
 }

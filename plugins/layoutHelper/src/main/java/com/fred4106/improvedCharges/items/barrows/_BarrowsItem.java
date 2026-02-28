@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.OnCombat;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class _BarrowsItem extends ChargedItem {
     public _BarrowsItem(
             final String itemName,
@@ -20,7 +22,7 @@ public class _BarrowsItem extends ChargedItem {
             provider
         );
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage(itemName + ": (?<percentage>.+)% remaining until the next degradation.").matcherConsumer((m) -> {
                 final int percentage = Integer.parseInt(m.group("percentage"));
@@ -36,8 +38,8 @@ public class _BarrowsItem extends ChargedItem {
             }),
 
             // Degrade in combat.
-            new OnCombat(90).isEquipped().decreaseCharges(1),
-        };
+            new OnCombat(90).isEquipped().decreaseCharges(1)
+        ));
     }
 
     @Override

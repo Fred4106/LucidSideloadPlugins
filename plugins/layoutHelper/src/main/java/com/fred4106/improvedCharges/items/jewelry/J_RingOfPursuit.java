@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_RingOfPursuit extends ChargedItem {
     public J_RingOfPursuit(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.RING_OF_PURSUIT, ItemId.RING_OF_PURSUIT, provider);
@@ -16,7 +18,7 @@ public class J_RingOfPursuit extends ChargedItem {
             new TriggerItem(ItemId.RING_OF_PURSUIT).needsToBeEquipped(),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your ring of pursuit has (?<charges>.+) charges? left.").setDynamicallyCharges(),
 
@@ -27,7 +29,7 @@ public class J_RingOfPursuit extends ChargedItem {
             new OnChatMessage("Your ring of pursuit reveals the entire trail to you. It then crumbles to dust.").setFixedCharges(10),
 
             // Destroy.
-            new OnChatMessage("The ring shatters. Your next ring of pursuit will start afresh from 10 charges.").setFixedCharges(10),
-        };
+            new OnChatMessage("The ring shatters. Your next ring of pursuit will start afresh from 10 charges.").setFixedCharges(10)
+        ));
     }
 }

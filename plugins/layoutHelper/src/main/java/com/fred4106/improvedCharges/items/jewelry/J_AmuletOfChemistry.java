@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_AmuletOfChemistry extends ChargedItem {
     public J_AmuletOfChemistry(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.AMULET_OF_CHEMISTRY, ItemId.AMULET_OF_CHEMISTRY, provider);
@@ -17,7 +19,7 @@ public class J_AmuletOfChemistry extends ChargedItem {
             new TriggerItem(ItemId.AMULET_OF_CHEMISTRY).needsToBeEquipped()
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check
             new OnChatMessage("Your amulet of chemistry has (?<charges>.+) charges? left.").setDynamicallyCharges(),
 
@@ -29,7 +31,7 @@ public class J_AmuletOfChemistry extends ChargedItem {
             new OnWidgetLoaded(219, 1, 0).text("Status: (?<charges>.+) charges? left.").setDynamically().onItemClick(),
 
             // Break
-            new OnChatMessage("The amulet shatters. Your next amulet of chemistry will start afresh from (?<charges>.+) charges.").setDynamicallyCharges(),
-        };
+            new OnChatMessage("The amulet shatters. Your next amulet of chemistry will start afresh from (?<charges>.+) charges.").setDynamicallyCharges()
+        ));
     }
 }

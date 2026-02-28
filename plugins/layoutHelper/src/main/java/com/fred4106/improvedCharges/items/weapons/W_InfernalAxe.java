@@ -6,6 +6,8 @@ import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.GraphicId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class W_InfernalAxe extends ChargedItem {
     public W_InfernalAxe(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.INFERNAL_AXE, ItemId.INFERNAL_AXE_UNCHARGED, provider);
@@ -15,7 +17,7 @@ public class W_InfernalAxe extends ChargedItem {
             new TriggerItem(ItemId.INFERNAL_AXE),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Infernal axe: (?<percentage>.+)% remaining.").matcherConsumer(m -> {
                 final double percentage = Double.parseDouble(m.group("percentage"));
@@ -23,7 +25,7 @@ public class W_InfernalAxe extends ChargedItem {
             }),
 
             // Charge used.
-            new OnGraphicChanged(GraphicId.INFERNAL_AXE_SMOKE).isEquipped().decreaseCharges(1),
-        };
+            new OnGraphicChanged(GraphicId.INFERNAL_AXE_SMOKE).isEquipped().decreaseCharges(1)
+        ));
     }
 }

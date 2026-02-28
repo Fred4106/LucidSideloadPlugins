@@ -1,16 +1,18 @@
 package com.fred4106.improvedCharges.items.utils;
 
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.FredsItemChargesPlugin;
-import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
+
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 
-public class U_FlamtaerBag extends ChargedItemWithStorage {
+public class U_FlamtaerBag extends ChargedItemWithStorageEmptyable {
 //    private boolean flamtaerBagEmptyDialogVisible = false;
 
     public U_FlamtaerBag(final Provider provider) {
@@ -25,7 +27,7 @@ public class U_FlamtaerBag extends ChargedItemWithStorage {
             new TriggerItem(ItemId.FLAMTAER_BAG),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Timber beams: (?<beams>.+) Limestone bricks: (?<bricks>.+) Swamp paste: (?<paste>.+)").matcherConsumer(m -> {
                 storage.clear();
@@ -76,7 +78,7 @@ public class U_FlamtaerBag extends ChargedItemWithStorage {
             new OnChatMessage("The bag is empty").onMenuOption("Empty", FredsItemChargesPlugin.menuOptionEmptyToInventory).onItemClick().emptyStorage(),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 }

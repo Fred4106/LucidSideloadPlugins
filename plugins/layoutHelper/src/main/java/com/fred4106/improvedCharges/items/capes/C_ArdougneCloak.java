@@ -10,6 +10,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class C_ArdougneCloak extends ChargedItem {
     public C_ArdougneCloak(final Provider provider) {
         super(Constants.ARDOUGNE_CLOAK, ItemId.ARDOUGNE_CLOAK_1, provider);
@@ -21,10 +23,10 @@ public class C_ArdougneCloak extends ChargedItem {
             new TriggerItem(ItemId.ARDOUGNE_CLOAK_4).fixedCharges(ChargeId.UNLIMITED),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             new OnChatMessage("You have used (?<used>.+) of your (?<total>.+) Ardougne Farm teleports for today.").setDifferenceCharges(),
             new OnResetDaily().specificItem(ItemId.ARDOUGNE_CLOAK_2).setFixedCharges(3),
-            new OnResetDaily().specificItem(ItemId.ARDOUGNE_CLOAK_3).setFixedCharges(5),
-        };
+            new OnResetDaily().specificItem(ItemId.ARDOUGNE_CLOAK_3).setFixedCharges(5)
+        ));
     }
 }

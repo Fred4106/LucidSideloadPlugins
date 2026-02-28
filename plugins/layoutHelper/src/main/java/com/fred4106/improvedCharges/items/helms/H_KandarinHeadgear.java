@@ -11,6 +11,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class H_KandarinHeadgear extends ChargedItem {
     public H_KandarinHeadgear(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.KANDARIN_HEADGEAR, ItemId.KANDARIN_HEADGEAR_3, provider);
@@ -20,7 +22,7 @@ public class H_KandarinHeadgear extends ChargedItem {
             new TriggerItem(ItemId.KANDARIN_HEADGEAR_4).fixedCharges(ChargeId.UNLIMITED),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Try to teleport while empty.
             new OnChatMessage("You have already used your available teleports for today. Your headgear will recharge tomorrow.").onItemClick().setFixedCharges(0),
 
@@ -28,7 +30,7 @@ public class H_KandarinHeadgear extends ChargedItem {
             new OnGraphicChanged(111).onItemClick().decreaseCharges(1),
 
             // Daily reset.
-            new OnResetDaily().specificItem(ItemId.KANDARIN_HEADGEAR_3).setFixedCharges(1),
-        };
+            new OnResetDaily().specificItem(ItemId.KANDARIN_HEADGEAR_3).setFixedCharges(1)
+        ));
     }
 }

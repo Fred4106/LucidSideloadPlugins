@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class U_StrangeOldLockpick extends ChargedItem {
     public U_StrangeOldLockpick(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.STRANGE_OLD_LOCKPICK, ItemId.STRANGE_OLD_LOCKPICK, provider);
@@ -17,9 +19,9 @@ public class U_StrangeOldLockpick extends ChargedItem {
             new TriggerItem(ItemId.STRANGE_OLD_LOCKPICK_DEGRADED),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             new OnChatMessage("Your Strange old lockpick( now)? has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
-            new OnChatMessage("The Strange old lockpick crumbles to dust as you use it one last time."),
-        };
+            new OnChatMessage("The Strange old lockpick crumbles to dust as you use it one last time.")
+        ));
     }
 }

@@ -77,6 +77,7 @@ public final class Constants {
 	public static final String SKILLS_NECKLACE = "skills_necklace";
 	public static final String SLAYER_RING = "slayer_ring";
 	public static final String XERICS_TALISMAN = "xerics_talisman";
+	public static final String SAILORS_AMULET = "sailors_amulet";
 
 	// Shields
 	public static final String CHRONICLE = "chronicle";

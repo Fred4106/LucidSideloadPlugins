@@ -1,29 +1,30 @@
 package com.fred4106.improvedCharges.items.utils;
 
+import com.fred4106.improvedCharges.Constants;
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.FredsItemChargesPlugin;
-import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 
-public class U_FishBarrel extends ChargedItemWithStorage {
+public class U_FishBarrel extends ChargedItemWithStorageEmptyable {
     private Optional<StorageItem> lastCaughtFish = Optional.empty();
 
     public U_FishBarrel(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.FISH_BARREL, ItemId.FISH_BARREL, provider);
+        super(Constants.FISH_BARREL, ItemId.FISH_BARREL, provider);
 
         this.items = new TriggerItem[]{
             new TriggerItem(ItemId.FISH_BARREL),
@@ -42,6 +43,11 @@ public class U_FishBarrel extends ChargedItemWithStorage {
             new StorableItem(ItemId.RAW_MACKEREL).checkName("Mackerel"),
             new StorableItem(ItemId.RAW_COD).checkName("Cod"),
             new StorableItem(ItemId.RAW_BASS).checkName("Bass"),
+
+            // Barbarian
+            new StorableItem(ItemId.LEAPING_TROUT).checkName("Leaping trout"),
+            new StorableItem(ItemId.LEAPING_SALMON).checkName("Leaping salmon"),
+            new StorableItem(ItemId.LEAPING_STURGEON).checkName("Leaping sturgeon"),
 
             // Rod
             new StorableItem(ItemId.RAW_SARDINE).checkName("Sardine"),
@@ -72,10 +78,15 @@ public class U_FishBarrel extends ChargedItemWithStorage {
             new StorableItem(ItemId.RAW_LOBSTER).checkName("Lobster"),
             new StorableItem(ItemId.RAW_DARK_CRAB).checkName("Dark crab"),
 
-            // Barbarian
-            new StorableItem(ItemId.LEAPING_TROUT).checkName("Leaping trout"),
-            new StorableItem(ItemId.LEAPING_SALMON).checkName("Leaping salmon"),
-            new StorableItem(ItemId.LEAPING_STURGEON).checkName("Leaping sturgeon"),
+            // Sailing
+            new StorableItem(ItemId.RAW_SWORDTIP_SQUID).checkName("Swordtip squid"),
+            new StorableItem(ItemId.RAW_JUMBO_SQUID).checkName("Jumbo squid"),
+            new StorableItem(ItemId.RAW_GIANT_KRILL).checkName("Giant krill"),
+            new StorableItem(ItemId.RAW_HADDOCK).checkName("Haddock"),
+            new StorableItem(ItemId.RAW_YELLOWFIN).checkName("Yellowfin"),
+            new StorableItem(ItemId.RAW_HALIBUT).checkName("Halibut"),
+            new StorableItem(ItemId.RAW_BLUEFIN).checkName("Bluefin"),
+            new StorableItem(ItemId.RAW_MARLIN).checkName("Marlin"),
 
             // Other
             new StorableItem(ItemId.RAW_KARAMBWAN).checkName("Karambwan"),
@@ -83,7 +94,7 @@ public class U_FishBarrel extends ChargedItemWithStorage {
             new StorableItem(ItemId.RAW_MANTA_RAY).checkName("Manta ray")
         );
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check or empty already empty.
             new OnChatMessage("(Your|The) barrel is empty.").onItemClick().emptyStorage(),
 
@@ -123,7 +134,7 @@ public class U_FishBarrel extends ChargedItemWithStorage {
             new OnChatMessage("You empty the barrel.").onMenuOption(FredsItemChargesPlugin.menuOptionEmptyToBank).emptyStorage(),
 
             // Hide destroy.
-            new OnMenuEntryAdded("Destroy").hide(),
-        };
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
     }
 }

@@ -16,6 +16,7 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Optional;
 
 public class U_MasterScrollBook extends ChargedItemWithStorage {
@@ -48,7 +49,7 @@ public class U_MasterScrollBook extends ChargedItemWithStorage {
             new TriggerItem(ItemId.MASTER_SCROLL_BOOK),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             new OnVarbitChanged(5672).varbitValueConsumer(charges -> storage.put(ItemId.TELEPORTSCROLL_NARDAH, charges)),
             new OnVarbitChanged(5673).varbitValueConsumer(charges -> storage.put(ItemId.TELEPORTSCROLL_DIGSITE, charges)),
             new OnVarbitChanged(5674).varbitValueConsumer(charges -> storage.put(ItemId.TELEPORTSCROLL_FELDIP_HILLS, charges)),
@@ -93,8 +94,8 @@ public class U_MasterScrollBook extends ChargedItemWithStorage {
                 storage.put(ItemId.TELEPORTSCROLL_SPIDER_CAVE, Integer.parseInt(provider.client.getWidget(597, 71).getText()));
                 storage.put(ItemId.TELEPORTSCROLL_COLOSSAL_WYRM, Integer.parseInt(provider.client.getWidget(597, 76).getText()));
                 storage.put(ItemId.TELEPORTSCROLL_CHASM_OF_FIRE, Integer.parseInt(provider.client.getWidget(597, 79).getText()));
-            }),
-        };
+            })
+		));
     }
 
     private int getDefaultTeleportsOrTotal() {

@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class S_TomeOfEarth extends ChargedItem {
     public S_TomeOfEarth(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.TOME_OF_EARTH, ItemId.TOME_OF_EARTH, provider);
@@ -18,7 +20,7 @@ public class S_TomeOfEarth extends ChargedItem {
             new TriggerItem(ItemId.TOME_OF_EARTH).needsToBeEquipped(),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your tome currently holds (?<charges>.+) charges?.").setDynamicallyCharges().onItemClick(),
 
@@ -29,7 +31,7 @@ public class S_TomeOfEarth extends ChargedItem {
             new OnChatMessage("The banker charges your Tome of earth using (?<soiledpage>.+)x Soiled page.").matcherConsumer(m -> {
                 final int soiledPages = Integer.parseInt(m.group("soiledpage"));
                 increaseCharges(soiledPages * 20);
-            }),
-        };
+            })
+        ));
     }
 }

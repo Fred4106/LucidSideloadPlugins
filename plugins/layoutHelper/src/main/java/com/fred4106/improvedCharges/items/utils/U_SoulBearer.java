@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class U_SoulBearer extends ChargedItem {
     public U_SoulBearer(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.SOUL_BEARER, ItemId.SOUL_BEARER, provider);
@@ -17,7 +19,7 @@ public class U_SoulBearer extends ChargedItem {
             new TriggerItem(ItemId.SOUL_BEARER_UNCHARGED).fixedCharges(0),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Uncharge.
             new OnChatMessage("You remove the runes from the soul bearer.").setFixedCharges(0),
 
@@ -40,7 +42,7 @@ public class U_SoulBearer extends ChargedItem {
             new OnChatMessage("The banker charges your Soul bearer using (?<bloodrune>.+)x Blood rune.*").matcherConsumer(m -> {
                 final int bloodRunes = Integer.parseInt(m.group("bloodrune"));
                 increaseCharges(bloodRunes);
-            }),
-        };
+            })
+        ));
     }
 }

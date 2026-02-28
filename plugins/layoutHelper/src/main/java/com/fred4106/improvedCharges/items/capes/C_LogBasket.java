@@ -1,5 +1,7 @@
 package com.fred4106.improvedCharges.items.capes;
 
+import com.fred4106.improvedCharges.Constants;
+import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import net.runelite.api.Skill;
 import net.runelite.api.widgets.Widget;
@@ -11,6 +13,7 @@ import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,13 +21,13 @@ import java.util.regex.Pattern;
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.BANK;
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 
-public class C_LogBasket extends ChargedItemWithStorage {
+public class C_LogBasket extends ChargedItemWithStorageEmptyable {
     private Optional<StorageItem> lastLogs = Optional.empty();
     private int infernalQuantityTracker = 0;
     private Optional<Integer> lastLogUsedFromBasketForBeehive = Optional.empty();
 
     public C_LogBasket(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.LOG_BASKET, ItemId.LOG_BASKET, provider);
+        super(Constants.LOG_BASKET, ItemId.LOG_BASKET, provider);
         storage.setMaximumTotalQuantity(28).storableItems(
             new StorableItem(ItemId.LOGS).displayName("Regular logs").checkName("some logs", "x Logs"),
             new StorableItem(ItemId.OAK_LOGS).checkName("Oak logs"),
@@ -49,7 +52,8 @@ public class C_LogBasket extends ChargedItemWithStorage {
             new TriggerItem(ItemId.LOG_BASKET),
             new TriggerItem(ItemId.LOG_BASKET_OPEN),
         };
-        this.triggers = new TriggerBase[] {
+
+        this.triggers.addAll(List.of(
             // Check while empty.
             new OnChatMessage("(Your|The) basket is empty.").onItemClick().emptyStorage().consumer(() -> {
                 infernalQuantityTracker = 0;
@@ -80,7 +84,7 @@ public class C_LogBasket extends ChargedItemWithStorage {
             new OnChatMessage("You get some maple logs and give them to Lumberjack Leif.").requiredItem(ItemId.LOG_BASKET_OPEN).addToStorage(ItemId.MAPLE_LOGS, 0),
             new OnChatMessage("You get some teak logs and give them to Carpenter Kjallak.").requiredItem(ItemId.LOG_BASKET_OPEN).addToStorage(ItemId.TEAK_LOGS, 0),
             new OnChatMessage("You get some mahogany logs and give them to Carpenter Kjallak.").requiredItem(ItemId.LOG_BASKET_OPEN).addToStorage(ItemId.MAHOGANY_LOGS, 0),
-            
+
 
             // Achey tree.
             new OnChatMessage("You get some logs.").onMenuTarget("Achey Tree").consumer(() -> {
@@ -149,10 +153,10 @@ public class C_LogBasket extends ChargedItemWithStorage {
                 "Rosewood logs"
             ).consumer(this::buildBeehive),
             new OnChatMessage("Well done, you've completed a beehive. The bees can now be safely rehomed.").consumer(() -> {
-               if (lastLogUsedFromBasketForBeehive.isPresent()) {
-                   storage.add(lastLogUsedFromBasketForBeehive.get(), 1);
-                   lastLogUsedFromBasketForBeehive = Optional.empty();
-               }
+                if (lastLogUsedFromBasketForBeehive.isPresent()) {
+                    storage.add(lastLogUsedFromBasketForBeehive.get(), 1);
+                    lastLogUsedFromBasketForBeehive = Optional.empty();
+                }
             }),
 
             // Replace "Empty" with proper Empty to bank option.
@@ -167,8 +171,8 @@ public class C_LogBasket extends ChargedItemWithStorage {
                     storage.remove(lastLogs.get().getId(), 1);
                     infernalQuantityTracker--;
                 }
-            }).requiredItem(ItemId.LOG_BASKET_OPEN),
-        };
+            }).requiredItem(ItemId.LOG_BASKET_OPEN)
+        ));
     }
 
     private void buildBeehive() {

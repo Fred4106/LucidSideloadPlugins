@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class W_EyeOfAyak  extends ChargedItem {
     public W_EyeOfAyak(Provider provider) {
         super(com.fred4106.improvedCharges.Constants.EYE_OF_AYAK, ItemId.EYE_OF_AYAK, provider);
@@ -27,7 +29,7 @@ public class W_EyeOfAyak  extends ChargedItem {
          * only one of them will be charged.
          */
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
                 // Check.
                 // Charge.
                 new OnChatMessage("The Eye of Ayak had been charged with (runes|demon tears). It currently has (?<charges>.+) charges?").setDynamicallyCharges(),
@@ -48,7 +50,7 @@ public class W_EyeOfAyak  extends ChargedItem {
                 }),
 
                 // Auto-charge
-                new OnChatMessage("The banker charges your Eye of Ayak using (?<charges>.+)x Demon tear").increaseDynamically(),
-        };
+                new OnChatMessage("The banker charges your Eye of Ayak using (?<charges>.+)x Demon tear").increaseDynamically()
+        ));
     }
 }

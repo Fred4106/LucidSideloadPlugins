@@ -6,6 +6,8 @@ import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_SkillsNecklace extends ChargedItem {
     public J_SkillsNecklace(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.SKILLS_NECKLACE, ItemId.SKILLS_NECKLACE_0, provider);
@@ -20,9 +22,9 @@ public class J_SkillsNecklace extends ChargedItem {
             new TriggerItem(ItemId.SKILLS_NECKLACE_6).fixedCharges(6),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Unified menu entry.
-            new OnMenuEntryAdded("Rub").replaceOption("Teleport"),
-        };
+            new OnMenuEntryAdded("Rub").replaceOption("Teleport")
+        ));
     }
 }

@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_EnchantedLyre extends ChargedItem {
     public W_EnchantedLyre(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.ENCHANTED_LYRE, ItemId.ENCHANTED_LYRE_0, provider);
@@ -23,8 +25,8 @@ public class W_EnchantedLyre extends ChargedItem {
             new TriggerItem(ItemId.ENCHANTED_LYRE_IMBUED).fixedCharges(ChargeId.UNLIMITED),
         };
 
-        this.triggers = new TriggerBase[]{
-            new OnMenuEntryAdded("Play").replaceOption("Teleport"),
-        };
+        this.triggers.addAll(List.of(
+            new OnMenuEntryAdded("Play").replaceOption("Teleport")
+        ));
     }
 }

@@ -12,6 +12,8 @@ import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class J_AmuletOfBloodFury extends ChargedItem {
     public J_AmuletOfBloodFury(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.AMULET_OF_BLOOD_FURY, ItemId.AMULET_OF_BLOOD_FURY, provider);
@@ -20,7 +22,7 @@ public class J_AmuletOfBloodFury extends ChargedItem {
             new TriggerItem(ItemId.AMULET_OF_BLOOD_FURY),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Creation
             new OnChatMessage("You have successfully created an Amulet of blood fury.").setFixedCharges(10000),
 
@@ -31,7 +33,7 @@ public class J_AmuletOfBloodFury extends ChargedItem {
             new OnChatMessage("You have successfully added .+ hits? to your Amulet of blood fury. It will now work for (?<charges>.+) more hits?.").setDynamicallyCharges(),
 
             // Take damage.
-            new OnHitsplatApplied(HitsplatTarget.ENEMY, HitsplatGroup.SUCCESSFUL).combatStyle(CombatStyle.MELEE).isEquipped().decreaseCharges(1),
-        };
+            new OnHitsplatApplied(HitsplatTarget.ENEMY, HitsplatGroup.SUCCESSFUL).combatStyle(CombatStyle.MELEE).isEquipped().decreaseCharges(1)
+        ));
     }
 }

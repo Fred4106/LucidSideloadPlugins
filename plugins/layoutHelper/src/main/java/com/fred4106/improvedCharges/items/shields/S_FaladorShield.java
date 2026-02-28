@@ -10,6 +10,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class S_FaladorShield extends ChargedItem {
     public S_FaladorShield(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.FALADOR_SHIELD, ItemId.FALADOR_SHIELD_1, provider);
@@ -21,7 +23,7 @@ public class S_FaladorShield extends ChargedItem {
             new TriggerItem(ItemId.FALADOR_SHIELD_4),
         };
         
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("You have one remaining charge for today.").onItemClick().setFixedCharges(1),
             new OnChatMessage("You have two remaining charges for today.").onItemClick().setFixedCharges(2),
@@ -37,7 +39,7 @@ public class S_FaladorShield extends ChargedItem {
             new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_1).setFixedCharges(1),
             new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_2).setFixedCharges(1),
             new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_3).setFixedCharges(1),
-            new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_4).setFixedCharges(2),
-        };
+            new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_4).setFixedCharges(2)
+        ));
     }
 }

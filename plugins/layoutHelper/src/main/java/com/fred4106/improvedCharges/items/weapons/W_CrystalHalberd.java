@@ -11,6 +11,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 import static com.fred4106.improvedCharges.store.enums.HitsplatTarget.ENEMY;
 
 public class W_CrystalHalberd extends ChargedItem {
@@ -21,7 +23,7 @@ public class W_CrystalHalberd extends ChargedItem {
             new TriggerItem(ItemId.CRYSTAL_HALBERD),
             new TriggerItem(ItemId.CRYSTAL_HALBERD_FULL).fixedCharges(2500),
         };
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your crystal halberd has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
 
@@ -30,6 +32,15 @@ public class W_CrystalHalberd extends ChargedItem {
 
             // Attack with slash.
             new OnAnimationChanged(AnimationId.HUMAN_SCYTHE_SWEEP).isEquipped().decreaseCharges(1),
-        };
+
+            // Attack with special.
+            new OnAnimationChanged(AnimationId.HUMAN_HALBERD_SPECIAL).isEquipped().decreaseCharges(1),
+
+            // Auto-charge.
+            new OnChatMessage("The banker charges your Crystal halberd using (?<crystalshard>.+)x Crystal shard.").matcherConsumer(m -> {
+                final int crystalShards = Integer.parseInt(m.group("crystalshard"));
+                increaseCharges(crystalShards * 100);
+            })
+        ));
     }
 }

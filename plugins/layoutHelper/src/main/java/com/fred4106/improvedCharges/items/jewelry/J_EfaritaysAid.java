@@ -10,6 +10,8 @@ import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.ids.AnimationId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 
+import java.util.List;
+
 public class J_EfaritaysAid extends ChargedItem {
     private boolean attackedVampyre = false;
 
@@ -20,7 +22,7 @@ public class J_EfaritaysAid extends ChargedItem {
             new TriggerItem(ItemId.EFARITAYS_AID).needsToBeEquipped()
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your ring has (?<charges>.+) charges? left.").setDynamicallyCharges().onItemClick(),
 
@@ -62,7 +64,7 @@ public class J_EfaritaysAid extends ChargedItem {
                     increaseCharges(1);
                     attackedVampyre = false;
                 }
-            }),
-        };
+            })
+        ));
     }
 }

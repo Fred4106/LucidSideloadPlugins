@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class S_DragonfireShield extends ChargedItem {
     public S_DragonfireShield(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.DRAGONFIRE_SHIELD, ItemId.DRAGONFIRE_SHIELD, provider);
@@ -20,7 +22,7 @@ public class S_DragonfireShield extends ChargedItem {
             new TriggerItem(ItemId.DRAGONFIRE_WARD)
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("The shield has (?<charges>.+) charges?.").setDynamicallyCharges().onItemClick(),
 
@@ -34,7 +36,7 @@ public class S_DragonfireShield extends ChargedItem {
             new OnChatMessage("Your dragonfire shield is already fully charged.").setFixedCharges(50),
 
             // Attack.
-            new OnGraphicChanged(1165).isEquipped().decreaseCharges(1),
-        };
+            new OnGraphicChanged(1165).isEquipped().decreaseCharges(1)
+        ));
     }
 }

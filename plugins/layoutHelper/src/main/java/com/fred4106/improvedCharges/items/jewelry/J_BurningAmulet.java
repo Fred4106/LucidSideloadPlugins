@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_BurningAmulet extends ChargedItem {
     public J_BurningAmulet(
         final Provider provider
@@ -22,8 +24,8 @@ public class J_BurningAmulet extends ChargedItem {
             new TriggerItem(ItemId.BURNING_AMULET_5).fixedCharges(5),
         };
 
-        this.triggers = new TriggerBase[]{
-            new OnMenuEntryAdded("Rub").replaceOption("Teleport"),
-        };
+        this.triggers.addAll(List.of(
+            new OnMenuEntryAdded("Rub").replaceOption("Teleport")
+        ));
     }
 }

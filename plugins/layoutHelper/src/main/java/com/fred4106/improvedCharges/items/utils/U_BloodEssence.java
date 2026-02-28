@@ -8,6 +8,7 @@ import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
 import java.util.Optional;
 
 public class U_BloodEssence extends ChargedItemWithStatus {
@@ -19,7 +20,7 @@ public class U_BloodEssence extends ChargedItemWithStatus {
             new TriggerItem(ItemId.BLOOD_ESSENCE_ACTIVE),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your blood essence has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
 
@@ -56,7 +57,7 @@ public class U_BloodEssence extends ChargedItemWithStatus {
                         provider.store.addConsumerToNextTickQueue(this::deactivate);
                     }
                 }
-            }),
-        };
+            })
+        ));
     }
 }

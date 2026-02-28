@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_SkullSceptre extends ChargedItem {
     public W_SkullSceptre(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.SKULL_SCEPTRE, ItemId.SKULL_SCEPTRE, provider);
@@ -18,7 +20,7 @@ public class W_SkullSceptre extends ChargedItem {
             new TriggerItem(ItemId.SKULL_SCEPTRE_IMBUED)
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Teleport.
             new OnChatMessage("Your Skull Sceptre has (?<charges>.+) charges? left.").setDynamicallyCharges(),
 
@@ -36,7 +38,7 @@ public class W_SkullSceptre extends ChargedItem {
 
             // Unified menu entry.
             new OnMenuEntryAdded("Divine").replaceOption("Check"),
-            new OnMenuEntryAdded("Invoke").replaceOption("Teleport"),
-        };
+            new OnMenuEntryAdded("Invoke").replaceOption("Teleport")
+        ));
     }
 }

@@ -16,6 +16,9 @@ import scala.collection.immutable.List$;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Arrays;
+
+import static net.runelite.api.gameval.InterfaceID.Bankmain.POTIONSTORE_ITEMS;
 
 @PluginDescriptor(
         name = "<html><font color=\"#32C8CD\">Freds</font> Layout Helper</html>",
@@ -72,4 +75,20 @@ public class LayoutHelper extends Plugin {
         });
         overlays = List$.MODULE$.empty();
     }
+
+    @Subscribe
+    public void onMenuEntryAdded(final MenuEntryAdded event) {
+        if(event.getMenuEntry().getType() == MenuAction.CC_OP_LOW_PRIORITY && event.getActionParam1() == POTIONSTORE_ITEMS && event.getOption().endsWith("Dose")) {
+            event.getMenuEntry().setType(MenuAction.CC_OP);
+        }
+
+//		if (event.getMenuEntry().getItemId() != -1) {
+//			System.out.println("MENU ENTRY ADDED | " +
+//				"item id: " + event.getMenuEntry().getItemId() +
+//				", option: " + event.getOption() +
+//				", target: " + event.getTarget()
+//			);
+//		}
+    }
+
 }

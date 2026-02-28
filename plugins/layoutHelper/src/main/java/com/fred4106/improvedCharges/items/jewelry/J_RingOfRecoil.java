@@ -8,6 +8,8 @@ import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_RingOfRecoil extends ChargedItem {
     public J_RingOfRecoil(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.RING_OF_RECOIL, ItemId.RING_OF_RECOIL, provider);
@@ -16,7 +18,7 @@ public class J_RingOfRecoil extends ChargedItem {
             new TriggerItem(ItemId.RING_OF_RECOIL).needsToBeEquipped(),
         };
 
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("You can inflict one more point of damage before a ring will shatter.").setFixedCharges(1),
 
@@ -36,7 +38,7 @@ public class J_RingOfRecoil extends ChargedItem {
             new OnWidgetLoaded(219, 1, 0).text("Status: (?<charges>.+) damage points? left.").setDynamically(),
 
             // Break.
-            new OnChatMessage("The ring shatters. Your next ring of recoil will start afresh from (?<charges>.+) damage points?.").setDynamicallyCharges(),
-        };
+            new OnChatMessage("The ring shatters. Your next ring of recoil will start afresh from (?<charges>.+) damage points?.").setDynamicallyCharges()
+        ));
     }
 }

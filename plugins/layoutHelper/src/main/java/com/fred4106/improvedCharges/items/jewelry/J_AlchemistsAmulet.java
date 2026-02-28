@@ -6,6 +6,8 @@ import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class J_AlchemistsAmulet extends ChargedItem {
     public J_AlchemistsAmulet(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.ALCHEMISTS_AMULET, ItemId.ALCHEMISTS_AMULET, provider);
@@ -15,9 +17,9 @@ public class J_AlchemistsAmulet extends ChargedItem {
             new TriggerItem(ItemId.ALCHEMISTS_AMULET_UNCHARGED).fixedCharges(0),
         };
 
-        this.triggers = new TriggerBase[] {
+        this.triggers.addAll(List.of(
             // Check
-            new OnChatMessage("Your Alchemist's amulet has (?<charges>.+) charges left.").setDynamicallyCharges(),
+            new OnChatMessage("Your Alchemist's amulet has (?<charges>.+) charges? left.").setDynamicallyCharges(),
 
             // Charge
             new OnChatMessage("You apply an additional .+ charges to your Alchemist's amulet. It now has (?<charges>.+) charges in total.").setDynamicallyCharges(),
@@ -28,13 +30,14 @@ public class J_AlchemistsAmulet extends ChargedItem {
 
             // Use charge
             new OnChatMessage("Your Alchemist's amulet helps you create a .-dose potion. It no longer has any charges.").setFixedCharges(0),
+            new OnChatMessage("Your Alchemist's amulet helps you create a .-dose potion. It has one charge left.").setFixedCharges(1),
             new OnChatMessage("Your Alchemist's amulet helps you create a .-dose potion. It has (?<charges>.+) charges? left.").setDynamicallyCharges(),
 
             // Auto-charge
             new OnChatMessage("The banker charges your Alchemist's amulet using (?<amulets>.+)x Amulet of chemistry.*").matcherConsumer(m -> {
                 final int amuletsOfChemistry = Integer.parseInt(m.group("amulets"));
                 increaseCharges(amuletsOfChemistry * 10);
-            }),
-        };
+            })
+        ));
     }
 }

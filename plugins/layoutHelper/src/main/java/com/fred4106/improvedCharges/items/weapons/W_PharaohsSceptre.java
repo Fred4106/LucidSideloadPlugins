@@ -9,6 +9,8 @@ import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 
+import java.util.List;
+
 public class W_PharaohsSceptre extends ChargedItem {
     public W_PharaohsSceptre(final Provider provider) {
         super(com.fred4106.improvedCharges.Constants.PHARAOHS_SCEPTRE, ItemId.PHARAOHS_SCEPTRE, provider);
@@ -19,7 +21,7 @@ public class W_PharaohsSceptre extends ChargedItem {
             new TriggerItem(ItemId.PHARAOHS_SCEPTRE),
         };
         
-        this.triggers = new TriggerBase[]{
+        this.triggers.addAll(List.of(
             // Check and automatic messages.
             new OnChatMessage("Your sceptre has (?<charges>.+) charges? left.").setDynamicallyCharges().onItemClick(),
 
@@ -30,7 +32,7 @@ public class W_PharaohsSceptre extends ChargedItem {
             new OnChatMessage("Right, .+ artefacts gives you (?<charges>.+) charges. Now be on your way.").setDynamicallyCharges(),
 
             // Teleport.
-            new OnGraphicChanged(715).decreaseCharges(1),
-        };
+            new OnGraphicChanged(715).decreaseCharges(1)
+        ));
     }
 }
