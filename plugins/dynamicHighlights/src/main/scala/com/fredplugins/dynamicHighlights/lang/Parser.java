@@ -1,7 +1,7 @@
 package com.fredplugins.dynamicHighlights.lang;
 
-import com.fredplugins.dynamicHighlights.DisplayConfigOld;
-import com.fredplugins.dynamicHighlights.DisplayConfigOld.DisplayConfigBuilder;
+import com.fredplugins.dynamicHighlights.DisplayConfig;
+import com.fredplugins.dynamicHighlights.DisplayConfig.DisplayConfigBuilder;
 import com.fredplugins.dynamicHighlights.LootFilter;
 import com.fredplugins.dynamicHighlights.FilterRule;
 import com.fredplugins.dynamicHighlights.model.SoundProvider;
@@ -166,7 +166,7 @@ public class Parser {
 
         // rule expression MUST be followed by block w/ display config assignments
         tokens.takeExpect(BLOCK_START);
-        var builder = DisplayConfigOld.builder();
+        var builder = DisplayConfig.emptyBuilder();
         while (!tokens.peek().is(BLOCK_END)) { // TokenStream.traverseBlock?
             var property = tokens.peek();
             if (property.getValue().equals("icon")) {
@@ -178,45 +178,45 @@ public class Parser {
             switch (assign[0].getValue()) {
                 case "textColor":
                 case "color":
-                    builder.textColor(assign[1].expectColor()); break;
+                    builder.withTextColor(assign[1].expectColor()); break;
                 case "backgroundColor":
-                    builder.backgroundColor(assign[1].expectColor()); break;
+                    builder.withBackgroundColor(assign[1].expectColor()); break;
                 case "borderColor":
-                    builder.borderColor(assign[1].expectColor()); break;
+                    builder.withBorderColor(assign[1].expectColor()); break;
                 case "hidden":
-                    builder.hidden(assign[1].expectBoolean()); break;
+                    builder.withHidden(assign[1].expectBoolean()); break;
                 case "showLootbeam":
                 case "showLootBeam":
-                    builder.showLootbeam(assign[1].expectBoolean()); break;
+                    builder.withShowLootbeam(assign[1].expectBoolean()); break;
                 case "showValue":
-                    builder.showValue(assign[1].expectBoolean()); break;
+                    builder.withShowValue(assign[1].expectBoolean()); break;
                 case "showDespawn":
-                    builder.showDespawn(assign[1].expectBoolean()); break;
+                    builder.withShowDespawn(assign[1].expectBoolean()); break;
                 case "notify":
-                    builder.notify(assign[1].expectBoolean()); break;
+                    builder.withNotify(assign[1].expectBoolean()); break;
                 case "textAccent":
-                    builder.textAccent(TextAccent.fromOrdinal(assign[1].expectInt())); break;
+                    builder.withTextAccent(TextAccent.fromOrdinal(assign[1].expectInt())); break;
                 case "textAccentColor":
-                    builder.textAccentColor(assign[1].expectColor()); break;
+                    builder.withAccentColor(assign[1].expectColor()); break;
                 case "lootbeamColor":
                 case "lootBeamColor":
-                    builder.lootbeamColor(assign[1].expectColor()); break;
+                    builder.withLootbeamColor(assign[1].expectColor()); break;
                 case "fontType":
-                    builder.fontType(FontType.fromOrdinal(assign[1].expectInt())); break;
+                    builder.withFontType(FontType.fromOrdinal(assign[1].expectInt())); break;
                 case "menuTextColor":
-                    builder.menuTextColor(assign[1].expectColor()); break;
+                    builder.withMenuTextColor(assign[1].expectColor()); break;
                 case "highlightTile":
-                    builder.highlightTile(assign[1].expectBoolean()); break;
+                    builder.withHighlightTile(assign[1].expectBoolean()); break;
                 case "tileStrokeColor":
-                    builder.tileStrokeColor(assign[1].expectColor()); break;
+                    builder.withTileStrokeColor(assign[1].expectColor()); break;
                 case "tileFillColor":
-                    builder.tileFillColor(assign[1].expectColor()); break;
+                    builder.withTileFillColor(assign[1].expectColor()); break;
                 case "hideOverlay":
-                    builder.hideOverlay(assign[1].expectBoolean()); break;
+                    builder.withHideOverlay(assign[1].expectBoolean()); break;
                 case "sound":
-                    builder.sound(SoundProvider.fromExpr(assign[1])); break;
+                    builder.withSound(SoundProvider.fromExpr(assign[1])); break;
                 case "menuSort":
-                    builder.menuSort(assign[1].expectInt()); break;
+                    builder.withMenuSort(assign[1].expectInt()); break;
                 default:
                     throw new ParseException("unexpected identifier in display config block", assign[0]);
             }
@@ -372,24 +372,24 @@ public class Parser {
             }
             var spriteId = args.get(0).takeExpect(LITERAL_INT).expectInt();
             var index = args.get(1).takeExpect(LITERAL_INT).expectInt();
-            builder.icon(new BufferedImageProvider.Sprite(spriteId, index));
+            builder.withIcon(new BufferedImageProvider.Sprite(spriteId, index));
         } else if (type.getValue().equals("Item")) {
             if (args.size() != 1) {
                 throw new ParseException("incorrect arg length in icon Item() expr", type);
             }
             var itemId = args.get(0).takeExpect(LITERAL_INT).expectInt();
-            builder.icon(new BufferedImageProvider.Item(itemId));
+            builder.withIcon(new BufferedImageProvider.Item(itemId));
         } else if (type.getValue().equals("File")) {
             if (args.size() != 1) {
                 throw new ParseException("incorrect arg length in icon File() expr", type);
             }
             var filename = args.get(0).take().expectString();
-            builder.icon(new BufferedImageProvider.File(filename));
+            builder.withIcon(new BufferedImageProvider.File(filename));
         } else if (type.getValue().equals("CurrentItem")) {
             if (!args.isEmpty()) {
                 throw new ParseException("incorrect arg length in icon CurrentItem() expr", type);
             }
-            builder.icon(new BufferedImageProvider.CurrentItem());
+            builder.withIcon(new BufferedImageProvider.CurrentItem());
         } else {
             throw new ParseException("unrecognized icon type", type);
         }

@@ -286,10 +286,10 @@ public class FredsLootFiltersPlugin extends Plugin {
 		if (match.getSound() != null && config.soundVolume() > 0) {
 			queuedAudio.add(match.getSound());
 		}
-		if (match.getIcon() != null && !match.isCompact()) {
+		if (match.getIcon() != null && !/*match.isCompact()*/config.compactMode()) {
 			iconIndex.inc(this, match.getIcon(), item);
 		}
-		if(match.isCompact()){
+		if(/*match.isCompact()*/config.compactMode()){
 			iconIndex.inc(this, match.getIcon(), item,config.compactRenderSize());
 		}
 	}
@@ -299,7 +299,7 @@ public class FredsLootFiltersPlugin extends Plugin {
 		lootbeamIndex.remove(tile, item);
 		displayIndex.remove(item);
 		if (display != null && display.getIcon() != null) {
-			iconIndex.dec(display.getIcon(), item, display.isCompact()? config.compactRenderSize() : 16);
+			iconIndex.dec(display.getIcon(), item, /*display.isCompact()*/config.compactMode()? config.compactRenderSize() : 16);
 		}
 	}
 

@@ -84,17 +84,16 @@ public class LootFilter {
         return builder;
     }
 
-    public @NonNull DisplayConfigOld findMatch(FredsLootFiltersPlugin plugin, PluginTileItem item) {
-        var display = new DisplayConfigOld(Color.WHITE).toBuilder()
-            .compact(plugin.getConfig().compactMode())
+    public @NonNull DisplayConfig findMatch(FredsLootFiltersPlugin plugin, PluginTileItem item) {
+    var display = DisplayConfig.builder(DisplayConfig$.MODULE$.apply(Color.WHITE))
             .build();
         for (var rule : rules) {
             if (!rule.getCond().test(plugin, item)) {
                 continue;
             }
 
-            display = display.merge(rule.getDisplay());
-            display.getEvalTrace().add(rule.getSourceLine());
+            display = DisplayConfig.builder(DisplayConfig.merge(display, rule.getDisplay()))
+                .withTrace(rule.getSourceLine()).build();
             if (rule.isTerminal()) {
                 return display;
             }

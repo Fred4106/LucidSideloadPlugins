@@ -31,16 +31,16 @@ public class FilterUtil {
         withConfig = withConfig.stream()
                 .map(it -> it.withDisplay(builder -> {
                     if (config.alwaysShowValue()) {
-                        builder.showValue(true);
+                        builder.withShowValue(true);
                     }
                     if (config.alwaysShowDespawn()) {
-                        builder.showDespawn(true);
+                        builder.withShowDespawn(true);
                     }
                     if (config.textAccent().ordinal() > TextAccent.USE_FILTER.ordinal()) {
-                        builder.textAccent(config.textAccent());
+                        builder.withTextAccent(config.textAccent());
                     }
                     if (config.highlightTiles()) {
-                        builder.highlightTile(true);
+                        builder.withHighlightTile(true);
                     }
                 }))
                 .collect(Collectors.toCollection(ArrayList::new));

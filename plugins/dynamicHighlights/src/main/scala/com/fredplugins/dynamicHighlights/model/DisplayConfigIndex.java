@@ -1,6 +1,6 @@
 package com.fredplugins.dynamicHighlights.model;
 
-import com.fredplugins.dynamicHighlights.DisplayConfigOld;
+import com.fredplugins.dynamicHighlights.DisplayConfig;
 import com.fredplugins.dynamicHighlights.FredsLootFiltersPlugin;
 import lombok.NonNull;
 import net.runelite.api.WorldView;
@@ -11,13 +11,13 @@ import java.util.Map;
 
 @Singleton
 public class DisplayConfigIndex {
-    private final Map<PluginTileItem, DisplayConfigOld> index = new HashMap<>();
+    private final Map<PluginTileItem, DisplayConfig> index = new HashMap<>();
 
-    public @NonNull DisplayConfigOld get(PluginTileItem item) {
+    public @NonNull DisplayConfig get(PluginTileItem item) {
         return index.get(item);
     }
 
-    public void put(PluginTileItem item, @NonNull DisplayConfigOld display) {
+    public void put(PluginTileItem item, @NonNull DisplayConfig display) {
         index.put(item, display);
     }
 

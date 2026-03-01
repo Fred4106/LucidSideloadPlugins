@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @ToString
 public class FilterRule {
     private final Condition cond;
-    private final DisplayConfigOld display;
+    private final DisplayConfig display;
     private final boolean isTerminal;
     private final int sourceLine;
 
@@ -45,22 +45,22 @@ public class FilterRule {
                 sound = new SoundProvider.File(configSound);
             }
         }
-        var display = DisplayConfigOld.builder()
-                .textColor(config.highlightColor())
-                .showLootbeam(config.highlightLootbeam())
-                .notify(config.highlightNotify())
-                .backgroundColor(config.higlightBackgroundColor())
-                .borderColor(config.highlightBorderColor())
-                .lootbeamColor(config.highlightLootbeamColor())
-                .menuTextColor(config.highlightMenuTextColor())
-                .menuSort(config.highlightMenuSort())
-                .sound(sound)
+        var display = DisplayConfig.emptyBuilder()
+                .withTextColor(config.highlightColor())
+                .withShowLootbeam(config.highlightLootbeam())
+                .withNotify(config.highlightNotify())
+                .withBackgroundColor(config.higlightBackgroundColor())
+                .withBorderColor(config.highlightBorderColor())
+                .withLootbeamColor(config.highlightLootbeamColor())
+                .withMenuTextColor(config.highlightMenuTextColor())
+                .withMenuSort(config.highlightMenuSort())
+                .withSound(sound)
                 .build();
         return new FilterRule(rule, display, true, -3);
     }
 
-    public FilterRule withDisplay(Consumer<DisplayConfigOld.DisplayConfigBuilder> consumer) {
-        var builder = display.toBuilder();
+    public FilterRule withDisplay(Consumer<DisplayConfig.DisplayConfigBuilder> consumer) {
+        var builder = DisplayConfig.builder(display);
         consumer.accept(builder);
         return new FilterRule(cond, builder.build(), isTerminal, sourceLine);
     }
@@ -72,8 +72,8 @@ public class FilterRule {
                         .map(it -> new AndCondition(new ItemNameCondition(it.getName()), new ItemQuantityCondition(it.getQuantity(), it.getComparator())))
                         .collect(Collectors.toList())
         );
-        var display = DisplayConfigOld.builder()
-                .hidden(true)
+        var display = DisplayConfig.emptyBuilder()
+                .withHidden(true)
                 .build();
         return new FilterRule(rule, display, true, -4);
     }

@@ -193,11 +193,11 @@ public class LootFiltersOverlay extends Overlay {
                 text.setText(displayText);
                 text.setColor(match.isHidden() ? config.hiddenColor() : match.getTextColor());
                 text.setPosition(new Point(textPoint.x, textPoint.y - currentOffset));
-                if (match.getTextAccentColor() != null) {
-                    text.setAccentColor(match.getTextAccentColor());
+                if (match.accentColor().isDefined()) {
+                    text.setAccentColor(match.accentColor().get());
                 }
-                if (match.getTextAccent() != null) {
-                    text.setTextAccent(match.getTextAccent());
+                if (match.accent().isDefined()) {
+                    text.setTextAccent(match.accent().get());
                 }
 
                 var boundingBox = new Rectangle(
@@ -210,12 +210,12 @@ public class LootFiltersOverlay extends Overlay {
                     boundingBox.width += iconWidth;
                 }
 
-                if (match.getBackgroundColor() != null) {
-                    g.setColor(match.getBackgroundColor());
+                if (match.backgroundColor().isDefined()) {
+                    g.setColor(match.backgroundColor().get());
                     g.fillRect(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
                 }
-                if (match.getBorderColor() != null) {
-                    g.setColor(match.getBorderColor());
+                if (match.borderColor().isDefined()) {
+                    g.setColor(match.borderColor().get());
                     g.drawRect(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
                 }
                 if (plugin.isHotkeyActive() && boundingBox.contains(mouse.getX(), mouse.getY())) {
@@ -249,7 +249,7 @@ public class LootFiltersOverlay extends Overlay {
         return null;
     }
 
-    private int renderCompact(DisplayConfigOld display, Graphics2D g, PluginTileItem item, Tile tile, long count, long quantity,
+    private int renderCompact(DisplayConfig display, Graphics2D g, PluginTileItem item, Tile tile, long count, long quantity,
                               int currentOffset, net.runelite.api.Point mouse, Consumer<Integer> onHoveredItem, int rowOffset,
                               int rowSize) {
         var overrideHidden = plugin.isHotkeyActive() && config.hotkeyShowHiddenItems();
@@ -289,12 +289,12 @@ public class LootFiltersOverlay extends Overlay {
                 boxWidth + 2, boxHeight + 2
         );
 
-        if (display.getBackgroundColor() != null) {
-            g.setColor(display.getBackgroundColor());
+        if (display.backgroundColor().isDefined()) {
+            g.setColor(display.backgroundColor().get());
             g.fillRect(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
         }
-        if (display.getBorderColor() != null) {
-            g.setColor(display.getBorderColor());
+        if (display.borderColor().isDefined()) {
+            g.setColor(display.borderColor().get());
             g.drawRect(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
         }
         if (plugin.isHotkeyActive() && boundingBox.contains(mouse.getX(), mouse.getY())) {
@@ -343,7 +343,7 @@ public class LootFiltersOverlay extends Overlay {
         return Color.GREEN;
     }
 
-    private String buildDisplayText(PluginTileItem item, int unstackedCount, int quantity, DisplayConfigOld display) {
+    private String buildDisplayText(PluginTileItem item, int unstackedCount, int quantity, DisplayConfig display) {
         var text = item.getName();
 
         // BOTH of these can be true, we want them to be visually different either way
@@ -438,7 +438,7 @@ public class LootFiltersOverlay extends Overlay {
         }
     }
 
-    private void renderClickboxes(Graphics2D g, Rectangle textBox, PluginTileItem item, DisplayConfigOld display,
+    private void renderClickboxes(Graphics2D g, Rectangle textBox, PluginTileItem item, DisplayConfig display,
                                   Consumer<Integer> onHoverHide, Consumer<Integer> onHoverHighlight) {
         var y = textBox.y + (textBox.height - CLICKBOX_SIZE) / 2;
         var hide = new Rectangle(textBox.x + textBox.width + 2, y, CLICKBOX_SIZE, CLICKBOX_SIZE);
@@ -480,7 +480,7 @@ public class LootFiltersOverlay extends Overlay {
         }
     }
 
-    private void highlightTile(Graphics2D g, Tile tile, DisplayConfigOld display) {
+    private void highlightTile(Graphics2D g, Tile tile, DisplayConfig display) {
         var poly = getCanvasTilePoly(client, tile.getLocalLocation(), tile.getItemLayer().getHeight());
         if (poly == null) {
             return;
@@ -490,8 +490,8 @@ public class LootFiltersOverlay extends Overlay {
         g.setColor(display.getTileStrokeColor());
         g.setStroke(new BasicStroke(2));
         g.draw(poly);
-        if (display.getTileFillColor() != null) {
-            g.setColor(display.getTileFillColor());
+        if (display.tileFillColor().isDefined()) {
+            g.setColor(display.tileFillColor().get());
             g.fill(poly);
         }
         g.setStroke(origStroke);
@@ -524,7 +524,7 @@ public class LootFiltersOverlay extends Overlay {
             if (existingVal == null) {
                 var quant = new ItemCounts(1, item.getQuantity());
                 countMap.put(key, quant);
-                itemCollection.get(key.displayConfig.isCompact()).add(new RenderItem(item, key, quant));
+                itemCollection.get(/*key.displayConfig.isCompact()*/config.compactMode()).add(new RenderItem(item, key, quant));
             } else {
                 if (item.isStackable()) {
                     existingVal.quantity += item.getQuantity();
@@ -538,7 +538,7 @@ public class LootFiltersOverlay extends Overlay {
     @Value
     private static class OverlayKey {
         int id;
-        DisplayConfigOld displayConfig;
+        DisplayConfig displayConfig;
     }
 
     @Value

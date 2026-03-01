@@ -1,13 +1,19 @@
 package com.fredplugins.dynamicHighlights;
 
 import com.fredplugins.dynamicHighlights.model.PluginTileItem;
+import com.fredplugins.dynamicHighlights.util.CollectionUtil;
+import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.coords.WorldPoint;
+import org.apache.commons.lang3.ArrayUtils;
+import scala.reflect.ClassTag;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -119,7 +125,7 @@ public class MenuEntryComposer {
         var item = getItemsForEntry(entry).get(0);
         var display = plugin.getDisplayIndex().get(item);
         Consumer<MenuEntry> onClick = (e) -> {
-            var trace = display.getEvalTrace();
+            var trace = Arrays.stream(display.getTrace()).mapToObj(j -> Integer.valueOf(j)).collect(Collectors.toList());
             if (trace.isEmpty()) {
                 plugin.addChatMessage(item.getName() + " did not match any config list or filter rule.");
             } else if (trace.size() == 1 && trace.get(0) == -4) {
