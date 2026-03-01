@@ -2,7 +2,7 @@ package com.fredplugins.dynamicHighlights;
 
 import ch.qos.logback.classic.Level;
 
-import javax.inject.Inject;
+import com.google.inject.Inject;
 
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;

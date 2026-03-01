@@ -1,0 +1,32 @@
+package com.fredplugins.dynamicHighlights.ast.leaf;
+
+import com.fredplugins.dynamicHighlights.FredsLootFiltersPlugin;
+import com.fredplugins.dynamicHighlights.model.Comparator;
+import com.fredplugins.dynamicHighlights.model.ValueType;
+import com.fredplugins.dynamicHighlights.model.PluginTileItem;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+@EqualsAndHashCode(callSuper = false)
+@ToString(callSuper = true)
+public class ItemValueCondition extends ComparatorCondition {
+    private final ValueType valueType;
+
+    public ItemValueCondition(int value, Comparator cmp, ValueType valueType) {
+       super(value, cmp);
+       this.valueType = valueType;
+    }
+
+    @Override
+    public int getLhs(FredsLootFiltersPlugin plugin, PluginTileItem item) {
+        return getValue(item) * item.getQuantity();
+    }
+
+    private int getValue(PluginTileItem item) {
+        switch (valueType) {
+            case HIGHEST: return Math.max(item.getGePrice(), item.getHaPrice());
+            case GE: return item.getGePrice();
+            default: return item.getHaPrice();
+        }
+    }
+}
