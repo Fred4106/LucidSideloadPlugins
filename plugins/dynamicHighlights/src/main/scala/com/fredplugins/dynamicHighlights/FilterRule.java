@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @ToString
 public class FilterRule {
     private final Condition cond;
-    private final DisplayConfig display;
+    private final DisplayConfigOld display;
     private final boolean isTerminal;
     private final int sourceLine;
 
@@ -45,7 +45,7 @@ public class FilterRule {
                 sound = new SoundProvider.File(configSound);
             }
         }
-        var display = DisplayConfig.builder()
+        var display = DisplayConfigOld.builder()
                 .textColor(config.highlightColor())
                 .showLootbeam(config.highlightLootbeam())
                 .notify(config.highlightNotify())
@@ -59,7 +59,7 @@ public class FilterRule {
         return new FilterRule(rule, display, true, -3);
     }
 
-    public FilterRule withDisplay(Consumer<DisplayConfig.DisplayConfigBuilder> consumer) {
+    public FilterRule withDisplay(Consumer<DisplayConfigOld.DisplayConfigBuilder> consumer) {
         var builder = display.toBuilder();
         consumer.accept(builder);
         return new FilterRule(cond, builder.build(), isTerminal, sourceLine);
@@ -72,7 +72,7 @@ public class FilterRule {
                         .map(it -> new AndCondition(new ItemNameCondition(it.getName()), new ItemQuantityCondition(it.getQuantity(), it.getComparator())))
                         .collect(Collectors.toList())
         );
-        var display = DisplayConfig.builder()
+        var display = DisplayConfigOld.builder()
                 .hidden(true)
                 .build();
         return new FilterRule(rule, display, true, -4);

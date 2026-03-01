@@ -1,7 +1,7 @@
 package com.fredplugins.dynamicHighlights.lang;
 
-import com.fredplugins.dynamicHighlights.DisplayConfig;
-import com.fredplugins.dynamicHighlights.DisplayConfig.DisplayConfigBuilder;
+import com.fredplugins.dynamicHighlights.DisplayConfigOld;
+import com.fredplugins.dynamicHighlights.DisplayConfigOld.DisplayConfigBuilder;
 import com.fredplugins.dynamicHighlights.LootFilter;
 import com.fredplugins.dynamicHighlights.FilterRule;
 import com.fredplugins.dynamicHighlights.model.SoundProvider;
@@ -166,7 +166,7 @@ public class Parser {
 
         // rule expression MUST be followed by block w/ display config assignments
         tokens.takeExpect(BLOCK_START);
-        var builder = DisplayConfig.builder();
+        var builder = DisplayConfigOld.builder();
         while (!tokens.peek().is(BLOCK_END)) { // TokenStream.traverseBlock?
             var property = tokens.peek();
             if (property.getValue().equals("icon")) {

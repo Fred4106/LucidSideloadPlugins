@@ -249,7 +249,7 @@ public class LootFiltersOverlay extends Overlay {
         return null;
     }
 
-    private int renderCompact(DisplayConfig display, Graphics2D g, PluginTileItem item, Tile tile, long count, long quantity,
+    private int renderCompact(DisplayConfigOld display, Graphics2D g, PluginTileItem item, Tile tile, long count, long quantity,
                               int currentOffset, net.runelite.api.Point mouse, Consumer<Integer> onHoveredItem, int rowOffset,
                               int rowSize) {
         var overrideHidden = plugin.isHotkeyActive() && config.hotkeyShowHiddenItems();
@@ -343,7 +343,7 @@ public class LootFiltersOverlay extends Overlay {
         return Color.GREEN;
     }
 
-    private String buildDisplayText(PluginTileItem item, int unstackedCount, int quantity, DisplayConfig display) {
+    private String buildDisplayText(PluginTileItem item, int unstackedCount, int quantity, DisplayConfigOld display) {
         var text = item.getName();
 
         // BOTH of these can be true, we want them to be visually different either way
@@ -438,7 +438,7 @@ public class LootFiltersOverlay extends Overlay {
         }
     }
 
-    private void renderClickboxes(Graphics2D g, Rectangle textBox, PluginTileItem item, DisplayConfig display,
+    private void renderClickboxes(Graphics2D g, Rectangle textBox, PluginTileItem item, DisplayConfigOld display,
                                   Consumer<Integer> onHoverHide, Consumer<Integer> onHoverHighlight) {
         var y = textBox.y + (textBox.height - CLICKBOX_SIZE) / 2;
         var hide = new Rectangle(textBox.x + textBox.width + 2, y, CLICKBOX_SIZE, CLICKBOX_SIZE);
@@ -480,7 +480,7 @@ public class LootFiltersOverlay extends Overlay {
         }
     }
 
-    private void highlightTile(Graphics2D g, Tile tile, DisplayConfig display) {
+    private void highlightTile(Graphics2D g, Tile tile, DisplayConfigOld display) {
         var poly = getCanvasTilePoly(client, tile.getLocalLocation(), tile.getItemLayer().getHeight());
         if (poly == null) {
             return;
@@ -538,7 +538,7 @@ public class LootFiltersOverlay extends Overlay {
     @Value
     private static class OverlayKey {
         int id;
-        DisplayConfig displayConfig;
+        DisplayConfigOld displayConfig;
     }
 
     @Value

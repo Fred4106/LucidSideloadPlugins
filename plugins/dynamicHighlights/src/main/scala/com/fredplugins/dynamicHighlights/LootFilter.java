@@ -84,8 +84,8 @@ public class LootFilter {
         return builder;
     }
 
-    public @NonNull DisplayConfig findMatch(FredsLootFiltersPlugin plugin, PluginTileItem item) {
-        var display = new DisplayConfig(Color.WHITE).toBuilder()
+    public @NonNull DisplayConfigOld findMatch(FredsLootFiltersPlugin plugin, PluginTileItem item) {
+        var display = new DisplayConfigOld(Color.WHITE).toBuilder()
             .compact(plugin.getConfig().compactMode())
             .build();
         for (var rule : rules) {
