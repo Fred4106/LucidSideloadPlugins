@@ -1,5 +1,8 @@
 package com.fredplugins.layouthelper;
 
+import ch.qos.logback.classic.Level;
+import com.fredplugins.layouthelper.LootBroadcastHelper.LootBroadcastMessage;
+import ethanApiPlugin.EthanApiPlugin;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
@@ -10,13 +13,15 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import org.pf4j.Extension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.immutable.List$;
 
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static net.runelite.api.gameval.InterfaceID.Bankmain.POTIONSTORE_ITEMS;
 
@@ -27,9 +32,12 @@ import static net.runelite.api.gameval.InterfaceID.Bankmain.POTIONSTORE_ITEMS;
         tags = {"layout", "widget", "interface", "stretched", "helper", "fred4106"}
 )
 @Singleton
-@Slf4j
 public class LayoutHelper extends Plugin {
-
+    private final static Logger log;
+    static {
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(LayoutHelper.class)).setLevel(Level.DEBUG);
+        log = LoggerFactory.getLogger(LayoutHelper.class);
+    }
     @Inject
     private Client client;
 
@@ -41,6 +49,7 @@ public class LayoutHelper extends Plugin {
 
     @Inject
     private ChatMessageManager chatMessageManager;
+
     
     scala.collection.immutable.List<OverlayWidgetHelper> overlays = List$.MODULE$.empty();
 
@@ -91,4 +100,40 @@ public class LayoutHelper extends Plugin {
 //		}
     }
 
+    @Subscribe
+    public void onScriptCallbackEvent(ScriptCallbackEvent event)
+    {
+        if (!"chatFilterCheck".equals(event.getEventName()))
+        {
+            return;
+        }
+
+        int[] intStack = client.getIntStack();
+        int intStackSize = client.getIntStackSize();
+        Object[] objectStack = client.getObjectStack();
+        int objectStackSize = client.getObjectStackSize();
+
+        final int messageType = intStack[intStackSize - 2];
+        final int messageId = intStack[intStackSize - 1];
+        String message = (String) objectStack[objectStackSize - 1];
+
+        ChatMessageType chatMessageType = ChatMessageType.of(messageType);
+        final MessageNode messageNode = client.getMessages().get(messageId);
+        final String name = messageNode.getName();
+
+        if((chatMessageType == ChatMessageType.GAMEMESSAGE || chatMessageType == ChatMessageType.SPAM) && name.isEmpty() && messageNode.getSender() == null) {
+            LootBroadcastMessage lootMsg = LootBroadcastHelper$.MODULE$.parse(message);
+            if(lootMsg != null) {
+                log.debug("Loot message {}", lootMsg);
+                intStack[intStackSize - 3] = 0;
+            }
+        }
+    }
+
+    @Subscribe(priority = -2) // run after ChatMessageManager
+    public void onChatMessage(final ChatMessage event) {
+        if(event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM && event.getSender() == null && event.getName().isEmpty()) {
+            log.debug("[onChatMessage] {}", event);
+        }
+    }
 }

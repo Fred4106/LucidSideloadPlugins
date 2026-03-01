@@ -152,7 +152,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		if (target instanceof NPC)
 		{
 			lastInteractionId = ((NPC)event.getTarget()).getId();
-			log.debug("[interact] last id: {} (\"{}\")", lastInteractionId, NPC_ID_TO_NAME_MAP.getOrDefault(lastInteractionId, "UNKNOWN"));
+//			log.debug("[interact] last id: {} (\"{}\")", lastInteractionId, NPC_ID_TO_NAME_MAP.getOrDefault(lastInteractionId, "UNKNOWN"));
 		}
 		else if (target == null)
 		{
@@ -216,7 +216,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 				default:
 					break;
 			}
-			log.debug("[menu clicked] {}\n\t\"{}\" last id: {} (\"{}\")", niceMenuClickedString, tOptStr, lastInteractionId, NPC_ID_TO_NAME_MAP.getOrDefault(lastInteractionId, "UNKNOWN"));
+//			log.debug("[menu clicked] {}\n\t\"{}\" last id: {} (\"{}\")", niceMenuClickedString, tOptStr, lastInteractionId, NPC_ID_TO_NAME_MAP.getOrDefault(lastInteractionId, "UNKNOWN"));
 			return;
 		}
 
@@ -311,7 +311,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		if (dConfig == null)
 			return;
 
-		log.debug("Dialog for {} has config {}", lastInteractionId, dConfig);
+//		log.debug("Dialog for {} has config {}", lastInteractionId, dConfig);
 
 		clientThread.invokeAtTickEnd(() ->
 		{
@@ -491,7 +491,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 			DialogueConfig d = dialogMap.get(x);
 			String dialogStr = "NULL";
 			if(d!=null) dialogStr = d.toString();
-			log.debug("dialogMap[{}] = {}", x, dialogStr);
+//			log.debug("dialogMap[{}] = {}", x, dialogStr);
 		});
 	}
 

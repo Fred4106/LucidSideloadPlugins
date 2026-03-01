@@ -383,7 +383,12 @@ public class DummyNPC implements NPC
 
     }
 
-	@Override
+    @Override
+    public int getFootprintSize() {
+        return 0;
+    }
+
+    @Override
 	public int getAnimationHeightOffset() {
 		return 0;
 	}
