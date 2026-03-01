@@ -5,15 +5,13 @@ import scala.jdk.OptionConverters.*
 import scala.jdk.StreamConverters.*
 import scala.util.chaining.*
 import scala.util.{Random, Try}
-import lexer.Tokens.*
-
 import scala.compiletime.uninitialized
 import scala.util.parsing.combinator.RegexParsers
 
 object LexerTest extends App {
 
 
-	val res = lexer.FilterLexer.run(TestFilterStrings.realFilter)
+//	val res = lexer.FilterLexer.run(TestFilterStrings.realFilter)
 	res.get.foreach(t => {
 		println(s"${t.pos}  |  ${t}")
 	})

@@ -1,5 +1,6 @@
 package com.fredplugins.dynamicHighlights;
 
+import com.fredplugins.dynamicHighlights.DefaultFilters.Rikten$;
 import com.fredplugins.dynamicHighlights.model.DespawnTimerType;
 import com.fredplugins.dynamicHighlights.model.DualValueDisplayType;
 import com.fredplugins.dynamicHighlights.model.FontMode;
@@ -21,7 +22,8 @@ import java.awt.Color;
 @ConfigGroup("freds-loot-filters")
 public interface FredsLootFiltersConfig extends Config {
     @ConfigItem(keyName = "preferredDefaultFilter", hidden = true, name = "", description = "")
-    default String getPreferredDefault() { return DefaultFilter.FILTERSCAPE.getName(); }
+    default String getPreferredDefault() { return Rikten$.MODULE$.displayName(); }
+
     @ConfigItem(keyName = "preferredDefaultFilter", hidden = true, name = "", description = "")
     void setPreferredDefault(String name);
 

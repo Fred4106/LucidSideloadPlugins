@@ -60,14 +60,14 @@ public class LootFiltersPanel extends PluginPanel {
 		var bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
 		var label = new JLabel("Active filter:");
-		var importClipboard = createIconButton(Icons.CLIPBOARD_PASTE,
+		var importClipboard = createIconButton(Icons.paste(),
 			"Import filter from clipboard.",
 			this::onImportClipboard);
 
-		var reloadFilters = createIconButton(Icons.RELOAD,
+		var reloadFilters = createIconButton(Icons.reload(),
 			"Reload filters from disk.",
 			this::onReloadFilters);
-		var browseFolder = createIconButton(Icons.FOLDER,
+		var browseFolder = createIconButton(Icons.folder(),
 			"View the plugin directory, where filters, sound files, and icon files should be placed, in the system file browser.",
 			this::onBrowseFolder);
 

@@ -12,7 +12,7 @@ public class OverlayStateIndicator extends InfoBox {
 
     @Inject
     public OverlayStateIndicator(FredsLootFiltersPlugin plugin) {
-        super(Icons.OVERLAY_DISABLED, plugin);
+        super(Icons.overlay_disabled(), plugin);
         this.plugin = plugin;
 //        this.config = config;
         setPriority(InfoBoxPriority.LOW);

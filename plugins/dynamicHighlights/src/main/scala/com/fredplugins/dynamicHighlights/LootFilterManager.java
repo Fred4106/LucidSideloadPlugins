@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.GameState;
 import okhttp3.Request;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -110,7 +109,7 @@ public class LootFilterManager {
 
 	public void fetchDefaultFilters(Runnable onComplete) {
 		httpDispatcher.execute(() -> {
-			for (var filter : DefaultFilter.all()) {
+			for(var filter : DefaultFilters.valuesArray()) {
 				fetchDefaultFilter(filter);
 			}
 			onComplete.run();
@@ -120,7 +119,7 @@ public class LootFilterManager {
 	public void fetchDefaultFilter(DefaultFilter filter) {
 		var req = new Request.Builder()
 			.get()
-			.url(filter.getUrl())
+			.url(filter.url())
 			.addHeader("User-Agent", "github.com/riktenx/loot-filters")
 			.build();
 		try (var resp = plugin.getOkHttpClient().newCall(req).execute()) {
@@ -128,7 +127,7 @@ public class LootFilterManager {
 			var parsed = LootFilter.fromSource(src);
 			defaultFilters.add(parsed);
 		} catch (Exception e) { // there could be an issue w/ a filter, but just keep going and let other fetches complete
-			log.warn("Failed to fetch default filter {}", filter.getName(), e);
+			log.warn("Failed to fetch default filter {}", filter.entryName(), e);
 		}
 	}
 

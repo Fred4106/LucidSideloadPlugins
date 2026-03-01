@@ -1,5 +1,5 @@
 package com.fredplugins.dynamicHighlights;
-
+import com.fredplugins.dynamicHighlights.DefaultFilters.Rikten$;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
 import com.fredplugins.dynamicHighlights.model.DisplayConfigIndex;
@@ -39,6 +39,7 @@ import okhttp3.OkHttpClient;
 import com.google.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -118,7 +119,7 @@ public class FredsLootFiltersPlugin extends Plugin {
 	public void setSelectedFilterName(String name) {
 		if (name != null) {
 			configManager.setConfiguration(CONFIG_GROUP, SELECTED_FILTER_KEY, name);
-			if (name.equals(DefaultFilter.FILTERSCAPE.getName()) || name.equals(DefaultFilter.JOESFILTER.getName())) {
+			if (Arrays.stream(DefaultFilters.valuesArray()).anyMatch(a -> a.displayName().equals(name))) {
 				config.setPreferredDefault(name);
 			}
 		} else {
@@ -163,7 +164,7 @@ public class FredsLootFiltersPlugin extends Plugin {
 		pluginPanel = new LootFiltersPanel(this);
 		pluginPanelNav = NavigationButton.builder()
 				.tooltip("Loot Filters")
-				.icon(Icons.PANEL_ICON)
+				.icon(Icons.panel())
 				.panel(pluginPanel)
 				.build();
 		if (config.showPluginPanel()) {
@@ -222,7 +223,7 @@ public class FredsLootFiltersPlugin extends Plugin {
 			} else {
 				var selected = getSelectedFilterName();
 				filterManager.getDefaultFilters().clear();
-				if (selected != null && selected.equals(DefaultFilter.FILTERSCAPE.getName())) {
+				if (selected != null && selected.equals(Rikten$.MODULE$.displayName())) {
 					selected = null;
 					setSelectedFilterName(null);
 				}
@@ -232,7 +233,7 @@ public class FredsLootFiltersPlugin extends Plugin {
 
 		if (event.getKey().equals(SELECTED_FILTER_KEY)) {
 			var selected = getSelectedFilterName();
-			if (DefaultFilter.all().stream().anyMatch(it -> it.getName().equals(selected))) {
+			if (Arrays.stream(DefaultFilters.valuesArray()).anyMatch(it -> it.displayName().equals(selected))) {
 				addChatMessage("Loaded " + selected + ". Visit filterscape.xyz to configure it.");
 			}
 		}
