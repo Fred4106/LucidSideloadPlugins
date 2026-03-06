@@ -5,6 +5,7 @@ import com.fredplugins.dynamicHighlights.lang.Lexer;
 import com.fredplugins.dynamicHighlights.lang.Parser;
 import com.fredplugins.dynamicHighlights.lang.Preprocessor;
 import com.fredplugins.dynamicHighlights.lang.Sources;
+import com.fredplugins.dynamicHighlights.lang.Token;
 import com.fredplugins.dynamicHighlights.lang.TokenStream;
 import com.fredplugins.dynamicHighlights.model.PluginTileItem;
 import lombok.EqualsAndHashCode;
@@ -13,12 +14,16 @@ import lombok.NonNull;
 import lombok.ToString;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.fredplugins.dynamicHighlights.LootFilterManager.toFilename;
 import static com.fredplugins.dynamicHighlights.lang.Location.UNKNOWN_SOURCE_NAME;
 import static com.fredplugins.dynamicHighlights.util.TextUtil.normalizeCrlf;
 
@@ -52,6 +57,21 @@ public class LootFilter {
         return fromSources(new LinkedHashMap<>(sources));
     }
 
+    public static void dumpTokens(TokenStream stream) throws IOException {
+        int tokenCount = stream.getTokens().size();
+        String toWrite = stream.getTokens().stream().map((Token t) -> (t.getType() + "(" + t.getLocation().getLineNumber() + ":" + t.getLocation().getCharNumber() + ", \"" + t.getValue() + "\")"))
+            .collect(Collectors.joining("\n", "tokens dump\n", "\n" + tokenCount + " tokens\n"));
+        File desktopFile = new File(System.getProperty("user.home"), "Desktop");
+        File newFile = new File(desktopFile, "tokenDump.dump");
+        if (!newFile.createNewFile()) {
+            throw new IOException("could not create file " + newFile.getPath());
+        }
+
+        try (var writer = new FileWriter(newFile)) {
+            writer.write(toWrite);
+        }
+    }
+
     public static LootFilter fromSources(LinkedHashMap<String, String> sources) throws CompileException {
         var combinedStream = sources
             .entrySet().stream()
@@ -68,6 +88,9 @@ public class LootFilter {
             .collect(Collectors.collectingAndThen(Collectors.toList(), TokenStream::new));
 
         var postproc = new Preprocessor(combinedStream).preprocess();
+//        try {
+//            dumpTokens(postproc);
+//        } catch (IOException e) {}
         return new Parser(postproc).parse();
     }
 

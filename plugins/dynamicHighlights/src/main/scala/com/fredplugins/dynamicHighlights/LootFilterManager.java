@@ -131,7 +131,7 @@ public class LootFilterManager {
 		}
 	}
 
-	private static String toFilename(String filterName) {
+	public static String toFilename(String filterName) {
 		return filterName.replaceAll("[^a-zA-Z0-9._-]", "_") + ".rs2f";
 	}
 }
