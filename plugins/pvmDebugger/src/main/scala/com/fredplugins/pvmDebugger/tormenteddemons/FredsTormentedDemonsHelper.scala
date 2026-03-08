@@ -21,13 +21,16 @@ import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackSt
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.TormentedDemonData
 import com.google.inject.Inject
 import ethanApiPlugin.EthanApiPlugin
+import ethanApiPlugin.collections.Equipment
 import ethanApiPlugin.lucidplugins.api.item.SlottedItem
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
 import ethanApiPlugin.collections.Inventory
+import ethanApiPlugin.lucidplugins.api.utils.EquipmentUtils
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
+import net.runelite.api.EquipmentInventorySlot
 import net.runelite.api.HeadIcon
 import net.runelite.api.NPC
 import net.runelite.api.Prayer
@@ -43,6 +46,7 @@ import net.runelite.client.RuneLite
 import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.config.Keybind
 import net.runelite.client.eventbus.Subscribe
+import net.runelite.client.game.ItemManager
 import net.runelite.client.input.KeyListener
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
@@ -371,6 +375,53 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 				log.debug("Finished killing target demon {} with data {}", targetDemon.get, demons(targetDemon.get))
 				targetDemon = Option.empty
 			}
+
+			targetDemon.map(d => d -> demons(d)).foreach((demon, data) => {
+				val requiredOverheads = data.attackStyle.map(_.protectionPrayer)
+				if(requiredOverheads.nonEmpty && config.enableDefensivePrayer() && !requiredOverheads.exists(p => client.isPrayerActive(p))) {
+					requiredOverheads.toList.sortBy {
+						case Prayer.PROTECT_FROM_MAGIC => 0
+						case Prayer.PROTECT_FROM_MISSILES => 10
+						case Prayer.PROTECT_FROM_MELEE => 20
+						case _ => 100
+					}.headOption.foreach(toActivate => {
+						CombatUtils.activatePrayer(toActivate)
+					})
+				}
+
+				val wepNameOpt = Equipment.search().slotIs(EquipmentInventorySlot.WEAPON).first().toScala.map(_.getName)//.nameContains(name).result.isEmpty);
+				Option(data.protectingStyle).zip(wepNameOpt).map(x => {
+					val msg = new ChatMessageBuilder()
+						.append("Weapon name = ")
+						.append(Color.blue, s"${x._2}")
+						.append("; Overhead = ")
+						.append(Color.green, s"${x._1}")
+						.append(";")
+					parent.getClientThread.invoke(() => {
+						printMessage(ChatMessageType.FRIENDSCHAT, "Tormented", "Auto swap")(msg)
+					})
+					x
+				}).filter {
+					case (AttackStyle.RANGE, wepName) => config.rangeGear().split(',').map(_.strip()).toList.exists(s => wepName.contains(s))
+					case (AttackStyle.MAGE, wepName) => config.magicGear().split(',').map(_.strip()).toList.exists(s => wepName.contains(s))
+					case (AttackStyle.MELEE, wepName) => config.meleeGear().split(',').map(_.strip()).toList.exists(s => wepName.contains(s))
+				}.map(_._1)
+					.map {
+						case AttackStyle.RANGE => if (config.useMeleeStyle()) HotkeyAction.SwapMelee else if(config.useMagicStyle()) HotkeyAction.SwapMagic else null
+						case AttackStyle.MAGE => if (config.useMeleeStyle()) HotkeyAction.SwapMelee else if(config.useRangeStyle()) HotkeyAction.SwapRange else null
+						case AttackStyle.MELEE => if (config.useRangeStyle()) HotkeyAction.SwapRange else if(config.useMagicStyle()) HotkeyAction.SwapMagic else null
+					}.filter(as=> as != null && config.autoGearSwitch())
+					.foreach(as => {
+						val msg = new ChatMessageBuilder()
+							.append("newStyle = ")
+							.append(Color.green, s"${as}")
+							.append(";")
+						parent.getClientThread.invoke(() => {
+							printMessage(ChatMessageType.FRIENDSCHAT, "Tormented", "Auto swap to")(msg)
+						})
+						as.run(FredsTormentedDemonsHelper.this)
+					})
+			})
 
 			if(targetDemon.isEmpty) {
 				findNewTarget()
