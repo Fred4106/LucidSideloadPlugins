@@ -1,13 +1,11 @@
 package com.fredplugins.pvmDebugger.inferno;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.ToString;
 import net.runelite.api.gameval.NpcID;
 import org.apache.commons.lang3.ArrayUtils;
 
 @AllArgsConstructor
-@Getter
 @ToString
 public enum InfernoNpcType {
 	NIBBLER(new int[]{NpcID.INFERNO_NIBBLER}, InfernoNpcAttack.MELEE, 4, 99, 100),
@@ -35,5 +33,25 @@ public enum InfernoNpcType {
 		}
 
 		return null;
+	}
+
+	public int[] getNpcIds() {
+		return this.npcIds;
+	}
+
+	public InfernoNpcAttack getDefaultAttack() {
+		return this.defaultAttack;
+	}
+
+	public int getTicksAfterAnimation() {
+		return this.ticksAfterAnimation;
+	}
+
+	public int getRange() {
+		return this.range;
+	}
+
+	public int getPriority() {
+		return this.priority;
 	}
 }

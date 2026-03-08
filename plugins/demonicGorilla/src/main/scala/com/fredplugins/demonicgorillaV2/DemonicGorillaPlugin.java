@@ -29,9 +29,11 @@ import ch.qos.logback.classic.Level;
 import com.fredplugins.common.utils.WorldAreaExtended$;
 import com.fredplugins.demonicgorillaV2.DemonicGorilla.AttackStyle;
 import com.google.common.collect.ImmutableSet;
+import com.google.inject.Provides;
 import ethanApiPlugin.lucidplugins.api.utils.CombatUtils;
-import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils;
+import ethanApiPlugin.lucidplugins.api.utils.EquipmentUtils;
 import ethanApiPlugin.EthanApiPlugin;
+import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -56,7 +58,10 @@ import net.runelite.api.events.PlayerSpawned;
 import net.runelite.api.events.ProjectileMoved;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -68,12 +73,15 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @PluginDependency(EthanApiPlugin.class)
 @PluginDescriptor(
@@ -95,9 +103,15 @@ public class DemonicGorillaPlugin extends Plugin {
 	@Inject
 	private Client client;
 	@Inject
+	private ConfigManager configManager;
+	@Inject
+	private ItemManager itemManager;
+	@Inject
 	private OverlayManager overlayManager;
 	@Inject
 	private DemonicGorillaOverlay overlay;
+	@Inject
+	private DemonicGorillaConfig config;
 	@Inject
 	private ClientThread clientThread;
 	private Map<NPC, DemonicGorilla> gorillas;
@@ -120,6 +134,13 @@ public class DemonicGorillaPlugin extends Plugin {
 
 	@Override
 	protected void startUp() {
+
+		rangeGearList = getGearList(config.rangeGear());
+		meeleGearList = getGearList(config.meleeGear());
+		
+		log.debug("Range gear = {}", rangeGearList);
+		log.debug("Melee gear = {}", meeleGearList);
+
 		if (client.getGameState() != GameState.LOGGED_IN || !atDemonicGorillas()) {
 			return;
 		}
@@ -330,6 +351,7 @@ public class DemonicGorillaPlugin extends Plugin {
 
 	}
 
+
 	@Subscribe
 	private void onHitsplatApplied(HitsplatApplied event) {
 		if (!atGorillas || gorillas.isEmpty()) {
@@ -446,6 +468,40 @@ public class DemonicGorillaPlugin extends Plugin {
 
 	private WorldPoint projectileToTargetLocation(Projectile projectile) {
 		return WorldPoint.fromLocal(client, projectile.getTarget());
+	}
+
+	private List<Integer> getGearList(String source) {
+		return source.lines().map(String::strip)
+//			.map(l -> {log.debug("line: \"{}\"", l); return l;})
+			.filter(l -> !l.isEmpty() && l.chars().allMatch(Character::isDigit))
+			.flatMap(l -> {
+				Integer x = null;
+				try {
+					x = Integer.parseInt(l);
+				} catch (NumberFormatException e) {
+				}
+				return Stream.ofNullable(x);
+			}).collect(Collectors.toList());
+	}
+
+//	private List<Integer> getMeleeGearList() {
+//		return getGearList(config.meleeGear());
+//	}
+//	private List<Integer> getRangeGearList() {
+//		return getGearList(config.rangeGear());
+//	}
+	private List<Integer> rangeGearList = List.of();
+	private List<Integer> meeleGearList = List.of();
+
+	@Subscribe
+		private void onConfigChanged(ConfigChanged event)
+	{
+		if (!DemonicGorillaConfig.GroupName.equals(event.getGroup()))
+		{
+			return;
+		}
+		rangeGearList = getGearList(config.rangeGear());
+		meeleGearList = getGearList(config.meleeGear());
 	}
 
 	@Subscribe
@@ -676,30 +732,61 @@ public class DemonicGorillaPlugin extends Plugin {
 				}
 			}
 
+			List<Integer> toEquip;
+			Prayer offensivePrayer;
 			switch (targetGorilla.getOverheadIcon()) {
 				case MELEE:
-					if (InventoryUtils.contains(ItemID.BOW_OF_FAERDHINEN_INFINITE)) {
-						InventoryUtils.wieldItem(ItemID.BOW_OF_FAERDHINEN_INFINITE);
-					}
-					if(CombatUtils.getActiveOffense() != Prayer.EAGLE_EYE) {
-						CombatUtils.activatePrayer(Prayer.EAGLE_EYE);
-					}
+					toEquip = rangeGearList;
+					offensivePrayer=Prayer.DEADEYE;
+					//disabled to improove gear switching
+//					if (InventoryUtils.contains(ItemID.BOW_OF_FAERDHINEN_INFINITE)) {
+//						InventoryUtils.wieldItem(ItemID.BOW_OF_FAERDHINEN_INFINITE);
+//					}
+//					if(CombatUtils.getActiveOffense() != Prayer.EAGLE_EYE) {
+//						CombatUtils.activatePrayer(Prayer.EAGLE_EYE);
+//					}
 					break;
 				case RANGED:
-					if (InventoryUtils.contains(ItemID.EMBERLIGHT)) {
-						InventoryUtils.wieldItem(ItemID.EMBERLIGHT);
-					}
-					if (InventoryUtils.contains(ItemID.DRAGON_PARRYINGDAGGER)) {
-						InventoryUtils.wieldItem(ItemID.DRAGON_PARRYINGDAGGER);
-					}
-//					if(CombatUtils.getSpecEnergy() >= 70 && !CombatUtils.isSpecEnabled()) {
-//						CombatUtils.toggleSpec();
+					toEquip = meeleGearList;
+					offensivePrayer=Prayer.PIETY;;
+					//disabled to improove gear switching
+//					if (InventoryUtils.contains(ItemID.EMBERLIGHT)) {
+//						InventoryUtils.wieldItem(ItemID.EMBERLIGHT);
 //					}
-					if(CombatUtils.getActiveOffense() != Prayer.PIETY) {
-						CombatUtils.activatePrayer(Prayer.PIETY);
-					}
+//					if (InventoryUtils.contains(ItemID.DRAGON_PARRYINGDAGGER)) {
+//						InventoryUtils.wieldItem(ItemID.DRAGON_PARRYINGDAGGER);
+//					}
+//					if(CombatUtils.getActiveOffense() != Prayer.PIETY) {
+//						CombatUtils.activatePrayer(Prayer.PIETY);
+//					}
 					break;
 				default:
+					int wepId=EquipmentUtils.getWepSlotItem().getId();
+					if(meeleGearList.contains(wepId)) {
+						toEquip=meeleGearList;
+						offensivePrayer=Prayer.PIETY;
+					} else if(rangeGearList.contains(wepId)) {
+						toEquip=rangeGearList;
+						offensivePrayer=Prayer.DEADEYE;
+					} else {
+						toEquip = List.of();
+						offensivePrayer = null;
+					}
+					break;
+			}
+			for (int i : toEquip) {
+				if(!EquipmentUtils.contains(i) && InventoryUtils.contains(i)) {
+					InventoryUtils.wieldItem(i);
+				}
+			}
+			if(offensivePrayer != null) {
+				if(!client.isPrayerActive(offensivePrayer)) {
+					CombatUtils.activatePrayer(offensivePrayer);
+				}
+			} else {
+				if(client.isPrayerActive(Prayer.DEADEYE) ||client.isPrayerActive(Prayer.PIETY)) {
+					CombatUtils.deactivatePrayers(Prayer.DEADEYE, Prayer.PIETY);
+				}
 			}
 		} else {
 			targetGorilla = null;
@@ -725,5 +812,9 @@ public class DemonicGorillaPlugin extends Plugin {
 
 	DemonicGorilla getTargetGorilla() {
 		return this.targetGorilla;
+	}
+	@Provides
+	DemonicGorillaConfig provideConfig(final ConfigManager configManager) {
+		return configManager.getConfig(DemonicGorillaConfig.class);
 	}
 }

@@ -1,7 +1,6 @@
 package com.fredplugins.pvmDebugger.inferno;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.ToString;
 import net.runelite.api.Prayer;
 import org.apache.commons.lang3.ArrayUtils;
@@ -9,7 +8,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.awt.*;
 
 @AllArgsConstructor
-@Getter
 @ToString
 public enum InfernoNpcAttack {
 	MELEE(Prayer.PROTECT_FROM_MELEE,
@@ -45,6 +43,7 @@ public enum InfernoNpcAttack {
 	private final Color normalColor;
 	private final Color criticalColor;
 	private final int[] animationIds;
+
 	static InfernoNpcAttack attackFromId(int animationId) {
 		for (InfernoNpcAttack attack : InfernoNpcAttack.values()) {
 			if (ArrayUtils.contains(attack.getAnimationIds(), animationId)) {
@@ -53,5 +52,21 @@ public enum InfernoNpcAttack {
 		}
 
 		return UNKNOWN;
+	}
+
+	public Prayer getPrayer() {
+		return this.prayer;
+	}
+
+	public Color getNormalColor() {
+		return this.normalColor;
+	}
+
+	public Color getCriticalColor() {
+		return this.criticalColor;
+	}
+
+	public int[] getAnimationIds() {
+		return this.animationIds;
 	}
 }
