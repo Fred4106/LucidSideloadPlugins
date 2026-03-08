@@ -472,7 +472,7 @@ public class DemonicGorillaPlugin extends Plugin {
 
 	private List<Integer> getGearList(String source) {
 		return source.lines().map(String::strip)
-//			.map(l -> {log.debug("line: \"{}\"", l); return l;})
+			.map(l -> {log.debug("line: \"{}\"", l); return l;})
 			.filter(l -> !l.isEmpty() && l.chars().allMatch(Character::isDigit))
 			.flatMap(l -> {
 				Integer x = null;
@@ -494,12 +494,13 @@ public class DemonicGorillaPlugin extends Plugin {
 	private List<Integer> meeleGearList = List.of();
 
 	@Subscribe
-		private void onConfigChanged(ConfigChanged event)
+	private void onConfigChanged(ConfigChanged event)
 	{
 		if (!DemonicGorillaConfig.GroupName.equals(event.getGroup()))
 		{
 			return;
 		}
+		log.debug("Key {}:{} changed from {} to {}", event.getGroup(), event.getKey(),event.getOldValue(), event.getNewValue());
 		rangeGearList = getGearList(config.rangeGear());
 		meeleGearList = getGearList(config.meleeGear());
 	}
