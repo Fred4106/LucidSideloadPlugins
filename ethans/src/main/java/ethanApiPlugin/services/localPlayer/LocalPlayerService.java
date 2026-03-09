@@ -7,6 +7,7 @@ import com.fredplugins.common.extensions.ActorExtensions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import ethanApiPlugin.EthanApiPlugin;
+import ethanApiPlugin.services.localPlayer.events.ActorPositionChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalAnimationChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalDestinationChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalInteractingChanged;
@@ -14,6 +15,8 @@ import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged;
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged;
 import ethanApiPlugin.utility.WorldPointUtility;
 import jdk.jfr.Event;
+import lombok.Data;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
@@ -26,7 +29,12 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -37,6 +45,14 @@ public class LocalPlayerService {
 	private WorldPoint wpDest;
 	private WorldPoint wpPos;
 
+	private Map<Actor, ActorData> actorMap =Map.<Actor, ActorData>of();
+
+
+	@Data
+	private class ActorData {
+		final Actor actor;
+		WorldPoint lastPosition;
+	}
 
 //	@Inject private Client client = null;
 //	@Inject private ClientThread clientThread = null;
@@ -49,6 +65,8 @@ public class LocalPlayerService {
 	public LocalPlayerService() {}
 
 	public void reset() {
+		actorMap =Map.<Actor, ActorData>of();
+
 		this.pRegionId = -1;
 		this.pAnimation = -1;
 		this.pInteracting = null;
@@ -60,8 +78,51 @@ public class LocalPlayerService {
 		return pRegionId;
 	}
 
-	@Subscribe
+	Optional<ActorPositionChanged> updateData(ActorData data) {
+		WorldPoint old = data.getLastPosition();
+		WorldPoint n  = TWorldPoint.get(data.getActor().getWorldLocation());
+		data.setLastPosition(n);
+		if(isDifferent(old, n)) {
+			return Optional.of(new ActorPositionChanged(data.getActor(), old, n));
+		}
+		return Optional.empty();
+	}
+
+	@Subscribe(priority = 200)
 	public void onGameTick(GameTick gt) {
+		List<ActorData> newMap = client.getPlayers().stream()
+			.map(p -> {
+				ActorData d = actorMap.get(p);
+				if(d == null) {
+					d = new ActorData(p);
+					d.setLastPosition(
+						TWorldPoint.get(p.getWorldLocation())
+					);
+				}
+				return d;
+			}).collect(Collectors.toList());//.collect(Collectors.toMap(d -> d.getActor(), d -> d);
+
+
+		List<ActorData> newNpcMap = client.getNpcs().stream()
+			.map(n -> {
+				ActorData d = actorMap.get(n);
+				if(d == null) {
+					d = new ActorData(n);
+					d.setLastPosition(
+						TWorldPoint.get(n.getWorldLocation())
+					);
+				}
+				return d;
+			}).collect(Collectors.toList());//.collect(Collectors.toMap(d -> d.getActor(), d -> d);
+
+		List<ActorData> finalNewMap = Stream.<ActorData>concat(newMap.stream(), newNpcMap.stream()).collect(Collectors.toList());
+
+		List<ActorPositionChanged> eventtsList = finalNewMap.stream().flatMap(d -> updateData(d).stream()).collect(Collectors.toList());
+		for (ActorPositionChanged e : eventtsList) {
+			eventBus.post(e);
+		}
+		actorMap = finalNewMap.stream().collect(Collectors.toMap(d -> d.getActor(), d -> d));
+
 		Player me = EthanApiPlugin.getClient().getLocalPlayer();
 		WorldPoint pos = Optional.ofNullable(me).map(Player::getWorldLocation)
 			.map(TWorldPoint::get)//toTemplate(u, me.getWorldView(), client))
@@ -107,6 +168,8 @@ public class LocalPlayerService {
 		}
 		return first == null || second == null || first.distanceTo(second) > 0;
 	}
+
+
 	private boolean isDifferent(WorldPoint first, WorldPoint second)
 	{
 		if (first == second) {

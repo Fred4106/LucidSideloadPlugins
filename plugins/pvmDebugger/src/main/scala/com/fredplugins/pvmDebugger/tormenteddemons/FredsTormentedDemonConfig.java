@@ -19,6 +19,42 @@ public interface FredsTormentedDemonConfig extends Config {
 		return false;
 	}
 	@ConfigSection(
+		name = "Font",
+		description = "font",
+		position = 100
+	)
+	String fontSettings = "fontSettings";
+
+	@Range(
+		min = 6,
+		max = 32
+	)
+	@ConfigItem(
+		keyName = "fontSize",
+		name = "Font Size",
+		description = "sets font size for overlay",
+		position = 0,
+		section = fontSettings
+	)
+	default int getFontSize()
+	{
+		return 14;
+	}
+
+
+	@ConfigItem(
+		keyName = "fontBold",
+		name = "Bold Font",
+		description = "sets bold font for overlay",
+		position = 1,
+		section = fontSettings
+	)
+	default boolean getFontBold()
+	{
+		return true;
+	}
+	
+	@ConfigSection(
 			name = "General Settings",
 			description = "Full Auto or Combat only",
 			position = 0

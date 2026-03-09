@@ -14,6 +14,7 @@ import com.fredplugins.common.extensions.GeneralExtensions.*
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
+import com.fredplugins.common.overlays
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle.MAGE
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle.MELEE
@@ -27,6 +28,7 @@ import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
 import ethanApiPlugin.collections.Inventory
 import ethanApiPlugin.lucidplugins.api.utils.EquipmentUtils
+import ethanApiPlugin.services.localPlayer.events.ActorPositionChanged
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.ChatMessageType
 import net.runelite.api.Client
@@ -46,15 +48,19 @@ import net.runelite.client.RuneLite
 import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.config.Keybind
 import net.runelite.client.eventbus.Subscribe
+import net.runelite.client.events.ConfigChanged
 import net.runelite.client.game.ItemManager
 import net.runelite.client.input.KeyListener
+import net.runelite.client.ui.FontManager
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
 import net.runelite.client.ui.overlay.components.LineComponent
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
 
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.event.KeyEvent
 import java.lang.reflect.Modifier
@@ -309,10 +315,16 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 		}
 	}
 
-//	@Subscribe
-//	def onInteractingChanged(event: InteractingChanged): Unit = {
-//		if(event.getSource
-//	}
+	@Subscribe
+	def onActorPositionChanged(event: ActorPositionChanged): Unit = {
+		event.getNpc.toScala.flatMap(n=> demons.get(n).map(td => n -> td)).filter(d => d._1.getInteracting != null).foreach(d => {
+			if(d._2.attackStyle.size > 1 && d._2.attackStyle.contains(AttackStyle.MELEE)) {
+				//maybe check if attackCount is still 0...
+				demons.update(d._1, d._2.copy(attackStyle = Set(AttackStyle.MELEE)));
+			}
+		});
+//		demons.get
+	}
 
 	@Subscribe
 	def onAnimationChanged(e: AnimationChanged): Unit = {
@@ -470,7 +482,28 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 					.build()
 			}).getOrElse(Seq.empty[LayoutableRenderableEntity])
 	}
+	private object Cache {
+//		var cachedFont   : Font = FontManager.getRunescapeFont.deriveFont(/*if (config.getFontBold) 1 else */0, config.getFontSize)
+		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+	}
+
+	@Subscribe
+	def onConfigChanged(e: ConfigChanged): Unit = {
+		if (e.getGroup == FredsTormentedDemonConfig.GroupName) {
+			e.getKey match {
+				case "fontSize" | "fontBold" => {
+					Cache.cachedFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+				}
+				case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
+			}
+		}
+	}
+
 	override def renderOverlay(g: Graphics2D): Dimension = {
+		given Graphics2D = g
+		given ModelOutlineRenderer = parent.getModelOutlineRenderer;
+		given Client = client
+
 		def renderNpcOverlay(n: NPC, text: String, color: Color, zoffset: Int): Unit = {
 			parent.getModelOutlineRenderer.drawOutline(n, 2, color, 4)
 			val poly = n.getCanvasTilePoly
@@ -478,15 +511,26 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 			val textLocation = n.getCanvasTextLocation(g, text, n.getLogicalHeight + zoffset)
 			if (textLocation != null) OverlayUtil.renderTextLocation(g, textLocation, text, color)
 		}
-		if(demons.nonEmpty) {
-			demons.foreach {
-				case (npc, data) => {
-					val text = s"attackCount: ${data.attackCount}, ticksUntilAttack: ${data.ticksUntilAttack}, anim: ${getAnimationName(data.animationId)}, protecting: ${data.protectingStyle}"
-					val color = if(targetDemon.contains(npc)) Color.GREEN else Color.RED
-					renderNpcOverlay(npc, text, color, 0)
+
+		overlays.withFont(Cache.cachedFont) {
+			if(demons.nonEmpty) {
+				demons.foreach {
+					case (npc, data) => {
+						val text = s"attackCount: ${data.attackCount}, attackStyle: ${data.attackStyle.toList.mkString("{", ", ", "}")}, ticksUntilAttack: ${data.ticksUntilAttack}, anim: ${getAnimationName(data.animationId)}, overhead: ${data.protectingStyle}"
+						val color = if(!targetDemon.contains(npc)) Color.GRAY else {
+							data.attackCount match {
+								case 9 => Color.RED
+								case 8 => Color.ORANGE
+								case 7 => Color.YELLOW
+								case 0 => Color.PINK
+								case n => Color.CYAN
+							}
+						}
+						renderNpcOverlay(npc, text, color, 0)
+					}
 				}
 			}
-		}
+			}
 		null.asInstanceOf[Dimension]
 	}
 }
