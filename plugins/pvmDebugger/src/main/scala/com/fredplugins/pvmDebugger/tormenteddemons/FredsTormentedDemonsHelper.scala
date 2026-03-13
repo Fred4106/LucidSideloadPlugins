@@ -519,7 +519,7 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 						val text = s"attackCount: ${data.attackCount}, attackStyle: ${data.attackStyle.toList.mkString("{", ", ", "}")}, ticksUntilAttack: ${data.ticksUntilAttack}, anim: ${getAnimationName(data.animationId)}, overhead: ${data.protectingStyle}"
 						val color = if(!targetDemon.contains(npc)) Color.GRAY else {
 							data.attackCount match {
-								case 9 => Color.RED
+								case n if n >= 9 => Color.RED
 								case 8 => Color.ORANGE
 								case 7 => Color.YELLOW
 								case 0 => Color.PINK

@@ -23,6 +23,13 @@ allprojects {
     version = Dependencies.releaseVersion
     repositories {
         mavenLocal()
+        maven(uri("https://repo.runelite.net")) {
+            name = "rrn"
+
+            content {
+                includeGroupAndSubgroups("net.runelite")
+            }
+        }
         gradlePluginPortal()
         mavenCentral()
     }
