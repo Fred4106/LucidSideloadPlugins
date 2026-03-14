@@ -334,7 +334,12 @@ class SuperClickerPlugin() extends Plugin {
 			egroup == group && eid == id
 		}).map(_._2._2._2)
 	}
-
+	private def findSpell(spell: WidgetInfoExtended): Option[Widget] = {
+		spellsWidgetTable.toList.find(e => {
+			val (egroup, eid) = e._2._2._2.getId.pipe(eid => WidgetInfoExtended.TO_GROUP(eid) -> WidgetInfoExtended.TO_CHILD(eid))
+			egroup == spell.getGroupId && eid == spell.getChildId
+		}).map(_._2._2._2)
+	}
 
 	private object OPAL_JEWELRY {
 		def unapply(id: Int): Boolean = {
@@ -439,16 +444,16 @@ class SuperClickerPlugin() extends Plugin {
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
 			val inventoryItemWidget = me.getWidget
 			Option(me.getItemId).collect{
-				case MAHOGANY_LOGS | TEAK_LOGS if findSpell(218, 133).exists(w => List(581, 1975).contains(w.getSpriteId)) => findSpell(218, 133).zip(Some(3))
-				case OPAL_JEWELRY() if findSpell(218,13).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(218, 13).zip(Some(2))
-				case SAPPHIRE_JEWELRY() if findSpell(218,13).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(218, 13).zip(Some(2))
-				case JADE_JEWELRY() if findSpell(218,24).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(218, 24).zip(Some(2))
-				case EMERALD_JEWELRY() if findSpell(218,24).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(218, 24).zip(Some(2))
-				case TOPAZ_JEWELRY() if findSpell(218,37).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(218, 37).zip(Some(2))
-				case RUBY_JEWELRY() if findSpell(218,37).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(218, 37).zip(Some(2))
-				case DIAMOND_JEWELRY() if findSpell(218,46).exists(u => List(1768 , 43).contains(u.getSpriteId)) => findSpell(218, 46).zip(Some(2))
-				case UNSTRUNG_JEWELRY() if findSpell(218,126).exists(u => List(1954, 550).contains(u.getSpriteId))  => findSpell(218, 126).zip(Some(3))
-				case Alchable() if findSpell(218,44).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(218, 44).zip(Some(3))
+				case MAHOGANY_LOGS | TEAK_LOGS if findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).exists(w => List(581, 1975).contains(w.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).zip(Some(3))
+				case OPAL_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).zip(Some(2))
+				case SAPPHIRE_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).zip(Some(2))
+				case JADE_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).zip(Some(2))
+				case EMERALD_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).zip(Some(2))
+				case TOPAZ_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).zip(Some(2))
+				case RUBY_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).zip(Some(2))
+				case DIAMOND_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_4_ENCHANT).exists(u => List(1768 , 43).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_4_ENCHANT).zip(Some(2))
+				case UNSTRUNG_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_STRING_JEWELLERY).exists(u => List(1954, 550).contains(u.getSpriteId))  => findSpell(WidgetInfoExtended.SPELL_STRING_JEWELLERY).zip(Some(3))
+				case Alchable() if findSpell(WidgetInfoExtended.SPELL_HIGH_LEVEL_ALCHEMY).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_HIGH_LEVEL_ALCHEMY).zip(Some(3))
 			}.flatten.collect {//(u  => u)//)//(iid => iid.)
 //				case (a, (b, (c, d))) => a
 				case (w, d) => {
