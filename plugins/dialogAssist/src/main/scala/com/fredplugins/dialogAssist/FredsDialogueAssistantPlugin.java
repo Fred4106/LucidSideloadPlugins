@@ -22,6 +22,7 @@ import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.util.Text;
@@ -82,12 +83,29 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	}).collect(Collectors.toUnmodifiableMap(Pair::getLeft, Pair::getRight));
 
 	private SkillMultiHelper skillMultiHelper = null;
+	private ConfigHelper configHelper = null;
 
 	@Override
 	protected void startUp()
 	{
+		configHelper = new ConfigHelper(config);
 		skillMultiHelper = new SkillMultiHelper(client, clientThread);
 		loadConfig();
+		makeXHidden = configHelper.getHiddenMakeXAsJava().stream().flatMap(Collection::stream).collect(Collectors.toList());
+		makeXAuto = configHelper.getAutoMakeXAsJava().stream().flatMap(Collection::stream).collect(Collectors.toList());
+	}
+
+	private java.util.List<Integer> makeXHidden = List.of();
+	private java.util.List<Integer> makeXAuto = List.of();
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event) {
+		if(event.getGroup().equals(CONFIG_GROUP)) {
+			if (event.getKey().equals("hiddenMakeXItems")) {
+				makeXHidden = configHelper.getHiddenMakeXAsJava().stream().flatMap(Collection::stream).collect(Collectors.toList());
+			} else if (event.getKey().equals("autoMakeXItems")) {
+				makeXAuto = configHelper.getAutoMakeXAsJava().stream().flatMap(Collection::stream).collect(Collectors.toList());
+			}
+		}
 	}
 
 	@Subscribe
@@ -99,18 +117,35 @@ public class FredsDialogueAssistantPlugin extends Plugin
 			checkSkillMulti();
 	}
 
-	List<Integer> gemIds = List.of(ItemID.MAPLE_LONGBOW, ItemID.UNSTRUNG_MAPLE_LONGBOW, ItemID.SAPPHIRE, ItemID.EMERALD, ItemID.RUBY, ItemID.DIAMOND, ItemID.DRAGONSTONE, ItemID.OPAL,  ItemID.JADE, ItemID.RED_TOPAZ);
 	public void checkSkillMulti() {
 		clientThread.invokeAtTickEnd(() -> {
 			var options = skillMultiHelper.getSkillMultiOptions();
-			var targetOptions = options.filter(x ->gemIds.contains(x.getId()));
-			log.debug("skillMultiOptions={} | {}", options, targetOptions);
-			((!targetOptions.asJavaList().isEmpty())?targetOptions:options).asJavaList().stream().findFirst().ifPresent(to -> {
-				log.debug("Clicking {} {}", ReflectionUtils$.MODULE$.getInterfaceName(to.widgetId()), ReflectionUtils$.MODULE$.getItemName(to.itemId()));
-				log.debug("{}, {}", client.getVarcIntValue(VarClientID.SKILLMULTI_QUANTITY), client.getVarcIntValue(VarClientID.SKILLMULTI_SUGGESTEDQUANTITY));
-				MousePackets.queueClickPacket(client.getWidget(to.widgetId()));
-				DialogUtils.queueResumePauseDialog(to.widgetId(), client.getVarcIntValue(VarClientID.SKILLMULTI_QUANTITY));
-			});
+			if(options.asJavaList().stream().anyMatch(u -> makeXHidden.contains(u.itemId()))){
+				var hiddenOptions = options.filter(c->makeXHidden.contains(c.getId()));
+				options = options.filter(c -> !makeXHidden.contains(c.getId()));
+				hiddenOptions.asJavaList().stream().forEach(toHide -> {
+					Widget w = client.getWidget(toHide.widgetId());
+					w.setHidden(true);
+					w.revalidate();
+				});
+			}
+			if(options.asJavaList().stream().anyMatch(u -> makeXAuto.contains(u.itemId()))){
+				options = options.filter(c->makeXAuto.contains(c.getId()));
+				options.asJavaList().stream().forEach(toAuto -> {
+					Widget w = client.getWidget(toAuto.widgetId());
+					w.setTextColor(0x00ffff);
+					w.setFilled(true);
+					w.setOpacity(220);
+					w.revalidate();
+				});
+			}
+
+			if(options.asJavaList().size() == 1) {
+				var toClick = options.asJavaList().get(0);
+				log.debug("clicking id={}, name={}, widget={}", ReflectionUtils$.MODULE$.getItemName(toClick.itemId()), toClick.itemDef().getName(), ReflectionUtils$.MODULE$.getInterfaceName(toClick.widgetId()));
+				MousePackets.queueClickPacket(client.getWidget(toClick.widgetId()));
+				DialogUtils.queueResumePauseDialog(toClick.widgetId(), client.getVarcIntValue(VarClientID.SKILLMULTI_QUANTITY));
+			}
 		});
 	}
 

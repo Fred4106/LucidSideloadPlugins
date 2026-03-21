@@ -92,8 +92,12 @@ object ReflectionUtils extends ShimUtils.Logging("DEBUG") {
 	val varbitIdToNameMap: Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.VarbitID])()
 
 	def getNpcName(id: Int): String = npcIdToNameMap.getOrElse(id, s"Npc(${id})")
+	def getNpcId(name: String): Int = npcIdToNameMap.map(_.swap).get(name).getOrElse(name.stripPrefix("Npc(").stripSuffix(")").toIntOption.getOrElse(-1))
+
 	def getAnimationName(id: Int): String = animationIdToNameMap.getOrElse(id, s"Animation(${id})")
 	def getItemName(id: Int): String = itemIdToNameMap.getOrElse(id, s"Item(${id})")
+	def getItemId(name: String): Int = itemIdToNameMap.map(_.swap).get(name).getOrElse(name.stripPrefix("Item(").stripSuffix(")").toIntOption.getOrElse(-1))
+
 	def getSpriteName(id: Int): String = spriteIdToNameMap.getOrElse(id, s"Sprite(${id})")
 	def getInterfaceName(id: Int): String = interfaceIdToNameMap.getOrElse(id, s"Interface(${id})")
 	def getInventoryName(id: Int): String = inventoryIdToNameMap.getOrElse(id, s"Inventory(${id})")
