@@ -30,7 +30,6 @@ val x = listOf(
     "pyramidPlunder",
     "recolorCG",
     "sailingHelper",
-    "scriptMaster",
     "scurriusHelper",
     "superClickHelper",
     "teleportMaps",

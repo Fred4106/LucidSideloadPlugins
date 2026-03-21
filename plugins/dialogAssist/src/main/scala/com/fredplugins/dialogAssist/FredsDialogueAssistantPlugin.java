@@ -2,14 +2,20 @@ package com.fredplugins.dialogAssist;
 
 import ch.qos.logback.classic.Level;
 import com.fredplugins.common.extensions.MenuExtensions$;
+import com.fredplugins.common.utils.ReflectionUtils;
+import com.fredplugins.common.utils.ReflectionUtils$;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 
+import ethanApiPlugin.lucidplugins.api.utils.DialogUtils;
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
+import net.runelite.api.gameval.VarClientID;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
@@ -22,6 +28,7 @@ import net.runelite.client.util.Text;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import packets.MousePackets;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -74,9 +81,12 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		return p;
 	}).collect(Collectors.toUnmodifiableMap(Pair::getLeft, Pair::getRight));
 
+	private SkillMultiHelper skillMultiHelper = null;
+
 	@Override
 	protected void startUp()
 	{
+		skillMultiHelper = new SkillMultiHelper(client, clientThread);
 		loadConfig();
 	}
 
@@ -85,6 +95,23 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	{
 		if (event.getGroupId() == InterfaceID.CHATMENU)
 			checkDialogOptions();
+		if (event.getGroupId() == InterfaceID.SKILLMULTI)
+			checkSkillMulti();
+	}
+
+	List<Integer> gemIds = List.of(ItemID.MAPLE_LONGBOW, ItemID.UNSTRUNG_MAPLE_LONGBOW, ItemID.SAPPHIRE, ItemID.EMERALD, ItemID.RUBY, ItemID.DIAMOND, ItemID.DRAGONSTONE, ItemID.OPAL,  ItemID.JADE, ItemID.RED_TOPAZ);
+	public void checkSkillMulti() {
+		clientThread.invokeAtTickEnd(() -> {
+			var options = skillMultiHelper.getSkillMultiOptions();
+			var targetOptions = options.filter(x ->gemIds.contains(x.getId()));
+			log.debug("skillMultiOptions={} | {}", options, targetOptions);
+			((!targetOptions.asJavaList().isEmpty())?targetOptions:options).asJavaList().stream().findFirst().ifPresent(to -> {
+				log.debug("Clicking {} {}", ReflectionUtils$.MODULE$.getInterfaceName(to.widgetId()), ReflectionUtils$.MODULE$.getItemName(to.itemId()));
+				log.debug("{}, {}", client.getVarcIntValue(VarClientID.SKILLMULTI_QUANTITY), client.getVarcIntValue(VarClientID.SKILLMULTI_SUGGESTEDQUANTITY));
+				MousePackets.queueClickPacket(client.getWidget(to.widgetId()));
+				DialogUtils.queueResumePauseDialog(to.widgetId(), client.getVarcIntValue(VarClientID.SKILLMULTI_QUANTITY));
+			});
+		});
 	}
 
 	@Subscribe

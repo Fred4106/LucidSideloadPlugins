@@ -4,6 +4,7 @@ package ethanApiPlugin.lucidplugins.api.utils;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.RuneLite;
+import packets.WidgetPackets;
 
 import java.util.*;
 import java.util.List;
@@ -14,10 +15,10 @@ public class DialogUtils
     private static List<Integer> continueParentIds = List.of(193, 229, 229, 231, 217, 11);
     private static List<Integer> continueChildIds = List.of(   0,   0,   2,   5,   5,  4);
 
-//    public static void queueResumePauseDialog(int widgetId, int childId)
-//    {
-//        WidgetPackets.queueResumePause(widgetId, childId);
-//    }
+    public static void queueResumePauseDialog(int widgetId, int childId)
+    {
+        WidgetPackets.queueResumePause(widgetId, childId);
+    }
 
     public static List<DialogOption> getOptions()
     {

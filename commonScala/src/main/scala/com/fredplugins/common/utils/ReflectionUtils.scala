@@ -2,7 +2,9 @@ package com.fredplugins.common.utils
 
 import net.runelite.api.Actor
 
+import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import scala.jdk.StreamConverters.*
@@ -56,7 +58,48 @@ object ReflectionUtils extends ShimUtils.Logging("DEBUG") {
 		val node = iterableNodeDequeueData.lastMethod.invoke(healthBarsValue)
 		log.debug(s"healthBars: ${healthBarsValue}, healthBars.last: ${node}")
 	}
-	
+	private def classToFieldNameMap(clazzes: Class[?]*)(childOnly: Boolean = false): Map[Int, String] = {
+
+		def checkClassModifier(c: Class[?]): Boolean = c.getModifiers() == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL)
+
+		def checkFieldModifier(f: Field): Boolean = f.getType == Integer.TYPE && f.getModifiers() == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL)
+
+		val topLevel: Seq[(Int, String)] = clazzes.flatMap(c => c.getDeclaredFields.filter(checkFieldModifier))
+			.map(f => f.getInt(null) -> f.getName)
+
+		val subLevel = clazzes.flatMap(c => c.getDeclaredClasses.filter(checkClassModifier))
+			.map(sc => sc.getDeclaredFields.filter(checkFieldModifier).map(f => f.getInt(null) -> s"${sc.getSimpleName}.${f.getName}"))
+			.flatten
+
+		val merged = (if(childOnly) subLevel else (topLevel.appendedAll(subLevel))).groupBy(_._1).map(j => j._1 -> j._2.map(_._2))
+		val dups   = merged.filter(_._2.size > 1)
+		if (dups.size > 0) {
+			log.warn(s"Found {} dups\n{}", dups.size, dups.map(j => s"\t${j._1} = ${j._2.mkString("[", ", ", "]")}").mkString("\n"))
+		}
+		merged.filter(_._2.size == 1).map(x => x._1 -> x._2.head)
+	}
+	private lazy val npcIdToNameMap          : Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.NpcID])()
+	private lazy val animationIdToNameMap    : Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.AnimationID])()
+	private lazy val itemIdToNameMap         : Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.ItemID])()
+	private lazy val spriteIdToNameMap       : Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.SpriteID])()
+	private lazy val interfaceIdToNameMap    : Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.InterfaceID])(true)
+	private lazy val inventoryIdToNameMap    : Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.InventoryID])()
+	private lazy val spotAnimationIdToNameMap: Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.SpotanimID])()
+	private lazy val objectIdToNameMap       : Map[Int, String] = classToFieldNameMap(
+		classOf[net.runelite.api.gameval.ObjectID],
+		classOf[net.runelite.api.gameval.ObjectID1]
+	)()
+	val varbitIdToNameMap: Map[Int, String] = classToFieldNameMap(classOf[net.runelite.api.gameval.VarbitID])()
+
+	def getNpcName(id: Int): String = npcIdToNameMap.getOrElse(id, s"Npc(${id})")
+	def getAnimationName(id: Int): String = animationIdToNameMap.getOrElse(id, s"Animation(${id})")
+	def getItemName(id: Int): String = itemIdToNameMap.getOrElse(id, s"Item(${id})")
+	def getSpriteName(id: Int): String = spriteIdToNameMap.getOrElse(id, s"Sprite(${id})")
+	def getInterfaceName(id: Int): String = interfaceIdToNameMap.getOrElse(id, s"Interface(${id})")
+	def getInventoryName(id: Int): String = inventoryIdToNameMap.getOrElse(id, s"Inventory(${id})")
+	def getSpotAnimationName(id: Int): String = spotAnimationIdToNameMap.getOrElse(id, s"SpotAnimation(${id})")
+	def getObjectName(id: Int): String = objectIdToNameMap.getOrElse(id, s"Object(${id})")
+	def getVarbitName(id: Int): String = varbitIdToNameMap.getOrElse(id, s"Varbit(${id})")
 //	  public int getHeadbarPercent(RSHealthBar headbar) {
 	//    if (headbar == null || headbar.getDefinition() == null) {
 	//      return 100;

@@ -5,6 +5,7 @@ import com.fredplugins.common.extensions.GeneralExtensions.*
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
+import com.fredplugins.common.utils.ReflectionUtils
 import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -115,50 +116,7 @@ object HueycoatlData {
 		, NpcID.HUEY_HEAD_DEFEATED
 		, NpcID.HUEY_HEAD_RESPAWN_PLACEHOLDER
 	)
-
-	val varbitIdToName: Map[Int, String] = classOf[net.runelite.api.gameval.VarbitID].getDeclaredFields.toList
-		.filter(_.getType == Integer.TYPE)
-		.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-//		.filterNot(_.getName.startsWith("ENT"))
-//		.filterNot(_.getName.startsWith("LEAGUE"))
-		.map(f => {
-			f.getInt(null) -> f.getName
-		}).toMap
-
-	val npcIdToName: Map[Int, String] = classOf[net.runelite.api.gameval.NpcID].getDeclaredFields.toList
-		.filter(_.getType == Integer.TYPE)
-		.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-		.map(f => {
-			f.getInt(null) -> f.getName
-		}).toMap
-
-	val animationIdToName: Map[Int, String] = classOf[net.runelite.api.gameval.AnimationID].getDeclaredFields.toList
-		.filter(_.getType == Integer.TYPE)
-		.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-		.map(f => {
-			f.getInt(null) -> f.getName
-		})
-		.appended(-1 -> "IDLE").toMap
-
-	val spotAnimationIdToName: Map[Int, String] = classOf[net.runelite.api.gameval.SpotanimID].getDeclaredFields.toList
-		.filter(_.getType == Integer.TYPE)
-		.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-		.map(f => {
-			f.getInt(null) -> f.getName
-		}).toMap
-
-	val objectIdToName: Map[Int, String] = {
-		List.newBuilder[Field]
-			.addAll(classOf[net.runelite.api.gameval.ObjectID].getDeclaredFields.toList)
-			.addAll(classOf[net.runelite.api.gameval.ObjectID1].getDeclaredFields.toList)
-			.result()
-			.filter(_.getType == Integer.TYPE)
-			.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-			.map(f => {
-				f.getInt(null) -> f.getName
-			}).toMap
-	}
-
+	
 	val HueyShockwaveIds = List(
 	SpotanimID.VFX_HUEY_TAIL_SLAM_SHOCKWAVE_SOUTH,
 	SpotanimID.	VFX_HUEY_TAIL_SLAM_SHOCKWAVE_WEST,
@@ -364,7 +322,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	@Subscribe
 	def onGraphicsObjectCreated(e: GraphicsObjectCreated): Unit = {
 		val graphicsObject = e.getGraphicsObject
-		val name           = spotAnimationIdToName.getOrElse(graphicsObject.getId, s"Unknown(${graphicsObject.getId})")
+		val name           = ReflectionUtils.getSpotAnimationName(graphicsObject.getId)
 		if (!name.startsWith("VFX_HUEY")) return
 		if(graphicsObject.templateLocation.getRegionID == HueyRegion) {
 			//ticksSinceDangerousTiles = 5
@@ -429,7 +387,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	@Subscribe
 	def onVarbitChanged(e: VarbitChanged): Unit = {
 		if(e.getVarbitId == -1) return
-		val name = varbitIdToName.getOrElse(e.getVarbitId, s"Unknown(${e.getVarbitId})")
+		val name = ReflectionUtils.getVarbitName(e.getVarbitId)//varbitIdToName.getOrElse(e.getVarbitId, s"Unknown(${e.getVarbitId})")
 		if(!name.contains("HUEY") && !name.startsWith("Unknown")) return
 		log.info(s"Varbit \"${name}\" changed to ${e.getValue}")
 		if(e.getVarbitId == VarbitID.HUEY_IN_AREA) {
@@ -440,7 +398,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	def onNpcSpawned(e: NpcSpawned): Unit = {
 		if (e.getNpc.templateLocation.getRegionID != HueyRegion) return
 		if (!HueyNpcIds.contains(e.getNpc.getId)) return
-		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
+		val name = e.getNpc.getId.pipe(n => ReflectionUtils.getNpcName(n))//npcIdToName.getOrElse(n, s"Unknown(${n})"))
 		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" spawned at ${e.getNpc.templateLocation}")
 		state = state.map(_.addNpc(e.getNpc))
 //		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc).appended(e.getNpc)
@@ -449,7 +407,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 	def onNpcDespawned(e: NpcDespawned): Unit = {
 		if (e.getNpc.templateLocation.getRegionID != HueyRegion) return
 		if (!HueyNpcIds.contains(e.getNpc.getId)) return
-		val name = e.getNpc.getId.pipe(n => npcIdToName.getOrElse(n, s"Unknown(${n})"))
+		val name = e.getNpc.getId.pipe(n => ReflectionUtils.getNpcName(n))//npcIdToName.getOrElse(n, s"Unknown(${n})"))
 		log.debug(s"Npc[${e.getNpc.getIndex}] \"${name}\" despawned at ${e.getNpc.templateLocation}")
 		state = state.map(_.removeNpc(e.getNpc))
 //		trackedNpcs = trackedNpcs.filterNot(_ == e.getNpc)
@@ -460,7 +418,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		val projectile: Projectile = e.getProjectile
 		if (projectile.getTargetActor != null && projectile.getTargetActor != client.getLocalPlayer) return
 		if (!HueyProjectileIds.keySet.contains(projectile.getId)) return
-		val name = projectile.getId.pipe(p => spotAnimationIdToName.getOrElse(p, s"Unknown($p)"))
+		val name = projectile.getId.pipe(p => ReflectionUtils.getSpotAnimationName(p))//spotAnimationIdToName.getOrElse(p, s"Unknown($p)"))
 		if (projectile.templateSourceLocation.getRegionID == HueyRegion || projectile.templateTargetLocation.getRegionID == HueyRegion) {
 			if(projectile.justSpawned) {
 				state = state.map(_.withProjectile(projectile))
@@ -485,7 +443,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
 		state.map(s => {
-			val projectileLine = LineComponent.builder().left("Projectile").right(s"${s.projectile.fold("Null")(_.getId.pipe(p => spotAnimationIdToName.getOrElse(p, s"Unknown(${p})")))}").rightColor(s.projectile.fold(Color.RED)(_ => Color.GREEN)).build
+			val projectileLine = LineComponent.builder().left("Projectile").right(s"${s.projectile.fold("Null")(_.getId.pipe(p => ReflectionUtils.getSpotAnimationName(p)))}").rightColor(s.projectile.fold(Color.RED)(_ => Color.GREEN)).build
 			val stageLine = LineComponent.builder().left("Stage").right(s"${s.stage}").build
 			val pillarsLines = s.pillars.map {
 				case (p, l) => LineComponent.builder().left(p.entryName).leftColor(p.getColor).right(s"$l").rightColor(
@@ -567,7 +525,7 @@ class FredsHueycoatlHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 
 				renderNpcOverlay(
 					n,
-					npcIdToName(n.getId),
+					ReflectionUtils.getNpcName(n.getId),
 					0,
 					color.withAlpha(150),
 					100,

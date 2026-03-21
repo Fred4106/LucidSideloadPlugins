@@ -216,14 +216,7 @@ class FredsVorkathHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 			log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}")
 		}
 	}
-
-	private lazy val varbitIdToName: Map[Int, String] = classOf[net.runelite.api.gameval.VarbitID].getDeclaredFields.toList
-		.filter(_.getType == Integer.TYPE)
-		.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-		.map(f => {
-			f.getInt(null) -> f.getName
-		}).toMap
-
+	
 //	@Subscribe
 //	def onVarbitChanged(e: VarbitChanged): Unit = {
 //		if(e.getVarbitId == -1) return

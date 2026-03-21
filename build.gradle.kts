@@ -83,7 +83,6 @@ dependencies {
     implementation(projects.pyramidPlunder)
     implementation(projects.recolorCG)
     implementation(projects.sailingHelper)
-    implementation(projects.scriptMaster)
     implementation(projects.scurriusHelper)
     implementation(projects.superClickHelper)
     implementation(projects.teleportMaps)

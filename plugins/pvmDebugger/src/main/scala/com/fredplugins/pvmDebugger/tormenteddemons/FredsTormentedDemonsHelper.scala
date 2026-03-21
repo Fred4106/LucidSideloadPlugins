@@ -15,6 +15,7 @@ import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.overlays
+import com.fredplugins.common.utils.ReflectionUtils
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle.MAGE
 import com.fredplugins.pvmDebugger.tormenteddemons.FredsTormentedDemons.AttackStyle.MELEE
@@ -257,33 +258,14 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 //			client.setMenuEntries(newMenuEntries.toArray[MenuEntry])
 //		}
 //	}
-
-	private lazy val npcIdToNameMap: Map[Int, String] = {
-		classOf[net.runelite.api.gameval.NpcID].getDeclaredFields.toList
-			.filter(_.getType == Integer.TYPE)
-			.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-			.map(f => {
-				f.getInt(null) -> f.getName
-			}).toMap
-	}
-	def getNpcName(id: Int): String = npcIdToNameMap.getOrElse(id, s"Npc(${id})")
-	private lazy val animationIdToNameMap: Map[Int, String] = {
-		classOf[net.runelite.api.gameval.AnimationID].getDeclaredFields.toList
-			.filter(_.getType == Integer.TYPE)
-			.filter(_.getModifiers == (Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
-			.map(f => {
-				f.getInt(null) -> f.getName
-			}).toMap
-	}
-	def getAnimationName(id: Int): String = animationIdToNameMap.getOrElse(id, s"Animation(${id})")
-
+	
 	@Subscribe
 	def onNpcSpawned(npcSpawned: NpcSpawned): Unit = {
 		if(inRegion()) {
 			Option(npcSpawned.getNpc).filterNot(n => TORMENTED_DEMON_IDS.contains(n.getId))
 				.foreach(n => {
 					val msg = new ChatMessageBuilder()
-						.append(Color.blue, s"${getNpcName(n.getId)}")
+						.append(Color.blue, s"${ReflectionUtils.getNpcName(n.getId)}")
 						.append(" spawned at ")
 						.append(Color.green, s"${n.getWorldLocation}")
 						.append(".")
@@ -335,9 +317,9 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 				case (npc, data) => {
 					val msg = new ChatMessageBuilder()
 						.append("Animation changed from ")
-						.append(Color.blue, s"${getAnimationName(data.animationId)}")
+						.append(Color.blue, s"${ReflectionUtils.getAnimationName(data.animationId)}")
 						.append(" to ")
-						.append(Color.green, s"${getAnimationName(npc.getAnimation)}")
+						.append(Color.green, s"${ReflectionUtils.getAnimationName(npc.getAnimation)}")
 						.append(".")
 					parent.getClientThread.invoke(() => {
 						printMessage(ChatMessageType.FRIENDSCHAT, "Tormented", "AnimationChanged")(msg)
@@ -516,7 +498,7 @@ class FredsTormentedDemonsHelper @Inject()(override val parent: PvmDebuggerPlugi
 			if(demons.nonEmpty) {
 				demons.foreach {
 					case (npc, data) => {
-						val text = s"attackCount: ${data.attackCount}, attackStyle: ${data.attackStyle.toList.mkString("{", ", ", "}")}, ticksUntilAttack: ${data.ticksUntilAttack}, anim: ${getAnimationName(data.animationId)}, overhead: ${data.protectingStyle}"
+						val text = s"attackCount: ${data.attackCount}, attackStyle: ${data.attackStyle.toList.mkString("{", ", ", "}")}, ticksUntilAttack: ${data.ticksUntilAttack}, anim: ${ReflectionUtils.getAnimationName(data.animationId)}, overhead: ${data.protectingStyle}"
 						val color = if(!targetDemon.contains(npc)) Color.GRAY else {
 							data.attackCount match {
 								case n if n >= 9 => Color.RED

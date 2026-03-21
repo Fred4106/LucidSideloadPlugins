@@ -1,11 +1,15 @@
 package com.fredplugins.layouthelper;
 
 import ch.qos.logback.classic.Level;
+import com.fredplugins.common.utils.ReflectionUtils;
 import com.fredplugins.layouthelper.LootBroadcastHelper.LootBroadcastMessage;
 import ethanApiPlugin.EthanApiPlugin;
+import ethanApiPlugin.collections.Widgets;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
@@ -15,13 +19,19 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import packets.MousePackets;
+import packets.WidgetPackets;
+import scala.collection.Seq$;
 import scala.collection.immutable.List$;
 
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static net.runelite.api.gameval.InterfaceID.Bankmain.POTIONSTORE_ITEMS;
 
@@ -61,6 +71,10 @@ public class LayoutHelper extends Plugin {
     protected void startUp() throws Exception {
         super.startUp();
 
+        List.of(536, 537, 19272).stream().forEach(i -> {
+            log.debug("id: {}, name: {}", i, ReflectionUtils.getItemName(i));
+        });
+
         overlays = OverlayWidgetHelper.getOverlays(overlayManager).filter(o ->
             o.groupId() == 164 && o.childId() >= 94 && o.childId() <= 96
         );
@@ -71,10 +85,50 @@ public class LayoutHelper extends Plugin {
         });
     }
 
+//    private boolean skillMultiOpened = false;
+//    @Subscribe
+//    private void onGameTick(GameTick e) {
+//            Widget sw = client.getWidget(InterfaceID.Skillmulti.BOTTOM);
+//            if(sw != null) {
+////                skillMultiOpened = false;
+//                List<Widget> multiOtions = IntStream.of(
+//                    InterfaceID.Skillmulti.A,
+//                    InterfaceID.Skillmulti.B,
+//                    InterfaceID.Skillmulti.C,
+//                    InterfaceID.Skillmulti.D,
+//                    InterfaceID.Skillmulti.E,
+//                    InterfaceID.Skillmulti.F,
+//                    InterfaceID.Skillmulti.G,
+//                    InterfaceID.Skillmulti.H,
+//                    InterfaceID.Skillmulti.I,
+//                    InterfaceID.Skillmulti.J,
+//                    InterfaceID.Skillmulti.K,
+//                    InterfaceID.Skillmulti.L,
+//                    InterfaceID.Skillmulti.M,
+//                    InterfaceID.Skillmulti.N,
+//                    InterfaceID.Skillmulti.O,
+//                    InterfaceID.Skillmulti.P,
+//                    InterfaceID.Skillmulti.Q,
+//                    InterfaceID.Skillmulti.R
+//                ).mapToObj(i -> client.getWidget(i)).filter(w -> {
+//                    return w.getName() != null && !w.getName().isEmpty();
+//                }).collect(Collectors.toList());
+//                
+//                Helper
+////                if(multiOtions.size() == 1) {
+////                    Widget toClick = multiOtions.get(0);
+//////                    MousePackets.queueClickPacket(toClick);
+//////                    WidgetPackets.queueWidgetActionPacket(1, toClick.getId(), toClick.getItemId(), toClick.getIndex());
+//////                    WidgetPackets.queueWidgetAction(toClick, "Item");
+////                }
+//            }
+//    }
+    
     @Subscribe
     private void onClientTick(ClientTick gt) {
         OverlayWidgetHelper.tick(overlays);
     }
+
     @Override
     protected void shutDown() throws Exception {
         super.shutDown();
@@ -133,7 +187,7 @@ public class LayoutHelper extends Plugin {
     @Subscribe(priority = -2) // run after ChatMessageManager
     public void onChatMessage(final ChatMessage event) {
         if(event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM && event.getSender() == null && event.getName().isEmpty()) {
-            log.debug("[onChatMessage] {}", event);
+            //log.debug("[onChatMessage] {}", event);
         }
     }
 }

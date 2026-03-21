@@ -6,7 +6,7 @@ plugins {
 dependencies {
     implementation(project(":common"))
     api("org.scala-lang:scala3-library_3:${Dependencies.scalaVersion}")
-
+    api("org.scala-lang:scala3-compiler_3:${Dependencies.scalaVersion}")
     implementation("net.codingwell:scala-guice_3:7.0.0") {
         exclude("com.google.inject", "guice")
     }

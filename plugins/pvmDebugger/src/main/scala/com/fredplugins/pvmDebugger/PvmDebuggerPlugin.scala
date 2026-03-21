@@ -54,7 +54,9 @@ import net.runelite.client.ui.overlay.OverlayManager
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
-
+import scala.reflect.Selectable.reflectiveSelectable
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import scala.util.chaining.*
 
 @PluginDescriptor(
@@ -116,7 +118,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	def getSpriteManager: SpriteManager = spriteManager
 	def getInfoBoxManager: InfoBoxManager = infoBoxManager
 	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
-
+	
 	//	//region types
 	case class InvSlotItem(index: Int, id: Int, qty: Int)
 	object InvSlotItem {
