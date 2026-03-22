@@ -1,20 +1,16 @@
 package com.fredplugins.dialogAssist;
 
-import net.runelite.api.gameval.ItemID;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
-import ujson.Str;
 
 import java.awt.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.*;
-
-@ConfigGroup(FredsDialogueAssistantPlugin.CONFIG_GROUP)
+@ConfigGroup(FredsDialogueAssistantConfig.CONFIG_GROUP)
 public interface FredsDialogueAssistantConfig extends Config
 {
+	String CONFIG_GROUP = "FredsDialogAssist";
+
 	@ConfigItem(
 			keyName = "optionHighlightColour",
 			name = "Option highlight colour",
@@ -69,4 +65,14 @@ public interface FredsDialogueAssistantConfig extends Config
 		description = "List of Items to automatically select from the make x screen"
 	)
 	void setAutoMakeXItems(String raw);
+
+	@ConfigItem(
+		keyName = "debugScripts",
+		name = "Debug Cs2",
+		description = "logs preScript and post script for specific events (including parameters passed and returned)"
+	)
+	default boolean debugScripts()
+	{
+		return true;
+	}
 }

@@ -2,18 +2,16 @@ package com.fredplugins.dialogAssist;
 
 import ch.qos.logback.classic.Level;
 import com.fredplugins.common.extensions.MenuExtensions$;
-import com.fredplugins.common.utils.ReflectionUtils;
 import com.fredplugins.common.utils.ReflectionUtils$;
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 
 import ethanApiPlugin.lucidplugins.api.utils.DialogUtils;
-import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.gameval.InterfaceID;
-import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.VarClientID;
 import net.runelite.api.widgets.JavaScriptCallback;
@@ -21,6 +19,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
@@ -54,7 +53,6 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		log = LoggerFactory.getLogger(FredsDialogueAssistantPlugin.class);
 	}
 
-	public static final String CONFIG_GROUP = "FredsDialogAssist";
 	private final String MAP_KEY = "FredsDialogConfig";
 	private int lastInteractionId = -1;
 	private int optionParentId = -1;
@@ -70,6 +68,34 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	private ClientThread clientThread;
 	@Inject
 	private ConfigManager configManager;
+	@Inject
+	private EventBus eventBus;
+	@Inject
+	private Gson gson;
+
+	public Client getClient() {
+		return client;
+	}
+
+	public FredsDialogueAssistantConfig getConfig() {
+		return config;
+	}
+
+	public ClientThread getClientThread() {
+		return clientThread;
+	}
+
+	public ConfigManager getConfigManager() {
+		return configManager;
+	}
+
+	public EventBus getEventBus() {
+		return eventBus;
+	}
+
+	public Gson getGson() {
+		return gson;
+	}
 
 	private final static Map<Integer, String> NPC_ID_TO_NAME_MAP = Arrays.stream(NpcID.class.getDeclaredFields()).filter(x -> x.getType() == Integer.TYPE && x.getModifiers() ==(Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL))
 	.map(f -> {
@@ -85,11 +111,17 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	private SkillMultiHelper skillMultiHelper = null;
 	private ConfigHelper configHelper = null;
 
+	SkillMultiHandler skillMultiHandler = null;
+
 	@Override
 	protected void startUp()
 	{
 		configHelper = new ConfigHelper(config);
 		skillMultiHelper = new SkillMultiHelper(client, clientThread);
+		if(skillMultiHandler == null) {
+			skillMultiHandler = new SkillMultiHandler(this);
+		}
+		eventBus.register(skillMultiHandler);
 		loadConfig();
 		makeXHidden = configHelper.getHiddenMakeXAsJava().stream().flatMap(Collection::stream).collect(Collectors.toList());
 		makeXAuto = configHelper.getAutoMakeXAsJava().stream().flatMap(Collection::stream).collect(Collectors.toList());
@@ -99,7 +131,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	private java.util.List<Integer> makeXAuto = List.of();
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
-		if(event.getGroup().equals(CONFIG_GROUP)) {
+		if(event.getGroup().equals(FredsDialogueAssistantConfig.CONFIG_GROUP)) {
 			if (event.getKey().equals("hiddenMakeXItems")) {
 				makeXHidden = configHelper.getHiddenMakeXAsJava().stream().flatMap(Collection::stream).collect(Collectors.toList());
 			} else if (event.getKey().equals("autoMakeXItems")) {
@@ -534,12 +566,12 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	private void saveConfig()
 	{
 		final String json = GSON.toJson(dialogMap);
-		configManager.setConfiguration(CONFIG_GROUP, MAP_KEY, json);
+		configManager.setConfiguration(FredsDialogueAssistantConfig.CONFIG_GROUP, MAP_KEY, json);
 	}
 
 	private void loadConfig()
 	{
-		final String json = configManager.getConfiguration(CONFIG_GROUP, MAP_KEY);
+		final String json = configManager.getConfiguration(FredsDialogueAssistantConfig.CONFIG_GROUP, MAP_KEY);
 		if (json == null || json.equals(""))
 		{
 			dialogMap = new HashMap<>();
@@ -567,6 +599,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	{
 		lastInteractionId = -1;
 		resetAllRecentWidgets();
+		eventBus.unregister(skillMultiHandler);
 	}
 
 	@Provides
