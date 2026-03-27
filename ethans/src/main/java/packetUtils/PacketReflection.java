@@ -155,16 +155,16 @@ public class PacketReflection {
 			params = List.of("widgetId", "slot", "itemId", "opCode");
 		}
 		if (def.type == PacketType.OPLOC) {
-			params = List.of("objectId", "worldPointX", "worldPointY", "ctrlDown");
+			params = List.of("objectId", "worldPointX", "worldPointY", "ctrlDown", "subop");
 		}
 		if (def.type == PacketType.OPNPC) {
-			params = List.of("npcIndex", "ctrlDown");
+			params = List.of("npcIndex", "ctrlDown", "subop");
 		}
 		if (def.type == PacketType.OPPLAYER) {
 			params = List.of("playerIndex", "ctrlDown");
 		}
 		if (def.type == PacketType.OPOBJ) {
-			params = List.of("objectId", "worldPointX", "worldPointY", "ctrlDown");
+			params = List.of("objectId", "worldPointX", "worldPointY", "ctrlDown", "subop");
 		}
 		if (def.type == PacketType.OPOBJT) {
 			params = List.of("objectId", "worldPointX", "worldPointY", "slot", "itemId", "widgetId",

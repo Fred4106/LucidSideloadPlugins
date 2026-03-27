@@ -232,7 +232,10 @@ class SuperClickerPlugin() extends Plugin {
 	private def reinitializeSpellbook(): Unit = {
 		val w = client.getWidget(InterfaceID.MagicSpellbook.UNIVERSE)
 		if (w != null && w.getOnLoadListener != null){
-			client.createScriptEvent(w.getOnLoadListener *).setSource(w).run()
+			client.createScriptEventBuilder(w.getOnLoadListener() *)
+				.setSource(w)
+				.build()
+				.run()
 		}
 	}
 	private val spellsWidgetTable: mutable.ListBuffer[(Int, ((Int, ItemComposition), (Int, Widget)))] = scala.collection.mutable.ListBuffer.empty[(Int, ((Int, ItemComposition), (Int, Widget)))]

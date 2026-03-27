@@ -52,7 +52,7 @@ public class PacketUtilsPlugin extends Plugin {
 	static Client staticClient;
 	public static Method addNodeMethod;
 	public static boolean usingClientAddNode = false;
-	public static final int CLIENT_REV = 236;
+	public static final int CLIENT_REV = 237;
 	private static String loadedConfigName = "";
 	@Inject
 	private PluginManager pluginManager;
@@ -152,14 +152,14 @@ public class PacketUtilsPlugin extends Plugin {
 			log.info("config loaded from correct path");
 		}
 		Path codeSource = RuneLite.RUNELITE_DIR.toPath().resolve("PacketUtils");
-		List<Path> toDelete = new ArrayList<>();
-		toDelete.add(codeSource.resolve("vanilla.jar"));
-		toDelete.add(codeSource.resolve("patched.jar"));
-		toDelete.add(codeSource.resolve("doAction.class"));
-		toDelete.add(codeSource.resolve("decompiled.txt"));
-		for (Path path : toDelete) {
-			Files.deleteIfExists(path);
-		}
+//		List<Path> toDelete = new ArrayList<>();
+//		toDelete.add(codeSource.resolve("vanilla.jar"));
+//		toDelete.add(codeSource.resolve("patched.jar"));
+//		toDelete.add(codeSource.resolve("doAction.class"));
+//		toDelete.add(codeSource.resolve("decompiled.txt"));
+//		for (Path path : toDelete) {
+//			Files.deleteIfExists(path);
+//		}
 	}
 
 	@SneakyThrows
@@ -281,7 +281,7 @@ public class PacketUtilsPlugin extends Plugin {
 		}
 		reader.close();
 		String mostUsedMethod = methodCalls.stream()
-				.filter(str -> !str.contains("** while"))
+				.filter(str -> !str.contains("** while") && !str.contains("throw"))
 				.collect(Collectors.groupingBy(str -> str, Collectors.counting()))
 				.entrySet().stream().min(Map.Entry.comparingByValue(Comparator.reverseOrder()))
 				.get().getKey();

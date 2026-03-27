@@ -11,21 +11,22 @@ public class TileItemPackets {
     public static void queueTileItemAction(int actionFieldNo, int objectId, int worldPointX, int worldPointY,
                                            boolean ctrlDown) {
         int ctrl = ctrlDown ? 1 : 0;
+        int subop = 0;
         switch (actionFieldNo) {
             case 1:
-                PacketReflection.sendPacket(PacketDef.getOpObj1(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpObj1(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 2:
-                PacketReflection.sendPacket(PacketDef.getOpObj2(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpObj2(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 3:
-                PacketReflection.sendPacket(PacketDef.getOpObj3(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpObj3(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 4:
-                PacketReflection.sendPacket(PacketDef.getOpObj4(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpObj4(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 5:
-                PacketReflection.sendPacket(PacketDef.getOpObj5(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpObj5(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
         }
     }

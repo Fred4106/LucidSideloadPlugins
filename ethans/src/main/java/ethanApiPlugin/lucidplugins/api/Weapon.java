@@ -15,7 +15,7 @@ public enum Weapon
     // Ranged Weapons
     BOW_OF_FAERDHINEN(List.of(
         ItemID.BOW_OF_FAERDHINEN,
-        ItemID.BOW_OF_FAERDHINEN_27187,
+        ItemID.BOW_OF_FAERDHINEN_C_27187,
         ItemID.BOW_OF_FAERDHINEN_C,
         ItemID.BOW_OF_FAERDHINEN_C_25869,
         ItemID.BOW_OF_FAERDHINEN_C_25884,

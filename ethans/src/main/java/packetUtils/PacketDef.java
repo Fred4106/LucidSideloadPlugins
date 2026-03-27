@@ -1,5 +1,6 @@
 package packetUtils;
 
+
 public class PacketDef {
 	public final String name;
 	public final String[] writeData;
@@ -13,34 +14,34 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpObj1() {
-		String[] writeData = new String[]{ObfuscatedNames.OPOBJ1_WRITE1, ObfuscatedNames.OPOBJ1_WRITE2, ObfuscatedNames.OPOBJ1_WRITE3, ObfuscatedNames.OPOBJ1_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPOBJ1_WRITE1, ObfuscatedNames.OPOBJ1_WRITE2, ObfuscatedNames.OPOBJ1_WRITE3, ObfuscatedNames.OPOBJ1_WRITE4, ObfuscatedNames.OPOBJ1_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPOBJ1_WRITES;
 		return new PacketDef(ObfuscatedNames.OPOBJ1_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPOBJ);
 	}
 
 	public static PacketDef getOpObj5() {
-		String[] writeData = new String[]{ObfuscatedNames.OPOBJ5_WRITE1, ObfuscatedNames.OPOBJ5_WRITE2, ObfuscatedNames.OPOBJ5_WRITE3, ObfuscatedNames.OPOBJ5_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPOBJ5_WRITE1, ObfuscatedNames.OPOBJ5_WRITE2, ObfuscatedNames.OPOBJ5_WRITE3, ObfuscatedNames.OPOBJ5_WRITE4, ObfuscatedNames.OPOBJ5_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPOBJ5_WRITES;
 		return new PacketDef(ObfuscatedNames.OPOBJ5_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPOBJ);
 	}
 
 
 	public static PacketDef getOpObj4() {
-		String[] writeData = new String[]{ObfuscatedNames.OPOBJ4_WRITE1, ObfuscatedNames.OPOBJ4_WRITE2, ObfuscatedNames.OPOBJ4_WRITE3, ObfuscatedNames.OPOBJ4_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPOBJ4_WRITE1, ObfuscatedNames.OPOBJ4_WRITE2, ObfuscatedNames.OPOBJ4_WRITE3, ObfuscatedNames.OPOBJ4_WRITE4, ObfuscatedNames.OPOBJ4_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPOBJ4_WRITES;
 		return new PacketDef(ObfuscatedNames.OPOBJ4_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPOBJ);
 	}
 
 
 	public static PacketDef getOpObj3() {
-		String[] writeData = new String[]{ObfuscatedNames.OPOBJ3_WRITE1, ObfuscatedNames.OPOBJ3_WRITE2, ObfuscatedNames.OPOBJ3_WRITE3, ObfuscatedNames.OPOBJ3_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPOBJ3_WRITE1, ObfuscatedNames.OPOBJ3_WRITE2, ObfuscatedNames.OPOBJ3_WRITE3, ObfuscatedNames.OPOBJ3_WRITE4, ObfuscatedNames.OPOBJ3_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPOBJ3_WRITES;
 		return new PacketDef(ObfuscatedNames.OPOBJ3_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPOBJ);
 	}
 
 
 	public static PacketDef getOpObj2() {
-		String[] writeData = new String[]{ObfuscatedNames.OPOBJ2_WRITE1, ObfuscatedNames.OPOBJ2_WRITE2, ObfuscatedNames.OPOBJ2_WRITE3, ObfuscatedNames.OPOBJ2_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPOBJ2_WRITE1, ObfuscatedNames.OPOBJ2_WRITE2, ObfuscatedNames.OPOBJ2_WRITE3, ObfuscatedNames.OPOBJ2_WRITE4, ObfuscatedNames.OPOBJ2_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPOBJ2_WRITES;
 		return new PacketDef(ObfuscatedNames.OPOBJ2_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPOBJ);
 	}
@@ -77,7 +78,7 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpNpc2() {
-		String[] writeData = new String[]{ObfuscatedNames.OPNPC2_WRITE1, ObfuscatedNames.OPNPC2_WRITE2};
+		String[] writeData = new String[]{ObfuscatedNames.OPNPC2_WRITE1, ObfuscatedNames.OPNPC2_WRITE2, ObfuscatedNames.OPNPC2_WRITE3};
 		String[][] writeMethods = ObfuscatedNames.OPNPC2_WRITES;
 		return new PacketDef(ObfuscatedNames.OPNPC2_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPNPC);
 	}
@@ -89,7 +90,7 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpNpc3() {
-		String[] writeData = new String[]{ObfuscatedNames.OPNPC3_WRITE1, ObfuscatedNames.OPNPC3_WRITE2};
+		String[] writeData = new String[]{ObfuscatedNames.OPNPC3_WRITE1, ObfuscatedNames.OPNPC3_WRITE2, ObfuscatedNames.OPNPC3_WRITE3};
 		String[][] writeMethods = ObfuscatedNames.OPNPC3_WRITES;
 		return new PacketDef(ObfuscatedNames.OPNPC3_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPNPC);
 	}
@@ -101,7 +102,7 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpLoc2() {
-		String[] writeData = new String[]{ObfuscatedNames.OPLOC2_WRITE1, ObfuscatedNames.OPLOC2_WRITE2, ObfuscatedNames.OPLOC2_WRITE3, ObfuscatedNames.OPLOC2_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPLOC2_WRITE1, ObfuscatedNames.OPLOC2_WRITE2, ObfuscatedNames.OPLOC2_WRITE3, ObfuscatedNames.OPLOC2_WRITE4, ObfuscatedNames.OPLOC2_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPLOC2_WRITES;
 		return new PacketDef(ObfuscatedNames.OPLOC2_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPLOC);
 	}
@@ -113,19 +114,19 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpLoc1() {
-		String[] writeData = new String[]{ObfuscatedNames.OPLOC1_WRITE1, ObfuscatedNames.OPLOC1_WRITE2, ObfuscatedNames.OPLOC1_WRITE3, ObfuscatedNames.OPLOC1_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPLOC1_WRITE1, ObfuscatedNames.OPLOC1_WRITE2, ObfuscatedNames.OPLOC1_WRITE3, ObfuscatedNames.OPLOC1_WRITE4, ObfuscatedNames.OPLOC1_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPLOC1_WRITES;
 		return new PacketDef(ObfuscatedNames.OPLOC1_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPLOC);
 	}
 
 	public static PacketDef getOpNpc1() {
-		String[] writeData = new String[]{ObfuscatedNames.OPNPC1_WRITE1, ObfuscatedNames.OPNPC1_WRITE2};
+		String[] writeData = new String[]{ObfuscatedNames.OPNPC1_WRITE1, ObfuscatedNames.OPNPC1_WRITE2, ObfuscatedNames.OPNPC1_WRITE3};
 		String[][] writeMethods = ObfuscatedNames.OPNPC1_WRITES;
 		return new PacketDef(ObfuscatedNames.OPNPC1_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPNPC);
 	}
 
 	public static PacketDef getOpLoc4() {
-		String[] writeData = new String[]{ObfuscatedNames.OPLOC4_WRITE1, ObfuscatedNames.OPLOC4_WRITE2, ObfuscatedNames.OPLOC4_WRITE3, ObfuscatedNames.OPLOC4_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPLOC4_WRITE1, ObfuscatedNames.OPLOC4_WRITE2, ObfuscatedNames.OPLOC4_WRITE3, ObfuscatedNames.OPLOC4_WRITE4, ObfuscatedNames.OPLOC4_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPLOC4_WRITES;
 		return new PacketDef(ObfuscatedNames.OPLOC4_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPLOC);
 	}
@@ -137,7 +138,7 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpLoc3() {
-		String[] writeData = new String[]{ObfuscatedNames.OPLOC3_WRITE1, ObfuscatedNames.OPLOC3_WRITE2, ObfuscatedNames.OPLOC3_WRITE3, ObfuscatedNames.OPLOC3_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPLOC3_WRITE1, ObfuscatedNames.OPLOC3_WRITE2, ObfuscatedNames.OPLOC3_WRITE3, ObfuscatedNames.OPLOC3_WRITE4, ObfuscatedNames.OPLOC3_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPLOC3_WRITES;
 		return new PacketDef(ObfuscatedNames.OPLOC3_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPLOC);
 	}
@@ -149,7 +150,7 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpNpc4() {
-		String[] writeData = new String[]{ObfuscatedNames.OPNPC4_WRITE1, ObfuscatedNames.OPNPC4_WRITE2};
+		String[] writeData = new String[]{ObfuscatedNames.OPNPC4_WRITE1, ObfuscatedNames.OPNPC4_WRITE2, ObfuscatedNames.OPNPC4_WRITE3};
 		String[][] writeMethods = ObfuscatedNames.OPNPC4_WRITES;
 		return new PacketDef(ObfuscatedNames.OPNPC4_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPNPC);
 	}
@@ -161,7 +162,7 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpNpc5() {
-		String[] writeData = new String[]{ObfuscatedNames.OPNPC5_WRITE1, ObfuscatedNames.OPNPC5_WRITE2};
+		String[] writeData = new String[]{ObfuscatedNames.OPNPC5_WRITE1, ObfuscatedNames.OPNPC5_WRITE2, ObfuscatedNames.OPNPC5_WRITE3};
 		String[][] writeMethods = ObfuscatedNames.OPNPC5_WRITES;
 		return new PacketDef(ObfuscatedNames.OPNPC5_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPNPC);
 	}
@@ -173,7 +174,7 @@ public class PacketDef {
 	}
 
 	public static PacketDef getOpLoc5() {
-		String[] writeData = new String[]{ObfuscatedNames.OPLOC5_WRITE1, ObfuscatedNames.OPLOC5_WRITE2, ObfuscatedNames.OPLOC5_WRITE3, ObfuscatedNames.OPLOC5_WRITE4};
+		String[] writeData = new String[]{ObfuscatedNames.OPLOC5_WRITE1, ObfuscatedNames.OPLOC5_WRITE2, ObfuscatedNames.OPLOC5_WRITE3, ObfuscatedNames.OPLOC5_WRITE4, ObfuscatedNames.OPLOC5_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.OPLOC5_WRITES;
 		return new PacketDef(ObfuscatedNames.OPLOC5_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPLOC);
 	}
@@ -199,7 +200,7 @@ public class PacketDef {
 
 	public static PacketDef getIfSubOp() {
 		String[] writeData = new String[]{ObfuscatedNames.IF_SUBOP_WRITE1, ObfuscatedNames.IF_SUBOP_WRITE2, ObfuscatedNames.IF_SUBOP_WRITE3,
-				ObfuscatedNames.IF_SUBOP_WRITE4, ObfuscatedNames.IF_SUBOP_WRITE5};
+			ObfuscatedNames.IF_SUBOP_WRITE4, ObfuscatedNames.IF_SUBOP_WRITE5};
 		String[][] writeMethods = ObfuscatedNames.IF_SUBOP_WRITES;
 		return new PacketDef(ObfuscatedNames.IF_SUBOP_OBFUSCATEDNAME, writeData, writeMethods, PacketType.IF_SUBOP);
 	}
@@ -236,14 +237,14 @@ public class PacketDef {
 
 	public static PacketDef getOpHeldd() {
 		String[] writeData = new String[]{ObfuscatedNames.OPHELDD_WRITE1, ObfuscatedNames.OPHELDD_WRITE2, ObfuscatedNames.OPHELDD_WRITE3,
-				ObfuscatedNames.OPHELDD_WRITE4, ObfuscatedNames.OPHELDD_WRITE5, ObfuscatedNames.OPHELDD_WRITE6};
+			ObfuscatedNames.OPHELDD_WRITE4, ObfuscatedNames.OPHELDD_WRITE5, ObfuscatedNames.OPHELDD_WRITE6};
 		String[][] writeMethods = ObfuscatedNames.OPHELDD_WRITES;
 		return new PacketDef(ObfuscatedNames.OPHELDD_OBFUSCATEDNAME, writeData, writeMethods, PacketType.OPHELDD);
 	}
 
 	public static PacketDef getIfButtonX() {
 		String[] writeData = new String[]{ObfuscatedNames.IF_BUTTONX_WRITE1, ObfuscatedNames.IF_BUTTONX_WRITE2, ObfuscatedNames.IF_BUTTONX_WRITE3,
-				ObfuscatedNames.IF_BUTTONX_WRITE4};
+			ObfuscatedNames.IF_BUTTONX_WRITE4};
 		String[][] writeMethods = ObfuscatedNames.IF_BUTTONX_WRITES;
 		return new PacketDef(ObfuscatedNames.IF_BUTTONX_OBFUSCATEDNAME, writeData, writeMethods, PacketType.IF_BUTTONX);
 	}

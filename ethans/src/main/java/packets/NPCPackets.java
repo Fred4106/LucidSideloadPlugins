@@ -16,22 +16,23 @@ public class NPCPackets {
 
 	@SneakyThrows
 	public static void queueNPCAction(int actionFieldNo, int npcIndex, boolean ctrlDown) {
+		int subop = 0;
 		int ctrl = ctrlDown ? 1 : 0;
 		switch (actionFieldNo) {
 			case 1:
-				PacketReflection.sendPacket(PacketDef.getOpNpc1(), npcIndex, ctrl);
+				PacketReflection.sendPacket(PacketDef.getOpNpc1(), npcIndex, ctrl, subop);
 				break;
 			case 2:
-				PacketReflection.sendPacket(PacketDef.getOpNpc2(), npcIndex, ctrl);
+				PacketReflection.sendPacket(PacketDef.getOpNpc2(), npcIndex, ctrl, subop);
 				break;
 			case 3:
-				PacketReflection.sendPacket(PacketDef.getOpNpc3(), npcIndex, ctrl);
+				PacketReflection.sendPacket(PacketDef.getOpNpc3(), npcIndex, ctrl, subop);
 				break;
 			case 4:
-				PacketReflection.sendPacket(PacketDef.getOpNpc4(), npcIndex, ctrl);
+				PacketReflection.sendPacket(PacketDef.getOpNpc4(), npcIndex, ctrl, subop);
 				break;
 			case 5:
-				PacketReflection.sendPacket(PacketDef.getOpNpc5(), npcIndex, ctrl);
+				PacketReflection.sendPacket(PacketDef.getOpNpc5(), npcIndex, ctrl, subop);
 				break;
 		}
 	}

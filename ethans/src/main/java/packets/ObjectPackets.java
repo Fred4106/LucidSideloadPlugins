@@ -25,22 +25,22 @@ public class ObjectPackets {
                                          boolean ctrlDown) {
         log.debug("actionFieldNo={}, objectId={}, worldPoint=({}, {}), ctrlDown={}", actionFieldNo, objectId, worldPointX, worldPointY, ctrlDown);
         int ctrl = ctrlDown ? 1 : 0;
-
+        int subop = 0;
         switch (actionFieldNo) {
             case 1:
-                PacketReflection.sendPacket(PacketDef.getOpLoc1(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpLoc1(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 2:
-                PacketReflection.sendPacket(PacketDef.getOpLoc2(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpLoc2(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 3:
-                PacketReflection.sendPacket(PacketDef.getOpLoc3(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpLoc3(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 4:
-                PacketReflection.sendPacket(PacketDef.getOpLoc4(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpLoc4(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
             case 5:
-                PacketReflection.sendPacket(PacketDef.getOpLoc5(), objectId, worldPointX, worldPointY, ctrl);
+                PacketReflection.sendPacket(PacketDef.getOpLoc5(), objectId, worldPointX, worldPointY, ctrl, subop);
                 break;
         }
     }
