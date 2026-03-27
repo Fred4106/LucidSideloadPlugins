@@ -152,14 +152,14 @@ public class PacketUtilsPlugin extends Plugin {
 			log.info("config loaded from correct path");
 		}
 		Path codeSource = RuneLite.RUNELITE_DIR.toPath().resolve("PacketUtils");
-//		List<Path> toDelete = new ArrayList<>();
-//		toDelete.add(codeSource.resolve("vanilla.jar"));
-//		toDelete.add(codeSource.resolve("patched.jar"));
-//		toDelete.add(codeSource.resolve("doAction.class"));
-//		toDelete.add(codeSource.resolve("decompiled.txt"));
-//		for (Path path : toDelete) {
-//			Files.deleteIfExists(path);
-//		}
+		List<Path> toDelete = new ArrayList<>();
+		toDelete.add(codeSource.resolve("vanilla.jar"));
+		toDelete.add(codeSource.resolve("patched.jar"));
+		toDelete.add(codeSource.resolve("doAction.class"));
+		toDelete.add(codeSource.resolve("decompiled.txt"));
+		for (Path path : toDelete) {
+			Files.deleteIfExists(path);
+		}
 	}
 
 	@SneakyThrows

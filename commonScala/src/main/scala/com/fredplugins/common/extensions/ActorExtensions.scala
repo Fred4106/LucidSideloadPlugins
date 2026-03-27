@@ -8,6 +8,7 @@ import net.runelite.api.NPC
 import net.runelite.api.NPCComposition
 import net.runelite.api.coords.WorldPoint
 import net.runelite.client.RuneLite
+import net.runelite.client.callback.ClientThread
 import net.runelite.client.game.NPCManager
 
 import scala.util.chaining.scalaUtilChainingOps
@@ -18,8 +19,18 @@ object ActorExtensions {
 
 	extension (e: Actor)(using client: Client) {
 		def templateLocation: WorldPoint = {
-			e.getWorldView
 			TWorldPoint.get(e.getWorldLocation)
+		}
+
+		def isInInstance: Boolean = {
+			e.getWorldView.isInstance
+		}
+
+		def region: Int =
+			e.getWorldLocation.getRegionID
+
+		def templateRegion: Int = {
+			templateLocation.getRegionID
 		}
 	}
 

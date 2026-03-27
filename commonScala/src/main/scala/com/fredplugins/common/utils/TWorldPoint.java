@@ -3,6 +3,7 @@ import net.runelite.api.Client;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.RuneLite;
+import net.runelite.client.callback.ClientThread;
 
 import static net.runelite.api.Constants.CHUNK_SIZE;
 import java.util.ArrayList;
@@ -13,18 +14,21 @@ public class TWorldPoint
 {
 
     private static Client clientRef = RuneLite.getInjector().getInstance(Client.class);
+    private static ClientThread clientThreadRef = RuneLite.getInjector().getInstance(ClientThread.class);
 //    public static void init(Client client) {
 //        clientRef = client;
 //    }
     public static WorldPoint get(WorldPoint worldPoint)
     {
         assert(clientRef!=null);
+        assert(clientThreadRef!=null);
         return fromInstance(worldPoint);
     }
 
     public static WorldPoint translate(WorldPoint worldPoint)
     {
         assert(clientRef!=null);
+        assert(clientThreadRef!=null);
         return toInstance(worldPoint).get(0);
     }
 
@@ -38,6 +42,7 @@ public class TWorldPoint
     private static WorldPoint fromInstance(WorldPoint worldPoint)
     {
         assert(clientRef!=null);
+        assert(clientThreadRef!=null);
         //get local
         Client client = clientRef;
         LocalPoint localPoint = LocalPoint.fromWorld(client, worldPoint);
@@ -74,6 +79,7 @@ public class TWorldPoint
     private static ArrayList<WorldPoint> toInstance(WorldPoint worldPoint)
     {
         assert(clientRef!=null);
+        assert(clientThreadRef!=null);
         Client client = clientRef;
 
         // if not in an instanced region, return the world point as12 is

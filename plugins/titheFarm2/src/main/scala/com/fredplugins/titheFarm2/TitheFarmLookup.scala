@@ -20,6 +20,7 @@ class TitheFarmLookup {
 	def getData: List[(WorldPoint, PlantData)] = {
 		dataMap.toList
 	}
+	def size: Int = dataMap.size
 	def clear(): Unit = dataMap.clear()
 	def getPlantData(patch: WorldPoint): Option[PlantData] = dataMap.get(patch)
 	def putPlantInfo(key: WorldPoint, go: GameObject): Unit = {
@@ -38,9 +39,9 @@ class TitheFarmLookup {
 				case None => dataMap.remove(key)
 			}
 			strMessage <- Option(removedData -> dataToAdd).collect {
-				case (Some(removed), Some(added)) => s"Replaced ${removed} with ${added}\n"
-				case (Some(removed), None) => s"Removed ${removed}\n"
-				case (None, Some(added)) => s"Added ${added}\n"
+				case (Some(removed), Some(added)) => s"Replaced ${removed} with ${added}"
+				case (Some(removed), None) => s"Removed ${removed}"
+				case (None, Some(added)) => s"Added ${added}"
 			}
 			//		} yield removedData -> dataToAdd)
 		} log.debug("transform: {}", strMessage)

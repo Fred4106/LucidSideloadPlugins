@@ -1,7 +1,10 @@
 package com.fredplugins.titheFarm2
 
 import com.fredplugins.common.extensions.MenuExtensions.getWorldLocationOpt
+import com.fredplugins.common.extensions.ActorExtensions._
+import com.fredplugins.common.extensions.LocationExtensions._
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.titheFarm2
 import com.fredplugins.titheFarm2.SPlantInfo.{DryPlantInfo, EmptyPlantInfo}
 import com.fredplugins.titheFarm2.TitheFarmLookup.PlantData
@@ -10,6 +13,7 @@ import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.{Inventory, TileObjects}
 import ethanApiPlugin.collections.query.ItemQuery
+import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.api.events.{GameObjectSpawned, GameTick, MenuEntryAdded, MenuOptionClicked, PostMenuSort}
 import net.runelite.api.widgets.Widget
@@ -22,6 +26,7 @@ import net.runelite.client.ui.overlay.OverlayManager
 import net.runelite.client.util.ColorUtil
 import org.slf4j.Logger
 import lombok.Getter
+import net.runelite.api.events.GameObjectDespawned
 
 import java.awt.Color
 import scala.collection.mutable
@@ -93,6 +98,8 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 			case (i, point) if i < 100 => Some((i + 1, point))
 			case (_, point) => None
 		}
+		val lp = client.getLocalPlayer
+		if(farmLookup.size > 0 && !(lp.templateRegion == 7222 && lp.isInInstance)) farmLookup.clear()
 		farmLookup.tick()
 	}
 
@@ -104,9 +111,19 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 		val  zzz = for {
 			go <- Option(event.getGameObject)
 			key <- Option(go.getWorldLocation)
-			info <- SPlantInfo.lookup(go.getId) if key.getRegionID != 2227
+			info <- SPlantInfo.lookup(go.getId) if key.getRegionID != 7222 && key.getTemplate.getRegionID == 7222
 		} farmLookup.putPlantInfo(key, go)
 	}
+
+//	@Subscribe
+//	def onGameObjectDespawned(event: GameObjectDespawned): Unit = {
+//		val zzz = for {
+//			go <- Option(event.getGameObject)
+//			view = go.getWorldView
+//			key <- Option(go.getWorldLocation)
+//			info <- SPlantInfo.lookup(go.getId) if view.isInstance
+//		} farmLookup.(key, go)
+//	}
 
 	def wateringCan(query: ItemQuery): List[Widget] = query.withIdFilter {
 		(value: Int) => (value >= 5333 && value <= 5340) || value == 13353

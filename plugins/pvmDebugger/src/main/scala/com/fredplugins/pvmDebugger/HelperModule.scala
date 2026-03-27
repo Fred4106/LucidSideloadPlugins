@@ -63,8 +63,10 @@ abstract class HelperModule/*[C <: Config :ClassTag]*/ {
 
 	final def startup(): Unit = {
 		if(!isRegistered() && isEnabled()) {
-			init()
 			log.debug(s"Initializing ${moduleName}")
+			parent.getClientThread.invoke(() => {
+				init()
+			})
 			Option(this).collect {
 				case swp: WithOverlay => swp.overlay
 			}.foreach(o => parent.getOverlayManager.add(o))
@@ -85,7 +87,9 @@ abstract class HelperModule/*[C <: Config :ClassTag]*/ {
 			Option(this).collect {
 				case swp: WithPanel => swp.panel
 			}.foreach(o => parent.getOverlayManager.remove(o))
-			cleanup()
+			parent.getClientThread.invoke(() => {
+				cleanup()
+			})
 			log.debug(s"Cleaning up ${moduleName}")
 		}
 	}
