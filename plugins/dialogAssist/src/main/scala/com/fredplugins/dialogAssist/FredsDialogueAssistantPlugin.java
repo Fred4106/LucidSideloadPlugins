@@ -2,6 +2,7 @@ package com.fredplugins.dialogAssist;
 
 import ch.qos.logback.classic.Level;
 import com.fredplugins.common.extensions.MenuExtensions$;
+import com.fredplugins.common.extensions.WidgetExtensions$;
 import com.fredplugins.common.utils.ReflectionUtils$;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -28,7 +29,9 @@ import net.runelite.client.util.Text;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import packetUtils.WidgetInfoExtended;
 import packets.MousePackets;
+import packets.WidgetPackets;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -72,6 +75,8 @@ public class FredsDialogueAssistantPlugin extends Plugin
 	private EventBus eventBus;
 	@Inject
 	private Gson gson;
+
+	public static final int SOMETHING_THAT_CC_RESUME_PAUSEBUTTON = 1437;
 
 	public Client getClient() {
 		return client;
@@ -174,9 +179,15 @@ public class FredsDialogueAssistantPlugin extends Plugin
 
 			if(options.asJavaList().size() == 1) {
 				var toClick = options.asJavaList().get(0);
-				log.debug("clicking id={}, name={}, widget={}", ReflectionUtils$.MODULE$.getItemName(toClick.itemId()), toClick.itemDef().getName(), ReflectionUtils$.MODULE$.getInterfaceName(toClick.widgetId()));
-				MousePackets.queueClickPacket(client.getWidget(toClick.widgetId()));
-				DialogUtils.queueResumePauseDialog(toClick.widgetId(), client.getVarcIntValue(VarClientID.SKILLMULTI_QUANTITY));
+				Widget toClickW = client.getWidget(toClick.widgetId());
+				int qty_idx = client.getVarcIntValue(VarClientID.SKILLMULTI_QUANTITY);
+				log.debug("clicking id={}, name={}, qty_idx = {}, widget={}[{}, {}, {}]", ReflectionUtils$.MODULE$.getItemName(toClick.itemId()), toClick.itemDef().getName(), qty_idx, ReflectionUtils$.MODULE$.getInterfaceName(toClick.widgetId()),
+					WidgetExtensions$.MODULE$.getGroupId(toClickW),
+					WidgetExtensions$.MODULE$.getChildId(toClickW),
+					WidgetExtensions$.MODULE$.getChildIdx(toClickW));
+
+				MousePackets.queueClickPacket(toClickW);
+				client.menuAction(-1, toClickW.getId(), MenuAction.CC_OP, 1, -1, "Make", "");
 			}
 		});
 	}
