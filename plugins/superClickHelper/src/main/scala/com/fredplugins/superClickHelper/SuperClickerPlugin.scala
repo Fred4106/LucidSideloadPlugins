@@ -69,6 +69,7 @@ import net.runelite.api.gameval.ItemID.{MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS
 import net.runelite.api.gameval.ItemID.{MYSTIC_FIRE_STAFF, MYSTIC_WATER_STAFF, MYSTIC_AIR_STAFF, MYSTIC_EARTH_STAFF, AIR_BATTLESTAFF, EARTH_BATTLESTAFF, FIRE_BATTLESTAFF, MAGIC_LONGBOW, MAGIC_SHORTBOW, MAPLE_LONGBOW, MAPLE_SHORTBOW, WATER_BATTLESTAFF, YEW_LONGBOW, YEW_SHORTBOW}
 import net.runelite.api.gameval.ItemID.{DIAMOND_NECKLACE, DIAMOND_RING, EMERALD_NECKLACE, EMERALD_RING, GOLD_NECKLACE, GOLD_RING, JEWL_DIAMOND_BRACELET, JEWL_EMERALD_BRACELET, JEWL_GOLD_BRACELET, JEWL_RUBY_BRACELET, JEWL_SAPPHIRE_BRACELET, RUBY_NECKLACE, RUBY_RING, SAPPHIRE_NECKLACE, SAPPHIRE_RING, STRUNG_DIAMOND_AMULET, STRUNG_EMERALD_AMULET, STRUNG_GOLD_AMULET, STRUNG_RUBY_AMULET, STRUNG_SAPPHIRE_AMULET}
 import net.runelite.api.gameval.ItemID.{ARROW_SHAFT, FEATHER, HEADLESS_ARROW, JADE_BRACELET, JADE_NECKLACE, JADE_RING, MAHOGANY_LOGS, OPAL_BRACELET, OPAL_NECKLACE, OPAL_RING, SLAYER_BROAD_ARROWHEAD, STRUNG_JADE_AMULET, STRUNG_OPAL_AMULET, STRUNG_TOPAZ_AMULET, TEAK_LOGS, TOPAZ_BRACELET, TOPAZ_NECKLACE, TOPAZ_RING, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET, UNSTRUNG_EMERALD_AMULET, UNSTRUNG_GOLD_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_ONYX_AMULET, UNSTRUNG_OPAL_AMULET, UNSTRUNG_RUBY_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_TOPAZ_AMULET, UNSTRUNG_ZENYTE_AMULET}
+import net.runelite.api.gameval.ItemID.{ROSEWOOD_LOGS, CAMPHOR_LOGS, IRONWOOD_LOGS, MAHOGANY_LOGS, TEAK_LOGS}
 import packetUtils.WidgetInfoExtended
 
 import scala.collection.immutable.HashMap
@@ -343,7 +344,11 @@ class SuperClickerPlugin() extends Plugin {
 			egroup == spell.getGroupId && eid == spell.getChildId
 		}).map(_._2._2._2)
 	}
-
+	private object PLANKABLE_LOGS {
+		def unapply(id: Int): Boolean = {
+			List(ROSEWOOD_LOGS, CAMPHOR_LOGS, IRONWOOD_LOGS, MAHOGANY_LOGS, TEAK_LOGS).contains(id)
+		}
+	}
 	private object OPAL_JEWELRY {
 		def unapply(id: Int): Boolean = {
 			List(OPAL_RING, OPAL_NECKLACE, STRUNG_OPAL_AMULET, OPAL_BRACELET).contains(id)
@@ -447,7 +452,7 @@ class SuperClickerPlugin() extends Plugin {
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
 			val inventoryItemWidget = me.getWidget
 			Option(me.getItemId).collect{
-				case MAHOGANY_LOGS | TEAK_LOGS if findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).exists(w => List(581, 1975).contains(w.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).zip(Some(3))
+				case PLANKABLE_LOGS() if findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).exists(w => List(581, 1975).contains(w.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).zip(Some(3))
 				case OPAL_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).zip(Some(2))
 				case SAPPHIRE_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).zip(Some(2))
 				case JADE_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).zip(Some(2))

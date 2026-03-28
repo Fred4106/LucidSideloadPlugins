@@ -494,7 +494,7 @@ public class RecolorCG extends Plugin
 
 	public void recolorNPCs(Boolean useRecolor)
 	{
-		IndexedObjectSet<? extends NPC> npcs = client.getWorldView(-1).npcs();
+		IndexedObjectSet<? extends NPC> npcs = client.getWorldView(WorldView.TOPLEVEL).npcs();
 		for (NPC npc:npcs) {
 			recolorNPC(npc, useRecolor);
 		}
