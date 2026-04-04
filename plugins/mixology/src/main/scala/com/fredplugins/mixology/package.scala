@@ -6,7 +6,6 @@ import net.runelite.api.gameval.{VarbitID, VarPlayerID, InterfaceID}
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.mixology.FredsMixologyPlugin
-import com.fredplugins.mixology.SMixType.{Aga, Lye, Mox}
 import net.runelite.api.gameval.ItemID.{
 	MM_POTION_MMM_UNFINISHED,
 	MM_POTION_MMA_UNFINISHED,
@@ -27,6 +26,11 @@ package object mixology {
 	private val log: Logger = ShimUtils.getLogger("com.fredsplugins.mixology", "DEBUG")
 	inline def PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS: Int = 7063
 	inline def PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS: Int = 7064
+
+	val LABS_REGION_ID    = 5521
+	val LABS_REGION_PLANE = 0
+
+	val FOUND_GEM = 2655
 
 	val VARBIT_POTION_ORDER   : Seq[Int] = List(VarbitID.MM_LAB_ORDER_1_TYPE, VarbitID.MM_LAB_ORDER_2_TYPE, VarbitID.MM_LAB_ORDER_3_TYPE)//List(11315, 11317, 11319)
 	val VARBIT_POTION_MODIFIER: Seq[Int] =  List(VarbitID.MM_LAB_ORDER_1_MODIFIER, VarbitID.MM_LAB_ORDER_2_MODIFIER, VarbitID.MM_LAB_ORDER_3_MODIFIER)//List(11316, 11318, 11320)
@@ -59,77 +63,44 @@ package object mixology {
 	val SPOT_ANIM_AGITATOR       : Int = 2954
 	val SPOT_ANIM_ALEMBIC        : Int    = 2955
 
-	private val COMPONENT_POTION_ORDERS_GROUP_ID = InterfaceID.MM_OVERLAY
-	private val COMPONENT_POTION_ORDERS_LAYER = InterfaceID.MmOverlay.UNIVERSE
-	private val COMPONENT_POTION_ORDERS          = InterfaceID.MmOverlay.CONTENT
-	
+	val COMPONENT_POTION_ORDERS_GROUP_ID = InterfaceID.MM_OVERLAY
+	val COMPONENT_POTION_ORDERS_LAYER = InterfaceID.MmOverlay.UNIVERSE
+	val COMPONENT_POTION_ORDERS          = InterfaceID.MmOverlay.CONTENT
 
-//	val COMPONENT_POTION_ORDERS_GROUP_ID: Int = 882
-//	val COMPONENT_POTION_ORDERS: Int = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2
-
-//	type OrderType = (SProcessType, SBrew)
-	type AllOrdersType = ((SProcessType, SBrew), (SProcessType, SBrew), (SProcessType, SBrew))
-
-	sealed trait SProcessType {
+	sealed trait SProcessType(val alchemyObject: AlchemyObject) extends enumeratum.EnumEntry {
 		this: Product =>
 	}
-	object SProcessType {
-		case object Retort extends SProcessType {}
-		case object Agitator extends SProcessType {}
-		case object Alembic extends SProcessType {}
+	object SProcessType extends enumeratum.Enum[SProcessType] {
+		case object Homogenous extends SProcessType(AlchemyObject.AGITATOR) {}
+		case object Concentrated extends SProcessType(AlchemyObject.RETORT) {}
+		case object Crystalised extends SProcessType(AlchemyObject.ALEMBIC) {}
 
 		def fromToolBench(to: TileObject): Option[SProcessType] = {
-//			log.debug("SProcessType fromToolBench: {}", to.getId)
-			Option(to.getId - 55389).filter((0 to 2).contains(_)).map(List(Retort, Agitator, Alembic).apply(_))
+			log.debug("SProcessType fromToolBench: {}", to.getId)
+			Option(to.getId - 55389).filter((0 to 2).contains(_)).map(List(Concentrated, Homogenous, Crystalised).apply(_))
 		}
 
 		def fromOrderValue(i: Int): Option[SProcessType] = {
-//			log.debug("SProcessType fromOrderValue: {}", i)
-			Option.when( 1 to 3 contains i){List(Agitator, Retort, Alembic)(i-1)}
+			log.debug("SProcessType fromOrderValue: {}", i)
+			Option.when( 1 to 3 contains i){List(Homogenous, Concentrated, Crystalised)(i-1)}
 		}
-	}
-	sealed trait SMixType(val color: Color) extends enumeratum.EnumEntry {
-		this: Product =>
-		def letter: Char = productPrefix.head
-	}
-	object SMixType extends enumeratum.Enum[SMixType] {
-		override def values: IndexedSeq[SMixType] = findValues
-		case object Mox extends SMixType(Color.decode("#03a9f4"))
-		case object Aga extends SMixType(Color.decode("#00e676"))
-		case object Lye extends SMixType(Color.decode("#e91e63"))
-
-		def fromLetter(letter: Char): Option[SMixType] = {
-			values.find(_.letter == letter)
-		}
-
-		def fromPedestal(to: TileObject)(using client: Client): Option[SMixType] =
-			Option.when(to.morphId != -1 && (55392 to 55394).contains(to.getId)) {
-				(to.morphId - (to.getId match {
-					case 55392 => 54905
-					case 55393 => 54908
-					case 55394 => 54911
-				}))
-			}.collect {
-				case 0 => Aga
-				case 1 => Lye
-				case 2 => Mox
-			}
+		override def values: IndexedSeq[SProcessType] = findValues
 	}
 
 
 	sealed trait SBrew(val unprocessedId: Int, val xp: Int) extends enumeratum.EnumEntry {
 		this: Product =>
-		val recipe: Map[SMixType, Int] = {
-			this.productPrefix.collect[SMixType] {
-				case 'M' => Mox
-				case 'A' => Aga
-				case 'L' => Lye
-			}.toList.pipe(
-				mList => mList.distinct.map(m => m -> mList.filter(_ == m).size)
+		val components: Array[PotionComponent] = {
+			this.productPrefix.map(c => PotionComponent.fromLetter(c)).toList.toArray
+		}
+
+		val recipe: Map[PotionComponent, Int] = {
+			this.productPrefix.map(c => PotionComponent.fromLetter(c)).toList.pipe(
+				mList => mList.distinct.map(m => m -> mList.count(_ == m))
 			).toMap
 		}.filter(_._2 > 0)
 
-		val worth: Map[SMixType, Int] = recipe.collect {
+		val worth: Map[PotionComponent, Int] = recipe.collect {
 			case (m, 1) => m -> 10
 			case (m, c) if c >= 2 => m -> 20
 		}
@@ -172,7 +143,7 @@ package object mixology {
 			}
 		}
 		def fromIdx(i: Int): Option[SBrew] = {
-//			log.debug("SBrew fromOrderValue: {}", i)
+			log.debug("SBrew fromOrderValue: {}", i)
 			Option(i).collect[SBrew] {
 				case 1 => MMM
 				case 2 => MMA
@@ -186,5 +157,40 @@ package object mixology {
 				case 10 =>MAL
 			}
 		}
+	}
+
+	class Order(val originalIdx: Int, val mod: SProcessType, val brew: SBrew) {
+		private var fullfilled: Boolean = false
+		def isFulfilled: Boolean = fullfilled
+		def setFulfilled(b: Boolean): Unit = fullfilled = b
+	}
+
+	case class GoalComponent(curAmount: Int, baseGoalAmount: Int, rewardQty: Int) {
+		assert(curAmount >= 0 && baseGoalAmount > 0 && rewardQty >= 0)
+		val goalAmount: Int = baseGoalAmount * rewardQty
+		lazy val affordableAmount: Int    = {
+			curAmount / baseGoalAmount
+		}
+		lazy val percentageToGoal: Double = {
+			if (goalAmount > 0) Math.min(curAmount.toDouble / goalAmount, 1.0d) else 1.0d
+		}
+	}
+
+	class Goal(config: FredsMixologyConfig)(using client: Client) {
+		val rewardItem: RewardItem = config.selectedReward()
+		val rewardQty: Int = if(rewardItem.isRepeatable) config.rewardQuantity() else 1
+
+		val componentMap: Map[PotionComponent, GoalComponent] =  (for {
+			c <- PotionComponent.values()
+			curAmount = client.getVarpValue(c.resinVarpId())
+			baseAmount = rewardItem.componentCost(c)
+		} yield c -> GoalComponent(curAmount, baseAmount, rewardQty)).toMap
+
+		val itemsAffordable: Int = componentMap.toList.map(_._2.affordableAmount)
+			.min
+			.pipe(Math.min(_, rewardQty))
+
+		val overallProgress : Double = componentMap.toList.map(_._2.percentageToGoal)
+			.pipe(x => x.sum / x.length)
 	}
 }

@@ -19,7 +19,7 @@ class InventoryPotionOverlay @Inject()(val plugin: FredsMixologyPlugin, val conf
 	showOnInventory()
 
 	def renderItemOverlay(graphics2D: Graphics2D, itemId: Int, widgetItem: WidgetItem): Unit = {
-		if (plugin.inLab && config.inventoryPotionTags() != InventoryPotionTagType.NONE) {
+		if (plugin.inLab && config.inventoryPotionTagType() != InventoryPotionTagType.NONE) {
 			val potionOpt = SBrew.fromItemId(itemId)
 			potionOpt.foreach(potion => {
 				val bounds = widgetItem.getCanvasBounds
@@ -27,7 +27,7 @@ class InventoryPotionOverlay @Inject()(val plugin: FredsMixologyPlugin, val conf
 				val y      = bounds.y + 30
 				drawRecipe(graphics2D, potion, x + 1, y + 1, Color.BLACK) //	 Drop shadow
 
-				if (config.inventoryPotionTags() == InventoryPotionTagType.COLORED) {
+				if (config.inventoryPotionTagType() == InventoryPotionTagType.COLORED) {
 					drawRecipe(graphics2D, potion, x, y, null)
 				} else {
 					drawRecipe(graphics2D, potion, x, y, Color.WHITE)
@@ -42,12 +42,11 @@ class InventoryPotionOverlay @Inject()(val plugin: FredsMixologyPlugin, val conf
 			graphics2D.setColor(color)
 			graphics2D.drawString(potion.entryName, x, y)
 		} else {
-//		import scala.collection.JavaConversions._
 			var xOffset = x
-			for (component <- potion.entryName.flatMap(SMixType.fromLetter)) {
+			for (component <- potion.components) {
 				graphics2D.setColor(component.color)
-				graphics2D.drawString(String.valueOf(component.letter), xOffset, y)
-				xOffset += graphics2D.getFontMetrics.charWidth(component.letter)
+				graphics2D.drawString(String.valueOf(component.character()), xOffset, y)
+				xOffset += graphics2D.getFontMetrics.charWidth(component.character())
 			}
 		}
 	}

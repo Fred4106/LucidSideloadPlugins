@@ -31,19 +31,19 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 	type LineData = (String, String) | String
 	private def lines: Seq[LineData] = {
 		val mixCodeLine: LineData = "Mix" -> TileObjects.search().withId(55392, 55393, 55394).result().asScala.toList.sortBy(_.getId).flatMap {
-			to => SMixType.fromPedestal(to)
-		}.foldLeft("")((j, j2) => s"${j}${j2.letter}")
+			to => Option(PotionComponent.fromPedistal(given_Client, to))
+		}.foldLeft("")((j, j2) => s"${j}${j2.character()}")
 
 //		val benchesLines: Seq[LineData] = plugin.state.toolBenches.flatMap((pt, tpl) => tpl._2.map(pt -> _)).map[LineData] {
 //			case (processesType, brew) => s"$processesType" -> s"$brew"
 //		}.prepended("Toolbenches")
-		val benchesLines: Seq[LineData] = List(SProcessType.Alembic -> plugin.alembicPotionType, SProcessType.Agitator -> plugin.agitatorPotionType, SProcessType.Retort -> plugin.retortPotionType).map {
+		val benchesLines: Seq[LineData] = List(SProcessType.Crystalised -> plugin.alembicPotionType, SProcessType.Homogenous -> plugin.agitatorPotionType, SProcessType.Concentrated -> plugin.retortPotionType).map {
 			case (z, zz) => (s"${z}", zz.map(zzz => s"${zzz}").getOrElse("Empty"))
 		}.map[LineData] {
 			case (processesTypeStr, brewStr) => processesTypeStr -> brewStr
 		}.prepended("Toolbenches")
-		val ordersLines: Seq[LineData] = plugin.potionOrders.pipe(x => List(x._1, x._2, x._3).zipWithIndex).map[LineData] {
-			case ((pt, br), idx) => s"Order ${idx + 1}" -> s"${pt} ${br}"
+		val ordersLines: Seq[LineData] = plugin.potionOrders.map[LineData] {
+			case order => s"Order ${order.originalIdx + 1}" ->s"${order.mod} ${order.brew} ${order.isFulfilled}"
 //			case (processType, brew) =>
 //			case (, idx) => s"Order ${idx + 1}" -> s"${pt} ${br}"
 		}.prepended("Orders")
@@ -55,9 +55,9 @@ class FredsMixologyPanel @Inject()(/*val client: Client, */plugin: FredsMixology
 			}.prepended("Inventory")
 
 		val debugLines: Seq[LineData] = List(
-			SProcessType.Retort -> (plugin.previousRetortProgess, if(plugin.previousRetortProgess < 17 && plugin.previousRetortProgess > 0) 1 else 0),
-			SProcessType.Agitator -> (plugin.previousAgitatorProgess, plugin.agitatorQuickActionTicks),
-			SProcessType.Alembic -> (plugin.previousAlembicProgress, plugin.alembicQuickActionTicks),
+			SProcessType.Concentrated -> (plugin.previousRetortProgess, if(plugin.previousRetortProgess < 17 && plugin.previousRetortProgess > 0) 1 else 0),
+			SProcessType.Homogenous -> (plugin.previousAgitatorProgess, plugin.agitatorQuickActionTicks),
+			SProcessType.Crystalised -> (plugin.previousAlembicProgress, plugin.alembicQuickActionTicks),
 		)
 			.map[LineData] {
 				case (processType, (prog, ticks)) => s"${processType}" -> s"${prog} | ${ticks}"
