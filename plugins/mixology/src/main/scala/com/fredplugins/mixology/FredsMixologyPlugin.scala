@@ -20,6 +20,7 @@ import net.runelite.client.eventbus.{EventBus, Subscribe}
 import net.runelite.client.events.ConfigChanged
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.overlay.OverlayManager
+import net.runelite.client.util.GameEventManager
 import org.slf4j.Logger
 
 import scala.jdk.StreamConverters.StreamHasToScala
@@ -95,13 +96,14 @@ class FredsMixologyPlugin() extends Plugin {
 	@Subscribe
 	def onWidgetLoaded(event: WidgetLoaded): Unit = {
 		if (event.getGroupId != COMPONENT_POTION_ORDERS_GROUP_ID) return
-		val ordersLayer = client.getWidget(COMPONENT_POTION_ORDERS_GROUP_ID, 0)
+		
+		val ordersLayer = client.getWidget(COMPONENT_POTION_ORDERS_LAYER)
 		if (ordersLayer == null || ordersLayer.isSelfHidden) {
 			return
 		}
 
 		log.debug("initialize plugin")
-		inLab = true
+//		inLab = true
 //		updatePotionOrders
 //		highlightLevers
 //		tryHighlightNextStation
@@ -320,7 +322,7 @@ class FredsMixologyPlugin() extends Plugin {
 
 	override protected def startUp(): Unit = {
 		inLab = clientThread.runOnClientThread(() => {
-			val ordersLayer = client.getWidget(COMPONENT_POTION_ORDERS_GROUP_ID, 0)
+			val ordersLayer = client.getWidget(COMPONENT_POTION_ORDERS_LAYER)
 			if (ordersLayer == null || ordersLayer.isSelfHidden) {
 				false
 			} else {

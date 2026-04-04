@@ -2,6 +2,7 @@ package com.fredplugins
 
 
 import net.runelite.api.{Client, TileObject}
+import net.runelite.api.gameval.{VarbitID, VarPlayerID, InterfaceID}
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.mixology.FredsMixologyPlugin
@@ -27,19 +28,19 @@ package object mixology {
 	inline def PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS: Int = 7063
 	inline def PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS: Int = 7064
 
-	val VARBIT_POTION_ORDER = List(11315, 11317, 11319)
-	val VARBIT_POTION_MODIFIER= List(11316, 11318, 11320)
+	val VARBIT_POTION_ORDER   : Seq[Int] = List(VarbitID.MM_LAB_ORDER_1_TYPE, VarbitID.MM_LAB_ORDER_2_TYPE, VarbitID.MM_LAB_ORDER_3_TYPE)//List(11315, 11317, 11319)
+	val VARBIT_POTION_MODIFIER: Seq[Int] =  List(VarbitID.MM_LAB_ORDER_1_MODIFIER, VarbitID.MM_LAB_ORDER_2_MODIFIER, VarbitID.MM_LAB_ORDER_3_MODIFIER)//List(11316, 11318, 11320)
 
-	val VARBIT_POTION_ORDER_1: Int     = 11315
-	val VARBIT_POTION_MODIFIER_1: Int  = 11316
-	val VARBIT_POTION_ORDER_2: Int     = 11317
-	val VARBIT_POTION_MODIFIER_2: Int  = 11318
-	val VARBIT_POTION_ORDER_3: Int    = 11319
-	val VARBIT_POTION_MODIFIER_3: Int = 11320
+	val VARBIT_POTION_ORDER_1: Int     = VARBIT_POTION_ORDER(0)//11315
+	val VARBIT_POTION_MODIFIER_1: Int  = VARBIT_POTION_MODIFIER(0)//11316
+	val VARBIT_POTION_ORDER_2: Int     = VARBIT_POTION_ORDER(1)//11317
+	val VARBIT_POTION_MODIFIER_2: Int  = VARBIT_POTION_MODIFIER(1)//11318
+	val VARBIT_POTION_ORDER_3: Int    =  VARBIT_POTION_ORDER(2)//11319
+	val VARBIT_POTION_MODIFIER_3: Int =  VARBIT_POTION_MODIFIER(2)//11320
 
-	val VARP_LYE_RESIN: Int  = 4414
-	val VARP_AGA_RESIN : Int = 4415
-	val VARP_MOX_RESIN : Int = 4416
+	val VARP_LYE_RESIN: Int  = VarPlayerID.MIXOLOGY_LYE_POINTS//4414
+	val VARP_AGA_RESIN : Int = VarPlayerID.MIXOLOGY_AGA_POINTS//4415
+	val VARP_MOX_RESIN : Int = VarPlayerID.MIXOLOGY_MOX_POINTS//4416
 
 	val VARBIT_RETORT_PROGRESS: Int   = 11327
 	val VARBIT_ALEMBIC_PROGRESS: Int   = 11328
@@ -57,8 +58,14 @@ package object mixology {
 	val VARBIT_DIGWEED_NORTH_WEST: Int = 11333
 	val SPOT_ANIM_AGITATOR       : Int = 2954
 	val SPOT_ANIM_ALEMBIC        : Int    = 2955
-	val COMPONENT_POTION_ORDERS_GROUP_ID: Int = 882
-	val COMPONENT_POTION_ORDERS: Int = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2
+
+	private val COMPONENT_POTION_ORDERS_GROUP_ID = InterfaceID.MM_OVERLAY
+	private val COMPONENT_POTION_ORDERS_LAYER = InterfaceID.MmOverlay.UNIVERSE
+	private val COMPONENT_POTION_ORDERS          = InterfaceID.MmOverlay.CONTENT
+	
+
+//	val COMPONENT_POTION_ORDERS_GROUP_ID: Int = 882
+//	val COMPONENT_POTION_ORDERS: Int = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2
 
 //	type OrderType = (SProcessType, SBrew)
 	type AllOrdersType = ((SProcessType, SBrew), (SProcessType, SBrew), (SProcessType, SBrew))

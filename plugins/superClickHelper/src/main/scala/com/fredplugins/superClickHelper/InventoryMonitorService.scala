@@ -67,25 +67,6 @@ class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService
 		def definition: ItemComposition = getItemDef(ii.id)
 	}
 
-//	val sub = plugin.eventBus.register[PluginChanged](
-//		classOf[PluginChanged], (e: PluginChanged) => {
-//			if (e.getPlugin == plugin) {
-//				if (e.isLoaded) plugin.eventBus.register(this)
-//				else plugin.eventBus.unregister(this)
-//			}
-//		}, 0)
-
-//	val sub = plugin.eventBus.register[ExternalPluginsChanged](
-//		classOf[ExternalPluginsChanged], (e: ExternalPluginsChanged) => {
-//			plugin.pluginManager.getSideloadedPlugins
-//			if (e.getPlugin == plugin) {
-//				if (e.isLoaded) plugin.eventBus.register(this)
-//				else plugin.eventBus.unregister(this)
-//			}
-//		}, 0
-//	)
-//	plugin.eventBus.register[PluginChanged](classOf[PluginChanged], )
-
 	private def itemContainerToInventoryItems(ic: ItemContainer): Map[Int, InventoryItem] = {
 		assert(ic.getId == InventoryID.INV)
 		(0 until ic.size()).flatMap(i => Option(ic.getItem(i)).map(item => {

@@ -124,11 +124,9 @@ class SuperClickerPlugin() extends Plugin {
 	private var cookingHelper: CookingHelper = null
 
 	private val inventoryService: InventoryMonitorService = new InventoryMonitorService(this)//InventoryMonitorService(this)
-	private val hallowedSepulchreService: HallowedSepulchreHelper = new HallowedSepulchreHelper(this)//InventoryMonitorService(this)
 
 	override protected def startUp(): Unit = {
 		inventoryService.init()
-		hallowedSepulchreService.init()
 		cookingHelper = new CookingHelper(this, client, clientThread)
 
 		clickedTiles.clear()
@@ -304,15 +302,8 @@ class SuperClickerPlugin() extends Plugin {
 		log.debug("Bolts enchanged {}", event)
 	}
 
-	var runes = Map.empty[OldRune, Int]
 	@Subscribe
 	def onGameTick(event: GameTick): Unit = {
-//		val nRunes = RunesUtil..getRunes
-//		if(runes != nRunes) {
-//			log.debug("Runes changed from \n{} to \n{}", runes, nRunes)
-//			runes = nRunes
-//		}
-
 		clickedTiles.flatMapInPlace {
 			case (i, point) if i < 20 => Some((i + 1, point))
 			case (_, point) => None
@@ -541,27 +532,6 @@ class SuperClickerPlugin() extends Plugin {
 			})
 		}
 	}
-
-
-		//		List(
-
-//		List()
-
-//	def birdhouseItem(query: ItemQuery, filter: Int => Boolean): Option[Widget] = query.withIdFilter {
-//		filter(_)
-//	}.result().asScala.toList.sortBy(u => (u.getItemId.min(65535).max(0) << 8) | (u.getIndex.min(255).max(0))).headOption
-
-//	extension(c: ItemContainer) {
-//		def findAny(ids: Int *): Option[Int] = {
-//			ids.foldLeft(Option.empty[Int])((acm, id) => {
-//				acm.orElse{
-//					Option(c.find(id)).filter(_ > -1)
-//				}
-//			})
-//		}
-//	}
-
-
 
 
 	@Subscribe
