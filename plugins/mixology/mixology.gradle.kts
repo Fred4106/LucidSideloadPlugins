@@ -10,8 +10,6 @@ dependencies {
     implementation(project(":ethans"))
     implementation(project(":common"))
     implementation(project(":commonScala"))
-//    implementation(project(":commonScala"))
-
 }
 
 
