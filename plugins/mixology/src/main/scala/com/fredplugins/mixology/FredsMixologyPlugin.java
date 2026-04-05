@@ -48,6 +48,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.fredplugins.mixology.AlchemyObject.AGA_LEVER;
+import static com.fredplugins.mixology.AlchemyObject.DIGWEED_NORTH_EAST;
+import static com.fredplugins.mixology.AlchemyObject.DIGWEED_NORTH_WEST;
+import static com.fredplugins.mixology.AlchemyObject.DIGWEED_SOUTH_EAST;
+import static com.fredplugins.mixology.AlchemyObject.DIGWEED_SOUTH_WEST;
 import static com.fredplugins.mixology.AlchemyObject.LYE_LEVER;
 import static com.fredplugins.mixology.AlchemyObject.MOX_LEVER;
 import static com.fredplugins.mixology.PotionComponent.AGA;
@@ -75,11 +79,6 @@ public class FredsMixologyPlugin extends Plugin {
     private static final int VARBIT_POTION_MODIFIER_2 = VarbitID.MM_LAB_ORDER_2_MODIFIER;
     private static final int VARBIT_POTION_ORDER_3 = VarbitID.MM_LAB_ORDER_3_TYPE;
     private static final int VARBIT_POTION_MODIFIER_3 = VarbitID.MM_LAB_ORDER_3_MODIFIER;
-
-    static final int VARP_LYE_RESIN = VarPlayerID.MIXOLOGY_LYE_POINTS;
-    static final int VARP_AGA_RESIN = VarPlayerID.MIXOLOGY_AGA_POINTS;
-    static final int VARP_MOX_RESIN = VarPlayerID.MIXOLOGY_MOX_POINTS;
-
     private static final int VARBIT_ALEMBIC_PROGRESS = VarbitID.MM_ALEMBIC_PROGRESS;
     private static final int VARBIT_AGITATOR_PROGRESS = VarbitID.MM_AGITATOR_PROGRESS;
 
@@ -87,15 +86,8 @@ public class FredsMixologyPlugin extends Plugin {
     private static final int VARBIT_ALEMBIC_QUICKACTION = VarbitID.MM_LAB_HIT_SKILLSHOT_ALEMBIC;
 
     private static final int VARBIT_MIXING_VESSEL_POTION = VarbitID.MM_LAB_VESSEL_READY;
-    private static final int VARBIT_AGITATOR_POTION = VarbitID.MM_LAB_AGITATOR_POTION;
     private static final int VARBIT_RETORT_POTION = VarbitID.MM_LAB_RETORT_POTION;
-    private static final int VARBIT_ALEMBIC_POTION = VarbitID.MM_LAB_ALEMBIC_POTION;
-
-    private static final int VARBIT_DIGWEED_NORTH_EAST = VarbitID.MM_HERB_READY_1;
-    private static final int VARBIT_DIGWEED_SOUTH_EAST = VarbitID.MM_HERB_READY_2;
-    private static final int VARBIT_DIGWEED_SOUTH_WEST = VarbitID.MM_HERB_READY_3;
-    private static final int VARBIT_DIGWEED_NORTH_WEST = VarbitID.MM_HERB_READY_4;
-
+    
     private static final int SPOT_ANIM_AGITATOR = SpotanimID.VFX_MACHINERY_ALCHEMY01_AGITATOR01;
     private static final int SPOT_ANIM_ALEMBIC = SpotanimID.VFX_MACHINERY_ALCHEMY01_ALEMBIC01;
 
@@ -131,30 +123,19 @@ public class FredsMixologyPlugin extends Plugin {
     @Inject
     private GoalInfoBoxOverlay goalInfoBoxOverlay;
 
-//    private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
-
-    private List<PotionOrder> potionOrders = Collections.emptyList();
-    private boolean inLab = false;
-
-    private PotionType alembicPotionType;
-    private PotionType agitatorPotionType;
-    private PotionType retortPotionType;
-
-    private int previousAgitatorProgess;
-    private int previousAlembicProgress;
-
-    private int agitatorQuickActionTicks = 0;
-    private int alembicQuickActionTicks = 0;
+    private List<PotionOrder> __potionOrders = Collections.emptyList();
+    public List<PotionOrder> potionOrders() {
+        return __potionOrders.stream().collect(Collectors.toUnmodifiableList());
+    }
 
     private final Goal goal = new Goal(RewardItem.NONE);
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
-        return Optional.ofNullable(stateData).map(u -> u.highlightedObjectsJava()).orElse(java.util.Map.<AlchemyObject, HighlightedObject>of());
-//        return highlightedObjects;
+        return Optional.ofNullable(stateData).map(MixologyStateData::highlightedObjectsJava).orElse(java.util.Map.<AlchemyObject, HighlightedObject>of());
     }
 
     public boolean isInLab() {
-        return inLab;
+        return stateData.inLab();
     }
 
     /**
@@ -194,15 +175,14 @@ public class FredsMixologyPlugin extends Plugin {
         overlayManager.remove(overlay);
         overlayManager.remove(potionOverlay);
         overlayManager.remove(goalInfoBoxOverlay);
-        inLab = false;
+//        inLab = false;
         stateData = null;
     }
 
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) {
-            stateData.getWriter().clearHighlightObject();
-//            highlightedObjects.clear();
+            stateData.writer().clearHighlightObject();
         }
     }
 
@@ -220,9 +200,9 @@ public class FredsMixologyPlugin extends Plugin {
             return;
         }
 
-        stateData.getWriter().clearHighlightObject();
-        //highlightedObjects.clear();
-        inLab = false;
+        stateData.writer().clearHighlightObject();
+        stateData.writer().inLab_$eq(false);
+//        inLab = false;
     }
 
     @Subscribe
@@ -237,7 +217,7 @@ public class FredsMixologyPlugin extends Plugin {
 
         if (event.getKey().equals("highlightStations")) {
             if (!config.highlightStations()) {
-                unHighlightAllStations();
+                stateData.writer().unHighlightAllStations();
             } else {
                 clientThread.invokeLater(this::tryHighlightNextStation);
             }
@@ -248,31 +228,30 @@ public class FredsMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::triggerPotionOrderUpdate);
         }
 
-        if (!config.highlightDigWeed()) {
-            unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
-            unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
-            unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
-            unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
+        if (event.getKey().equals("highlightDigweed")) {
+            if(!config.highlightDigWeed()) {
+                stateData.writer().unHighlightDigweeds();
+            }
         }
 
         if (event.getKey().equals("selectedReward") || event.getKey().equals("rewardQuantity") || event.getKey().equals("showResinBars")) {
             recalculateGoalData();
         }
 
-        if (config.highlightLevers()) {
-            highlightLevers();
-        } else {
-            unHighlightLevers();
+
+        if (event.getKey().equals("highlightLevers")) {
+            stateData.writer().unHighlightLevers();
+            stateData.writer().highlightLevers();
         }
     }
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INV) {
+        if (!isInLab() || !config.highlightStations() || event.getContainerId() != InventoryID.INV) {
             return;
         }
         // Do not update the highlight if there's a potion in a station
-        if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
+        if (stateData.alembicPotionType().isDefined() || stateData.agitatorPotionType().isDefined() || stateData.retortPotionType().isDefined()) {
             return;
         }
         var inventory = event.getItemContainer();
@@ -284,10 +263,10 @@ public class FredsMixologyPlugin extends Plugin {
             if (potionType == null || potionType.modifiedItemId() == item.getId()) {
                 continue;
             }
-            for (var order : potionOrders) {
+            for (var order : potionOrders()) {
                 if (order.potionType() == potionType && !order.fulfilled()) {
-                    unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                    stateData.writer().unHighlightAllStations();
+                    stateData.writer().highlightStation(order.potionModifier().alchemyObject());
                     return;
                 }
             }
@@ -302,123 +281,70 @@ public class FredsMixologyPlugin extends Plugin {
 
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
         // set to the new values. We can use this to clear all the stations.
-        if (varbitId == VARBIT_POTION_ORDER_1) {
+        if (varbitId == VarbitID.MM_LAB_ORDER_1_TYPE) {
             if (value == 0) {
-                unHighlightAllStations();
+                stateData.writer().unHighlightAllStations();
             } else {
                 clientThread.invokeAtTickEnd(this::updatePotionOrders);
             }
-        } else if (varbitId == VARBIT_ALEMBIC_POTION) {
+        } else if (varbitId == VarbitID.MM_LAB_ALEMBIC_POTION) {
             if (value == 0) {
                 // Finished crystalising
-                unHighlightObject(AlchemyObject.ALEMBIC);
-                tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED);
+                stateData.writer().unHighlightObject(AlchemyObject.ALEMBIC);
+                tryFulfillOrder(stateData.alembicPotionTypeJava(), PotionModifier.CRYSTALISED);
                 tryHighlightNextStation();
-                LOGGER.debug("Finished crystalising {}", alembicPotionType);
-                alembicPotionType = null;
+                LOGGER.debug("Finished crystalising {}", stateData.alembicPotionTypeJava());
+                stateData.writer().alembicPotionType_$eq(null);
             } else {
-                alembicPotionType = PotionType.fromIdx(value - 1);
-                LOGGER.debug("Alembic potion type: {}", alembicPotionType);
+                stateData.writer().alembicPotionType_$eq(PotionType.fromIdx(value - 1));
+                LOGGER.debug("Alembic potion type: {}", stateData.alembicPotionTypeJava());
             }
-        } else if (varbitId == VARBIT_AGITATOR_POTION) {
+        } else if (varbitId == VarbitID.MM_LAB_AGITATOR_POTION) {
             if (value == 0) {
                 // Finished homogenising
-                unHighlightObject(AlchemyObject.AGITATOR);
-                tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS);
+                stateData.writer().unHighlightObject(AlchemyObject.AGITATOR);
+                tryFulfillOrder(stateData.agitatorPotionTypeJava(), PotionModifier.HOMOGENOUS);
                 tryHighlightNextStation();
-                LOGGER.debug("Finished homogenising {}", agitatorPotionType);
-                agitatorPotionType = null;
+                LOGGER.debug("Finished homogenising {}", stateData.agitatorPotionTypeJava());
+                stateData.writer().agitatorPotionType_$eq(null);
             } else {
-                agitatorPotionType = PotionType.fromIdx(value - 1);
-                LOGGER.debug("Agitator potion type: {}", agitatorPotionType);
+                stateData.writer().agitatorPotionType_$eq(PotionType.fromIdx(value - 1));
+                LOGGER.debug("Agitator potion type: {}", stateData.agitatorPotionTypeJava());
             }
-        } else if (varbitId == VARBIT_RETORT_POTION) {
+        } else if (varbitId == VarbitID.MM_LAB_RETORT_POTION) {
             if (value == 0) {
                 // Finished concentrating
-                unHighlightObject(AlchemyObject.RETORT);
-                tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED);
+                stateData.writer().unHighlightObject(AlchemyObject.RETORT);
+                tryFulfillOrder(stateData.retortPotionTypeJava(), PotionModifier.CONCENTRATED);
                 tryHighlightNextStation();
-                LOGGER.debug("Finished concentrating {}", retortPotionType);
-                retortPotionType = null;
+                LOGGER.debug("Finished concentrating {}", stateData.retortPotionTypeJava());
+                stateData.writer().retortPotionType_$eq(null);
             } else {
-                retortPotionType = PotionType.fromIdx(value - 1);
-                LOGGER.debug("Retort potion type: {}", retortPotionType);
+                stateData.writer().retortPotionType_$eq(PotionType.fromIdx(value - 1));
+                LOGGER.debug("Retort potion type: {}", stateData.retortPotionTypeJava());
             }
-        } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
-            if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
-                }
-                notifier.notify(config.notifyDigWeed(), "A digweed has spawned north east.");
-            } else {
-                unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
-            }
-        } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
-            if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
-                }
-                notifier.notify(config.notifyDigWeed(), "A digweed has spawned south east.");
-            } else {
-                unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
-            }
-        } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
-            if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
-                }
-                notifier.notify(config.notifyDigWeed(), "A digweed has spawned south west.");
-            } else {
-                unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
-            }
-        } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
-            if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
-                }
-                notifier.notify(config.notifyDigWeed(), "A digweed has spawned north west.");
-            } else {
-                unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
-            }
-        } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
-            if (agitatorQuickActionTicks == 2) {
-                // quick action was triggered two ticks ago, so it's now too late
-                resetStationHighlight(AlchemyObject.AGITATOR);
-                agitatorQuickActionTicks = 0;
-            }
-            if (agitatorQuickActionTicks == 1) {
-                agitatorQuickActionTicks = 2;
-            }
-            if (value < previousAgitatorProgess) {
-                // progress was set back due to a quick action failure
-                resetStationHighlight(AlchemyObject.AGITATOR);
-            }
-            previousAgitatorProgess = value;
-        } else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
-            if (alembicQuickActionTicks == 1) {
-                // quick action was triggered last tick, so it's now too late
-                resetStationHighlight(AlchemyObject.ALEMBIC);
-                alembicQuickActionTicks = 0;
-            }
-            if (value < previousAlembicProgress) {
-                // progress was set back due to a quick action failure
-                resetStationHighlight(AlchemyObject.ALEMBIC);
-            }
-            previousAlembicProgress = value;
-        } else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
+        } else if (varbitId == VarbitID.MM_AGITATOR_PROGRESS) {
+            stateData.writer().handleAgitatorProgress(value);
+        } else if (varbitId == VarbitID.MM_ALEMBIC_PROGRESS) {
+            stateData.writer().handleAlembicProgress(value);
+        } else if (varbitId == VarbitID.MM_LAB_HIT_SKILLSHOT_AGITATOR) {
             // agitator quick action was just successfully popped
-            resetStationHighlight(AlchemyObject.AGITATOR);
-        } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
+            stateData.writer().highlightStation(AlchemyObject.AGITATOR);
+        } else if (varbitId == VarbitID.MM_LAB_HIT_SKILLSHOT_ALEMBIC) {
             // alembic quick action was just successfully popped
-            resetStationHighlight(AlchemyObject.ALEMBIC);
-        } else if (varpId == VARP_MOX_RESIN || varpId == VARP_AGA_RESIN || varpId == VARP_LYE_RESIN) {
+            stateData.writer().highlightStation(AlchemyObject.ALEMBIC);
+        } else if (varpId >= VarPlayerID.MIXOLOGY_LYE_POINTS && varpId <= VarPlayerID.MIXOLOGY_MOX_POINTS) {
             recalculateGoalData();
+        } else if (varbitId >= VarbitID.MM_HERB_READY_1 && varbitId <= VarbitID.MM_HERB_READY_4) {
+            AlchemyObject weed = AlchemyObject.values()[(DIGWEED_NORTH_EAST.ordinal() + (varbitId- VarbitID.MM_HERB_READY_1))];
+            stateData.writer().toggleDigweed(weed,value == 1);
+            if (value == 1) notifier.notify(config.notifyDigWeed(), "A digweed has spawned.");
         }
     }
 
     @Subscribe
     public void onSoundEffectPlayed(SoundEffectPlayed event) {
-        if (inLab && alembicPotionType != null && event.getSoundId() == FOUND_GEM && event.getDelay() > 0 && config.soundEffectAlembic()) {
+        if (isInLab() && stateData.alembicPotionType().isDefined() && event.getSoundId() == FOUND_GEM && event.getDelay() > 0 && config.soundEffectAlembic()) {
             LOGGER.debug("client found_gem sound effect detected during Alembic, blocking");
             event.consume();
         }
@@ -431,8 +357,8 @@ public class FredsMixologyPlugin extends Plugin {
         if (!config.highlightQuickActionEvents()) {
             return;
         }
-        if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
-            highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
+        if (spotAnimId == SPOT_ANIM_ALEMBIC && stateData.alembicPotionType().isDefined()) {
+            stateData.writer().highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
 
             if (config.soundEffectAlembic()) {
                 LOGGER.debug("Playing manual found_gem sound effect");
@@ -441,14 +367,14 @@ public class FredsMixologyPlugin extends Plugin {
 
             // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
             // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
-            alembicQuickActionTicks = 1;
+            stateData.writer().alembicQuickActionTicks_$eq(1);
         }
 
-        if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
-            highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
+        if (spotAnimId == SPOT_ANIM_AGITATOR && stateData.agitatorPotionType().isDefined()) {
+            stateData.writer().highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
             // start counting ticks for agitator so we know to un-highlight on the next agitator varbit update
             // note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
-            agitatorQuickActionTicks = 1;
+            stateData.writer().agitatorQuickActionTicks_$eq(1);
         }
     }
 
@@ -464,7 +390,7 @@ public class FredsMixologyPlugin extends Plugin {
             return;
         }
         if (scriptId == PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS) {
-            widgetTool.updatePotionOrdersComponent(baseWidget, potionOrders);
+            widgetTool.updatePotionOrdersComponent(baseWidget, potionOrders());
         } else {
             widgetTool.appendResins(baseWidget);
         }
@@ -477,80 +403,10 @@ public class FredsMixologyPlugin extends Plugin {
         }
 
         LOGGER.debug("initialize plugin");
-        inLab = true;
+        stateData.writer().inLab_$eq(true);
         updatePotionOrders();
-        highlightLevers();
+        stateData.writer().highlightLevers();
         tryHighlightNextStation();
-    }
-
-/*    public void highlightObject(AlchemyObject alchemyObject, Color color) {
-        var worldView = client.getTopLevelWorldView();
-
-        if (worldView == null) {
-            return;
-        }
-        var localPoint = LocalPoint.fromWorld(worldView, alchemyObject.coordinate());
-
-        if (localPoint == null) {
-            return;
-        }
-        var tiles = worldView.getScene().getTiles();
-        var tile = tiles[worldView.getPlane()][localPoint.getSceneX()][localPoint.getSceneY()];
-
-        for (var gameObject : tile.getGameObjects()) {
-            if (gameObject == null) {
-                continue;
-            }
-
-            if (gameObject.getId() == alchemyObject.objectId()) {
-                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, config.highlightBorderWidth(), config.highlightFeather()));
-                return;
-            }
-        }
-        // The aga lever is actually a wall decoration, not a scenery object
-        var decorativeObject = tile.getDecorativeObject();
-
-        if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
-            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
-        }
-    }*/
-
-    public void highlightObject(AlchemyObject alchemyObject, Color color) {
-        stateData.getWriter().highlightObject(alchemyObject, color);
-    }
-
-    public void resetStationHighlight(AlchemyObject alchemyObject) {
-        if (config.highlightStations()) {
-            highlightObject(alchemyObject, config.stationHighlightColor());
-        }
-    }
-
-/*    public void unHighlightObject(AlchemyObject alchemyObject) {
-        highlightedObjects.remove(alchemyObject);
-    }*/
-    public void unHighlightObject(AlchemyObject alchemyObject) {
-        stateData.getWriter().unHighlightObject(alchemyObject);
-    }
-    private void unHighlightAllStations() {
-        unHighlightObject(AlchemyObject.RETORT);
-        unHighlightObject(AlchemyObject.ALEMBIC);
-        unHighlightObject(AlchemyObject.AGITATOR);
-    }
-
-    private void highlightLevers() {
-        if (!config.highlightLevers()) {
-            return;
-        }
-
-        highlightObject(LYE_LEVER, LYE.color());
-        highlightObject(AGA_LEVER, AGA.color());
-        highlightObject(MOX_LEVER, MOX.color());
-    }
-
-    private void unHighlightLevers() {
-        unHighlightObject(LYE_LEVER);
-        unHighlightObject(AGA_LEVER);
-        unHighlightObject(MOX_LEVER);
     }
 
     private String stringify(List<PotionOrder> l) {
@@ -561,9 +417,9 @@ public class FredsMixologyPlugin extends Plugin {
             .map(this::createPotionOrder)
             .sorted(config.potionOrderSorting().comparator())
             .collect(Collectors.toUnmodifiableList());
-        if(!newOrders.stream().allMatch(u -> potionOrders.stream().anyMatch(u::equals))) {
-            LOGGER.debug("Updating potion orders to from\n\t   {}\n\tto {}", stringify(potionOrders),stringify(newOrders));
-            potionOrders = newOrders;
+        if(!newOrders.stream().allMatch(u -> potionOrders().stream().anyMatch(u::equals))) {
+            LOGGER.debug("Updating potion orders to from\n\t   {}\n\tto {}", stringify(potionOrders()),stringify(newOrders));
+            __potionOrders = newOrders;
             triggerPotionOrderUpdate();
         }
     }
@@ -577,7 +433,7 @@ public class FredsMixologyPlugin extends Plugin {
     }
 
     private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {
-        for (var order : potionOrders) {
+        for (var order : potionOrders()) {
             if (order.potionType() == potionType && order.potionModifier() == modifier && !order.fulfilled()) {
                 LOGGER.debug("Order {} has been fulfilled", order);
                 order.setFulfilled(true);
@@ -596,13 +452,13 @@ public class FredsMixologyPlugin extends Plugin {
             return;
         }
 
-        for (var order : potionOrders) {
+        for (var order : potionOrders()) {
             if (order.fulfilled()) {
                 continue;
             }
             if (inventory.contains(order.potionType().itemId())) {
                 LOGGER.debug("Highlighting station for order {}", order);
-                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                stateData.writer().highlightStation(order.potionModifier().alchemyObject());
                 break;
             }
         }
