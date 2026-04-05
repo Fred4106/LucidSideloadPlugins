@@ -1,5 +1,7 @@
 package com.fredplugins.mixology;
 
+import java.util.Objects;
+
 public class PotionOrder {
 
     private final int idx;
@@ -35,11 +37,24 @@ public class PotionOrder {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        PotionOrder that = (PotionOrder) o;
+        return idx == that.idx && fulfilled == that.fulfilled && potionType == that.potionType && potionModifier == that.potionModifier;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(idx, potionType, potionModifier, fulfilled);
+    }
+
+    @Override
     public String toString() {
-        return "PotionOrder{" +
+        return "PotionOrder(" +
                 "idx=" + idx +
                 ", potionType=" + potionType +
                 ", potionModifier=" + potionModifier +
-                '}';
+                ", fulfilled=" + fulfilled +
+                ')';
     }
 }

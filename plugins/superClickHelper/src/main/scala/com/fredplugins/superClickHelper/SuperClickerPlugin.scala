@@ -11,6 +11,8 @@ import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
+import net.runelite.api.widgets.WidgetInfo
+import org.intellij.lang.annotations.MagicConstant
 //import com.fredplugins.common.utils.RunesUtil
 import ethanApiPlugin.EthanApiPlugin
 import ethanApiPlugin.collections.Inventory
@@ -329,10 +331,12 @@ class SuperClickerPlugin() extends Plugin {
 			egroup == group && eid == id
 		}).map(_._2._2._2)
 	}
-	private def findSpell(spell: WidgetInfoExtended): Option[Widget] = {
+	private def findSpell(@MagicConstant(valuesFromClass=classOf[InterfaceID.MagicSpellbook]) spellComponent: Int): Option[Widget] = {
+		val spellGroup = WidgetInfo.TO_GROUP(spellComponent)
+		val spellChild = WidgetInfo.TO_CHILD(spellComponent)
 		spellsWidgetTable.toList.find(e => {
-			val (egroup, eid) = e._2._2._2.getId.pipe(eid => WidgetInfoExtended.TO_GROUP(eid) -> WidgetInfoExtended.TO_CHILD(eid))
-			egroup == spell.getGroupId && eid == spell.getChildId
+			val (egroup, eid) = e._2._2._2.getId.pipe(eid => WidgetInfo.TO_GROUP(eid) -> WidgetInfo.TO_CHILD(eid))
+			egroup == spellGroup && eid == spellChild
 		}).map(_._2._2._2)
 	}
 	private object PLANKABLE_LOGS {
@@ -438,21 +442,22 @@ class SuperClickerPlugin() extends Plugin {
 
 	@Subscribe
 	def onMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
+		import InterfaceID.MagicSpellbook.{PLANK_MAKE, ENCHANT_1,ENCHANT_2,ENCHANT_3,ENCHANT_4,ENCHANT_5,ENCHANT_6,ENCHANT_7,HIGH_ALCHEMY,STRING_JEWEL}
 		val me = menuOptionAdded.getMenuEntry
 		if(!client.getMenu.getMenuEntries.contains(me) || blockTopLevelSwitch > -1) return
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
 			val inventoryItemWidget = me.getWidget
 			Option(me.getItemId).collect{
-				case PLANKABLE_LOGS() if findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).exists(w => List(581, 1975).contains(w.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_PLANK_MAKE).zip(Some(3))
-				case OPAL_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).zip(Some(2))
-				case SAPPHIRE_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_1_ENCHANT).zip(Some(2))
-				case JADE_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).zip(Some(2))
-				case EMERALD_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_2_ENCHANT).zip(Some(2))
-				case TOPAZ_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).zip(Some(2))
-				case RUBY_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_3_ENCHANT).zip(Some(2))
-				case DIAMOND_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_LVL_4_ENCHANT).exists(u => List(1768 , 43).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_LVL_4_ENCHANT).zip(Some(2))
-				case UNSTRUNG_JEWELRY() if findSpell(WidgetInfoExtended.SPELL_STRING_JEWELLERY).exists(u => List(1954, 550).contains(u.getSpriteId))  => findSpell(WidgetInfoExtended.SPELL_STRING_JEWELLERY).zip(Some(3))
-				case Alchable() if findSpell(WidgetInfoExtended.SPELL_HIGH_LEVEL_ALCHEMY).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(WidgetInfoExtended.SPELL_HIGH_LEVEL_ALCHEMY).zip(Some(3))
+				case PLANKABLE_LOGS() if findSpell(PLANK_MAKE).exists(w => List(581, 1975).contains(w.getSpriteId)) => findSpell(PLANK_MAKE).zip(Some(3))
+				case OPAL_JEWELRY() if findSpell(ENCHANT_1).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(ENCHANT_1).zip(Some(2))
+				case SAPPHIRE_JEWELRY() if findSpell(ENCHANT_1).exists(u => List(18, 1765).contains(u.getSpriteId)) => findSpell(ENCHANT_1).zip(Some(2))
+				case JADE_JEWELRY() if findSpell(ENCHANT_2).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(ENCHANT_2).zip(Some(2))
+				case EMERALD_JEWELRY() if findSpell(ENCHANT_2).exists(u => List(28, 1766).contains(u.getSpriteId)) => findSpell(ENCHANT_2).zip(Some(2))
+				case TOPAZ_JEWELRY() if findSpell(ENCHANT_3).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(ENCHANT_3).zip(Some(2))
+				case RUBY_JEWELRY() if findSpell(ENCHANT_3).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(ENCHANT_3).zip(Some(2))
+				case DIAMOND_JEWELRY() if findSpell(ENCHANT_4).exists(u => List(1768 , 43).contains(u.getSpriteId)) => findSpell(ENCHANT_4).zip(Some(2))
+//				case UNSTRUNG_JEWELRY() if findSpell(STRING_JEWEL).exists(u => List(1954, 550).contains(u.getSpriteId))  => findSpell(STRING_JEWEL).zip(Some(3))
+				case Alchable() if findSpell(HIGH_ALCHEMY).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(HIGH_ALCHEMY).zip(Some(3))
 			}.flatten.collect {//(u  => u)//)//(iid => iid.)
 //				case (a, (b, (c, d))) => a
 				case (w, d) => {

@@ -32,6 +32,9 @@ import java.util.Arrays;
  * Represents a group-child {@link Widget} relationship.
  * <p>
  */
+
+//("Switch to net.runelite.api.gameval.InterfaceID")
+@Deprecated
 public enum WidgetInfoExtended {
     FAIRY_RING_LEFT_ORB_CLOCKWISE(WidgetIDExtended.FAIRY_RING_GROUP_ID, WidgetIDExtended.FairyRing.LEFT_ORB_CLOCKWISE),
     FAIRY_RING_LEFT_ORB_COUNTER_CLOCKWISE(WidgetIDExtended.FAIRY_RING_GROUP_ID, WidgetIDExtended.FairyRing.LEFT_ORB_COUNTER_CLOCKWISE),

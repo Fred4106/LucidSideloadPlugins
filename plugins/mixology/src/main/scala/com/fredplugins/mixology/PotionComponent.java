@@ -2,11 +2,12 @@ package com.fredplugins.mixology;
 
 import java.awt.Color;
 import net.runelite.api.gameval.SpriteID;
+import net.runelite.api.gameval.VarPlayerID;
 
 public enum PotionComponent {
-    MOX('M', "03a9f4", SpriteID.IconAlchemyChemicals01_20x20._0, FredsMixologyPlugin.VARP_MOX_RESIN),
-    AGA('A', "00e676", SpriteID.IconAlchemyChemicals01_20x20._1, FredsMixologyPlugin.VARP_AGA_RESIN),
-    LYE('L', "e91e63", SpriteID.IconAlchemyChemicals01_20x20._2, FredsMixologyPlugin.VARP_LYE_RESIN);
+    MOX('M', "03a9f4", SpriteID.IconAlchemyChemicals01_20x20._0, VarPlayerID.MIXOLOGY_MOX_POINTS),
+    AGA('A', "00e676", SpriteID.IconAlchemyChemicals01_20x20._1, VarPlayerID.MIXOLOGY_AGA_POINTS),
+    LYE('L', "e91e63", SpriteID.IconAlchemyChemicals01_20x20._2, VarPlayerID.MIXOLOGY_LYE_POINTS);
 
     public static final PotionComponent[] ENTRIES = values();
 

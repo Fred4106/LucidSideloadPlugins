@@ -6,7 +6,6 @@ plugins {
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
 include(":ethans")
 include(":common")
 include(":commonScala")

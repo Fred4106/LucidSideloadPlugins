@@ -1,5 +1,7 @@
 package com.fredplugins.mixology;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import ethanApiPlugin.EthanApiPlugin;
@@ -40,14 +42,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.fredplugins.mixology.AlchemyObject.AGA_LEVER;
 import static com.fredplugins.mixology.AlchemyObject.LYE_LEVER;
@@ -133,7 +131,8 @@ public class FredsMixologyPlugin extends Plugin {
     @Inject
     private GoalInfoBoxOverlay goalInfoBoxOverlay;
 
-    private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
+//    private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
+
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private boolean inLab = false;
 
@@ -150,7 +149,8 @@ public class FredsMixologyPlugin extends Plugin {
     private final Goal goal = new Goal(RewardItem.NONE);
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
-        return highlightedObjects;
+        return Optional.ofNullable(stateData).map(u -> u.highlightedObjectsJava()).orElse(java.util.Map.<AlchemyObject, HighlightedObject>of());
+//        return highlightedObjects;
     }
 
     public boolean isInLab() {
@@ -172,8 +172,14 @@ public class FredsMixologyPlugin extends Plugin {
         return configManager.getConfig(FredsMixologyConfig.class);
     }
 
+    private MixologyWidgetTool widgetTool = null;
+    private MixologyStateData stateData = null;
+
     @Override
     protected void startUp() {
+        stateData = new MixologyStateData(client, clientThread, config);
+        if(widgetTool == null) widgetTool = new MixologyWidgetTool(client, clientThread, config);
+
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
         overlayManager.add(goalInfoBoxOverlay);
@@ -189,12 +195,14 @@ public class FredsMixologyPlugin extends Plugin {
         overlayManager.remove(potionOverlay);
         overlayManager.remove(goalInfoBoxOverlay);
         inLab = false;
+        stateData = null;
     }
 
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) {
-            highlightedObjects.clear();
+            stateData.getWriter().clearHighlightObject();
+//            highlightedObjects.clear();
         }
     }
 
@@ -212,7 +220,8 @@ public class FredsMixologyPlugin extends Plugin {
             return;
         }
 
-        highlightedObjects.clear();
+        stateData.getWriter().clearHighlightObject();
+        //highlightedObjects.clear();
         inLab = false;
     }
 
@@ -455,83 +464,10 @@ public class FredsMixologyPlugin extends Plugin {
             return;
         }
         if (scriptId == PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS) {
-            updatePotionOrdersComponent(baseWidget);
+            widgetTool.updatePotionOrdersComponent(baseWidget, potionOrders);
         } else {
-            appendResins(baseWidget);
+            widgetTool.appendResins(baseWidget);
         }
-    }
-
-    private void updatePotionOrdersComponent(Widget baseWidget) {
-        // https://github.com/Joshua-F/cs2-scripts/blob/7cc261be62a40a6390de3e1f770259038660af10/scripts/%5Bproc%2Cscript7063%5D.cs2#L26
-        var children = selectChildren(baseWidget, widget -> widget.getType() == WidgetType.GRAPHIC || widget.getType() == WidgetType.TEXT);
-
-        if (children.isEmpty()) {
-            return;
-        }
-        /*
-         * Filtered children layout:
-         * TEXT - Potion Orders
-         * GRAPHIC - 5673
-         * TEXT - Mammoth-might mix
-         * GRAPHIC - 5672
-         * TEXT - <str>Mixalot</str>
-         * GRAPHIC - 5673
-         * TEXT - Marley's moonlight
-         */
-        for (int i = 0; i < potionOrders.size(); i++) {
-            var order = potionOrders.get(i);
-            LOGGER.debug("Updating component for order {}", order);
-            var orderGraphic = children.get(order.idx() * 2 + 1);
-            var orderText = children.get(order.idx() * 2 + 2);
-
-            if (orderGraphic.getType() != WidgetType.GRAPHIC || orderText.getType() != WidgetType.TEXT) {
-                LOGGER.debug("Eep Eep! Selected the wrong components!");
-                continue;
-            }
-            var builder = new StringBuilder(orderText.getText());
-
-            if (order.fulfilled()) {
-                builder.append(" (<col=00ff00>done!</col>)");
-            } else {
-                builder.append(" (").append(order.potionType().recipe()).append(")");
-            }
-            orderText.setText(builder.toString());
-
-            if (i != order.idx()) {
-                LOGGER.debug("Updating order {} position from {} to {}", order, order.idx(), i);
-                // update component position
-                var y = 20 + (i * 26) + 3;
-                orderGraphic.setOriginalY(y);
-                orderText.setOriginalY(y);
-
-                orderGraphic.revalidate();
-                orderText.revalidate();
-            }
-        }
-    }
-
-    private List<Widget> selectChildren(Widget parent, Predicate<Widget> filter) {
-        var children = parent.getChildren();
-
-        if (children == null) {
-            return List.of();
-        }
-        return Arrays.stream(children)
-                     .filter(filter)
-                     .collect(Collectors.toUnmodifiableList());
-    }
-
-    private void appendResins(Widget baseWidget) {
-        if (!config.displayResin()) {
-            return;
-        }
-        var parentWidth = baseWidget.getWidth();
-        var dx = parentWidth / 3;
-        int x = dx / 2;
-
-        addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x, VARP_MOX_RESIN, MOX);
-        addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx, VARP_AGA_RESIN, AGA);
-        addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx * 2, VARP_LYE_RESIN, LYE);
     }
 
     private void initialize() {
@@ -547,7 +483,7 @@ public class FredsMixologyPlugin extends Plugin {
         tryHighlightNextStation();
     }
 
-    public void highlightObject(AlchemyObject alchemyObject, Color color) {
+/*    public void highlightObject(AlchemyObject alchemyObject, Color color) {
         var worldView = client.getTopLevelWorldView();
 
         if (worldView == null) {
@@ -577,6 +513,10 @@ public class FredsMixologyPlugin extends Plugin {
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
             highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
         }
+    }*/
+
+    public void highlightObject(AlchemyObject alchemyObject, Color color) {
+        stateData.getWriter().highlightObject(alchemyObject, color);
     }
 
     public void resetStationHighlight(AlchemyObject alchemyObject) {
@@ -585,10 +525,12 @@ public class FredsMixologyPlugin extends Plugin {
         }
     }
 
-    public void unHighlightObject(AlchemyObject alchemyObject) {
+/*    public void unHighlightObject(AlchemyObject alchemyObject) {
         highlightedObjects.remove(alchemyObject);
+    }*/
+    public void unHighlightObject(AlchemyObject alchemyObject) {
+        stateData.getWriter().unHighlightObject(alchemyObject);
     }
-
     private void unHighlightAllStations() {
         unHighlightObject(AlchemyObject.RETORT);
         unHighlightObject(AlchemyObject.ALEMBIC);
@@ -611,48 +553,27 @@ public class FredsMixologyPlugin extends Plugin {
         unHighlightObject(MOX_LEVER);
     }
 
+    private String stringify(List<PotionOrder> l) {
+        return l.stream().map(PotionOrder::toString).collect(Collectors.joining(", ", "{", "}"));
+    }
     private void updatePotionOrders() {
-        LOGGER.debug("Updating potion orders");
-        potionOrders = getPotionOrders();
-
-        var potionOrderSorting = config.potionOrderSorting();
-
-        if (potionOrderSorting != PotionOrderSorting.VANILLA) {
-            LOGGER.debug("Orders pre-sort: {}", potionOrders);
-            potionOrders.sort(potionOrderSorting.comparator());
-            LOGGER.debug("Sorted orders: {}", potionOrders);
+        var newOrders = Stream.of(0, 1, 2)
+            .map(this::createPotionOrder)
+            .sorted(config.potionOrderSorting().comparator())
+            .collect(Collectors.toUnmodifiableList());
+        if(!newOrders.stream().allMatch(u -> potionOrders.stream().anyMatch(u::equals))) {
+            LOGGER.debug("Updating potion orders to from\n\t   {}\n\tto {}", stringify(potionOrders),stringify(newOrders));
+            potionOrders = newOrders;
+            triggerPotionOrderUpdate();
         }
-
-        triggerPotionOrderUpdate();
     }
 
     public void triggerPotionOrderUpdate() {
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
-
         if (varbitType != null) {
             client.queueChangedVarp(varbitType.getIndex());
         }
-    }
-
-    private void addResinText(Widget widget, int x, int varp, PotionComponent component) {
-        var amount = client.getVarpValue(varp);
-        var color = component.color().getRGB();
-
-        widget.setText(amount + "")
-              .setTextShadowed(true)
-              .setTextColor(color)
-              .setOriginalWidth(20)
-              .setOriginalHeight(15)
-              .setFontId(FontID.QUILL_8)
-              .setOriginalY(0)
-              .setOriginalX(x)
-              .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
-              .setXTextAlignment(WidgetTextAlignment.CENTER)
-              .setYTextAlignment(WidgetTextAlignment.CENTER);
-
-        widget.revalidate();
-        LOGGER.debug("adding resin text {} at {} with color {}", amount, x, color);
     }
 
     private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {
@@ -687,19 +608,9 @@ public class FredsMixologyPlugin extends Plugin {
         }
     }
 
-    private List<PotionOrder> getPotionOrders() {
-        var potionOrders = new ArrayList<PotionOrder>(3);
-
-        for (int orderIdx = 0; orderIdx < 3; orderIdx++) {
-            var potionType = getPotionType(orderIdx);
-            var potionModifier = getPotionModifier(orderIdx);
-
-            if (potionType == null || potionModifier == null) {
-                continue;
-            }
-            potionOrders.add(new PotionOrder(orderIdx, potionType, potionModifier));
-        }
-        return potionOrders;
+    PotionOrder createPotionOrder(int idx) {
+        assert(idx >= 0 && idx < 3);
+        return new PotionOrder(idx, getPotionType(idx), getPotionModifier(idx));
     }
 
     private PotionType getPotionType(int orderIdx) {
@@ -741,7 +652,7 @@ public class FredsMixologyPlugin extends Plugin {
         private final int outlineWidth;
         private final int feather;
 
-        private HighlightedObject(TileObject object, Color color, int outlineWidth, int feather) {
+        HighlightedObject(TileObject object, Color color, int outlineWidth, int feather) {
             this.object = object;
             this.color = color;
             this.outlineWidth = outlineWidth;

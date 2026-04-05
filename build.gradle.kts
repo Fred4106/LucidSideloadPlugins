@@ -1,6 +1,3 @@
-import org.gradle.kotlin.dsl.invoke
-import org.gradle.tooling.internal.protocol.ProjectVersion3
-
 buildscript {
     repositories {
         mavenLocal()
