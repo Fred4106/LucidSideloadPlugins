@@ -29,13 +29,15 @@ import net.runelite.client.chat.ChatColorType
 import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.{EventBus, Subscribe}
+import net.runelite.client.events.ConfigChanged
 import net.runelite.client.menus.MenuManager
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
+import net.runelite.client.ui.FontManager
 import net.runelite.client.ui.overlay.OverlayManager
 import net.runelite.client.util.ColorUtil
 import org.slf4j.Logger
 
-import java.awt.Color
+import java.awt.{Color, Font}
 import scala.collection.immutable.HashMap
 import scala.collection.mutable
 import scala.util.chaining.*
@@ -61,6 +63,7 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 	@Inject() private val overlayManager: OverlayManager                    = null
 	@Inject() private val config        : FredsPyramidPlunderCounterConfig  = null
 	@Inject() private val overlay       : FredsPyramidPlunderCounterOverlay = null
+	@Inject() private val overlayPanel  : FredsPyramidPlunderCounterPanel = null
 	@Inject() private val GSON: Gson                                        = null
 
 	var stateLines: List[(String, (Int, Int))] = List.empty
@@ -92,8 +95,8 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 	override protected def startUp(): Unit = {
 		currentRoom = Option.empty
 		stateLines = List.empty
-		eventBus.register(overlay)
 		overlayManager.add(overlay)
+		overlayManager.add(overlayPanel)
 		//		overlay.updateConfig()
 
 
@@ -101,9 +104,26 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 	}
 	override protected def shutDown(): Unit = {
 		overlayManager.remove(overlay)
-		eventBus.unregister(overlay)
+		overlayManager.remove(overlayPanel)
 		currentRoom = Option.empty
 		stateLines = List.empty
+	}
+
+	object Cache {
+		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
+	}
+
+
+	@Subscribe
+	def onConfigChanged(e: ConfigChanged): Unit = {
+		if(e.getGroup == FredsPyramidPlunderCounterConfig.GroupName) e.getKey match {
+			case "fontSize" | "fontBold" => {
+				Cache.cachedFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+				Cache.countdownFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
+			}
+			case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
+		}
 	}
 
 	@Subscribe

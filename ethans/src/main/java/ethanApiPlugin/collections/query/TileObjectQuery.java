@@ -10,6 +10,7 @@ import net.runelite.api.GroundObject;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.TileObject;
 import net.runelite.api.WallObject;
+import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.RuneLite;
 import org.apache.commons.lang3.ArrayUtils;
@@ -102,6 +103,12 @@ public class TileObjectQuery {
 
 	public TileObjectQuery withinDistance(int distance) {
 		tileObjects = tileObjects.stream().filter(tileObject -> tileObject.getWorldLocation().distanceTo(client.getLocalPlayer().getWorldLocation()) <= distance).collect(Collectors.toList());
+		return this;
+	}
+
+	public TileObjectQuery withinArea(WorldArea ... areas) {
+		Predicate<WorldPoint> u = (WorldPoint p) -> Arrays.stream(areas).anyMatch(a -> a.contains(p));
+		tileObjects = tileObjects.stream().filter(tileObject -> u.test(tileObject.getWorldLocation())).collect(Collectors.toList());
 		return this;
 	}
 

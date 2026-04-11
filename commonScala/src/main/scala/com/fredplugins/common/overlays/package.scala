@@ -99,9 +99,6 @@ package object overlays {
 	}
 	def renderGameObjectOverlay(gameObject: GameObject, text: String)(outlineThickness:Int, feather: Int, borderColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
 		modelOutlineRenderer.drawOutline(gameObject, outlineThickness, borderColor.darker, feather)
-//		Option(gameObject.getConvexHull).foreach(s => {
-//			OverlayUtil.renderPolygon(g, s, borderColor.brighter(), ColorUtil.colorWithAlpha(borderColor, 16), getStroke(1, dashed))
-//		})
 
 		val localLoc = gameObject.getLocalLocation
 		renderMinimapArea(localLoc, gameObject.composition.pipe(c => c.getSizeX -> c.getSizeY), 1, borderColor, 24, dashed)

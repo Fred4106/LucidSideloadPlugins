@@ -12,6 +12,7 @@ import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
 import net.runelite.api.gameval.ItemID.{BRUT_SPAWNING_SALMON, BRUT_SPAWNING_TROUT, BRUT_STURGEON, KNIFE, TINDERBOX, MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS}
+import net.runelite.api.gameval.ItemID.{GRAPES, ZAMORAK_GRAPES, JUG_WATER}
 import net.runelite.api.widgets.WidgetInfo
 import org.intellij.lang.annotations.MagicConstant
 //import com.fredplugins.common.utils.RunesUtil
@@ -471,6 +472,9 @@ class SuperClickerPlugin() extends Plugin {
 				case KNIFE => List(MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS, BRUT_SPAWNING_TROUT, BRUT_SPAWNING_SALMON, BRUT_STURGEON)
 				case TINDERBOX => List(MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS)
 				case MAPLE_LOGS | YEW_LOGS | MAGIC_LOGS => List(TINDERBOX, KNIFE)
+				case ZAMORAK_GRAPES => List(JUG_WATER)
+				case GRAPES => List(JUG_WATER)
+				case JUG_WATER => List(GRAPES, ZAMORAK_GRAPES)
 			}.map(lst => lst.flatMap(lste => inventoryService.find(lste)).reverse)
 			a.zip(b).map((aa, bb) => {
 				bb.map(bbe => {
@@ -480,7 +484,7 @@ class SuperClickerPlugin() extends Plugin {
 						.setIdentifier(0)
 						.onClick(e => {
 							clientThread.invokeLater(() => {
-								log.debug("a={}, b={}", aa, bbe)
+								log.debug("a={}['{}'] -> b={}['{}']", aa, aa.definition.getName, bbe, bbe.definition.getName)
 								InteractionUtils.useWidgetOnWidget(aa.widget, bbe.widget)
 							})
 						})
