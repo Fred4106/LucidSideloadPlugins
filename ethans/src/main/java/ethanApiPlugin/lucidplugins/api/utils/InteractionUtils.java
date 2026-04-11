@@ -14,6 +14,7 @@ import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.RuneLite;
 import packets.MousePackets;
@@ -265,9 +266,24 @@ public class InteractionUtils
 			((mPoint.distanceTo(w1P) > mPoint.distanceTo(w2P))?widget:widget2)
 				.getBounds()
 		);
-//		MousePackets.queueClickPacket(widget.getBounds());
 		WidgetPackets.queueWidgetOnWidget(widget, widget2);
 	}
+
+	public static void useInvItemOnInvItem(int sourceSlot, int destinationSlot)
+	{
+		Widget w = client.getWidget(InterfaceID.Inventory.ITEMS);
+		if (w == null||w.getDynamicChildren() == null)
+		{
+			return;
+		}
+		Widget w1 = w.getChild(sourceSlot);
+		Widget w2 = w.getChild(destinationSlot);
+		useWidgetOnWidget(w1, w2);
+//		Point mPoint = client.getMouseCanvasPosition();
+//		MousePackets.queueClickPacket(w.getBounds());
+//		WidgetPackets.queueWidgetOnWidget(sourceWidgetId, sourceSlot, sourceItemId, destinationWidgetId, destinationSlot, destinationItemId);
+	}
+
 
 	public static boolean isMoving()
 	{

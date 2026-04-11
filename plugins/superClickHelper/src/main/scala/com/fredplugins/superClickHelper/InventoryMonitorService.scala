@@ -29,9 +29,8 @@ import net.runelite.client.events.ConfigChanged
 import net.runelite.client.events.ExternalPluginsChanged
 import net.runelite.client.events.PluginChanged
 import net.runelite.client.plugins.PluginManager
-import net.runelite.client.ui.overlay.Overlay
-import net.runelite.client.ui.overlay.OverlayLayer
-import net.runelite.client.ui.overlay.OverlayPosition
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
+import net.runelite.client.ui.overlay.{Overlay, OverlayLayer, OverlayManager, OverlayPosition}
 import net.runelite.client.util.ColorUtil
 import net.runelite.client.util.Text as TextUtil
 
@@ -47,15 +46,25 @@ import scala.util.Try
 import scala.util.chaining.*
 
 
-case class InventoryItem(slot: Int, id: Int, qty: Int) {}
 
-class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService(plugin, "DEBUG") {
-//	private def client: Client = plugin.client
+class InventoryMonitorService(plugin: SuperClickerPlugin) extends Logging("DEBUG") {
+
+	//	private def client: Client = plugin.client
 //	private def eventBus: EventBus = plugin.eventBus
 //	private def clientThread: ClientThread= plugin.clientThread
 //	private def pluginManager: PluginManager = plugin.pluginManager
+	private final def client: Client = plugin.client
+
+	private final def eventBus: EventBus = plugin.eventBus
+	private final def clientThread: ClientThread= plugin.clientThread
+	private final def pluginManager: PluginManager = plugin.pluginManager
+	private final def overlayManager: OverlayManager = plugin.overlayManager
+	private final def config: SuperClickHelperConfig = plugin.config
+	given ModelOutlineRenderer = plugin.getInjector.getInstance(classOf[ModelOutlineRenderer])
+	given Client = client
+
 	private val itemDefMap: scala.collection.mutable.Map[Int, ItemComposition] = scala.collection.mutable.HashMap.empty[Int, ItemComposition]
-	private var cachedItems: Map[Int, InventoryItem] = Map.empty[Int, InventoryItem]
+	private var cachedItems: List[InventoryItem] = List.empty[InventoryItem]
 
 	private def getItemDef(id: Int): ItemComposition = {
 		itemDefMap.getOrElseUpdate(id, clientThread.runOnClientThread(() => {
@@ -63,15 +72,20 @@ class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService
 		}))
 	}
 
-	extension (ii: InventoryItem) {
-		def definition: ItemComposition = getItemDef(ii.id)
+	case class InventoryItem(slot: Int, id: Int, qty: Int) {
+		lazy val definition: ItemComposition = getItemDef(this.id)
+		lazy val widget: Widget = {
+			clientThread.runOnClientThread(() => {
+				client.getWidget(InterfaceID.Inventory.ITEMS).getChild(slot)
+			})
+		}
 	}
 
-	private def itemContainerToInventoryItems(ic: ItemContainer): Map[Int, InventoryItem] = {
+	private def itemContainerToInventoryItems(ic: ItemContainer): List[InventoryItem] = {
 		assert(ic.getId == InventoryID.INV)
 		(0 until ic.size()).flatMap(i => Option(ic.getItem(i)).map(item => {
 			InventoryItem(i, item.getId, item.getQuantity)
-		})).tap(xxx => xxx.map(_.id).distinct.foreach(getItemDef)).map(i => i.slot -> i).toMap
+		})).toList
 	}
 
 	@Subscribe(priority = 1000.0f)
@@ -81,19 +95,31 @@ class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService
 		cachedItems = itemContainerToInventoryItems(event.getItemContainer)
 //		val itemsMap = items.map(i => i.slot -> i).toMap
 
-		val slotsToCheck = (cachedItems.keySet ++ copyOfCached.keySet).toSeq.sorted.filterNot(slot => {
-			cachedItems.get(slot) == copyOfCached.get(slot)
-		})
-
-		val report = slotsToCheck.map(s => (s, copyOfCached.get(s), cachedItems.get(s))).map{
-			case (s, Some(o), None) => s"Removed ${o}"
-			case (s, Some(o), Some(n)) if o.id == n.id => s"Count ${n} changed by ${n.qty - o.qty}"
-			case (s, Some(o), Some(n)) => s"Replaced ${o} with ${n}"
-			case (s, None, Some(n)) => s"Added ${n}"
-			case (s, None, None) => s"Impossible case ${s}"
-		}.pipe(seq => Option.when(seq.nonEmpty)(seq.map(s => s"  ${s}").prepended(s"Inventory changed: ${client.getTickCount}").appended(""))).map(_.mkString("\n"))
+//		val slotsToCheck = (cachedItems.map().keySet ++ copyOfCached.keySet).toSeq.sorted.filterNot(slot => {
+//			cachedItems.get(slot) == copyOfCached.get(slot)
+//		})
+//
+//		val report = slotsToCheck.map(s => (s, copyOfCached.get(s), cachedItems.get(s))).map{
+//			case (s, Some(o), None) => s"Removed ${o}"
+//			case (s, Some(o), Some(n)) if o.id == n.id => s"Count ${n} changed by ${n.qty - o.qty}"
+//			case (s, Some(o), Some(n)) => s"Replaced ${o} with ${n}"
+//			case (s, None, Some(n)) => s"Added ${n}"
+//			case (s, None, None) => s"Impossible case ${s}"
+//		}.pipe(seq => Option.when(seq.nonEmpty)(seq.map(s => s"  ${s}").prepended(s"Inventory changed: ${client.getTickCount}").appended(""))).map(_.mkString("\n"))
 
 //		report.foreach(r => log.debug(r))
+	}
+
+	def getAt(slot: Int): Option[InventoryItem] = {
+		cachedItems.find(ci => ci.slot == slot)
+	}
+//
+//	def find(id: Int): Option[InventoryItem] = {
+//		cachedItems.find(ci => ci.id == id)
+//	}
+
+	def find(ids: Int *): Option[InventoryItem] = {
+		cachedItems.find(ci => ids.contains(ci.id))
 	}
 
 	@Subscribe
@@ -108,21 +134,6 @@ class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService
 			}
 		}
 	}
-
-//	@Subscribe(priority = 1000.0f)
-//	def externalPluginsChanged(event: ExternalPluginsChanged): Unit = {
-//		if (!pluginManager.getPlugins.asScala.toList.contains(plugin) && eventBus.isRegistered(this)) {
-//			log.debug("[externalPluginsChanged] Unregistering InventoryMonitorService")
-//			eventBus.unregister(this)
-//		}
-//	}
-//	@Subscribe(priority = 1000.0f)
-//	def onPluginChanged(event: PluginChanged): Unit = {
-//		if(event.getPlugin == plugin && !event.isLoaded && eventBus.isRegistered(this)) {
-//			log.debug("[onPluginChanged] Unregistering InventoryMonitorService")
-//			eventBus.unregister(this)
-//		}
-//	}
 
 	private object InventoryMonitorOverlay extends Overlay(plugin) {
 		setPosition(OverlayPosition.DYNAMIC)
@@ -159,14 +170,18 @@ class InventoryMonitorService(plugin: SuperClickerPlugin) extends MonitorService
 		}
 	}
 
-	override protected def startService(): Unit = {
+	def startService(): Unit = {
+		cachedItems = List.empty
+		itemDefMap.clear()
+		eventBus.register(this)
 		if(config.isDebugInventoryMonitorService) {
 			overlayManager.add(InventoryMonitorOverlay)
 		}
-//		eventBus.register(InventoryMonitorOverlay)
 	}
-	override protected def stopService(): Unit = {
+	def stopService(): Unit = {
+		eventBus.unregister(this)
 		overlayManager.remove(InventoryMonitorOverlay)
-//		eventBus.unregister(InventoryMonitorOverlay)
+		cachedItems = List.empty
+		itemDefMap.clear()
 	}
 }

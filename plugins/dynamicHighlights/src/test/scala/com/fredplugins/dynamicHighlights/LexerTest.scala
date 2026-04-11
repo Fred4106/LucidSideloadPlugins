@@ -12,9 +12,9 @@ object LexerTest extends App {
 
 
 //	val res = lexer.FilterLexer.run(TestFilterStrings.realFilter)
-	res.get.foreach(t => {
-		println(s"${t.pos}  |  ${t}")
-	})
+//	res.get.foreach(t => {
+//		println(s"${t.pos}  |  ${t}")
+//	})
 
 //	tokens.foldLeft("")((a, b) => {a.appendedAll(b.prettyPrint)}).pipe(_.appendedAll("\n\"").prependedAll("\"\n")).tap(println)
 }

@@ -11,6 +11,7 @@ import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
+import net.runelite.api.gameval.ItemID.{BRUT_SPAWNING_SALMON, BRUT_SPAWNING_TROUT, BRUT_STURGEON, KNIFE, TINDERBOX, MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS}
 import net.runelite.api.widgets.WidgetInfo
 import org.intellij.lang.annotations.MagicConstant
 //import com.fredplugins.common.utils.RunesUtil
@@ -70,10 +71,10 @@ import net.runelite.api.gameval.ItemID.{ADAMANT_2H_SWORD, ADAMANT_ARMOURED_BOOTS
 import net.runelite.api.gameval.ItemID.{MITHRIL_2H_SWORD, MITHRIL_ARMOURED_BOOTS, MITHRIL_AXE, MITHRIL_AXE_2H, MITHRIL_BATTLEAXE, MITHRIL_CHAINBODY, MITHRIL_CLAWS, MITHRIL_DAGGER, MITHRIL_DAGGER_P, MITHRIL_DAGGER_P_, MITHRIL_DAGGER_P__, MITHRIL_FULL_HELM, MITHRIL_HALBERD, MITHRIL_KITESHIELD, MITHRIL_LONGSWORD, MITHRIL_MACE, MITHRIL_MED_HELM, MITHRIL_PICKAXE, MITHRIL_PLATEBODY, MITHRIL_PLATELEGS, MITHRIL_PLATESKIRT, MITHRIL_SCIMITAR, MITHRIL_SPEAR, MITHRIL_SPEAR_P, MITHRIL_SPEAR_P_, MITHRIL_SPEAR_P__, MITHRIL_SQ_SHIELD, MITHRIL_SWORD, MITHRIL_THROWNAXE, MITHRIL_WARHAMMER}
 import net.runelite.api.gameval.ItemID.{MYSTIC_FIRE_STAFF, MYSTIC_WATER_STAFF, MYSTIC_AIR_STAFF, MYSTIC_EARTH_STAFF, AIR_BATTLESTAFF, EARTH_BATTLESTAFF, FIRE_BATTLESTAFF, MAGIC_LONGBOW, MAGIC_SHORTBOW, MAPLE_LONGBOW, MAPLE_SHORTBOW, WATER_BATTLESTAFF, YEW_LONGBOW, YEW_SHORTBOW}
 import net.runelite.api.gameval.ItemID.{DIAMOND_NECKLACE, DIAMOND_RING, EMERALD_NECKLACE, EMERALD_RING, GOLD_NECKLACE, GOLD_RING, JEWL_DIAMOND_BRACELET, JEWL_EMERALD_BRACELET, JEWL_GOLD_BRACELET, JEWL_RUBY_BRACELET, JEWL_SAPPHIRE_BRACELET, RUBY_NECKLACE, RUBY_RING, SAPPHIRE_NECKLACE, SAPPHIRE_RING, STRUNG_DIAMOND_AMULET, STRUNG_EMERALD_AMULET, STRUNG_GOLD_AMULET, STRUNG_RUBY_AMULET, STRUNG_SAPPHIRE_AMULET}
-import net.runelite.api.gameval.ItemID.{ARROW_SHAFT, FEATHER, HEADLESS_ARROW, JADE_BRACELET, JADE_NECKLACE, JADE_RING, MAHOGANY_LOGS, OPAL_BRACELET, OPAL_NECKLACE, OPAL_RING, SLAYER_BROAD_ARROWHEAD, STRUNG_JADE_AMULET, STRUNG_OPAL_AMULET, STRUNG_TOPAZ_AMULET, TEAK_LOGS, TOPAZ_BRACELET, TOPAZ_NECKLACE, TOPAZ_RING, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET, UNSTRUNG_EMERALD_AMULET, UNSTRUNG_GOLD_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_ONYX_AMULET, UNSTRUNG_OPAL_AMULET, UNSTRUNG_RUBY_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_TOPAZ_AMULET, UNSTRUNG_ZENYTE_AMULET}
+import net.runelite.api.gameval.ItemID.{ARROW_SHAFT, FEATHER, HUNTING_STRIPY_BIRD_FEATHER, HUNTING_JUNGLE_FEATHER, HUNTING_POLAR_FEATHER, HUNTING_DESERT_FEATHER, HUNTING_WOODLAND_FEATHER, HEADLESS_ARROW, JADE_BRACELET, JADE_NECKLACE, JADE_RING, MAHOGANY_LOGS, OPAL_BRACELET, OPAL_NECKLACE, OPAL_RING, SLAYER_BROAD_ARROWHEAD, STRUNG_JADE_AMULET, STRUNG_OPAL_AMULET, STRUNG_TOPAZ_AMULET, TEAK_LOGS, TOPAZ_BRACELET, TOPAZ_NECKLACE, TOPAZ_RING, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET, UNSTRUNG_EMERALD_AMULET, UNSTRUNG_GOLD_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_ONYX_AMULET, UNSTRUNG_OPAL_AMULET, UNSTRUNG_RUBY_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_TOPAZ_AMULET, UNSTRUNG_ZENYTE_AMULET}
 import net.runelite.api.gameval.ItemID.{ROSEWOOD_LOGS, CAMPHOR_LOGS, IRONWOOD_LOGS, MAHOGANY_LOGS, TEAK_LOGS}
 import packetUtils.WidgetInfoExtended
-
+import com.fredplugins.superClickHelper.InventoryMonitorService
 import scala.collection.immutable.HashMap
 
 @PluginDescriptor(
@@ -123,13 +124,10 @@ class SuperClickerPlugin() extends Plugin {
 	def overlays(): Seq[SuperClickHelperOverlay] = List(overlay/*, panel*/)
 	private var blockTopLevelSwitch: Int = -1
 
-	private var cookingHelper: CookingHelper = null
-
 	private val inventoryService: InventoryMonitorService = new InventoryMonitorService(this)//InventoryMonitorService(this)
 
 	override protected def startUp(): Unit = {
-		inventoryService.init()
-		cookingHelper = new CookingHelper(this, client, clientThread)
+		inventoryService.startService()
 
 		clickedTiles.clear()
 		clickedNpcs.clear()
@@ -142,10 +140,10 @@ class SuperClickerPlugin() extends Plugin {
 			eventBus.register(o)
 			overlayManager.add(o)
 		})
-		eventBus.register(cookingHelper)
 	}
 
 	override protected def shutDown(): Unit = {
+		inventoryService.stopService()
 		overlays().foreach(o => {
 			overlayManager.remove(o)
 			eventBus.unregister(o)
@@ -158,9 +156,6 @@ class SuperClickerPlugin() extends Plugin {
 
 		clickedNpcs.clear()
 		clickedTiles.clear()
-
-		eventBus.unregister(cookingHelper)
-		cookingHelper=  null
 	}
 
 	private final inline def ConfigGroupName(): String = config.getClass.getAnnotation[ConfigGroup](classOf[ConfigGroup]).value()
@@ -251,30 +246,18 @@ class SuperClickerPlugin() extends Plugin {
 			.sortBy(u => (u.getId.min(65535).max(0) << 8) | u.getWidget.getIndex.min(255).max(0)).headOption
 	}
 	private val processedGameObjects: mutable.ListBuffer[TileObject] = mutable.ListBuffer.empty
-	private var birdhouseItem_c: WidgetItem = null
-	private var birdhouseSeed_c: WidgetItem = null
-	private def birdhouseItem(): WidgetItem = {
-		if (birdhouseItem_c == null) {
-			birdhouseItem_c = search(BIRDHOUSE_REDWOOD, BIRDHOUSE_MAGIC, BIRDHOUSE_YEW, BIRDHOUSE_MAHOGANY, BIRDHOUSE_MAPLE, BIRDHOUSE_TEAK, BIRDHOUSE_WILLOW, BIRDHOUSE_OAK, BIRDHOUSE_NORMAL).orNull
-			if (birdhouseItem_c != null) {
-				log.debug(
-					"Found birdhouse {}", Option(birdhouseItem_c).map(w => s"${w.getId} @ ${w.getWidget.getIndex}")
-				)
-			}
-		}
-		birdhouseItem_c
+
+	private def birdhouseItem(): inventoryService.InventoryItem= {
+		val f = inventoryService.find(BIRDHOUSE_REDWOOD, BIRDHOUSE_MAGIC, BIRDHOUSE_YEW, BIRDHOUSE_MAHOGANY, BIRDHOUSE_MAPLE, BIRDHOUSE_TEAK, BIRDHOUSE_WILLOW, BIRDHOUSE_OAK, BIRDHOUSE_NORMAL)
+
+		f.foreach(ii => log.debug("Found birdhouse {} @ {}", ii.id, ii.slot))
+		f.orNull
 	}
 
-	private def birdhouseSeed(): WidgetItem = {
-		if (birdhouseSeed_c == null) {
-			birdhouseSeed_c = search(BARLEY_SEED, JUTE_SEED, HAMMERSTONE_HOP_SEED, ASGARNIAN_HOP_SEED, YANILLIAN_HOP_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED).orNull
-			if(birdhouseSeed_c != null) {
-				log.debug(
-					"Found seeds {}", Option(birdhouseSeed_c).map(w => s"${w.getId} @ ${w.getWidget.getIndex}")
-				)
-			}
-		}
-		birdhouseSeed_c
+	private def birdhouseSeed(): inventoryService.InventoryItem = {
+		val f = inventoryService.find(BARLEY_SEED, JUTE_SEED, HAMMERSTONE_HOP_SEED, ASGARNIAN_HOP_SEED, YANILLIAN_HOP_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED)
+		f.foreach(ii => log.debug("Found seeds {} @ {}", ii.id, ii.slot))
+		f.orNull
 	}
 
 	@Subscribe
@@ -292,16 +275,6 @@ class SuperClickerPlugin() extends Plugin {
 				event.getScriptEvent.getArguments.update(1, Int.box(InterfaceTab.INVENTORY.getId))
 			}
 		}
-	}
-
-	@Subscribe
-	def onRunesChanged(event: RunesChanged): Unit = {
-		event.getChanges
-		log.debug("Runes changed {}", event)
-	}
-	@Subscribe
-	def onBoltsEnchanted(event: BoltsEnchanted): Unit = {
-		log.debug("Bolts enchanged {}", event)
 	}
 
 	@Subscribe
@@ -486,39 +459,63 @@ class SuperClickerPlugin() extends Plugin {
 		val me = menuOptionAdded.getMenuEntry
 		if (!client.getMenu.getMenuEntries.contains(me)) return
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
-			Option(me.getItemId).collect {
-				case ARROW_SHAFT | FEATHER                   => search(FEATHER).zip(search(ARROW_SHAFT))//(218, 133)
-				case 122 | HEADLESS_ARROW => search(SLAYER_BROAD_ARROWHEAD).zip(search(HEADLESS_ARROW))
-			}.flatten.map((a, b) => a.getWidget -> b.getWidget).map {
-				case (a, b) => client.getMenu.createMenuEntry(-1)
-					.setOption("Make".colored(Color.GREEN))
-					.setType(MenuAction.RUNELITE)
-					.setIdentifier(0)
-					.onClick(e => {
-						clientThread.invokeLater(() => {
-							InteractionUtils.useWidgetOnWidget(a, b)
+//			log.debug("p0={}, wid={}", me.getParam0, me.getWidget.toString)
+//			val widget_a = InventoryItem(me.getWidget.getIndex, me.getWidget.getItemId, me.getWidget.getItemQuantity)
+			val a = inventoryService.getAt(me.getParam0)
+			val b = a.map(_.id).collect {
+				case ARROW_SHAFT => List(FEATHER, HUNTING_STRIPY_BIRD_FEATHER, HUNTING_JUNGLE_FEATHER, HUNTING_POLAR_FEATHER, HUNTING_DESERT_FEATHER,HUNTING_WOODLAND_FEATHER)
+				case FEATHER | HUNTING_STRIPY_BIRD_FEATHER | HUNTING_JUNGLE_FEATHER | HUNTING_POLAR_FEATHER | HUNTING_DESERT_FEATHER | HUNTING_WOODLAND_FEATHER => List(ARROW_SHAFT)
+				case HEADLESS_ARROW => List(SLAYER_BROAD_ARROWHEAD)
+				case SLAYER_BROAD_ARROWHEAD => List(HEADLESS_ARROW)
+				case BRUT_SPAWNING_TROUT | BRUT_SPAWNING_SALMON | BRUT_STURGEON  => List(KNIFE)
+				case KNIFE => List(MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS, BRUT_SPAWNING_TROUT, BRUT_SPAWNING_SALMON, BRUT_STURGEON)
+				case TINDERBOX => List(MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS)
+				case MAPLE_LOGS | YEW_LOGS | MAGIC_LOGS => List(TINDERBOX, KNIFE)
+			}.map(lst => lst.flatMap(lste => inventoryService.find(lste)).reverse)
+			a.zip(b).map((aa, bb) => {
+				bb.map(bbe => {
+					client.getMenu.createMenuEntry(-1)
+						.setOption(aa.definition.getName.colored(Color.CYAN) + "->".colored(Color.GREEN) + bbe.definition.getName.colored(Color.ORANGE))
+						.setType(MenuAction.RUNELITE)
+						.setIdentifier(0)
+						.onClick(e => {
+							clientThread.invokeLater(() => {
+								log.debug("a={}, b={}", aa, bbe)
+								InteractionUtils.useWidgetOnWidget(aa.widget, bbe.widget)
+							})
 						})
-					}).tap(m => priorityMenuEntries.addOne(m));
-			}
+				})
+			}).foreach(mes => {
+				priorityMenuEntries.addAll(mes)
+			})
+
+//			Option(widget_a).collect {
+//				case a@InventoryItem(_, ARROW_SHAFT, _) if inventoryService.find(FEATHER).isDefined => Option(a).zip(inventoryService.find(FEATHER))//(218, 133)
+//				case a@InventoryItem(_, FEATHER, _)  if inventoryService.find(ARROW_SHAFT).isDefined => Option(a).zip(inventoryService.find(ARROW_SHAFT))//(218, 133)
+//				case a@InventoryItem(_, 1937, _)  if inventoryService.find(20749).isDefined  => Option(a).zip(inventoryService.find(20749))//(218, 133)
+//				case a@InventoryItem(_, 20749, _)  if inventoryService.find(1937).isDefined                  => Option(a).zip(inventoryService.find(1937))//(218, 133)
+//				case a@InventoryItem(_, HEADLESS_ARROW, _)  if inventoryService.find(SLAYER_BROAD_ARROWHEAD).isDefined  => Option(a).zip(inventoryService.find(SLAYER_BROAD_ARROWHEAD))
+//				case a@InventoryItem(_, SLAYER_BROAD_ARROWHEAD, _)   if inventoryService.find(HEADLESS_ARROW).isDefined   => Option(a).zip(inventoryService.find(HEADLESS_ARROW))
+//				case a@InventoryItem(_, BRUT_STURGEON, _)   if inventoryService.find(KNIFE).isDefined   => Option(a).zip(inventoryService.find(KNIFE))
+//				case a@InventoryItem(_, BRUT_SPAWNING_SALMON, _)   if inventoryService.find(KNIFE).isDefined   => Option(a).zip(inventoryService.find(KNIFE))
+//				case a@InventoryItem(_, BRUT_SPAWNING_TROUT, _)   if inventoryService.find(KNIFE).isDefined   => Option(a).zip(inventoryService.find(KNIFE))
+//			}.flatten.map {
+//				case (a, b) => client.getMenu.createMenuEntry(-1)
+//					.setOption("Make".colored(Color.GREEN))
+//					.setType(MenuAction.RUNELITE)
+//					.setIdentifier(0)
+//					.onClick(e => {
+//						clientThread.invokeLater(() => {
+//							log.debug("a={}, b={}", a, b)
+////							val aw = client.getWidget(InterfaceID.Inventory.ITEMS).getChild(a.slot)
+////							val bw = client.getWidget(InterfaceID.Inventory.ITEMS).getChild(b.slot)
+//							InteractionUtils.useInvItemOnInvItem(a.slot, b.slot)
+//						})
+//					}).tap(m => priorityMenuEntries.addOne(m));
+//			}
 		}
 	}
 
-	object BIRDHOUSE_SEED {
-		def unapply(id: Int): Boolean = {
-			List(BARLEY_SEED, JUTE_SEED, HAMMERSTONE_HOP_SEED, ASGARNIAN_HOP_SEED, YANILLIAN_HOP_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED).contains(id)
-		}
-	}
-	object BIRDHOUSE_ITEM {
-		def unapply(id: Int): Boolean = {
-			List(		BIRDHOUSE_NORMAL,BIRDHOUSE_OAK,BIRDHOUSE_WILLOW,BIRDHOUSE_TEAK,BIRDHOUSE_MAPLE,BIRDHOUSE_MAHOGANY,BIRDHOUSE_YEW,BIRDHOUSE_MAGIC,BIRDHOUSE_REDWOOD).contains(id)
-		}
-	}
-
-	object BIRDHOUSE_FULL{
-		def unapply(id: Int): Boolean = {
-				List(BIRDHOUSE_NORMAL_FULL, BIRDHOUSE_OAK_FULL, BIRDHOUSE_WILLOW_FULL, BIRDHOUSE_TEAK_FULL, BIRDHOUSE_MAPLE_FULL, BIRDHOUSE_MAHOGANY_FULL, BIRDHOUSE_YEW_FULL, BIRDHOUSE_MAGIC_FULL, BIRDHOUSE_REDWOOD_FULL).contains(id)
-		}
-	}
 	private object BIRDHOUSE_EMPTY{
 		def unapply(id: Int): Boolean = {
 				List(BIRDHOUSE_NORMAL_BUILT, BIRDHOUSE_OAK_BUILT, BIRDHOUSE_WILLOW_BUILT, BIRDHOUSE_TEAK_BUILT, BIRDHOUSE_MAPLE_BUILT, BIRDHOUSE_MAHOGANY_BUILT, BIRDHOUSE_YEW_BUILT, BIRDHOUSE_MAGIC_BUILT, BIRDHOUSE_REDWOOD_BUILT).contains(id)
@@ -563,9 +560,9 @@ class SuperClickerPlugin() extends Plugin {
 							sendChatMessage("birdhouses"){s"harvesting bird @ ${birdSeenLocation}"}
 						})
 				}
-				case (30552, to) if birdhouseItem() != null => {
+				case (BIRDHOUSE_NOT_BUILT, to) if birdhouseItem() != null => {
 					//GAME_OBJECT_FIRST_OPTION(id=30567, params=(48, 49), option=Build, target=<lt>col=ffff<gt>Space)
-					(_: MenuEntry)
+					/*(_: MenuEntry)
 						.setOption("Build".colored(Color.GREEN.darker()))
 						.setType(MenuAction.GAME_OBJECT_FIRST_OPTION)
 						.setIdentifier(to.getId)
@@ -575,6 +572,16 @@ class SuperClickerPlugin() extends Plugin {
 							sendChatMessage(s"birdhouses"){
 								s"building a birdhouse @ ${birdSeenLocation} with item ${birdhouseItem()}"
 							}
+						})*/
+					(_: MenuEntry)
+						.setOption("Build".colored(Color.GREEN.darker()))
+						.setType(MenuAction.RUNELITE)
+						.setIdentifier(0)
+						.onClick(e => {
+							val w = birdhouseItem().widget
+							clientThread.invokeLater(() => {
+								InteractionUtils.useWidgetOnTileObject(w, to)
+							})
 						})
 				}
 				case (BIRDHOUSE_EMPTY(), to) if birdhouseSeed() != null => {
@@ -583,7 +590,7 @@ class SuperClickerPlugin() extends Plugin {
 						.setType(MenuAction.RUNELITE)
 						.setIdentifier(0)
 						.onClick(e => {
-							val w = birdhouseSeed().getWidget
+							val w = birdhouseSeed().widget
 							clientThread.invokeLater(() => {
 								InteractionUtils.useWidgetOnTileObject(w, to)
 							})
@@ -591,27 +598,6 @@ class SuperClickerPlugin() extends Plugin {
 				}
 			}).foreach(b => b.apply(client.getMenu.createMenuEntry(-1)).tap(priorityMenuEntries.addOne))
 		})
-//		def birdhouseSeed(query: ItemQuery): List[Widget] = query.withIdFilter {
-//			BIRDHOUSE_SEED.unapply(_)
-//		}.result().asScala.toList.sortBy(u => (u.getItemId.min(65535).max(0) << 8) | (u.getIndex.min(255).max(0))).headOption
-
-//		targetedTileObject.zip
-//			.collect {
-//				case (BIRDHOUSE_EMPTY(), to) => birdhouseItem(Inventory.search(), BIRDHOUSE_ITEM.unapply).map(w => w -> to)
-//				case (BIRDHOUSE_FULL(), to) => to
-//				case (BIRDHOUSE_BIRD(), to) => to
-//				case (_, to) => ItemQuery
-//			}
-	}
-
-	@Subscribe
-	def onItemContainerChanged(event: ItemContainerChanged): Unit = {
-		if(event.getItemContainer.getId == InventoryID.INV) {
-			birdhouseSeed_c = null
-			birdhouseItem_c = null
-			birdhouseItem()
-			birdhouseSeed()
-		}
 	}
 
 	@Subscribe(priority = -15)
