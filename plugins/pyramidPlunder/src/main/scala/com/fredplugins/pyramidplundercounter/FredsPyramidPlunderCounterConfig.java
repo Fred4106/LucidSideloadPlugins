@@ -5,6 +5,9 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
+import net.runelite.client.util.ColorUtil;
+
+import java.awt.*;
 
 @ConfigGroup(FredsPyramidPlunderCounterConfig.GroupName)
 public interface FredsPyramidPlunderCounterConfig extends Config
@@ -62,6 +65,157 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	}
 
 
+	//region Highlight
+	@ConfigSection(
+		name = "Highlight",
+		description = "Highlight settings",
+		position = 4
+	)
+	String HIGHLIGHT_SECTION = "Highlight";
+
+	@ConfigItem(
+		keyName = "closedChestColor",
+		name = "Highlight Chest[Closed]",
+		description = "Color to highlight closed grand chest with.",
+		position = 0,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color closedChestColor()
+	{
+		return Color.YELLOW;
+	}
+	@ConfigItem(
+		keyName = "openedChestColor",
+		name = "Highlight Chest[Opened]",
+		description = "Color to highlight opened grand chest with.",
+		position = 1,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color openedChestColor()
+	{
+		return new Color(255, 255, 255, 0);
+	}
+
+
+	@ConfigItem(
+		keyName = "closedSarcColor",
+		name = "Highlight Sarcophogaus[Closed]",
+		description = "Color to highlight closed sarcophogaus with.",
+		position = 2,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color closedSarcColor()
+	{
+		return Color.YELLOW;
+	}
+	@ConfigItem(
+		keyName = "openingSarcColor",
+		name = "Highlight Sarcophogaus[Opening]",
+		description = "Color to highlight opening sarcophogaus with.",
+		position = 3,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color openingSarcColor()
+	{
+		return ColorUtil.colorWithAlpha(Color.ORANGE, 128);
+	}
+	@ConfigItem(
+		keyName = "openedSarcColor",
+		name = "Highlight Sarcophogaus[Opened]",
+		description = "Color to highlight opened sarcophogaus with.",
+		position = 4,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color openedSarcColor()
+	{
+		return new Color(255, 255, 255, 0);
+	}
+
+	@ConfigItem(
+		keyName = "lockedDoorColor",
+		name = "Highlight Door[Locked]",
+		description = "Color to highlight locked tomb doors with.",
+		position = 5,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color lockedDoorColor()
+	{
+		return Color.YELLOW;
+	}
+	@ConfigItem(
+		keyName = "openedDoorColor",
+		name = "Highlight Door[Opened]",
+		description = "Color to highlight opened tomb doors with.",
+		position = 6,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color openedDoorColor()
+	{
+		return new Color(255, 255, 255, 0);
+	}
+
+	@ConfigItem(
+		keyName = "closedUrnColor",
+		name = "Highlight Urn[Closed]",
+		description = "Color to highlight closed urns with.",
+		position = 7,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color closedUrnColor()
+	{
+		return Color.YELLOW;
+	}
+
+	@ConfigItem(
+		keyName = "snakeUrnColor",
+		name = "Highlight Urn[Snake]",
+		description = "Color to highlight snake urns with.",
+		position = 8,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color snakeUrnColor()
+	{
+		return Color.GREEN;
+	}
+
+	@ConfigItem(
+		keyName = "charmedUrnColor",
+		name = "Highlight Urn[Charmed]",
+		description = "Color to highlight charmed snake urns with.",
+		position = 9,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color charmedUrnColor()
+	{
+		return new Color(255, 255, 255, 0);
+	}
+
+	@ConfigItem(
+		keyName = "openedUrnColor",
+		name = "Highlight Urn[Opened]",
+		description = "Color to highlight opened urns with.",
+		position = 10,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color openedUrnColor()
+	{
+		return new Color(255, 255, 255, 0);
+	}
+
+	@ConfigItem(
+		keyName = "spearTrapColor",
+		name = "Highlight Spear Trap",
+		description = "Color to highlight spear traps with.",
+		position = 12,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color spearTrapColor()
+	{
+		return Color.ORANGE;
+	}
+	//endregion
+
+
 	//region Overlay
 	@ConfigSection(
 		name = "Overlay",
@@ -96,6 +250,55 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	default boolean getFontBold()
 	{
 		return true;
+	}
+
+	@Range(
+		min = 1,
+		max = 4
+	)
+	@ConfigItem(
+		keyName = "borderThickness",
+		name = "Border Thickness",
+		description = "The thickness of the border",
+		position = 2,
+		section = OVERLAY_SECTION
+	)
+	default int borderThickness()
+	{
+		return 1;
+	}
+
+	@Range(
+		min = 0,
+		max = 4
+	)
+	@ConfigItem(
+		keyName = "borderFeather",
+		name = "Border Feather",
+		description = "The feather of the border",
+		position = 3,
+		section = OVERLAY_SECTION
+	)
+	default int borderFeather()
+	{
+		return 0;
+	}
+
+	// alpha
+	@Range(
+		min = 0,
+		max = 255
+	)
+	@ConfigItem(
+		keyName = "borderAlpha",
+		name = "Border Alpha",
+		description = "The alpha of the border highlight",
+		position = 4,
+		section = OVERLAY_SECTION
+	)
+	default int borderAlpha()
+	{
+		return 255;
 	}
 	//endregion
 

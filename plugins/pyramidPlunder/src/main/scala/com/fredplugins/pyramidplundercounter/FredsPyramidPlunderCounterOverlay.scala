@@ -5,8 +5,7 @@ import com.fredplugins.common.extensions.GeneralExtensions.*
 import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
-import com.fredplugins.common.overlays.renderGameObjectOverlay
-import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlayBak, renderTileOverlay, withFont}
+import com.fredplugins.common.overlays.{getCanvasTextLocation, renderGameObjectOverlay, renderGameObjectOverlayBak, renderTileOverlay, renderWallObjectOverlay, withFont}
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.common.{OldOverlayUtil, overlays}
 import com.google.inject.{Inject, Singleton}
@@ -41,15 +40,72 @@ class FredsPyramidPlunderCounterOverlay @Inject()(val client: Client, val plugin
 		given ModelOutlineRenderer = modelOutlineRenderer
 		given Client = client
 
-		val currentAreas: Seq[WorldArea] = plugin.currentRoom.map(_.areas).toList.flatten
-
-		if (client.getGameState == GameState.LOGGED_IN && PyramidPlunderHelper.isInPyramidPlunder && currentAreas.nonEmpty) {
+		if (client.getGameState == GameState.LOGGED_IN && PyramidPlunderHelper.isInPyramidPlunder) {
 			withFont(plugin.Cache.cachedFont) {
-				TileObjects.search().withinArea(currentAreas *).gameObjects().asScala.toList
-					.flatMap(go => UrnStates.getUrnState(go).map(x => x -> go))
+				plugin.getGameObjects.filter(go => PyramidPlunderHelper.SpeartrapMultiIds.contains(go.getId))
 					.foreach {
-						case (state, obj) => renderGameObjectOverlay(obj, state.entryName)(2, 1, state.color, false)
+						case (obj) => {
+							val color = config.spearTrapColor()
+							if (color.getAlpha > 0) {
+								renderGameObjectOverlay(obj, "")(config.borderThickness(), config.borderFeather(), color)
+							}
+						}
 					}
+
+				plugin.getGameObjects
+					.flatMap(go => UrnStates.getState(go).map(x => x -> go))
+					.foreach {
+						case (state, obj) => {
+							val color = state match {
+								case UrnStates.Closed => config.closedUrnColor()
+								case UrnStates.Snake => config.snakeUrnColor()
+								case UrnStates.Charmed => config.charmedUrnColor()
+								case UrnStates.Opened => config.openedUrnColor()
+							}
+							if(color.getAlpha > 0) {
+								renderGameObjectOverlay(obj, state.entryName)(config.borderThickness(), config.borderFeather(), color)
+							}
+						}
+					}
+
+				plugin.getWallObjects
+					.flatMap(go => TombDoorStates.getState(go).map(x => x -> go))
+					.foreach {
+						case (state, obj) => {
+							val color = state match {
+								case TombDoorStates.Locked => config.lockedDoorColor()
+								case TombDoorStates.Opened => config.openedDoorColor()
+							}
+							if (color.getAlpha > 0) {
+								renderWallObjectOverlay(obj, state.entryName)(config.borderThickness(), config.borderFeather(), color)
+							}
+						}
+					}
+
+				plugin.getGameObjects
+					.flatMap(go => GrandChestStates.getState(go).map(x => x -> go))
+					.foreach((state, obj) =>{
+						val color = state match {
+							case GrandChestStates.Closed => config.closedChestColor()
+							case GrandChestStates.Opened => config.openedChestColor()
+						}
+						if(color.getAlpha > 0) {
+							renderGameObjectOverlay(obj, state.entryName)(config.borderThickness(), config.borderFeather(), color)
+						}
+					})
+
+				plugin.getGameObjects
+					.flatMap(go => SarcophagusStates.getState(go).map(x => x -> go))
+					.foreach((state, obj) =>{
+						val color = state match {
+							case SarcophagusStates.Closed => config.closedSarcColor()
+							case SarcophagusStates.Opened => config.openedSarcColor()
+							case SarcophagusStates.Opening => config.openingSarcColor()
+						}
+						if(color.getAlpha > 0) {
+							renderGameObjectOverlay(obj, state.entryName)(config.borderThickness(), config.borderFeather(), color)
+						}
+					})
 			}
 		}
 		null

@@ -1,9 +1,17 @@
 package com.fredplugins.pyramidplundercounter
 
-import net.runelite.api.ClientThreadInvoke
-import net.runelite.api.Client
+import ethanApiPlugin.collections.TileObjects
+import ethanApiPlugin.collections.query.TileObjectQuery
+import net.runelite.api.{Client, ClientThreadInvoke, WallObject}
 import net.runelite.api.coords.WorldArea
 import net.runelite.api.gameval.VarbitID
+import net.runelite.api.gameval.ObjectID.{NTK_URN_TYPE1_MULTI_1, NTK_URN_TYPE1_MULTI_2, NTK_URN_TYPE1_MULTI_3, NTK_URN_TYPE1_MULTI_4,
+	NTK_URN_TYPE1_MULTI_5, NTK_URN_TYPE2_MULTI_6, NTK_URN_TYPE2_MULTI_7, NTK_URN_TYPE2_MULTI_8, NTK_URN_TYPE2_MULTI_9, NTK_URN_TYPE2_MULTI_10,
+	NTK_URN_TYPE3_MULTI_11, NTK_URN_TYPE3_MULTI_12, NTK_URN_TYPE3_MULTI_13, NTK_URN_TYPE3_MULTI_14, NTK_URN_TYPE3_MULTI_15,
+	NTK_TOMB_DOOR, NTK_TOMB_DOOR1, NTK_TOMB_DOOR2, NTK_TOMB_DOOR3, NTK_TOMB_DOOR4,
+	NTK_GOLDEN_CHEST_MULTI, NTK_SARCOPHAGUS_MULTI,
+	NTK_SPEARTRAP_INMOTION
+}
 
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
@@ -80,5 +88,17 @@ object PyramidPlunderHelper {
 				RoomEnum.Lobby
 			})
 		}
+	}
+
+	inline def UrnMultiIds: Set[Int] = Set(NTK_URN_TYPE1_MULTI_1, NTK_URN_TYPE1_MULTI_2, NTK_URN_TYPE1_MULTI_3, NTK_URN_TYPE1_MULTI_4, NTK_URN_TYPE1_MULTI_5, NTK_URN_TYPE2_MULTI_6, NTK_URN_TYPE2_MULTI_7, NTK_URN_TYPE2_MULTI_8, NTK_URN_TYPE2_MULTI_9, NTK_URN_TYPE2_MULTI_10, NTK_URN_TYPE3_MULTI_11, NTK_URN_TYPE3_MULTI_12, NTK_URN_TYPE3_MULTI_13, NTK_URN_TYPE3_MULTI_14, NTK_URN_TYPE3_MULTI_15)
+	inline def TombDoorMultiIds: Set[Int] = Set(NTK_TOMB_DOOR, NTK_TOMB_DOOR1, NTK_TOMB_DOOR2, NTK_TOMB_DOOR3, NTK_TOMB_DOOR4)
+	inline def SarcophagusMultiIds: Set[Int] = Set(NTK_SARCOPHAGUS_MULTI)
+	inline def GoldenChestMultiIds: Set[Int] = Set(NTK_GOLDEN_CHEST_MULTI)
+	inline def SpeartrapMultiIds: Set[Int] = Set(NTK_SPEARTRAP_INMOTION)
+	
+	inline def TileObjectIdsList: List[Int] = List.apply(UrnMultiIds, TombDoorMultiIds, SarcophagusMultiIds, GoldenChestMultiIds, SpeartrapMultiIds).flatten
+	def getTileObjectsQuery(using client : Client): TileObjectQuery => TileObjectQuery = {
+		val areas = getCurrentFloor.map(_.areas).getOrElse(Seq.empty[WorldArea])
+		(x) => x.withId(TileObjectIdsList *).withinArea(areas *)
 	}
 }

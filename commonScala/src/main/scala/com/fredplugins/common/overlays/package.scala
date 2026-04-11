@@ -1,18 +1,14 @@
 package com.fredplugins.common
 
 import com.fredplugins.common.extensions.ObjectExtensions.*
-import net.runelite.api.Actor
-import net.runelite.api.NPC
+import net.runelite.api.{Actor, Client, GameObject, NPC, Perspective, Player, Point, Projectile, WallObject}
 import net.runelite.api.Perspective.localToCanvas
-import net.runelite.api.Player
-import net.runelite.api.Projectile
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
-import net.runelite.api.{Client, GameObject, Perspective, Point}
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import net.runelite.client.util.ColorUtil
-import org.locationtech.jts as jts
-import org.locationtech.jts.geom.{Geometry as JtsGeometry, Point as JtsPoint, Polygon as JtsPolygon, Coordinate as JtsCoordinate}
+import org.locationtech.jts
+import org.locationtech.jts.geom.{Coordinate as JtsCoordinate, Geometry as JtsGeometry, Point as JtsPoint, Polygon as JtsPolygon}
 
 import java.awt.Polygon
 //import org.locationtech.jts.geom.Polygon => JtsPolygon
@@ -91,28 +87,52 @@ package object overlays {
 		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
 			case (str, strLoc@(x, y, b)) => {
 				val padding        = 5
-//				val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding * 2)
+//				val textBackground = new Rectangle(x - padding, y - padding, b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding * 2)
 //				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
 				OverlayUtil.renderTextLocation(g, new Point(x, y), str, Color.BLACK)
 			}
 		}
 	}
-	def renderGameObjectOverlay(gameObject: GameObject, text: String)(outlineThickness:Int, feather: Int, borderColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
-		modelOutlineRenderer.drawOutline(gameObject, outlineThickness, borderColor.darker, feather)
+	def renderGameObjectOverlay(gameObject: GameObject, text: String)(outlineThickness:Int, feather: Int, fillColor: Color)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
+		val outlineColor = ColorUtil.colorWithAlpha(fillColor.darker, 255)
+		modelOutlineRenderer.drawOutline(gameObject, outlineThickness, outlineColor, feather)
+		Option(gameObject.getConvexHull).foreach(s => {
+			OverlayUtil.renderPolygon(g, s, fillColor, outlineColor, getStroke(outlineThickness, false))
+		})
 
 		val localLoc = gameObject.getLocalLocation
-		renderMinimapArea(localLoc, gameObject.composition.pipe(c => c.getSizeX -> c.getSizeY), 1, borderColor, 24, dashed)
+		renderMinimapArea(localLoc, gameObject.composition.pipe(c => c.getSizeX -> c.getSizeY), 1, outlineColor, 32, false)
 
 		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
 			case (str, strLoc@(x, y, b)) => {
 				val padding = 5
-				//				val textBackground = new Rectangle(x - padding, y - padding, w + padding * 2, h + padding * 2)
-				//				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
-				OverlayUtil.renderTextLocation(g, new Point(x, y), str, Color.BLACK)
+				val textBackground = new Rectangle(x - padding, y - padding, b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding * 2)
+				OverlayUtil.renderPolygon(g, textBackground, outlineColor, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, false))
+
+				OverlayUtil.renderTextLocation(g, new Point(x, y), str, outlineColor)
 			}
 		}
 	}
+	def renderWallObjectOverlay(wallObject: WallObject, text: String)(outlineThickness:Int, feather: Int, fillColor: Color)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
+		val outlineColor = ColorUtil.colorWithAlpha(fillColor.darker, 255)
+		modelOutlineRenderer.drawOutline(wallObject, outlineThickness, outlineColor, feather)
+		Option(wallObject.getConvexHull).foreach(s => {
+			OverlayUtil.renderPolygon(g, s, fillColor, outlineColor, getStroke(outlineThickness, false))
+		})
 
+		val localLoc = wallObject.getLocalLocation
+		renderMinimapArea(localLoc, wallObject.composition.pipe(c => c.getSizeX -> c.getSizeY), 1, outlineColor, 32, false)
+
+		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(localLoc, text, 0))).foreach {
+			case (str, strLoc@(x, y, b)) => {
+				val padding = 5
+				val textBackground = new Rectangle(x - padding, y - padding, b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding * 2)
+				OverlayUtil.renderPolygon(g, textBackground, outlineColor, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, false))
+
+				OverlayUtil.renderTextLocation(g, new Point(x, y), str, outlineColor)
+			}
+		}
+	}
 	def renderProjectileOverlay(projectile: Projectile, text: String)(outlineThickness: Int, feather: Int, borderColor: Color)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
 		val lp = LocalPoint(projectile.getX.toInt, projectile.getY.toInt, -1)
 		modelOutlineRenderer.drawModelOutline(client.getTopLevelWorldView, projectile.getModel, lp.getX, lp.getY, projectile.getZ.toInt, 0, outlineThickness,  borderColor, feather)

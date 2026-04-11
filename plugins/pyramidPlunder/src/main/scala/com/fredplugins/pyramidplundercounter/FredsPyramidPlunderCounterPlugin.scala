@@ -2,12 +2,13 @@ package com.fredplugins.pyramidplundercounter
 
 import com.fredplugins.common.extensions.MenuExtensions.{getNpcOpt, getWorldLocationOpt, isNpcAction, isRuneliteAction, isTileObjectAction}
 import com.fredplugins.common.utils.ShimUtils
-import com.fredplugins.pyramidplundercounter.PyramidPlunderHelper.getCurrentFloor
-import com.fredplugins.pyramidplundercounter.PyramidPlunderHelper.isInPyramidPlunder
+import com.fredplugins.pyramidplundercounter.PyramidPlunderHelper.{getCurrentFloor, getTileObjectsQuery, isInPyramidPlunder}
 import com.fredplugins.pyramidplundercounter.RoomEnum.Lobby
 import com.google.gson.Gson
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
+import ethanApiPlugin.collections.TileObjects
+import ethanApiPlugin.collections.query.TileObjectQuery
 import net.runelite.api.ChatMessageType
 import net.runelite.api.GameState
 import net.runelite.api.Skill
@@ -34,7 +35,6 @@ import net.runelite.client.menus.MenuManager
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.FontManager
 import net.runelite.client.ui.overlay.OverlayManager
-import net.runelite.client.util.ColorUtil
 import org.slf4j.Logger
 
 import java.awt.{Color, Font}
@@ -68,9 +68,10 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 
 	var stateLines: List[(String, (Int, Int))] = List.empty
 	var currentRoom: Option[RoomEnum] = Option.empty
+	var objects: (List[GameObject], List[WallObject]) = (List.empty, List.empty)
 
-//	var savedOutside  = false
-//	var loadedSession = false
+	def getWallObjects: List[WallObject] = objects._2
+	def getGameObjects: List[GameObject] = objects._1
 
 	@Provides
 	def getConfig(configManager: ConfigManager): FredsPyramidPlunderCounterConfig = {
@@ -94,6 +95,7 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 	
 	override protected def startUp(): Unit = {
 		currentRoom = Option.empty
+		objects=(List.empty[GameObject],List.empty[WallObject])
 		stateLines = List.empty
 		overlayManager.add(overlay)
 		overlayManager.add(overlayPanel)
@@ -107,11 +109,12 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 		overlayManager.remove(overlayPanel)
 		currentRoom = Option.empty
 		stateLines = List.empty
+		objects=(List.empty[GameObject],List.empty[WallObject])
 	}
 
 	object Cache {
-		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
-		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
+		var cachedFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize.toFloat)
+		var countdownFont: Font = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toFloat)
 	}
 
 
@@ -119,8 +122,8 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 	def onConfigChanged(e: ConfigChanged): Unit = {
 		if(e.getGroup == FredsPyramidPlunderCounterConfig.GroupName) e.getKey match {
 			case "fontSize" | "fontBold" => {
-				Cache.cachedFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
-				Cache.countdownFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toInt)
+				Cache.cachedFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize.toFloat)
+				Cache.countdownFont = FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, (config.getFontSize * 1.5).toFloat)
 			}
 			case u => log.debug("Key {} changed from {} to {}, but had no associated action", u, e.getOldValue, e.getNewValue)
 		}
@@ -129,26 +132,16 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 	@Subscribe
 	def onMenuEntryAdded(event: MenuEntryAdded): Unit = {
 		if (isInPyramidPlunder) {
-			log.debug("added: {}", event.getMenuEntry)
+			if (config.isDebugMenu) log.debug("added: {}", event.getMenuEntry)
 		}
 	}
 
 	@Subscribe
 	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
 		if (isInPyramidPlunder) {
-			log.debug("clicked: {}", menuOptionClicked.getMenuEntry)
+			if(config.isDebugMenu) log.debug("clicked: {}", menuOptionClicked.getMenuEntry)
 			val isCC_OP: Boolean = (menuOptionClicked.getMenuAction == MenuAction.CC_OP)
 			var temp = menuOptionClicked.getMenuAction
-//			(menuOptionClicked.getMenuTarget match {
-//				case PyramidPlunderHelper.GRAND_GOLD_CHEST_TARGET =>  usingChestOrSarco = true
-//				case PyramidPlunderHelper.SARCOPHAGUS_TARGET =>   usingChestOrSarco = true
-//				case PyramidPlunderHelper.SPEAR_TRAP =>    usingSpearTrap = true
-//				case j => {
-//					if(!isCC_OP && usingChestOrSarco) {
-//						usingChestOrSarco = false
-//					}
-//				}
-//			})
 		}
 	}
 //
@@ -163,62 +156,28 @@ class FredsPyramidPlunderCounterPlugin() extends Plugin {
 //		}
 //	}
 
+//	var queryOp: TileObjectQuery => TileObjectQuery = (a) => a
 
 	@Subscribe
 	def onGameTick(e: GameTick): Unit = {
-		val n = getCurrentFloor
+		val oldFloor = currentRoom
+		val newFloor = getCurrentFloor
 //			log.debug("current floor is {}, but was {}", n, currentRoom)
-		Option((currentRoom, n)).collect {
+		val didChange = Option((oldFloor, newFloor)).collect {
 			case (Some(old), Some(newer)) if(old != newer) => s"Changed from ${old} to ${newer}"
 			case (Some(old), None) => s"Exited from ${old}"
 			case (None, Some(newer)) => s"Entered to ${newer}"
-		}.foreach(u => {
+		}.tap(_.foreach(u =>
 			log.debug(s"${u}")
-		})
-		currentRoom = n
+		)).isDefined
 
-		if(currentRoom.exists(_ != Lobby)) {
-			
+		if(didChange) {
+			currentRoom = newFloor
+			objects = getTileObjectsQuery(TileObjects.search()).pipe(q => {
+				(q.gameObjects().asScala.toList, q.wallObjects().asScala.toList)
+			})
 		}
+
 	}
-//	@Subscribe
-//	def onVarbitChanged(event: VarbitChanged): Unit = {
-//		val vbitId: Int = event.getVarbitId
-//		if(vbitId == NTK_ROOM_NUMBER) {
-//			val oldRoom = currentRoom
-//			val newRoom = getCurrentFloor
-//			log.debug("Moved from {} to {}")
-//		}
-////		if(vbitId != -1 && toMonitor.contains(vbitId) && cachedVarbitValues.contains(vbitId)) {
-////			val oldValue = cachedVarbitValues(vbitId)
-////			val newValue = event.getValue
-////			if(oldValue != newValue) {
-////				cachedVarbitValues = cachedVarbitValues.updated(vbitId, newValue)
-////					val message = buildMessage(
-////						s"${varbitNames(vbitId)}",
-////						("vbit", vbitId),
-////						("delta", (oldValue, newValue))
-////					)
-////					val line    = client.addChatMessage(ChatMessageType.CLAN_GUEST_CHAT, "VbitChanged", message, "PPC")
-//////					val line    = client.addChatMessage(ChatMessageType.GAMEMESSAGE, "PP Counter", message, "")
-////			}
-////		}
-//	}
-//	@Subscribe
-//	def onInteractingChanged(interactingChanged: InteractingChanged): Unit = {
-//		if (isInPyramidPlunder) {
-//			if (swarmSpawned &&
-//				spawnedNPC.contains(interactingChanged.getSource) &&
-//				(interactingChanged.getTarget == null || interactingChanged.getTarget.equals(client.getLocalPlayer))
-//			) {
-//				swarmSpawned = false
-//				chestLooted += 1
-//				val chance = PyramidPlunderHelper.getCurrentFloor.map(f => f.percentageOds).getOrElse(0.0d)
-//				totalChance = totalChance * (1 - chance)
-//				dryChance = 1 - totalChance
-//				spawnedNPC.clear
-//			}
-//		}
-//	}
 }
 
