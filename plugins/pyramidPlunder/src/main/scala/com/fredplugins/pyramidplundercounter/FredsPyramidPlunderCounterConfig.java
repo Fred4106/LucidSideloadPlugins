@@ -1,5 +1,6 @@
 package com.fredplugins.pyramidplundercounter;
 
+import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -72,7 +73,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 		position = 4
 	)
 	String HIGHLIGHT_SECTION = "Highlight";
-
+	@Alpha
 	@ConfigItem(
 		keyName = "closedChestColor",
 		name = "Highlight Chest[Closed]",
@@ -84,6 +85,8 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return Color.YELLOW;
 	}
+
+	@Alpha
 	@ConfigItem(
 		keyName = "openedChestColor",
 		name = "Highlight Chest[Opened]",
@@ -96,7 +99,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 		return new Color(255, 255, 255, 0);
 	}
 
-
+	@Alpha
 	@ConfigItem(
 		keyName = "closedSarcColor",
 		name = "Highlight Sarcophogaus[Closed]",
@@ -108,6 +111,8 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return Color.YELLOW;
 	}
+
+	@Alpha
 	@ConfigItem(
 		keyName = "openingSarcColor",
 		name = "Highlight Sarcophogaus[Opening]",
@@ -119,6 +124,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return ColorUtil.colorWithAlpha(Color.ORANGE, 128);
 	}
+	@Alpha
 	@ConfigItem(
 		keyName = "openedSarcColor",
 		name = "Highlight Sarcophogaus[Opened]",
@@ -130,7 +136,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return new Color(255, 255, 255, 0);
 	}
-
+	@Alpha
 	@ConfigItem(
 		keyName = "lockedDoorColor",
 		name = "Highlight Door[Locked]",
@@ -142,6 +148,8 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return Color.YELLOW;
 	}
+
+	@Alpha
 	@ConfigItem(
 		keyName = "openedDoorColor",
 		name = "Highlight Door[Opened]",
@@ -153,7 +161,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return new Color(255, 255, 255, 0);
 	}
-
+	@Alpha
 	@ConfigItem(
 		keyName = "closedUrnColor",
 		name = "Highlight Urn[Closed]",
@@ -165,7 +173,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return Color.YELLOW;
 	}
-
+	@Alpha
 	@ConfigItem(
 		keyName = "snakeUrnColor",
 		name = "Highlight Urn[Snake]",
@@ -177,7 +185,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return Color.GREEN;
 	}
-
+	@Alpha
 	@ConfigItem(
 		keyName = "charmedUrnColor",
 		name = "Highlight Urn[Charmed]",
@@ -189,7 +197,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return new Color(255, 255, 255, 0);
 	}
-
+	@Alpha
 	@ConfigItem(
 		keyName = "openedUrnColor",
 		name = "Highlight Urn[Opened]",
@@ -201,7 +209,7 @@ public interface FredsPyramidPlunderCounterConfig extends Config
 	{
 		return new Color(255, 255, 255, 0);
 	}
-
+	@Alpha
 	@ConfigItem(
 		keyName = "spearTrapColor",
 		name = "Highlight Spear Trap",

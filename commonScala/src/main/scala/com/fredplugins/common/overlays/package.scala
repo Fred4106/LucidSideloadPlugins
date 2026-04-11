@@ -97,7 +97,7 @@ package object overlays {
 		val outlineColor = ColorUtil.colorWithAlpha(fillColor.darker, 255)
 		modelOutlineRenderer.drawOutline(gameObject, outlineThickness, outlineColor, feather)
 		Option(gameObject.getConvexHull).foreach(s => {
-			OverlayUtil.renderPolygon(g, s, fillColor, outlineColor, getStroke(outlineThickness, false))
+			OverlayUtil.renderPolygon(g, s, outlineColor, fillColor, getStroke(outlineThickness, false))
 		})
 
 		val localLoc = gameObject.getLocalLocation
@@ -117,7 +117,7 @@ package object overlays {
 		val outlineColor = ColorUtil.colorWithAlpha(fillColor.darker, 255)
 		modelOutlineRenderer.drawOutline(wallObject, outlineThickness, outlineColor, feather)
 		Option(wallObject.getConvexHull).foreach(s => {
-			OverlayUtil.renderPolygon(g, s, fillColor, outlineColor, getStroke(outlineThickness, false))
+			OverlayUtil.renderPolygon(g, s, outlineColor, fillColor, getStroke(outlineThickness, false))
 		})
 
 		val localLoc = wallObject.getLocalLocation
