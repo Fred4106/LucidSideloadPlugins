@@ -15,5 +15,10 @@ object WidgetExtensions {
 		def getGroupId(): Int = w.getId >>> 16
 		def getChildId(): Int = w.getId & 0xFFFF
 		def getChildIdx(): Int = w.getIndex
+
+		def niceString: String = {
+			val idxStr = Option(getChildIdx()).filter(_ != -1).map(i=>s"[${i}]").getOrElse("")
+			s"Widget(id=${getGroupId()}.${getChildId()}${idxStr})"
+		}
 	}
 }

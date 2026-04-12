@@ -413,9 +413,21 @@ class SuperClickerPlugin() extends Plugin {
 		}
 	}
 
+	//			MenuEntryTarget(menuOptionClicked).foreach(met => {
+	//				log.debug("MenuClicked: {}", met)
+	//			})
 
 	@Subscribe
 	def onMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
+		if (config.isDebugMenu) {
+//			MenuEntryTarget(menuOptionAdded).foreach(met => {
+//				log.debug("Menu Added: {}", met)
+//			})
+		}
+	}
+
+	@Subscribe
+	def onInventoryItemMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
 		import InterfaceID.MagicSpellbook.{PLANK_MAKE, ENCHANT_1,ENCHANT_2,ENCHANT_3,ENCHANT_4,ENCHANT_5,ENCHANT_6,ENCHANT_7,HIGH_ALCHEMY,STRING_JEWEL}
 		val me = menuOptionAdded.getMenuEntry
 		if(!client.getMenu.getMenuEntries.contains(me) || blockTopLevelSwitch > -1) return
@@ -621,7 +633,10 @@ class SuperClickerPlugin() extends Plugin {
 	@Subscribe
 	def onMenuOptionClicked(menuOptionClicked: MenuOptionClicked): Unit = {
 		if(config.isDebugMenu) {
-			sendChatMessage("MenuClicked")(menuOptionClicked.getMenuEntry.prettyString())
+			MenuEntryTarget(menuOptionClicked).foreach(met => {
+				log.debug("Menu Clicked: {}", met)
+			})
+			log.debug("Menu Clicked: {}", Text.removeTags(menuOptionClicked.getMenuEntry.prettyString()))
 		}
 
 		val me = menuOptionClicked.getMenuEntry

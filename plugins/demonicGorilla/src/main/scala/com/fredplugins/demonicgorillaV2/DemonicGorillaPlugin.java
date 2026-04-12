@@ -796,11 +796,13 @@ public class DemonicGorillaPlugin extends Plugin {
 
 
 	public int getPlayerRegionID() {
-		return WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation()).getRegionID();
+		Player lp = client.getLocalPlayer();
+		if(lp == null) return -1;
+		else return WorldPoint.fromLocalInstance(client, lp.getLocalLocation()).getRegionID();
 	}
 
 	private boolean atDemonicGorillas() {
-		return REGION_IDS.contains(getPlayerRegionID());
+		return client.getLocalPlayer() != null && REGION_IDS.contains(getPlayerRegionID());
 	}
 
 	Map<NPC, DemonicGorilla> getGorillas() {

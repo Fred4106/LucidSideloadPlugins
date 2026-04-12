@@ -3,12 +3,8 @@ package com.fredplugins.common.extensions
 import com.formdev.flatlaf.util.Animator
 import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.common.utils.WorldPointUtils
-import net.runelite.api.Animation
-import net.runelite.api.DynamicObject
-import net.runelite.api.GameObject
-import net.runelite.api.GraphicsObject
+import net.runelite.api.{Animation, Client, DecorativeObject, DynamicObject, GameObject, GraphicsObject, GroundObject, ItemLayer, ObjectComposition, TileObject, WallObject}
 import net.runelite.api.coords.WorldPoint
-import net.runelite.api.{Client, ObjectComposition, TileObject}
 
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
@@ -41,9 +37,6 @@ object ObjectExtensions {
 				case d: DynamicObject => Option(d.getAnimFrame -> d.getAnimCycle)
 			}.flatten
 		}
-		def templateLocation: WorldPoint = {
-			TWorldPoint.get(e.getWorldLocation)// WorldPointUtils.toTemplate(e.getWorldLocation)
-		}
 	}
 	extension (e: GraphicsObject)(using client: Client) {
 		def templateLocation: WorldPoint = {
@@ -52,6 +45,11 @@ object ObjectExtensions {
 	}
 	extension (e: TileObject)(using client: Client) {
 		def wrapped: TileObjectWrapper = TileObjectWrapper(e)
+
+		def templateLocation: WorldPoint = {
+			TWorldPoint.get(e.getWorldLocation) // WorldPointUtils.toTemplate(e.getWorldLocation)
+		}
+
 		def composition: ObjectComposition = client.getObjectDefinition(e.getId)
 		def impostorComposition: Option[ObjectComposition] = {
 			Option.when(isImpostor){composition.getImpostor}
@@ -61,6 +59,22 @@ object ObjectExtensions {
 		}
 		def isImpostor: Boolean = {
 			composition.getImpostorIds != null
+		}
+
+		def niceString: String = {
+			val morphString = Option(morphId).filter(_ != -1).map(i=>s", morph=${i}").getOrElse("")
+			val nicePrefix = Option(e).collect{
+				case _: GameObject => "GameObject"
+				case _: WallObject => "WallObject"
+			}.getOrElse("TileObject")
+//			e match {
+//				case gameObject: GameObject => {
+//					s"GameObject(id=${gameObject.getId}${morphString}, sLoc=${gameObject.getLocalLocation.pipe(ll => s"(${ll.getSceneX}, ${ll.getSceneY})")}, tLoc=${gameObject.templateLocation})"
+//				}
+//				case wallObject: WallObject =>
+//				case other => s"TileObject(id=${other.getId}${morphString}, sLoc=${other.getLocalLocation.pipe(ll => s"(${ll.getSceneX}, ${ll.getSceneY})")}, tLoc=${other.templateLocation})"
+//			}
+			s"${nicePrefix}(id=${e.getId}${morphString}, sLoc=${e.getLocalLocation.pipe(ll => s"(${ll.getSceneX}, ${ll.getSceneY})")}, tLoc=${templateLocation})"
 		}
 	}
 }
