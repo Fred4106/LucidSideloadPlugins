@@ -6,6 +6,7 @@ import com.fredplugins.common.constants.magic.SEquipables
 import com.fredplugins.common.constants.magic.SRune
 import com.fredplugins.common.constants.magic.SRunes
 import com.fredplugins.common.magic.RuneChanges
+import com.fredplugins.common.magic.events.RunesChanged
 import com.fredplugins.common.services.CastSuppliesTrackerService.RUNE_POUCH_VARBITS
 import com.fredplugins.common.services.CastSuppliesTrackerService.isRelevantItemContainer
 import com.fredplugins.common.services.CastSuppliesTrackerService.isRelevantVarbit
@@ -89,7 +90,6 @@ class CastSuppliesTrackerService @Inject()(val client: Client, val clientThread:
 	}
 
 	private def readRunePouch(isDivine: Boolean): Seq[(SRune, Int)] = {
-		val runepouchEnum = client.getEnum(EnumID.RUNEPOUCH_RUNE)
 		inline def pouchSize     = if (isDivine) 4 else 3
 		RUNE_POUCH_VARBITS.take(pouchSize).map {
 			case (idVarbit, qtyVarbit) => client.getVarbitValue(idVarbit) -> client.getVarbitValue(qtyVarbit)

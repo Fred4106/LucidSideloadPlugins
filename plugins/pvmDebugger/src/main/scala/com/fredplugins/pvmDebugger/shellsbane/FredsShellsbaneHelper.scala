@@ -1,9 +1,12 @@
 package com.fredplugins.pvmDebugger.shellsbane
 
 import com.fredplugins.common.ProjectileID
+import com.fredplugins.common.constants.magic.SMagicBoost.{DeathCharge, SummonThrall}
+import com.fredplugins.common.constants.magic.STimedPotion.Divine_combat
 import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.common.extensions.ActorExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
+import com.fredplugins.common.services.{MagicBoostActiveChanged, MagicBoostCooldownChanged, TimedBoostsService, TimedPotionValueChanged}
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -11,23 +14,13 @@ import com.fredplugins.pvmDebugger.WithOverlay
 import com.fredplugins.pvmDebugger.WithPanel
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import ethanApiPlugin.lucidplugins.api.utils.CombatUtils
+import ethanApiPlugin.collections.{Equipment, Inventory}
+import ethanApiPlugin.interactionApi.InventoryInteraction
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InteractionUtils, InventoryUtils}
 import ethanApiPlugin.services.localPlayer.events.LocalDestinationChanged
 import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
-import net.runelite.api.Actor
-import net.runelite.api.Client
-import net.runelite.api.GameObject
-import net.runelite.api.GameState
-import net.runelite.api.GraphicsObject
-import net.runelite.api.NPC
-import net.runelite.api.NPCComposition
-import net.runelite.api.Perspective
-import net.runelite.api.Player
-import net.runelite.api.Point
-import net.runelite.api.Prayer
-import net.runelite.api.Projectile
-import net.runelite.api.WorldView
+import net.runelite.api.{Actor, Client, EquipmentInventorySlot, GameObject, GameState, GraphicsObject, NPC, NPCComposition, Perspective, Player, Point, Prayer, Projectile, WorldView}
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.coords.WorldArea
 import net.runelite.api.coords.WorldPoint
@@ -40,8 +33,7 @@ import net.runelite.api.events.GraphicsObjectCreated
 import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.events.ProjectileMoved
-import net.runelite.api.gameval.AnimationID
-import net.runelite.api.gameval.NpcID
+import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID}
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
@@ -77,7 +69,7 @@ object Shellsbane {
 	}
 }
 @Singleton
-class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsShellsbaneConfig) extends HelperModule with WithPanel with WithOverlay {
+class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, override val client: Client, override val config: FredsShellsbaneConfig, val timedBoostsService: TimedBoostsService) extends HelperModule with WithPanel with WithOverlay {
 	override val moduleName: String = FredsShellsbaneConfig.GROUP
 	private def clientThread  = parent.getClientThread
 	given Client = client
@@ -90,17 +82,21 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 
 	var boss: Shellsbane = uninitialized
 	var projectiles: List[Projectile] = List.empty[Projectile]
+	var castDeathCharge: Boolean = false
+	var castThrall: Boolean = false
+	var drinkCombatPotion: Boolean = false
 
 	private def clearState(): Unit = {
 		boss = null
 		projectiles = List.empty[Projectile]
+		castDeathCharge = false
+		castThrall = false
+		drinkCombatPotion = false
 	}
 
 	override def init(): Unit = {
 		curRegion = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
 		clearState()
-//		currentRoom = None
-//		currentRoomChangedTick = -1
 	}
 
 	override def cleanup(): Unit = {
@@ -110,7 +106,34 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
+		if(boss == null || curRegion != ShellsbaneRegion) return
 		projectiles = projectiles.filterNot(_.hasHit)
+
+		val deathChargeData = timedBoostsService.checkBoost(DeathCharge)
+		if (castDeathCharge == false && deathChargeData.active == 0 && deathChargeData.cooldown == 0) {
+			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.DEATH_CHARGE, "Cast")
+			castDeathCharge = true
+		}
+
+		val thrallData = timedBoostsService.checkBoost(SummonThrall)
+		if (castThrall == false && thrallData.active == 0 && thrallData.cooldown == 0) {
+			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.RESURRECT_SUPERIOR_ZOMBIE, "Cast")
+			castThrall = true
+		}
+
+		val handItem = EquipmentUtils.getItemInSlot(EquipmentInventorySlot.GLOVES)
+		if (boss.wrapped.getHealthRatio < (boss.wrapped.getHealthScale / 3)
+			&& handItem.getId != ItemID.BRACELET_OF_SLAUGHTER
+			&& InventoryUtils.contains(ItemID.BRACELET_OF_SLAUGHTER)
+		) {
+			InventoryUtils.wieldItem(ItemID.BRACELET_OF_SLAUGHTER)
+		} else {
+			val divinePotionWidget = Inventory.search().nameContains("Divine super combat").onlyUnnoted().result().asScala.toList.minByOption(w => w.getItemId * 100 + w.getIndex)
+			if(drinkCombatPotion == false && timedBoostsService.checkTimer(Divine_combat) < 15 && divinePotionWidget.isDefined) {
+				InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
+				drinkCombatPotion = true
+			}
+		}
 	}
 
 	@Subscribe
@@ -145,7 +168,7 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	@Subscribe
 	def onNpcDespawned(e: NpcDespawned): Unit = {
 		if(curRegion == ShellsbaneRegion) {
-			if(Shellsbane.tryBuild(e.getActor).map(_.wrapped).contains(boss.wrapped)) {
+			if(Option(boss).map(_.wrapped).contains(e.getNpc)){
 				clearState()
 			}
 		}
@@ -168,7 +191,25 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 		}
 	}
 
-//
+	@Subscribe
+	def onMagicBoostCooldownChanged(e: MagicBoostCooldownChanged): Unit = {
+		log.debug(s"MagicBoost {}'s cooldown changed from {} to {}", e.boost, e.oldValue, e.newValue)
+	}
+	@Subscribe
+	def onMagicBoostActiveChanged(e: MagicBoostActiveChanged): Unit = {
+		log.debug(s"MagicBoost {}'s active changed from {} to {}", e.boost, e.oldValue, e.newValue)
+		if(e.boost ==DeathCharge && e.newValue == 1 && e.oldValue == 0) {
+			castDeathCharge = false
+		}
+		if (e.boost == SummonThrall && e.newValue == 1 && e.oldValue == 0) {
+			castThrall = false
+		}
+	}
+	@Subscribe
+	def onTimedPotionChanged(e:TimedPotionValueChanged): Unit = {
+		//log.debug(s"TimedPotion {}'s value changed from {} to {}", e.boost, e.oldValue, e.newValue)
+	}
+
 //	@Subscribe
 //	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
 //		if (curRegion == ShellsbaneRegion) {
@@ -219,7 +260,15 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
 
 		//		if(curRegion == ShellsbaneRegion){
+		val deathChargeV = timedBoostsService.checkBoost(DeathCharge)
+		val thrallV = timedBoostsService.checkBoost(SummonThrall)
+		val divineCombatV = timedBoostsService.checkTimer(Divine_combat)
 		val regionLine = LineComponent.builder().left("Region").right(s"$curRegion").rightColor(if(curRegion == ShellsbaneRegion) Color.GREEN else Color.RED).build
+		val deathChargeLine = LineComponent.builder().left("Death Charge").right(s"${deathChargeV}").rightColor(if(deathChargeV.active == 1) Color.GREEN else (if(deathChargeV.cooldown == 1) Color.RED else Color.BLUE)).build
+		val thrallLine = LineComponent.builder().left("Thall").right(s"${thrallV}").rightColor(if(thrallV.active == 1) Color.GREEN else (if(thrallV.cooldown == 1) Color.RED else Color.BLUE)).build
+		val divineCombatLine = LineComponent.builder().left("Divine Combat").right(s"${divineCombatV}").rightColor(if(divineCombatV > 200) Color.GREEN else ColorUtil.colorLerp(Color.YELLOW, Color.RED,
+			Math.min(1.0d, Math.max(0.0d,(200 - divineCombatV).toDouble/200.0d))
+		)).build
 		//			val bossLine = bossData.headOption.map((amox, amoxdata) =>{
 		//				LineComponent.builder().left(amox.toString).right(amoxdata.toString).rightColor(if(client.getTickCount - amoxdata.lastAttackTick > 6) Color.RED else Color.BLUE).build
 		//			}).toList
@@ -251,7 +300,7 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 //				).rightColor(ColorUtil.colorLerp(Color.RED, Color.GREEN, Math.min(1.0d, Math.max(0.0d,(client.getTickCount - b._2.spawnedTick).toDouble/15.0d)))).build
 //			}).pipe(ibl => if(ibl.nonEmpty) ibl.prepended(TitleComponent.builder().text("Unstable Ice").color(Color.CYAN).build()) else ibl)
 
-			Seq(regionLine, bossLines).flatMap{
+			Seq(regionLine,deathChargeLine, thrallLine, divineCombatLine, bossLines).flatMap{
 				case e: LayoutableRenderableEntity => Seq(e)
 				case le: Seq[_] => le.collect{
 					case e: LayoutableRenderableEntity => e

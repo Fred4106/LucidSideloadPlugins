@@ -17,6 +17,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.RuneLite;
+import net.runelite.client.util.Text;
 import packets.MousePackets;
 import packets.MovementPackets;
 import packets.NPCPackets;
@@ -29,6 +30,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class InteractionUtils
 {
@@ -157,16 +159,28 @@ public class InteractionUtils
 			target = target.getChild(grandchildId);
 		}
 
-		if (target != null && target.getActions() != null)
-		{
-			MousePackets.queueClickPacket();
-			WidgetPackets.queueWidgetAction(target, action);
-		}
+		widgetInteract(target, action);
 	}
 
 	public static void widgetInteract(int parentId, int childId, String action)
 	{
 		widgetInteract(parentId, childId, -1, action);
+	}
+	public static void widgetInteract(int widgetId, String action)
+	{
+		widgetInteract(client.getWidget(widgetId), action);
+	}
+
+
+	public static void widgetInteract(Widget w, String action)
+	{
+		if (w != null && w.getActions() != null)
+		{
+			if(Arrays.stream(w.getActions()).filter(v -> v != null).map(String::toLowerCase).map(Text::removeTags).anyMatch(v -> v.equalsIgnoreCase(action))){
+				MousePackets.queueClickPacket();
+				WidgetPackets.queueWidgetAction(w, action);
+			}
+		}
 	}
 
 //    public static void queueResumePause(int parentId, int childId, int subchildId)

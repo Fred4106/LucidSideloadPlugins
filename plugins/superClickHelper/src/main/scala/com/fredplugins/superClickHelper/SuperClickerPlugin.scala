@@ -6,7 +6,6 @@ import com.fredplugins.common.extensions.TextExtensions.*
 import com.fredplugins.common.magic.OldRune
 import com.fredplugins.common.magic.SpellIds
 import com.fredplugins.common.magic.events.BoltsEnchanted
-import com.fredplugins.common.magic.events.RunesChanged
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils

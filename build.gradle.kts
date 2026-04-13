@@ -11,6 +11,7 @@ buildscript {
 plugins {
     id("java-library")
     id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("idea")
 }
 
 val javaVersion = JavaVersion.VERSION_11
@@ -33,6 +34,7 @@ allprojects {
     if(!name.equals("plugins")) {
         println("allprojects $name")
         apply<JavaLibraryPlugin>()
+        apply<IdeaPlugin>()
         apply<MavenPublishPlugin>()
 
         dependencies {
@@ -55,6 +57,11 @@ allprojects {
                 duplicatesStrategy = DuplicatesStrategy.WARN
             }
         }
+        idea {
+            module {
+
+            }
+        }
     }
 }
 
@@ -64,21 +71,18 @@ dependencies {
     implementation(projects.commonScala)
     implementation(projects.alchBlocker)
     implementation(projects.attackTimer)
-    implementation(projects.customPrayers)
     implementation(projects.demonicGorilla)
     implementation(projects.devkit)
     implementation(projects.dialogAssist)
     implementation(projects.dt2)
     implementation(projects.dynamicHighlights)
     implementation(projects.gauntlet)
-    implementation(projects.gearSwapper)
     implementation(projects.giantsFoundry)
     implementation(projects.hallowedHelper)
     implementation(projects.layoutHelper)
     implementation(projects.mixology)
     implementation(projects.pvmDebugger)
     implementation(projects.pyramidPlunder)
-    implementation(projects.recolorCG)
     implementation(projects.sailingHelper)
     implementation(projects.scurriusHelper)
     implementation(projects.superClickHelper)

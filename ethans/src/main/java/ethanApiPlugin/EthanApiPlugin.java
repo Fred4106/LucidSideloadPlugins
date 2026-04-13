@@ -3,11 +3,10 @@ package ethanApiPlugin;
 import ch.qos.logback.classic.Level;
 import com.fredplugins.common.PrayerExtended;
 import com.fredplugins.common.services.CastSuppliesTrackerService;
+import com.fredplugins.common.services.TimedBoostsService;
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils;
-import ethanApiPlugin.services.CastSuppliesTracker;
 import com.google.inject.Singleton;
 import ethanApiPlugin.collections.*;
-import ethanApiPlugin.services.RemainingCastTracker;
 import ethanApiPlugin.services.localPlayer.LocalPlayerService;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.VarbitID;
@@ -105,14 +104,10 @@ public class EthanApiPlugin extends Plugin {
 	@Inject
 	LocalPlayerService localPlayerService;
 
-//	@Inject
-//	CastSuppliesTracker castSuppliesTracker;
-//
-//	@Inject
-//	RemainingCastTracker remainingCastTracker;
-
 	@Inject
 	CastSuppliesTrackerService castSuppliesTrackerService;
+	@Inject
+	TimedBoostsService timedBoostsService;
 
 	public static LoadingCache<Integer, ItemComposition> itemDefs = CacheBuilder.newBuilder()
 			.maximumSize(1000)
@@ -1357,15 +1352,13 @@ public class EthanApiPlugin extends Plugin {
 	public void startUp() throws Exception {
 		eventBus.register(localPlayerService);
 		castSuppliesTrackerService.start();
-//		castSuppliesTracker.start();
-//		remainingCastTracker.start(this);
+		timedBoostsService.start();
 	}
 
 	@Override
 	public void shutDown() throws Exception {
 		eventBus.unregister(localPlayerService);
 		castSuppliesTrackerService.stop();
-//		castSuppliesTracker.stop();
-//		remainingCastTracker.stop();
+		timedBoostsService.stop();
 	}
 }
