@@ -34,6 +34,15 @@ object ActorExtensions {
 			(npcManager.getHealth(n.getId).toDouble * (ratio.toDouble / scale.toDouble)).toInt
 		}
 
+		def healthPercent: Int = {
+			val ratio = n.getHealthRatio
+			val scale = n.getHealthScale
+			(
+				if(ratio  == -1 || scale == -1) 100
+				else ((ratio.toDouble / scale.toDouble) * 100).toInt
+			).min(100).max(0)
+		}
+
 		def baseId: Int = {
 			n.getComposition.getId
 		}

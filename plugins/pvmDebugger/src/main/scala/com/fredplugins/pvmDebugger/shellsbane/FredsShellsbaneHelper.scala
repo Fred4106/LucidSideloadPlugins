@@ -117,22 +117,22 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 
 		val thrallData = timedBoostsService.checkBoost(SummonThrall)
 		if (castThrall == false && thrallData.active == 0 && thrallData.cooldown == 0) {
-			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.RESURRECT_SUPERIOR_ZOMBIE, "Cast")
+			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.RESURRECT_GREATER_ZOMBIE, "Cast")
 			castThrall = true
 		}
 
 		val handItem = EquipmentUtils.getItemInSlot(EquipmentInventorySlot.GLOVES)
-		if (boss.wrapped.getHealthRatio < (boss.wrapped.getHealthScale / 3)
+		if (boss.wrapped.healthPercent < 25
 			&& handItem.getId != ItemID.BRACELET_OF_SLAUGHTER
 			&& InventoryUtils.contains(ItemID.BRACELET_OF_SLAUGHTER)
 		) {
 			InventoryUtils.wieldItem(ItemID.BRACELET_OF_SLAUGHTER)
-		} else {
-			val divinePotionWidget = Inventory.search().nameContains("Divine super combat").onlyUnnoted().result().asScala.toList.minByOption(w => w.getItemId * 100 + w.getIndex)
-			if(drinkCombatPotion == false && timedBoostsService.checkTimer(Divine_combat) < 15 && divinePotionWidget.isDefined) {
-				InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
-				drinkCombatPotion = true
-			}
+		}
+
+		val divinePotionWidget = Inventory.search().withId(23685,23688,23691, 23694).result().asScala.toList.maxByOption(w => w.getItemId)
+		if (drinkCombatPotion == false && timedBoostsService.checkTimer(Divine_combat) < 15 && divinePotionWidget.isDefined) {
+			InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
+			drinkCombatPotion = true
 		}
 	}
 
@@ -169,6 +169,9 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	def onNpcDespawned(e: NpcDespawned): Unit = {
 		if(curRegion == ShellsbaneRegion) {
 			if(Option(boss).map(_.wrapped).contains(e.getNpc)){
+				if(InventoryUtils.contains(7462)) {
+					InventoryUtils.wieldItem(7462)
+				}
 				clearState()
 			}
 		}
@@ -207,7 +210,10 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	}
 	@Subscribe
 	def onTimedPotionChanged(e:TimedPotionValueChanged): Unit = {
-		//log.debug(s"TimedPotion {}'s value changed from {} to {}", e.boost, e.oldValue, e.newValue)
+		log.debug(s"TimedPotion {}'s value changed from {} to {}", e.boost, e.oldValue, e.newValue)
+		if (e.boost == Divine_combat && e.newValue > e.oldValue) {
+			drinkCombatPotion = false
+		}
 	}
 
 //	@Subscribe
