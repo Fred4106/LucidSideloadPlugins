@@ -6,6 +6,7 @@ import com.fredplugins.common.constants.magic.STimedPotion.Divine_combat
 import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.common.extensions.ActorExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
+import com.fredplugins.common.services.TimedBoostsService.{MagicBoostChanged, getCachedValue, isActive, isLocked}
 import com.fredplugins.common.services.{MagicBoostActiveChanged, MagicBoostCooldownChanged, TimedBoostsService, TimedPotionValueChanged}
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
@@ -109,14 +110,12 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 		if(boss == null || curRegion != ShellsbaneRegion) return
 		projectiles = projectiles.filterNot(_.hasHit)
 
-		val deathChargeData = timedBoostsService.checkBoost(DeathCharge)
-		if (castDeathCharge == false && deathChargeData.active == 0 && deathChargeData.cooldown == 0) {
+		if (castDeathCharge == false && !DeathCharge.isActive && !DeathCharge.isLocked) {
 			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.DEATH_CHARGE, "Cast")
 			castDeathCharge = true
 		}
 
-		val thrallData = timedBoostsService.checkBoost(SummonThrall)
-		if (castThrall == false && thrallData.active == 0 && thrallData.cooldown == 0) {
+		if (castThrall == false && !SummonThrall.isActive && !SummonThrall.isLocked) {
 			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.RESURRECT_GREATER_ZOMBIE, "Cast")
 			castThrall = true
 		}
@@ -129,11 +128,11 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 			InventoryUtils.wieldItem(ItemID.BRACELET_OF_SLAUGHTER)
 		}
 
-		val divinePotionWidget = Inventory.search().withId(23685,23688,23691, 23694).result().asScala.toList.maxByOption(w => w.getItemId)
-		if (drinkCombatPotion == false && timedBoostsService.checkTimer(Divine_combat) < 15 && divinePotionWidget.isDefined) {
-			InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
-			drinkCombatPotion = true
-		}
+//		val divinePotionWidget = Inventory.search().withId(23685,23688,23691, 23694).result().asScala.toList.maxByOption(w => w.getItemId)
+//		if (drinkCombatPotion == false && timedBoostsService.checkTimer(Divine_combat) < 15 && divinePotionWidget.isDefined) {
+//			InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
+//			drinkCombatPotion = true
+//		}
 	}
 
 	@Subscribe
@@ -195,26 +194,31 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	}
 
 	@Subscribe
-	def onMagicBoostCooldownChanged(e: MagicBoostCooldownChanged): Unit = {
-		log.debug(s"MagicBoost {}'s cooldown changed from {} to {}", e.boost, e.oldValue, e.newValue)
-	}
-	@Subscribe
-	def onMagicBoostActiveChanged(e: MagicBoostActiveChanged): Unit = {
-		log.debug(s"MagicBoost {}'s active changed from {} to {}", e.boost, e.oldValue, e.newValue)
-		if(e.boost ==DeathCharge && e.newValue == 1 && e.oldValue == 0) {
-			castDeathCharge = false
-		}
-		if (e.boost == SummonThrall && e.newValue == 1 && e.oldValue == 0) {
-			castThrall = false
+	def onMagicBoostChanged(e: MagicBoostChanged): Unit = {
+		log.debug(s"MagicBoostChanged {}",e)
+		if(e.oldValue.active == 1 && e.newValue.active == 0){
+			if(e.boost == DeathCharge) castDeathCharge = false
+			if(e.boost == SummonThrall) castThrall = false
 		}
 	}
-	@Subscribe
-	def onTimedPotionChanged(e:TimedPotionValueChanged): Unit = {
-		log.debug(s"TimedPotion {}'s value changed from {} to {}", e.boost, e.oldValue, e.newValue)
-		if (e.boost == Divine_combat && e.newValue > e.oldValue) {
-			drinkCombatPotion = false
-		}
-	}
+
+//	@Subscribe
+//	def onMagicBoostActiveChanged(e: MagicBoostActiveChanged): Unit = {
+//		log.debug(s"MagicBoost {}'s active changed from {} to {}", e.boost, e.oldValue, e.newValue)
+//		if(e.boost ==DeathCharge && e.newValue == 1 && e.oldValue == 0) {
+//			castDeathCharge = false
+//		}
+//		if (e.boost == SummonThrall && e.newValue == 1 && e.oldValue == 0) {
+//			castThrall = false
+//		}
+//	}
+//	@Subscribe
+//	def onTimedPotionChanged(e:TimedPotionValueChanged): Unit = {
+//		log.debug(s"TimedPotion {}'s value changed from {} to {}", e.boost, e.oldValue, e.newValue)
+//		if (e.boost == Divine_combat && e.newValue > e.oldValue) {
+//			drinkCombatPotion = false
+//		}
+//	}
 
 //	@Subscribe
 //	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
@@ -266,15 +270,15 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
 
 		//		if(curRegion == ShellsbaneRegion){
-		val deathChargeV = timedBoostsService.checkBoost(DeathCharge)
-		val thrallV = timedBoostsService.checkBoost(SummonThrall)
-		val divineCombatV = timedBoostsService.checkTimer(Divine_combat)
+		val deathChargeV = DeathCharge.getCachedValue
+		val thrallV = SummonThrall.getCachedValue
+//		val divineCombatV = timedBoostsService.checkTimer(Divine_combat)
 		val regionLine = LineComponent.builder().left("Region").right(s"$curRegion").rightColor(if(curRegion == ShellsbaneRegion) Color.GREEN else Color.RED).build
 		val deathChargeLine = LineComponent.builder().left("Death Charge").right(s"${deathChargeV}").rightColor(if(deathChargeV.active == 1) Color.GREEN else (if(deathChargeV.cooldown == 1) Color.RED else Color.BLUE)).build
 		val thrallLine = LineComponent.builder().left("Thall").right(s"${thrallV}").rightColor(if(thrallV.active == 1) Color.GREEN else (if(thrallV.cooldown == 1) Color.RED else Color.BLUE)).build
-		val divineCombatLine = LineComponent.builder().left("Divine Combat").right(s"${divineCombatV}").rightColor(if(divineCombatV > 200) Color.GREEN else ColorUtil.colorLerp(Color.YELLOW, Color.RED,
-			Math.min(1.0d, Math.max(0.0d,(200 - divineCombatV).toDouble/200.0d))
-		)).build
+//		val divineCombatLine = LineComponent.builder().left("Divine Combat").right(s"${divineCombatV}").rightColor(if(divineCombatV > 200) Color.GREEN else ColorUtil.colorLerp(Color.YELLOW, Color.RED,
+//			Math.min(1.0d, Math.max(0.0d,(200 - divineCombatV).toDouble/200.0d))
+//		)).build
 		//			val bossLine = bossData.headOption.map((amox, amoxdata) =>{
 		//				LineComponent.builder().left(amox.toString).right(amoxdata.toString).rightColor(if(client.getTickCount - amoxdata.lastAttackTick > 6) Color.RED else Color.BLUE).build
 		//			}).toList
@@ -306,7 +310,7 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 //				).rightColor(ColorUtil.colorLerp(Color.RED, Color.GREEN, Math.min(1.0d, Math.max(0.0d,(client.getTickCount - b._2.spawnedTick).toDouble/15.0d)))).build
 //			}).pipe(ibl => if(ibl.nonEmpty) ibl.prepended(TitleComponent.builder().text("Unstable Ice").color(Color.CYAN).build()) else ibl)
 
-			Seq(regionLine,deathChargeLine, thrallLine, divineCombatLine, bossLines).flatMap{
+			Seq(regionLine,deathChargeLine, thrallLine, /*divineCombatLine,*/ bossLines).flatMap{
 				case e: LayoutableRenderableEntity => Seq(e)
 				case le: Seq[_] => le.collect{
 					case e: LayoutableRenderableEntity => e

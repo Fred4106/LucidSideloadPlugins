@@ -13,7 +13,6 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Keybind;
 
 import javax.swing.*;
-import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -190,7 +189,7 @@ class TeleMenu
 		SwingUtilities.invokeLater(() ->
 		{
 			Window window = null;
-			for (Component c = (Applet) plugin.getClient(); c != null; c = c.getParent())
+			for (Component c = (Component) plugin.getClient(); c != null; c = c.getParent())
 			{
 				if (c instanceof Window)
 				{
