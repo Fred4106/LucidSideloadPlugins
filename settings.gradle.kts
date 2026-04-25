@@ -28,7 +28,6 @@ val x = listOf(
     "sailingHelper",
     "scurriusHelper",
     "superClickHelper",
-    "teleportMaps",
     "tempoross",
     "titheFarm2",
     "valeTotems",

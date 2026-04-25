@@ -86,7 +86,6 @@ dependencies {
     implementation(projects.sailingHelper)
     implementation(projects.scurriusHelper)
     implementation(projects.superClickHelper)
-    implementation(projects.teleportMaps)
     implementation(projects.tempoross)
     implementation(projects.titheFarm2)
     implementation(projects.valeTotems)
