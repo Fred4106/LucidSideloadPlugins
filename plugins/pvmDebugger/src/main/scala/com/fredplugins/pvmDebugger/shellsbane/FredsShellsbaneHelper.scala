@@ -7,7 +7,7 @@ import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.common.extensions.ActorExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.services.TimedBoostsService.{MagicBoostChanged, getCachedValue, isActive, isLocked}
-import com.fredplugins.common.services.{MagicBoostActiveChanged, MagicBoostCooldownChanged, TimedBoostsService, TimedPotionValueChanged}
+import com.fredplugins.common.services.TimedBoostsService
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin

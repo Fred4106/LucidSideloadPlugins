@@ -13,6 +13,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -52,6 +53,9 @@ public class LayoutHelper extends Plugin {
     private Client client;
 
     @Inject
+    private EventBus eventBus;
+
+    @Inject
     private OverlayManager overlayManager;
 
     @Inject
@@ -60,7 +64,9 @@ public class LayoutHelper extends Plugin {
     @Inject
     private ChatMessageManager chatMessageManager;
 
-    
+    @Inject
+    private LeaguesToggleHelper leaguesHelper;
+
     scala.collection.immutable.List<OverlayWidgetHelper> overlays = List$.MODULE$.empty();
 
     private void sendMessage(ChatMessageType tpe, String message) {
@@ -70,6 +76,7 @@ public class LayoutHelper extends Plugin {
     @Override
     protected void startUp() throws Exception {
         super.startUp();
+        eventBus.register(leaguesHelper);
 
         List.of(536, 537, 19272).stream().forEach(i -> {
             log.debug("id: {}, name: {}", i, ReflectionUtils.getItemName(i));
@@ -83,6 +90,8 @@ public class LayoutHelper extends Plugin {
             log.debug("{}", o);
             return -1;
         });
+
+//        eventBus.register(LeaguesToggleHelper$.MODULE$);
     }
 
 //    private boolean skillMultiOpened = false;
@@ -132,6 +141,7 @@ public class LayoutHelper extends Plugin {
     @Override
     protected void shutDown() throws Exception {
         super.shutDown();
+        eventBus.unregister(leaguesHelper);
         overlays.foreach(o -> {
             o.snappable_$eq(true);
             return -1;
