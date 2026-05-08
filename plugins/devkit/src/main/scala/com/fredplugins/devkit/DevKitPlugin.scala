@@ -19,11 +19,8 @@ import net.runelite.client.callback.ClientThread
 import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 import net.runelite.client.events.ConfigChanged
-import net.runelite.client.plugins.xtea.XteaClient
-import net.runelite.client.plugins.xtea.XteaPlugin
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.overlay.OverlayManager
-import net.runelite.http.api.xtea.XteaKey
 import okhttp3.Call
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient

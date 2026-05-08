@@ -226,13 +226,13 @@ public class PacketDef {
 	public static PacketDef getResumeNameDialog() {
 		String[] writeData = new String[]{ObfuscatedNames.RESUME_NAMEDIALOG_WRITE1, ObfuscatedNames.RESUME_NAMEDIALOG_WRITE2};
 		String[][] writeMethods = ObfuscatedNames.RESUME_NAMEDIALOG_WRITES;
-		return new PacketDef(ObfuscatedNames.RESUME_NAMEDIALOG_OBFUSCATED_NAME, writeData, writeMethods, PacketType.RESUME_NAMEDIALOG);
+		return new PacketDef(ObfuscatedNames.RESUME_NAMEDIALOG_OBFUSCATEDNAME, writeData, writeMethods, PacketType.RESUME_NAMEDIALOG);
 	}
 
 	public static PacketDef getResumeStringDialog() {
 		String[] writeData = new String[]{ObfuscatedNames.RESUME_STRINGDIALOG_WRITE1, ObfuscatedNames.RESUME_STRINGDIALOG_WRITE2};
 		String[][] writeMethods = ObfuscatedNames.RESUME_STRINGDIALOG_WRITES;
-		return new PacketDef(ObfuscatedNames.RESUME_STRINGDIALOG_OBFUSCATED_NAME, writeData, writeMethods, PacketType.RESUME_STRINGDIALOG);
+		return new PacketDef(ObfuscatedNames.RESUME_STRINGDIALOG_OBFUSCATEDNAME, writeData, writeMethods, PacketType.RESUME_STRINGDIALOG);
 	}
 
 	public static PacketDef getOpHeldd() {
