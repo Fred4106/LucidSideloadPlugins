@@ -7,6 +7,7 @@ import net.runelite.api.{ChatMessageType, Client, ScriptEvent}
 import net.runelite.api.events.{ClientTick, MenuOptionClicked, VarbitChanged}
 import net.runelite.api.widgets.{JavaScriptCallback, Widget}
 import net.runelite.api.gameval.InterfaceID
+import net.runelite.client.callback.ClientThread
 import net.runelite.client.eventbus.{EventBus, Subscribe}
 
 import javax.inject.Inject
@@ -17,7 +18,7 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
-class LeaguesToggleHelper @Inject()(val client: Client, val eventBus:EventBus) extends ShimUtils.Logging("TRACE") {
+class LeaguesToggleHelper @Inject()(val client: Client, val eventBus:EventBus, val clientThread: ClientThread) extends ShimUtils.Logging("TRACE") {
 	val opListener = new JavaScriptCallback {
 		override def run(e: ScriptEvent): Unit = {
 			val s = e.getSource
@@ -79,16 +80,19 @@ class LeaguesToggleHelper @Inject()(val client: Client, val eventBus:EventBus) e
 				case (struct, (offVal, varpIdx)) => {
 					val mask = 1 << (varpIdx)
 
-					val varps = client.getVarps
-					val oldValue = varps(5514)
-					val newValue = oldValue ^ mask
-					varps(5514) = newValue
-					client.queueChangedVarp(5514)
-					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Changed VarPlayer " + 5514 + " from " + oldValue + " to " + newValue, null)
-					val varbitChanged = new VarbitChanged
-					varbitChanged.setVarpId(5514)
-					varbitChanged.setValue(newValue)
-					eventBus.post(varbitChanged) // fake event
+					clientThread.invoke(() => {
+						val varps = client.getVarps
+						val oldValue = varps(5514)
+						val newValue = oldValue ^ mask
+						varps(5514) = newValue
+						client.queueChangedVarp(5514)
+						client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Changed VarPlayer " + 5514 + " from " + oldValue + " to " + newValue, null)
+						val varbitChanged = new VarbitChanged
+						varbitChanged.setVarpId(5514)
+						varbitChanged.setValue(newValue)
+						eventBus.post(varbitChanged) // fake event
+						})
+
 					e.consume()
 //					client.createScriptEventBuilder(9411, struct, 1, 0, 16513013, 16019731).build.run()
 				}

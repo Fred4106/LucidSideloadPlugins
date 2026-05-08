@@ -1,12 +1,12 @@
 package com.fredplugins.titheFarm2
 
 import com.fredplugins.common.extensions.MenuExtensions.getWorldLocationOpt
-import com.fredplugins.common.extensions.ActorExtensions._
-import com.fredplugins.common.extensions.LocationExtensions._
+import com.fredplugins.common.extensions.ActorExtensions.*
+import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.common.utils.TWorldPoint
 import com.fredplugins.titheFarm2
-import com.fredplugins.titheFarm2.SPlantInfo.{DryPlantInfo, EmptyPlantInfo}
+import com.fredplugins.titheFarm2.SPlantInfo.{DryPlantInfo, EmptyPlantInfo, WateredPlantInfo}
 import com.fredplugins.titheFarm2.TitheFarmLookup.PlantData
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
@@ -128,6 +128,9 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 	def wateringCan(query: ItemQuery): List[Widget] = query.withIdFilter {
 		(value: Int) => (value >= 5333 && value <= 5340) || value == 13353
 	}.result().asScala.toList
+
+	def compostBucket(query: ItemQuery): List[Widget] = query.withId(13420).result().asScala.toList
+
 	def seed(query: ItemQuery): List[Widget] = {
 		query.withIdFilter {
 			(value: Int) => List(13423,13424,13425).contains(value)
@@ -153,6 +156,25 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 			}.flatten
 		}
 
+		def addCompostPart(me: MenuEntry): Option[(Widget, TileObject)] = {
+			SPlantInfo.lookup(me.getIdentifier).collect {
+				case state@DryPlantInfo(plantType, _) => {
+					val compostBktWidget = compostBucket(Inventory.search()).headOption
+					val patchLocation = me.getWorldLocation.dx(1).dy(1)
+					farmLookup.getPlantData(patchLocation).collect {
+						case PlantData(cachedInfo, go, composted, countdown) if (countdown < 100 && countdown > 100 - 3) => compostBktWidget.map(wcw => wcw -> go)
+					}.flatten
+				}
+				case state@WateredPlantInfo(plantType, _) => {
+					val compostBktWidget = compostBucket(Inventory.search()).headOption
+					val patchLocation = me.getWorldLocation.dx(1).dy(1)
+					farmLookup.getPlantData(patchLocation).collect {
+						case PlantData(cachedInfo, go, composted, countdown) if (countdown < 100 && countdown > 100 - 3) => compostBktWidget.map(wcw => wcw -> go)
+					}.flatten
+				}
+			}.flatten
+		}
+
 		def plantSeedsInPatchPart1(me: MenuEntry): Option[(Widget, TileObject)] = {
 			SPlantInfo.lookup(me.getIdentifier).collect {
 				case state@EmptyPlantInfo => {
@@ -166,11 +188,28 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 		}
 
 		if (menuEntryAdded.getMenuEntry.getType == MenuAction.EXAMINE_OBJECT) {
-			val addWaterPatchEntry    : Option[Client => MenuEntry] = addWaterPart1(menuEntryAdded.getMenuEntry).map {
+			val addWaterPatchEntry: Option[Client => MenuEntry] = addWaterPart1(menuEntryAdded.getMenuEntry).map {
 				case (w, patch) => {
 					(c: Client) => {
 						c.getMenu().createMenuEntry(-1)
 							.setOption("Water " + ColorUtil.wrapWithColorTag("Watering Can", Color.BLUE))
+							.setTarget(ColorUtil.wrapWithColorTag(s"${c.getObjectDefinition(patch.getId).getName} patch", Color.YELLOW))
+							.setType(MenuAction.RUNELITE)
+							.setParam0(menuEntryAdded.getActionParam0)
+							.setParam1(menuEntryAdded.getActionParam1)
+							.setIdentifier(2428)
+							.onClick((ee) => {
+								InteractionUtils.useWidgetOnTileObject(w, patch)
+							})
+					}
+				}
+			}.headOption
+
+			val addCompostPatchEntry: Option[Client => MenuEntry] = addCompostPart(menuEntryAdded.getMenuEntry).map {
+				case (w, patch) => {
+					(c: Client) => {
+						c.getMenu().createMenuEntry(-1)
+							.setOption("Compost " + ColorUtil.wrapWithColorTag("Compost", new Color(102, 80, 0)))
 							.setTarget(ColorUtil.wrapWithColorTag(s"${c.getObjectDefinition(patch.getId).getName} patch", Color.YELLOW))
 							.setType(MenuAction.RUNELITE)
 							.setParam0(menuEntryAdded.getActionParam0)
@@ -201,14 +240,28 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 				}
 			}.headOption
 
-			addWaterPatchEntry.zip(Option("add water")).orElse(plantSeedsInPatchEntry.zip(Option("plant seeds"))).map {
-				case (clientToEntry, str) => {
-					log.trace("Storing \"{}\" from entry \"{}\"", str, menuEntryAdded)
-					clientToEntry.andThen(me => {
-						log.trace("Added entry \"{}\"", me)
-					})
-				}
-			}.foreach(_.apply(client))
+			Option.empty
+				.orElse(addWaterPatchEntry.zip(Option("add water")))
+				.orElse(addCompostPatchEntry.zip(Option("compost")))
+				.orElse(plantSeedsInPatchEntry.zip(Option("plant seeds")))
+				.tap(u => println(u))
+				.map {
+					case (clientToEntry, str) => {
+						log.trace("Storing \"{}\" from entry \"{}\"", str, menuEntryAdded)
+						clientToEntry.andThen(me => {
+							log.trace("Added entry \"{}\"", me)
+						})
+					}
+				}.foreach(_.apply(client))
+
+//			addWaterPatchEntry.zip(Option("add water")).orElse(plantSeedsInPatchEntry.zip(Option("plant seeds"))).map {
+//				case (clientToEntry, str) => {
+//					log.trace("Storing \"{}\" from entry \"{}\"", str, menuEntryAdded)
+//					clientToEntry.andThen(me => {
+//						log.trace("Added entry \"{}\"", me)
+//					})
+//				}
+//			}.foreach(_.apply(client))
 		}
 	}
 
@@ -217,7 +270,7 @@ class FredsTitheFarmV2Plugin() extends Plugin {
 		if (!client.isMenuOpen) {
 			val menuEntries: List[MenuEntry] = client.getMenuEntries.toList
 			val (added, stock) = menuEntries.partition(e => {
-				e.getType == MenuAction.RUNELITE && (e.getOption.startsWith("Plant") || e.getOption.startsWith("Water"))
+				e.getType == MenuAction.RUNELITE && (e.getOption.startsWith("Plant") || e.getOption.startsWith("Water") || e.getOption.startsWith("Compost"))
 			})
 			val newMenuEntries: List[MenuEntry] = stock.appendedAll(added)
 			client.setMenuEntries(newMenuEntries.toArray[MenuEntry])
