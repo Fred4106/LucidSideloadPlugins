@@ -494,8 +494,8 @@ class SuperClickerPlugin() extends Plugin {
 						.setType(MenuAction.RUNELITE)
 						.setIdentifier(0)
 						.onClick(e => {
+							log.debug("a={}['{}']={} -> b={}['{}']={}", aa, aa.definition.getName, aa.widget, bbe, bbe.definition.getName, bbe.widget)
 							clientThread.invokeLater(() => {
-								log.debug("a={}['{}'] -> b={}['{}']", aa, aa.definition.getName, bbe, bbe.definition.getName)
 								InteractionUtils.useWidgetOnWidget(aa.widget, bbe.widget)
 							})
 						})

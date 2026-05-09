@@ -1,5 +1,4 @@
 package packetUtils;
-
 public final class ObfuscatedNames
 {
 
@@ -20,22 +19,16 @@ public final class ObfuscatedNames
 	};
 	public static final String IF_BUTTONT_OBFUSCATEDNAME = "ew";
 	public static final String IF_BUTTONT_WRITE1 = "destinationWidgetId";
-	public static final String IF_BUTTONT_METHOD_NAME1 = "az";
-	public static final String IF_BUTTONT_WRITE2 = "sourceWidgetId";
-	public static final String IF_BUTTONT_METHOD_NAME2 = "ed";
+	public static final String IF_BUTTONT_WRITE2 = "sourceSlot";
 	public static final String IF_BUTTONT_WRITE3 = "sourceItemId";
-	public static final String IF_BUTTONT_METHOD_NAME3 = "ko";
-	public static final String IF_BUTTONT_WRITE4 = "sourceSlot";
-	public static final String IF_BUTTONT_METHOD_NAME4 = "ek";
+	public static final String IF_BUTTONT_WRITE4 = "sourceWidgetId";
 	public static final String IF_BUTTONT_WRITE5 = "destinationSlot";
-	public static final String IF_BUTTONT_METHOD_NAME5 = "bw";
 	public static final String IF_BUTTONT_WRITE6 = "destinationItemId";
-	public static final String IF_BUTTONT_METHOD_NAME6 = "ko";
 	public static final String[][] IF_BUTTONT_WRITES = new String[][]{
 		{"r 24", "r 16", "r 8", "v"},
 		{"r 8", "a 128"},
 		{"a 128", "r 8"},
-		{"r 8", "v", "r 16", "r 24"},
+		{"r 8", "v", "r 24", "r 16"},
 		{"r 8", "v"},
 		{"a 128", "r 8"},
 	};

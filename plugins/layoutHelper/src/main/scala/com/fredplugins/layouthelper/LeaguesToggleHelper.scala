@@ -18,7 +18,7 @@ import scala.util.chaining.*
 import scala.util.{Random, Try}
 import scala.compiletime.uninitialized
 
-class LeaguesToggleHelper @Inject()(val client: Client, val eventBus:EventBus, val clientThread: ClientThread) extends ShimUtils.Logging("TRACE") {
+class LeaguesToggleHelper @Inject()(val client: Client, val eventBus:EventBus, val clientThread: ClientThread) extends ShimUtils.Logging("INFO") {
 	val opListener = new JavaScriptCallback {
 		override def run(e: ScriptEvent): Unit = {
 			val s = e.getSource
