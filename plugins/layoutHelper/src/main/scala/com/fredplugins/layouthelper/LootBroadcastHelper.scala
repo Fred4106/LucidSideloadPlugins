@@ -47,10 +47,10 @@ object LootBroadcastHelper {
 //			val r3 = """ \(([^)]+)\)""".r
 			val bossCharStart = suffix.lastIndexOf('(')
 			val bossCharEnd = suffix.lastIndexOf(')')
-			val boss = suffix.substring(bossCharStart+1, bossCharEnd)
+			val (content, boss) = Option.when(bossCharStart > 0 && bossCharEnd >  bossCharStart)(suffix.substring(0, bossCharStart-1) -> suffix.substring(bossCharStart+1, bossCharEnd)).getOrElse(suffix.trim -> "")
 
 			val r2 = """(\d+) x (.+)""".r
-			suffix.substring(0, bossCharStart-1) match {
+			content match {
 				case x@r2(q, item) => Some(LootBroadcastMessage(user, q.toInt, item, boss))
 				case x => {
 					Some(LootBroadcastMessage(user, 1, x, boss))

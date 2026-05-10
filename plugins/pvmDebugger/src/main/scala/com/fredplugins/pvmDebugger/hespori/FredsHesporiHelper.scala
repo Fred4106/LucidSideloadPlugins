@@ -428,14 +428,6 @@ class FredsHesporiHelper @Inject()(override val parent: PvmDebuggerPlugin, overr
 					renderNpcText(sb.wrapped, s"T: ${client.getTickCount - sb.lastAttack}", Color.GRAY, 20)
 				}
 
-			flowers
-				.foreach { f =>
-					renderNpcOverlay(f.wrapped, Color.PINK)
-					val (fTextColor, fText) = Option(f.overhead).fold(Color.RED -> "null")(h => Color.GREEN -> h.name)
-
-					renderNpcText(f.wrapped, fText, fTextColor, 20)
-				}
-
 			projectiles
 				.foreach {p =>
 					import com.fredplugins.common.overlays
