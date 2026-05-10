@@ -1,6 +1,7 @@
 package com.fredplugins.pvmDebugger
 
 import com.fredplugins.common.utils.ShimUtils
+import com.fredplugins.pvmDebugger.DebugPanel.ClearEvent
 import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlConfig
 import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlHelper
 import com.fredplugins.pvmDebugger.cerberus.CerberusConfig
@@ -21,6 +22,8 @@ import com.fredplugins.pvmDebugger.muspah.FredsMuspahConfig
 import com.fredplugins.pvmDebugger.muspah.FredsMuspahHelper
 import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneConfig
 import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneHelper
+import com.fredplugins.pvmDebugger.hespori.FredsHesporiConfig
+import com.fredplugins.pvmDebugger.hespori.FredsHesporiHelper
 import com.fredplugins.pvmDebugger.titans.FredsTitanConfig
 import com.fredplugins.pvmDebugger.titans.FredsTitanHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
@@ -54,9 +57,11 @@ import net.runelite.client.ui.overlay.OverlayManager
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
+
 import scala.reflect.Selectable.reflectiveSelectable
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import scala.swing.Frame
 import scala.util.chaining.*
 
 @PluginDescriptor(
@@ -97,6 +102,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val titansHelper: FredsTitanHelper    = null
 	@Inject private val yamaHelper: FredsYamaHelper             = null
 	@Inject private val shellsbaneHelper: FredsShellsbaneHelper = null
+	@Inject private val hesporiHelper: FredsHesporiHelper = null
 	@Inject private val cerbHelper: CerberusHelper              = null
 
 
@@ -181,7 +187,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List(hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -389,4 +395,6 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideDksConfig(configManager: ConfigManager): DksConfig = configManager.getConfig(classOf[DksConfig])
 	@Provides def provideShellsBane(configManager: ConfigManager): FredsShellsbaneConfig = configManager.getConfig(classOf[FredsShellsbaneConfig])
 	@Provides def provideCerbConfig(configManager: ConfigManager): CerberusConfig = configManager.getConfig(classOf[CerberusConfig])
+
+	@Provides def provideHespori(configManager: ConfigManager): FredsHesporiConfig = configManager.getConfig(classOf[FredsHesporiConfig])
 }

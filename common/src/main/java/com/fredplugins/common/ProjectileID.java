@@ -126,4 +126,16 @@ public final class ProjectileID
     public static final int GRYPHON_RANGED_PROJECTILE = 3459;
     public static final int GRYPHON_RANGED_IMPACT = 3460;
     public static final int GRYPHON_SPIT_PROJECTILE = 3461;
+
+//    public static final int HESPORI_RANGE_PROJ_ECHO = 3140;
+//    public static final int HESPORI_MAGIC_PROJ_ECHO = 3141;
+//    public static final int HESPORI_MAGIC_IMPACT_ECHO = 3142;
+//    public static final int HESPORI_VINE_PROJ_ECHO = 3143;
+//    public static final int HESPORI_VINE_IMPACT_ECHO = 3144;
+
+    public static final int HESPORI_RANGE_PROJ = 3677;
+    public static final int HESPORI_MAGIC_PROJ = 3678;
+    public static final int HESPORI_MAGIC_IMPACT = 3679;
+    public static final int HESPORI_VINE_PROJ = 3680;
+    public static final int HESPORI_VINE_IMPACT = 3681;
 }
