@@ -207,5 +207,10 @@ package object hunllef {
 		def pray(p: Prayer*)(using client: Client): Action = {
 			new Action with PrayerActionMixin(p *) {}
 		}
+
+		case object NoOp extends Action with ProductActionMixin {
+			override def shouldRun(using client: Client): Boolean = false
+			override def run(): Unit = {}
+		}
 	}
 }

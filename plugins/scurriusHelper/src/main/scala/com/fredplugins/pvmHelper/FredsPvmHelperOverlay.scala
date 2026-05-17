@@ -13,10 +13,8 @@ import scala.compiletime.uninitialized
 import scala.util.chaining.*
 
 abstract class FredsPvmHelperOverlay[P <: Plugin & BossToolTrait](val plugin: P) extends Overlay(plugin) {
-	given ModelOutlineRenderer = plugin.getInjector.getInstance(classOf[ModelOutlineRenderer])
-
 	//	given Client = plugin.getInjector.getInstance(classOf[Client])
-	override def getName: String = super.getName + plugin.getClass.getSimpleName
+	override def getName: String = plugin.getClass.getSimpleName + "Overlay"
 
 	val log: Logger = ShimUtils.getLogger(this.getClass.getName + s"[${plugin.getClass.getName}]", "DEBUG")
 	setPosition(OverlayPosition.DYNAMIC);
@@ -29,6 +27,8 @@ abstract class FredsPvmHelperOverlay[P <: Plugin & BossToolTrait](val plugin: P)
 		given Graphics2D = graphics
 
 		given Client = plugin.client
+
+		given ModelOutlineRenderer = plugin.modelOutlineRenderer
 
 		render()
 		//		for (elem: (WorldPoint, Color, String) <- plugin.tilesToPaint()) {

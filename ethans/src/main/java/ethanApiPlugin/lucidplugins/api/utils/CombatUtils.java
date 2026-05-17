@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
+import packetUtils.WidgetInfoExtended;
 import packets.MousePackets;
 import packets.WidgetPackets;
 
@@ -252,7 +253,7 @@ public class CombatUtils
     public static void toggleSpec()
     {
         MousePackets.queueClickPacket();
-        WidgetPackets.queueWidgetActionPacket(1, 10485795, -1, -1);
+        WidgetPackets.queueWidgetActionPacket(1, WidgetInfoExtended.PACK(160, 36), -1, -1);
     }
 
     public static boolean isSpecEnabled() {

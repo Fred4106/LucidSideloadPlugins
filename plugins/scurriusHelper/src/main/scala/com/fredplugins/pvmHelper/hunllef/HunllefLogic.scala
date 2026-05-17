@@ -1,5 +1,8 @@
 package com.fredplugins.pvmHelper.hunllef
 
+import com.fredplugins.common.extensions.ActorExtensions
+import com.fredplugins.common.extensions.ActorExtensions.*
+
 import com.fredplugins.common.Locatable
 import com.fredplugins.common.OldOverlayUtil.{drawOutlineAndFill, renderTextLocation}
 import com.fredplugins.common.utils.TWorldPoint
@@ -42,37 +45,46 @@ import scala.util.chaining.scalaUtilChainingOps
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class HunllefLogic() extends Plugin with BossToolTrait {
-	@Inject val client: Client = null
-	@Inject val clientThread: ClientThread = null
-	@Inject val skillIconManager: SkillIconManager = null
-	@Inject val config: HunleffConfig = null
-	@Inject val notifier: Notifier = null
-	@Inject val modelOutlineRenderer: ModelOutlineRenderer = null
-	@Inject private val eventBus: EventBus = null
-	@Inject private val overlayManager: OverlayManager = null
+	@Inject() val client: Client = null
+	@Inject() val clientThread: ClientThread = null
+	@Inject() val skillIconManager: SkillIconManager = null
+	@Inject() val config: HunleffConfig = null
+	@Inject() val notifier: Notifier = null
+	@Inject() val modelOutlineRenderer: ModelOutlineRenderer = null
+	@Inject() private val eventBus: EventBus = null
+	@Inject() private val overlayManager: OverlayManager = null
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 
 	given SkillIconManager = skillIconManager
 
-	given ModelOutlineRenderer = modelOutlineRenderer
+//	given ModelOutlineRenderer = modelOutlineRenderer
 
 	private lazy val panel: FredsPvmHelperPanel[HunllefLogic] = new FredsPvmHelperPanel[HunllefLogic](this) {}
 
-	private lazy val overlay: FredsPvmHelperOverlay[HunllefLogic] = new FredsPvmHelperOverlay[HunllefLogic](this) {
+	private lazy val overlay: FredsPvmHelperOverlay[HunllefLogic] = new FredsPvmHelperOverlay[HunllefLogic](this) {self =>
 		override def render()(using graphics: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
-			State.tornadoes.map(tt => {
-				val lp = TWorldPoint.get(tt.getWorldLocation).pipe(LocalPoint.fromWorld(client, _))
-				val polygon = Perspective.getCanvasTilePoly(client, lp)
-				tt match {
-					case tornado: ChaseTornado => (Color.blue, polygon, lp, s"${tornado.diesOnTick}")
-					case tornado: RoamingTornado => (Color.RED, polygon, lp, s"${tornado.scenePos}")
-				}
-			}).foreach {
-				case (color, polygon, lp, str) => {
-					drawOutlineAndFill(graphics, ColorUtil.colorWithAlpha(color, 192), ColorUtil.colorWithAlpha(color, 128), 2, polygon)
-					renderTextLocation(graphics, Perspective.getCanvasTextLocation(client, graphics, lp, str, 20), str, Color.white)
-				}
+			if (self.plugin.inArea()) {
+//				self.log.debug(s"pausing here ${graphics}, ${client}, ${modelOutlineRenderer}, {}", client.getTickCount)
+				self.plugin.State.tornadoes.foreach(tt => {
+					val lp = TWorldPoint.get(tt.getWorldLocation).pipe(LocalPoint.fromWorld(client, _))
+//					val polygon = Perspective.getCanvasTilePoly(client, lp)
+					self.log.debug(s"lp=${lp}, wrapped=${tt.wrapped.niceString}")
+				})
 			}
+//			State.tornadoes.map(tt => {
+//				val lp = TWorldPoint.get(tt.getWorldLocation).pipe(LocalPoint.fromWorld(client, _))
+//				val polygon = Perspective.getCanvasTilePoly(client, lp)
+//				tt match {
+//					case tornado: ChaseTornado => (Color.blue, polygon, lp, s"${tornado.diesOnTick}")
+//					case tornado: RoamingTornado => (Color.RED, polygon, lp, s"${tornado.scenePos}")
+//				}
+//			}).foreach {
+//				case j@(color, polygon, lp, str) => {
+//					self.log.debug(s"pausing here ${j}")
+//					drawOutlineAndFill(graphics, ColorUtil.colorWithAlpha(color, 192), ColorUtil.colorWithAlpha(color, 128), 2, polygon)
+//					renderTextLocation(graphics, Perspective.getCanvasTextLocation(client, graphics, lp, str, 20), str, Color.white)
+//				}
+//			}
 			//					val wpTemplate = WorldPoint.fromRegion(7768, sceneX, sceneY, 1)
 			//					val wp = WorldPoint.toLocalInstance(client.getTopLevelWorldView, wpTemplate).asScala.toList
 			//					val polygon = Perspective.getCanvasTilePoly(client, LocalPoint.fromWorld(client.getTopLevelWorldView, wp2))
@@ -242,6 +254,8 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 
 	override protected def startUp(): Unit = {
 		resetState()
+		log.debug("panel[\"{}\"] | overlay[\"{}\"]", panel.getName, overlay.getName)
+
 		overlayManager.add(panel)
 		overlayManager.add(overlay)
 	}
@@ -298,7 +312,7 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 			State.HunllefState.reset()
 		} else if (isTornado(event.getNpc)) {
 			Tornado(event.getNpc).foreach(toAdd => {
-				State.tornadoes = State.tornadoes + toAdd
+				State.tornadoes_=(State.tornadoes ++ Set(toAdd))
 			})
 		} else {
 			shouldLog = false
@@ -405,48 +419,53 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 				val currentCycle = State.HunllefState.getNextCycle
 				//				val oldHunleffCycle = State.HunllefState.getLastCycle
 				import scala.jdk.OptionConverters.*
-				val hunleffNpc: NPC = NPCs.search().filter(isHunllef(_)).first().get() //idInList(HunllefIds.map(Integer.valueOf).asJava).results().asScala.toList.head
+				val hunleffNpc: NPC = NPCs.search().filter(isHunllef(_)).first().toScala.orNull //idInList(HunllefIds.map(Integer.valueOf).asJava).results().asScala.toList.head
+				if(hunleffNpc != null) {
+					if (projectilesSpawnedThisTick.nonEmpty) {
+						logTick(s"hunllef spawned these projectiles ${projectilesSpawnedThisTick.mkString("Set(", ", ", ")")}")
+					}
+					val wepEquippedId = Option(EquipmentUtils.getWepSlotItem).map(_.getId).getOrElse(-1)
 
-				if (projectilesSpawnedThisTick.nonEmpty) {
-					logTick(s"hunllef spawned these projectiles ${projectilesSpawnedThisTick.mkString("Set(", ", ", ")")}")
-				}
-				val wepEquippedId = Option(EquipmentUtils.getWepSlotItem).map(_.getId).getOrElse(-1)
+					val wieldAction: Action = Option(EthanApiPlugin.getHeadIcon(hunleffNpc) match {
+						case HeadIcon.RANGE_MAGE_MELEE if CombatUtils.getSpecEnergy >= 25 => Action.wield(30340) //want dagger if have energy
+	//					case HeadIcon.RANGE_MAGE_MELEE => Action.wield(23851) //want halbrid if low spec
+	//					case HeadIcon.RANGED => Action.wield(23854)
+	//					case HeadIcon.MELEE => Action.wield(23854)
+	//					case HeadIcon.MAGIC => Action.wield(23857)
+						case null => Action.wield(23857)
+						case unknown => Action.NoOp//.wield(23851)
+					}).get
 
-				val wieldAction: Action = Option(EthanApiPlugin.getHeadIcon(hunleffNpc) match {
-					case HeadIcon.RANGE_MAGE_MELEE if CombatUtils.getSpecEnergy < 25 => Action.wield(23851) //want halbrid if low spec
-					case HeadIcon.RANGE_MAGE_MELEE => Action.wield(30340) //want dagger if have energy
-					case null => Action.wield(23857)
-					case unknown => Action.wield(23851)
-				}).get
-
-				val actionsToTake = if (wieldAction.shouldRun) {
-					Seq(wieldAction)
-				} else {
-					{
-						wepEquippedId match {
-							case 30340 => Seq(Action.ActivateSpec, Action.pray(Prayer.ULTIMATE_STRENGTH, Prayer.INCREDIBLE_REFLEXES, Prayer.STEEL_SKIN))
-							case 23851 => Seq(Action.pray(Prayer.ULTIMATE_STRENGTH, Prayer.INCREDIBLE_REFLEXES, Prayer.STEEL_SKIN))
-							case 23857 => Seq(Action.pray(Prayer.EAGLE_EYE, Prayer.STEEL_SKIN))
-							case _ => Seq.empty
-						}
-					}.appended(
-						if (client.getProjectiles.asScala.exists(p => p.getId == 3164 && p.getInteracting == client.getLocalPlayer)) {
-							DisableOverheads
-						} else {
-							currentCycle match {
-								case Range(couldBeInverted) => PrayRange
-								case Mage => PrayMagic
+					val actionsToTake = if (wieldAction.shouldRun) {
+						Seq(wieldAction)
+					} else {
+						{
+							wepEquippedId match {
+								case 30340 => Seq(Action.ActivateSpec, Action.pray(Prayer.PIETY))
+								case 23851 => Seq(Action.pray(Prayer.PIETY))
+								case 23857 => Seq(Action.pray(Prayer.EAGLE_EYE, Prayer.STEEL_SKIN))
+								case 23854 => Seq(Action.pray(Prayer.MYSTIC_MIGHT, Prayer.STEEL_SKIN))
+								case _ => Seq.empty
 							}
-						}
-					)
-				}
-				actionsToTake.filter(_.shouldRun).foreach(a => {
-					logTick("Taking action \'{}\'", a.name)
-					a.run()
-				})
+						}.appended(
+							if (client.getProjectiles.asScala.exists(p => p.getId == 3687 && p.getInteracting == client.getLocalPlayer)) {
+								DisableOverheads
+							} else {
+								currentCycle match {
+									case Range(couldBeInverted) => PrayRange
+									case Mage => PrayMagic
+								}
+							}
+						)
+					}
+					actionsToTake.filter(_.shouldRun).foreach(a => {
+						logTick("Taking action \'{}\'", a.name)
+						a.run()
+					})
 
-				State.HunllefState.onTick()
-				projectilesSpawnedThisTick = Set.empty
+					State.HunllefState.onTick()
+					projectilesSpawnedThisTick = Set.empty
+				}
 			}
 		}
 

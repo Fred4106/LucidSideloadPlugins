@@ -23,6 +23,7 @@ import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.FontManager
 import net.runelite.client.ui.overlay.OverlayManager
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
 
 import java.awt.Font
@@ -48,6 +49,7 @@ import scala.util.{Random, Try}
 @Singleton
 class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 	@Inject val client: Client = null
+	@Inject val modelOutlineRenderer: ModelOutlineRenderer = null
 	@Inject val clientThread: ClientThread = null
 	@Inject val config: FredsPvmHelperConfig = null
 	@Inject val notifier: Notifier = null

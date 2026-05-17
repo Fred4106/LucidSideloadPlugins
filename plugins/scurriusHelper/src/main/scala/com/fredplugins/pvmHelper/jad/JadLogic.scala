@@ -13,7 +13,8 @@ import net.runelite.client.config.*
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
-import com.fredplugins.common.Locatable.{given, *}
+import com.fredplugins.common.Locatable.{*, given}
+
 import java.awt.Color
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, InteractionUtils, NpcUtils}
@@ -28,6 +29,7 @@ import net.runelite.client.events.ConfigChanged
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.FontManager
 import net.runelite.client.ui.overlay.OverlayManager
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
 
 import java.awt.Font
@@ -53,6 +55,7 @@ import scala.util.chaining.*
 class JadLogic() extends Plugin with BossToolTrait {
 	@Inject val client: Client = null
 	@Inject val clientThread: ClientThread = null
+	@Inject val modelOutlineRenderer: ModelOutlineRenderer = null
 	@Inject val config: JadConfig = null
 	@Inject val notifier: Notifier = null
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
@@ -266,14 +269,13 @@ class JadLogic() extends Plugin with BossToolTrait {
 
 			requestedJadPrayer match {
 				case Some(p) => CombatUtils.activatePrayer(p)
-				case None => CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE)
+				case None => if(config.defaultToMelee()) { CombatUtils.activatePrayer(Prayer.PROTECT_FROM_MELEE) }
 			}
 
 			if (jad.wrapped.isDead) {
 				CombatUtils.deactivatePrayers(false)
 			} else {
-				CombatUtils.activatePrayer(Prayer.ULTIMATE_STRENGTH)
-				CombatUtils.activatePrayer(Prayer.INCREDIBLE_REFLEXES)
+				CombatUtils.activatePrayer(Prayer.MYSTIC_MIGHT)
 			}
 			//handle jad
 		}

@@ -188,7 +188,7 @@ public class LayoutHelper extends Plugin {
         if((chatMessageType == ChatMessageType.GAMEMESSAGE || chatMessageType == ChatMessageType.SPAM) && name.isEmpty() && messageNode.getSender() == null) {
             LootBroadcastMessage lootMsg = LootBroadcastHelper$.MODULE$.parse(message);
             if(lootMsg != null) {
-                log.debug("Loot message {}", lootMsg);
+//                log.debug("Loot message {}", lootMsg);
                 intStack[intStackSize - 3] = 0;
             }
         }

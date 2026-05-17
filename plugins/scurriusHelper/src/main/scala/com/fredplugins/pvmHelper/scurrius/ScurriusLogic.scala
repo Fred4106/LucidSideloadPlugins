@@ -13,6 +13,7 @@ import net.runelite.client.config.*
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, TitleComponent}
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 
 import java.awt.Color
 import scala.reflect.Selectable.reflectiveSelectable
@@ -59,6 +60,8 @@ class ScurriusLogic() extends Plugin with BossToolTrait {
 	@Inject val clientThread: ClientThread   = null
 	@Inject val config      : ScurriusConfig = null
 	@Inject val notifier    : Notifier       = null
+	@Inject val modelOutlineRenderer: ModelOutlineRenderer = null
+
 	private         val log                    : Logger                             = ShimUtils.getLogger(
 		this
 			.getClass

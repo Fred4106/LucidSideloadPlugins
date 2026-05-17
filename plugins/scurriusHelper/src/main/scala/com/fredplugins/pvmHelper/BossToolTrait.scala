@@ -8,6 +8,7 @@ import net.runelite.api.events.NpcSpawned
 import net.runelite.client.plugins.Plugin
 import net.runelite.client.ui.overlay.OverlayPanel
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import org.slf4j.Logger
 
 import java.awt.Color
@@ -15,6 +16,7 @@ import java.awt.Color
 trait BossToolTrait {
 	self: Plugin =>
 	def client: Client
+	def modelOutlineRenderer: ModelOutlineRenderer
 	//	def log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
 	//	def name: String = this.getClass.getSimpleName.stripSuffix("Logic")
 
