@@ -1516,6 +1516,14 @@ public interface FredsItemChargesConfig extends Config {
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = ABYSSAL_TENTACLE + _INFOBOX,
+		name = "Abyssal tentacle",
+		description = "",
+		section = infoboxes
+	)
+	default boolean abyssalTentacleInfobox() { return true; }
+
 	@ConfigSection(
 		name = "Overlays",
 		description = "Choose for which charged items number is shown next to it",
@@ -2751,6 +2759,16 @@ public interface FredsItemChargesConfig extends Config {
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = ABYSSAL_TENTACLE + _OVERLAY,
+		name = "Abyssal tentacle",
+		description = "",
+		section = overlays
+	)
+	default boolean abyssalTentacleOverlay() {
+		return true;
+	}
+
 	@ConfigSection(
 		name = "Debug",
 		description = "Values of charges for all items under the hood",
@@ -3650,4 +3668,11 @@ public interface FredsItemChargesConfig extends Config {
 	default int getAmuletOfChemistryCharges() {
 		return ChargeId.UNKNOWN;
 	}
+
+	@ConfigItem(
+		keyName = ABYSSAL_TENTACLE,
+		name = ABYSSAL_TENTACLE,
+		description = ABYSSAL_TENTACLE,
+		section = debug
+	) default int getAbyssalTentacleCharges() { return ChargeId.UNKNOWN; }
 }

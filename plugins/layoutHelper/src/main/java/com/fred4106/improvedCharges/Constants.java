@@ -131,6 +131,7 @@ public final class Constants {
 	public static final String WATERSKIN = "waterskin";
 
 	// Weapons
+	public static final String ABYSSAL_TENTACLE = "abyssal_tentacle";
 	public static final String ARCLIGHT = "arclight";
 	public static final String BLAZING_BLOWPIPE = "blazing_blowpipe";
 	public static final String BOW_OF_FAERDHINEN = "bow_of_faerdhinen";
