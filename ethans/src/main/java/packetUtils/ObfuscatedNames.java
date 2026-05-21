@@ -274,11 +274,11 @@ public final class ObfuscatedNames
 	public static final String OPNPCT_METHOD_NAME1 = "ko";
 	public static final String OPNPCT_WRITE2 = "itemId";
 	public static final String OPNPCT_METHOD_NAME2 = "ed";
-	public static final String OPNPCT_WRITE3 = "slot";
+	public static final String OPNPCT_WRITE3 = "widgetId";
 	public static final String OPNPCT_METHOD_NAME3 = "tv";
 	public static final String OPNPCT_WRITE4 = "ctrlDown";
 	public static final String OPNPCT_METHOD_NAME4 = "di";
-	public static final String OPNPCT_WRITE5 = "widgetId";
+	public static final String OPNPCT_WRITE5 = "slot";
 	public static final String OPNPCT_METHOD_NAME5 = "ko";
 	public static final String[][] OPNPCT_WRITES = new String[][]{
 		{"a 128", "r 8"},

@@ -103,8 +103,8 @@ class KrakenHelper @Inject()(override val parent: PvmDebuggerPlugin, override va
 	@Subscribe
 	def onNpcChanged(e: NpcChanged): Unit = {
 		if(e.getNpc.getId == NpcID.SLAYER_KRAKEN_BOSS && e.getOld.getId == NpcID.SLAYER_KRAKEN_BOSS_WHIRLPOOL) {
-			CombatUtils.activatePrayer(Prayer.MYSTIC_LORE)
-//			CombatUtils.activatePrayer(Prayer.MYSTIC_MIGHT)
+//			CombatUtils.activatePrayer(Prayer.MYSTIC_LORE)
+			CombatUtils.activatePrayer(Prayer.MYSTIC_MIGHT)
 		}
 	}
 
@@ -136,19 +136,25 @@ class KrakenHelper @Inject()(override val parent: PvmDebuggerPlugin, override va
 					NpcUtils.attackNpc(kraken)
 					cooldown = 12
 				}
-				else if(myHp < config.lowerHpThreshold() && EquipmentUtils.getWepSlotItem.getId != ItemID.MAGICTRAINING_WAND_MASTER) {
-					cooldown = if(InventoryUtils.wieldItem(ItemID.MAGICTRAINING_WAND_MASTER)) 2 else 0
-				}
-				else if (myHp > config.upperHpThreshold() && EquipmentUtils.getWepSlotItem.getId != ItemID.WARPED_SCEPTRE) {
-					cooldown = if(InventoryUtils.wieldItem(ItemID.WARPED_SCEPTRE)) 2 else 0
-				}
+//				else if(myHp < config.lowerHpThreshold() && EquipmentUtils.getWepSlotItem.getId != ItemID.MAGICTRAINING_WAND_MASTER) {
+//					cooldown = if(InventoryUtils.wieldItem(ItemID.MAGICTRAINING_WAND_MASTER)) 2 else 0
+//				}
+//				else if (myHp > config.upperHpThreshold() && EquipmentUtils.getWepSlotItem.getId != ItemID.WARPED_SCEPTRE) {
+//					cooldown = if(InventoryUtils.wieldItem(ItemID.WARPED_SCEPTRE)) 2 else 0
+//				}
 				else if (localPlayer.getInteracting == null || localPlayer.getInteracting != kraken) {
 					if(kraken.getId == NpcID.SLAYER_KRAKEN_BOSS) {
 						countdownTillFirstAttack = 1
 					} else if(config.autoExplosive() && InventoryUtils.contains(ItemID.FISHING_EXPLOSIVE) && localPlayer.getInteracting == null) {
 						InteractionUtils.useItemOnNPC(ItemID.FISHING_EXPLOSIVE, kraken)
-						countdownTillFirstAttack = Random.nextInt(3)+1
+						countdownTillFirstAttack = Random.nextInt(3) + 1
 						cooldown = 4
+//						val explosivesWidgetOpt = Inventory.search().withId(ItemID.FISHING_EXPLOSIVE).first().toScala
+//						explosivesWidgetOpt.foreach(explosivesW => {
+//							InteractionUtils.useWidgetOnNPC(explosivesW, kraken)
+//							countdownTillFirstAttack = Random.nextInt(3) + 1
+//							cooldown = 4
+//						})
 					}
 				}
 			}

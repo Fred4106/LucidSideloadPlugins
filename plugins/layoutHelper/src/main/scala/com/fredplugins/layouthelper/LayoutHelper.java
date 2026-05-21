@@ -189,7 +189,7 @@ public class LayoutHelper extends Plugin {
             LootBroadcastMessage lootMsg = LootBroadcastHelper$.MODULE$.parse(message);
             if(lootMsg != null) {
 //                log.debug("Loot message {}", lootMsg);
-                intStack[intStackSize - 3] = 0;
+//                intStack[intStackSize - 3] = 0;
             }
         }
     }
