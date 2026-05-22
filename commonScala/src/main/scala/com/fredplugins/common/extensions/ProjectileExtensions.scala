@@ -34,7 +34,10 @@ object ProjectileExtensions {
 		def localLocation(using client: Client) : LocalPoint = {
 			val x: Int = e.getX.toInt
 			val y: Int = e.getY.toInt
-			new LocalPoint(x, y, client.getTopLevelWorldView)
+			new LocalPoint(x, y, client.getScene.getWorldViewId)
+		}
+		def worldLocation(using client: Client): WorldPoint = {
+			WorldPoint.fromLocal(client, localLocation)
 		}
 	}
 }

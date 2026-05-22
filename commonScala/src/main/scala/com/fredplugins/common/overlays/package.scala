@@ -1,7 +1,7 @@
 package com.fredplugins.common
 
 import com.fredplugins.common.extensions.ObjectExtensions.*
-import net.runelite.api.{Actor, Client, GameObject, NPC, Perspective, Player, Point, Projectile, WallObject}
+import net.runelite.api.{Actor, Client, GameObject, NPC, Perspective, Player, Point, Projectile, WallObject, WorldView}
 import net.runelite.api.Perspective.localToCanvas
 import net.runelite.api.coords.{LocalPoint, WorldPoint}
 import net.runelite.client.ui.overlay.OverlayUtil
@@ -134,8 +134,8 @@ package object overlays {
 		}
 	}
 	def renderProjectileOverlay(projectile: Projectile, text: String)(outlineThickness: Int, feather: Int, borderColor: Color)(using g: Graphics2D, client: Client, modelOutlineRenderer: ModelOutlineRenderer): Unit = {
-		val lp = LocalPoint(projectile.getX.toInt, projectile.getY.toInt, -1)
-		modelOutlineRenderer.drawModelOutline(client.getTopLevelWorldView, projectile.getModel, lp.getX, lp.getY, projectile.getZ.toInt, 0, outlineThickness,  borderColor, feather)
+		val lp = LocalPoint(projectile.getX.toInt, projectile.getY.toInt, client.getScene.getWorldViewId)
+		modelOutlineRenderer.drawModelOutline(client.getWorldView(lp.getWorldView), projectile.getModel, lp.getX, lp.getY, projectile.getZ.toInt, 0, outlineThickness,  borderColor, feather)
 		Option(text).filter(_.nonEmpty).zip(Option(getCanvasTextLocation(lp, text, 0))).foreach {
 			case (str, strLoc@(x, y, b)) => {
 				val padding = 5
@@ -178,8 +178,9 @@ package object overlays {
 			renderTileArea(localPoint, (1, 1), .4, 0, ColorUtil.colorWithAlpha(fillColor,32), fillColor.getAlpha, dashed)
 			renderMinimapArea(localPoint, (1, 1), .4, ColorUtil.colorWithAlpha(fillColor, 32), fillColor.getAlpha, dashed)
 
-			val textLocation@(x, y, b) = getCanvasTextLocation(localPoint, text, 0)
+			val textLocation = getCanvasTextLocation(localPoint, text, 0)
 			if (textLocation != null) {
+				val (x, y, b) = textLocation
 				val padding        = 5
 				val textBackground = new Rectangle(x - padding, y - padding - (b.getHeight.toInt / 2), b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding * 2)
 				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))

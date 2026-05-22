@@ -66,9 +66,16 @@ class HunllefLogic() extends Plugin with BossToolTrait {
 			if (self.plugin.inArea()) {
 //				self.log.debug(s"pausing here ${graphics}, ${client}, ${modelOutlineRenderer}, {}", client.getTickCount)
 				self.plugin.State.tornadoes.foreach(tt => {
-					val lp = TWorldPoint.get(tt.getWorldLocation).pipe(LocalPoint.fromWorld(client, _))
-//					val polygon = Perspective.getCanvasTilePoly(client, lp)
-					self.log.debug(s"lp=${lp}, wrapped=${tt.wrapped.niceString}")
+					val lp = tt.wrapped.getLocalLocation
+					val polygon = Perspective.getCanvasTilePoly(client, lp)
+					self.log.debug(s"lp=${lp}, polygon=${polygon}, wrapped=${tt.wrapped.niceString}")
+					val (color: Color, str: String) = tt match {
+						case tornado: ChaseTornado => (Color.blue, s"${tornado.diesOnTick}")
+						case tornado: RoamingTornado => (Color.RED, s"${tornado.scenePos}")
+					}
+
+					drawOutlineAndFill(graphics, ColorUtil.colorWithAlpha(color, 192), ColorUtil.colorWithAlpha(color, 128), 2, polygon)
+					renderTextLocation(graphics, Perspective.getCanvasTextLocation(client, graphics, lp, str, 20), str, Color.white)
 				})
 			}
 //			State.tornadoes.map(tt => {

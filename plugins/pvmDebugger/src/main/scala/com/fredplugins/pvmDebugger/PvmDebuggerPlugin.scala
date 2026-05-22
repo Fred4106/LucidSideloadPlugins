@@ -24,6 +24,7 @@ import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneConfig
 import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneHelper
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiConfig
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiHelper
+import com.fredplugins.pvmDebugger.thermy.{FredsThermyConfig, FredsThermyHelper}
 import com.fredplugins.pvmDebugger.titans.FredsTitanConfig
 import com.fredplugins.pvmDebugger.titans.FredsTitanHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
@@ -103,6 +104,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val yamaHelper: FredsYamaHelper             = null
 	@Inject private val shellsbaneHelper: FredsShellsbaneHelper = null
 	@Inject private val hesporiHelper: FredsHesporiHelper = null
+	@Inject private val thermyHelper: FredsThermyHelper = null
 	@Inject private val cerbHelper: CerberusHelper              = null
 
 
@@ -187,7 +189,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List(thermyHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -397,4 +399,5 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideCerbConfig(configManager: ConfigManager): CerberusConfig = configManager.getConfig(classOf[CerberusConfig])
 
 	@Provides def provideHespori(configManager: ConfigManager): FredsHesporiConfig = configManager.getConfig(classOf[FredsHesporiConfig])
+	@Provides def provideThermy(configManager: ConfigManager): FredsThermyConfig = configManager.getConfig(classOf[FredsThermyConfig])
 }
