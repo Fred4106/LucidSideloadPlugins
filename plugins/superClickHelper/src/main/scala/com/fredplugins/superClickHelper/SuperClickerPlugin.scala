@@ -10,7 +10,7 @@ import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
 import ethanApiPlugin.lucidplugins.api.utils.InventoryUtils
-import net.runelite.api.gameval.ItemID.{BRUT_SPAWNING_SALMON, BRUT_SPAWNING_TROUT, BRUT_STURGEON, KNIFE, TINDERBOX, MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS}
+import net.runelite.api.gameval.ItemID.{BRUT_SPAWNING_SALMON, BRUT_SPAWNING_TROUT, BRUT_STURGEON, KNIFE, FLETCHING_KNIFE, TINDERBOX, MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS}
 import net.runelite.api.gameval.ItemID.{GRAPES, ZAMORAK_GRAPES, JUG_WATER}
 import net.runelite.api.widgets.WidgetInfo
 import org.intellij.lang.annotations.MagicConstant
@@ -33,6 +33,7 @@ import net.runelite.api.events.PostClientTick
 import net.runelite.api.events.ScriptPreFired
 import net.runelite.api.events.{GameObjectSpawned, GameTick, MenuEntryAdded, MenuOptionClicked, PostMenuSort}
 import net.runelite.api.gameval.InterfaceID
+import net.runelite.api.gameval.InterfaceID.MagicSpellbook.{PLANK_MAKE, ENCHANT_1, ENCHANT_2, ENCHANT_3, ENCHANT_4, ENCHANT_5, ENCHANT_6, ENCHANT_7, TRANSMUTE_UPGRADE, TRANSMUTE_DOWNGRADE, HIGH_ALCHEMY, STRING_JEWEL}
 import net.runelite.api.gameval.InventoryID
 import net.runelite.api.gameval.ItemID
 import net.runelite.api.gameval.VarbitID
@@ -73,6 +74,29 @@ import net.runelite.api.gameval.ItemID.{MYSTIC_FIRE_STAFF, MYSTIC_WATER_STAFF, M
 import net.runelite.api.gameval.ItemID.{DIAMOND_NECKLACE, DIAMOND_RING, EMERALD_NECKLACE, EMERALD_RING, GOLD_NECKLACE, GOLD_RING, JEWL_DIAMOND_BRACELET, JEWL_EMERALD_BRACELET, JEWL_GOLD_BRACELET, JEWL_RUBY_BRACELET, JEWL_SAPPHIRE_BRACELET, RUBY_NECKLACE, RUBY_RING, SAPPHIRE_NECKLACE, SAPPHIRE_RING, STRUNG_DIAMOND_AMULET, STRUNG_EMERALD_AMULET, STRUNG_GOLD_AMULET, STRUNG_RUBY_AMULET, STRUNG_SAPPHIRE_AMULET}
 import net.runelite.api.gameval.ItemID.{ARROW_SHAFT, FEATHER, HUNTING_STRIPY_BIRD_FEATHER, HUNTING_JUNGLE_FEATHER, HUNTING_POLAR_FEATHER, HUNTING_DESERT_FEATHER, HUNTING_WOODLAND_FEATHER, HEADLESS_ARROW, JADE_BRACELET, JADE_NECKLACE, JADE_RING, MAHOGANY_LOGS, OPAL_BRACELET, OPAL_NECKLACE, OPAL_RING, SLAYER_BROAD_ARROWHEAD, STRUNG_JADE_AMULET, STRUNG_OPAL_AMULET, STRUNG_TOPAZ_AMULET, TEAK_LOGS, TOPAZ_BRACELET, TOPAZ_NECKLACE, TOPAZ_RING, UNSTRUNG_DIAMOND_AMULET, UNSTRUNG_DRAGONSTONE_AMULET, UNSTRUNG_EMERALD_AMULET, UNSTRUNG_GOLD_AMULET, UNSTRUNG_JADE_AMULET, UNSTRUNG_ONYX_AMULET, UNSTRUNG_OPAL_AMULET, UNSTRUNG_RUBY_AMULET, UNSTRUNG_SAPPHIRE_AMULET, UNSTRUNG_TOPAZ_AMULET, UNSTRUNG_ZENYTE_AMULET}
 import net.runelite.api.gameval.ItemID.{ROSEWOOD_LOGS, CAMPHOR_LOGS, IRONWOOD_LOGS, MAHOGANY_LOGS, TEAK_LOGS}
+import net.runelite.api.gameval.ItemID.{UNCUT_SAPPHIRE, UNCUT_EMERALD, UNCUT_RUBY, UNCUT_DIAMOND, UNCUT_DRAGONSTONE, UNCUT_OPAL, UNCUT_JADE, UNCUT_RED_TOPAZ, CHISEL, ARCEUUS_ESSENCE_BLOCK_DARK}
+import net.runelite.api.gameval.ItemID.{IRON_ORE, COAL, MITHRIL_ORE, ADAMANTITE_ORE, RUNITE_ORE}
+import net.runelite.api.gameval.ItemID.{COW_HIDE, VILLAGE_SNAKE_HIDE, DRAGONHIDE_GREEN, DRAGONHIDE_BLUE, DRAGONHIDE_RED, DRAGONHIDE_BLACK}
+import net.runelite.api.gameval.ItemID.{LOGS, OAK_LOGS, WILLOW_LOGS, TEAK_LOGS, MAPLE_LOGS, MAHOGANY_LOGS, YEW_LOGS, MAGIC_LOGS, REDWOOD_LOGS}
+import net.runelite.api.gameval.ItemID.{LOGS_PYRE, OAK_LOGS_PYRE, WILLOW_LOGS_PYRE, MAPLE_LOGS_PYRE, YEW_LOGS_PYRE, MAGIC_LOGS_PYRE, REDWOOD_LOGS_PYRE}
+import net.runelite.api.gameval.ItemID.{BONES, BAT_BONES, BIG_BONES, BABYWYRM_BONES, BABYDRAGON_BONES, WYRM_BONES, DRAGON_BONES, DRAKE_BONES, LAVA_DRAGON_BONES, HYDRA_BONES, DAGANNOTH_KING_BONES,DRAGON_BONES_SUPERIOR}
+import net.runelite.api.gameval.ItemID.{ZOGRE_BONES, ZOGRE_ANCESTRAL_BONES_FAYG, ZOGRE_ANCESTRAL_BONES_OURG, ZOGRE_ANCESTRAL_BONES_RAURG}
+import net.runelite.api.gameval.ItemID.{ASHES, FOSSIL_VOLCANIC_ASH, FIENDISH_ASHES, VILE_ASHES, MALICIOUS_ASHES, ABYSSAL_ASHES, INFERNAL_ASHES}
+import net.runelite.api.gameval.ItemID.{BUCKET_COMPOST, BUCKET_SUPERCOMPOST, BUCKET_ULTRACOMPOST}
+import net.runelite.api.gameval.ItemID.{CACTUS_SEED, POTATO_CACTUS_SEED}
+import net.runelite.api.gameval.ItemID.{TEAK_SEED, MAHOGANY_SEED}
+import net.runelite.api.gameval.ItemID.{APPLE_TREE_SEED, BANANA_TREE_SEED, ORANGE_TREE_SEED, CURRY_TREE_SEED, PINEAPPLE_TREE_SEED, PAPAYA_TREE_SEED, PALM_TREE_SEED, DRAGONFRUIT_TREE_SEED}
+import net.runelite.api.gameval.ItemID.{ACORN, WILLOW_SEED, MAPLE_SEED, YEW_SEED, MAGIC_TREE_SEED, REDWOOD_TREE_SEED, SPIRIT_TREE_SEED}
+import net.runelite.api.gameval.ItemID.{AIRRUNE, WATERRUNE, EARTHRUNE, FIRERUNE, CHAOSRUNE, NATURERUNE, COSMICRUNE, LAWRUNE, DEATHRUNE, ASTRALRUNE, BLOODRUNE, SOULRUNE, WRATHRUNE}
+import net.runelite.api.gameval.ItemID.{REDBERRY_BUSH_SEED, CADAVABERRY_BUSH_SEED, DWELLBERRY_BUSH_SEED, JANGERBERRY_BUSH_SEED, WHITEBERRY_BUSH_SEED, POISONIVY_BUSH_SEED}
+import net.runelite.api.gameval.ItemID.{BARLEY_SEED, JUTE_SEED, HAMMERSTONE_HOP_SEED, ASGARNIAN_HOP_SEED, YANILLIAN_HOP_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED}
+import net.runelite.api.gameval.ItemID.{GUAM_SEED, MARRENTILL_SEED, TARROMIN_SEED, HARRALANDER_SEED, RANARR_SEED, TOADFLAX_SEED, IRIT_SEED, AVANTOE_SEED, KWUARM_SEED, SNAPDRAGON_SEED, HUASCA_SEED, CADANTINE_SEED, LANTADYME_SEED, DWARF_WEED_SEED, TORSTOL_SEED}
+import net.runelite.api.gameval.ItemID.{MARIGOLD_SEED, ROSEMARY_SEED, NASTURTIUM_SEED, WOAD_SEED, LIMPWURT_SEED, WHITE_LILY_SEED}
+import net.runelite.api.gameval.ItemID.{POTATO_SEED, ONION_SEED, CABBAGE_SEED, TOMATO_SEED, SWEETCORN_SEED, STRAWBERRY_SEED, WATERMELON_SEED, SNAPE_GRASS_SEED}
+import net.runelite.api.gameval.ItemID.{CLAY, SILVER_ORE, GOLD_ORE}
+import net.runelite.api.gameval.ItemID.{RAW_SHRIMP, RAW_SARDINE, RAW_HERRING, RAW_ANCHOVIES, RAW_MACKEREL, RAW_TROUT, RAW_COD, RAW_PIKE, RAW_SALMON, RAW_TUNA, RAW_LOBSTER, RAW_BASS, RAW_SWORDFISH, TBWT_RAW_KARAMBWAN, RAW_SHARK, RAW_ANGLERFISH, RAW_DARK_CRAB}
+
+
 import packetUtils.WidgetInfoExtended
 import com.fredplugins.superClickHelper.InventoryMonitorService
 import scala.collection.immutable.HashMap
@@ -222,7 +246,10 @@ class SuperClickerPlugin() extends Plugin {
 				})
 				w.setOnOpListener(newOnOpListener)
 			}
-		}
+		}.appendedAll(List(
+			(1982, ((-1, null.asInstanceOf[ItemComposition]), (TRANSMUTE_UPGRADE, client.getWidget(TRANSMUTE_UPGRADE)))),
+			(1982, ((-1, null.asInstanceOf[ItemComposition]), (TRANSMUTE_DOWNGRADE, client.getWidget(TRANSMUTE_DOWNGRADE))))
+		).filter(_._1 == spellBookEnum))
 	}
 
 	private def reinitializeSpellbook(): Unit = {
@@ -412,6 +439,61 @@ class SuperClickerPlugin() extends Plugin {
 		}
 	}
 
+	val transmuteChains = List(
+			List(
+				UNCUT_SAPPHIRE,
+				UNCUT_EMERALD,
+				UNCUT_RUBY,
+				UNCUT_DIAMOND,
+				UNCUT_DRAGONSTONE,
+				UNCUT_OPAL,
+				UNCUT_JADE,
+				UNCUT_RED_TOPAZ
+			),
+			List(
+				IRON_ORE,
+				COAL,
+				MITHRIL_ORE,
+				ADAMANTITE_ORE,
+				RUNITE_ORE
+			),
+			List(COW_HIDE, VILLAGE_SNAKE_HIDE, DRAGONHIDE_GREEN, DRAGONHIDE_BLUE, DRAGONHIDE_RED, DRAGONHIDE_BLACK),
+			List(LOGS, OAK_LOGS, WILLOW_LOGS, TEAK_LOGS, MAPLE_LOGS, MAHOGANY_LOGS, YEW_LOGS, MAGIC_LOGS, REDWOOD_LOGS),
+			List(LOGS_PYRE, OAK_LOGS_PYRE, WILLOW_LOGS_PYRE, MAPLE_LOGS_PYRE, YEW_LOGS_PYRE, MAGIC_LOGS_PYRE, REDWOOD_LOGS_PYRE),
+			List(BONES, BAT_BONES, BIG_BONES, BABYWYRM_BONES, BABYDRAGON_BONES, WYRM_BONES, DRAGON_BONES, DRAKE_BONES, LAVA_DRAGON_BONES, HYDRA_BONES, DAGANNOTH_KING_BONES,DRAGON_BONES_SUPERIOR),
+			List(ZOGRE_BONES, ZOGRE_ANCESTRAL_BONES_FAYG, ZOGRE_ANCESTRAL_BONES_OURG, ZOGRE_ANCESTRAL_BONES_RAURG),
+			List(ASHES, FOSSIL_VOLCANIC_ASH, FIENDISH_ASHES, VILE_ASHES, MALICIOUS_ASHES, ABYSSAL_ASHES, INFERNAL_ASHES),
+			List(BUCKET_COMPOST, BUCKET_SUPERCOMPOST, BUCKET_ULTRACOMPOST),
+			List(CACTUS_SEED, POTATO_CACTUS_SEED),
+			List(TEAK_SEED, MAHOGANY_SEED),
+			List(APPLE_TREE_SEED, BANANA_TREE_SEED, ORANGE_TREE_SEED, CURRY_TREE_SEED, PINEAPPLE_TREE_SEED, PAPAYA_TREE_SEED, PALM_TREE_SEED, DRAGONFRUIT_TREE_SEED),
+			List(ACORN, WILLOW_SEED, MAPLE_SEED, YEW_SEED, MAGIC_TREE_SEED, REDWOOD_TREE_SEED, SPIRIT_TREE_SEED),
+			List(AIRRUNE, WATERRUNE, EARTHRUNE, FIRERUNE, CHAOSRUNE, NATURERUNE, COSMICRUNE, LAWRUNE, DEATHRUNE, ASTRALRUNE, BLOODRUNE, SOULRUNE, WRATHRUNE),
+			List(REDBERRY_BUSH_SEED, CADAVABERRY_BUSH_SEED, DWELLBERRY_BUSH_SEED, JANGERBERRY_BUSH_SEED, WHITEBERRY_BUSH_SEED, POISONIVY_BUSH_SEED),
+			List(BARLEY_SEED, JUTE_SEED, HAMMERSTONE_HOP_SEED, ASGARNIAN_HOP_SEED, YANILLIAN_HOP_SEED, KRANDORIAN_HOP_SEED, WILDBLOOD_HOP_SEED),
+			List(GUAM_SEED, MARRENTILL_SEED, TARROMIN_SEED, HARRALANDER_SEED, RANARR_SEED, TOADFLAX_SEED, IRIT_SEED, AVANTOE_SEED, KWUARM_SEED, SNAPDRAGON_SEED, HUASCA_SEED, CADANTINE_SEED, LANTADYME_SEED, DWARF_WEED_SEED, TORSTOL_SEED),
+			List(MARIGOLD_SEED, ROSEMARY_SEED, NASTURTIUM_SEED, WOAD_SEED, LIMPWURT_SEED, WHITE_LILY_SEED),
+			List(POTATO_SEED, ONION_SEED, CABBAGE_SEED, TOMATO_SEED, SWEETCORN_SEED, STRAWBERRY_SEED, WATERMELON_SEED, SNAPE_GRASS_SEED),
+			List(CLAY, SILVER_ORE, GOLD_ORE),
+			List(RAW_SHRIMP, RAW_SARDINE, RAW_HERRING, RAW_ANCHOVIES, RAW_MACKEREL, RAW_TROUT, RAW_COD, RAW_PIKE, RAW_SALMON, RAW_TUNA, RAW_LOBSTER, RAW_BASS, RAW_SWORDFISH, TBWT_RAW_KARAMBWAN, RAW_SHARK, RAW_ANGLERFISH, RAW_DARK_CRAB)
+		)
+
+	lazy val notedTransmuteChains = transmuteChains.map(_.flatMap(iid => {
+			client.getItemDefinition(iid).pipe(x => Option(x.getLinkedNoteId).filter(_ != -1)).toList
+	}))
+
+	private object Upgradable {
+		def unapply(id: Int): Boolean = {
+			transmuteChains.appendedAll(notedTransmuteChains).find(_.contains(id)).map(_.reverse.head != id).getOrElse(false)
+		}
+	}
+
+	private object Downgradable {
+		def unapply(id: Int): Boolean = {
+			transmuteChains.appendedAll(notedTransmuteChains).find(_.contains(id)).map(_.head != id).getOrElse(false)
+		}
+	}
+
 	//			MenuEntryTarget(menuOptionClicked).foreach(met => {
 	//				log.debug("MenuClicked: {}", met)
 	//			})
@@ -426,8 +508,63 @@ class SuperClickerPlugin() extends Plugin {
 	}
 
 	@Subscribe
-	def onInventoryItemMenuEntryAdded(menuOptionAdded: MenuEntryAdded): Unit = {
-		import InterfaceID.MagicSpellbook.{PLANK_MAKE, ENCHANT_1,ENCHANT_2,ENCHANT_3,ENCHANT_4,ENCHANT_5,ENCHANT_6,ENCHANT_7,HIGH_ALCHEMY,STRING_JEWEL}
+	def onInventoryItemMenuEntryAddedAlch(menuOptionAdded: MenuEntryAdded): Unit = {
+		val me = menuOptionAdded.getMenuEntry
+		if(!client.getMenu.getMenuEntries.contains(me) || blockTopLevelSwitch > -1) return
+		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
+			val inventoryItemWidget = me.getWidget
+			Option(me.getItemId).collect{
+				case Alchable() if findSpell(HIGH_ALCHEMY).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(HIGH_ALCHEMY).zip(Some(3))
+				case Alchable() if findSpell(TRANSMUTE_UPGRADE).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(TRANSMUTE_UPGRADE).zip(Some(3))
+			}.flatten.collect {
+				case (w, d) => {
+					client.getMenu.createMenuEntry(-1)
+						.setOption("Alch".colored(Color.GREEN))
+						.setType(MenuAction.RUNELITE)
+						.setIdentifier(0)
+						.onClick(e => {
+							blockTopLevelSwitch = d
+							clientThread.invokeLater(() => {
+								InteractionUtils.useWidgetOnWidget(w, inventoryItemWidget)
+							})
+						}).tap(m => priorityMenuEntries.addOne(m));
+				}
+			}
+		}
+	}
+
+	@Subscribe
+	def onInventoryItemMenuEntryAddedTransmute(menuOptionAdded: MenuEntryAdded): Unit = {
+		val me = menuOptionAdded.getMenuEntry
+		if(!client.getMenu.getMenuEntries.contains(me) || blockTopLevelSwitch > -1) return
+		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
+
+			val spellsToSearch = List[(Int => Boolean, String, Int, List[Int])](
+				(Downgradable.unapply(_), "Downgrade", TRANSMUTE_DOWNGRADE, List(1810, 6925)),
+				(Upgradable.unapply(_), "Upgrade", TRANSMUTE_UPGRADE, List(1809, 6924)),
+			)
+			spellsToSearch.flatMap { (isMatch, verb, spell, spriteIds) =>
+				val spellWidgetOpt = findSpell(spell).filter(w => spriteIds.contains(w.getSpriteId)).map(w => (w, verb, 3))
+				val inventoryItemWidgetOpt = Option.when(isMatch(me.getItemId))(me.getWidget)
+				spellWidgetOpt.zip(inventoryItemWidgetOpt).toList
+			}.foreach { case ((spellWidget, spellVerb, spellDelay), inventoryItemWidget) =>
+				client.getMenu.createMenuEntry(-1)
+					.setOption(spellVerb.colored(Color.CYAN))
+					.setType(MenuAction.RUNELITE)
+					.setIdentifier(0)
+					.onClick(e => {
+						blockTopLevelSwitch = spellDelay
+						clientThread.invokeLater(() => {
+							InteractionUtils.useWidgetOnWidget(spellWidget, inventoryItemWidget)
+						})
+					}).tap(m => priorityMenuEntries.addOne(m));
+			}
+
+		}
+	}
+
+	@Subscribe
+	def onInventoryItemMenuEntryAddedEnchant(menuOptionAdded: MenuEntryAdded): Unit = {
 		val me = menuOptionAdded.getMenuEntry
 		if(!client.getMenu.getMenuEntries.contains(me) || blockTopLevelSwitch > -1) return
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
@@ -441,20 +578,13 @@ class SuperClickerPlugin() extends Plugin {
 				case TOPAZ_JEWELRY() if findSpell(ENCHANT_3).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(ENCHANT_3).zip(Some(2))
 				case RUBY_JEWELRY() if findSpell(ENCHANT_3).exists(u => List(1767 , 39).contains(u.getSpriteId)) => findSpell(ENCHANT_3).zip(Some(2))
 				case DIAMOND_JEWELRY() if findSpell(ENCHANT_4).exists(u => List(1768 , 43).contains(u.getSpriteId)) => findSpell(ENCHANT_4).zip(Some(2))
-//				case UNSTRUNG_JEWELRY() if findSpell(STRING_JEWEL).exists(u => List(1954, 550).contains(u.getSpriteId))  => findSpell(STRING_JEWEL).zip(Some(3))
-				case Alchable() if findSpell(HIGH_ALCHEMY).exists(u => List(41, 1781).contains(u.getSpriteId)) => findSpell(HIGH_ALCHEMY).zip(Some(3))
 			}.flatten.collect {//(u  => u)//)//(iid => iid.)
 //				case (a, (b, (c, d))) => a
 				case (w, d) => {
-//					val inventoryItemWidget = findItem
 					client.getMenu.createMenuEntry(-1)
-						.setOption("Cast".colored(Color.BLUE))
-//						.setType(MenuAction.WIDGET_TARGET)
+						.setOption("Enchant".colored(Color.BLUE))
 						.setType(MenuAction.RUNELITE)
 						.setIdentifier(0)
-//						.setParam0(-1)
-//						.setParam1(cid)
-//					.onClick(e => {
 						.onClick(e => {
 							blockTopLevelSwitch = d
 							clientThread.invokeLater(() => {
@@ -471,8 +601,6 @@ class SuperClickerPlugin() extends Plugin {
 		val me = menuOptionAdded.getMenuEntry
 		if (!client.getMenu.getMenuEntries.contains(me)) return
 		if (me.getType == MenuAction.WIDGET_TARGET && me.getParam1 == InterfaceID.Inventory.ITEMS) {
-//			log.debug("p0={}, wid={}", me.getParam0, me.getWidget.toString)
-//			val widget_a = InventoryItem(me.getWidget.getIndex, me.getWidget.getItemId, me.getWidget.getItemQuantity)
 			val a = inventoryService.getAt(me.getParam0)
 			val b = a.map(_.id).collect {
 				case ARROW_SHAFT => List(FEATHER, HUNTING_STRIPY_BIRD_FEATHER, HUNTING_JUNGLE_FEATHER, HUNTING_POLAR_FEATHER, HUNTING_DESERT_FEATHER,HUNTING_WOODLAND_FEATHER)
@@ -480,12 +608,22 @@ class SuperClickerPlugin() extends Plugin {
 				case HEADLESS_ARROW => List(SLAYER_BROAD_ARROWHEAD)
 				case SLAYER_BROAD_ARROWHEAD => List(HEADLESS_ARROW)
 				case BRUT_SPAWNING_TROUT | BRUT_SPAWNING_SALMON | BRUT_STURGEON  => List(KNIFE)
-				case KNIFE => List(MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS, BRUT_SPAWNING_TROUT, BRUT_SPAWNING_SALMON, BRUT_STURGEON)
+				case KNIFE | FLETCHING_KNIFE => List(MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS, BRUT_SPAWNING_TROUT, BRUT_SPAWNING_SALMON, BRUT_STURGEON)
 				case TINDERBOX => List(MAPLE_LOGS, YEW_LOGS, MAGIC_LOGS)
 				case MAPLE_LOGS | YEW_LOGS | MAGIC_LOGS => List(TINDERBOX, KNIFE)
 				case ZAMORAK_GRAPES => List(JUG_WATER)
 				case GRAPES => List(JUG_WATER)
 				case JUG_WATER => List(GRAPES, ZAMORAK_GRAPES)
+				case CHISEL => List(ARCEUUS_ESSENCE_BLOCK_DARK, UNCUT_SAPPHIRE, UNCUT_EMERALD, UNCUT_RUBY, UNCUT_DIAMOND, UNCUT_DRAGONSTONE, UNCUT_OPAL, UNCUT_JADE, UNCUT_RED_TOPAZ)
+				case ARCEUUS_ESSENCE_BLOCK_DARK => List(CHISEL)
+				case UNCUT_SAPPHIRE => List(CHISEL)
+				case UNCUT_EMERALD => List(CHISEL)
+				case UNCUT_RUBY => List(CHISEL)
+				case UNCUT_DIAMOND => List(CHISEL)
+				case UNCUT_DRAGONSTONE => List(CHISEL)
+				case UNCUT_OPAL => List(CHISEL)
+				case UNCUT_JADE => List(CHISEL)
+				case UNCUT_RED_TOPAZ => List(CHISEL)
 			}.map(lst => lst.flatMap(lste => inventoryService.find(lste)).reverse)
 			a.zip(b).map((aa, bb) => {
 				bb.map(bbe => {
