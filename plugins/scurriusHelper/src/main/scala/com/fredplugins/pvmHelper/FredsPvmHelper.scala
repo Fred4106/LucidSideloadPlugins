@@ -211,7 +211,7 @@ class FredsPvmHelper() extends Plugin with BossToolTrait with Publisher {
 
 	override def inArea(): Boolean = true
 
-	private val gui: PvmGui = new pvmHelper.PvmGui().tap(_.visible = false)
+	private lazy val gui: PvmGui = new pvmHelper.PvmGui().tap(_.visible = false)
 	override protected def startUp(): Unit = {
 		resetState()
 		overlayManager.add(panel)
