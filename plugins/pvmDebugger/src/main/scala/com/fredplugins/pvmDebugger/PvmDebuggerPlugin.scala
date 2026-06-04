@@ -8,6 +8,7 @@ import com.fredplugins.pvmDebugger.cerberus.CerberusConfig
 import com.fredplugins.pvmDebugger.cerberus.CerberusHelper
 import com.fredplugins.pvmDebugger.dks.DksConfig
 import com.fredplugins.pvmDebugger.dks.DksHelper
+import com.fredplugins.pvmDebugger.dt2.{FredsVardorvisConfig, FredsVardorvisHelper}
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansConfig
 import com.fredplugins.pvmDebugger.guardians.GrotesqueGuardiansHelper
 import com.fredplugins.pvmDebugger.hueycoatl.FredsHueycoatlConfig
@@ -104,6 +105,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val yamaHelper: FredsYamaHelper             = null
 	@Inject private val shellsbaneHelper: FredsShellsbaneHelper = null
 	@Inject private val hesporiHelper: FredsHesporiHelper = null
+	@Inject private val vardorvisHelper: FredsVardorvisHelper = null
 	@Inject private val thermyHelper: FredsThermyHelper = null
 	@Inject private val cerbHelper: CerberusHelper              = null
 
@@ -189,7 +191,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(thermyHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List( vardorvisHelper, thermyHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -397,6 +399,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideDksConfig(configManager: ConfigManager): DksConfig = configManager.getConfig(classOf[DksConfig])
 	@Provides def provideShellsBane(configManager: ConfigManager): FredsShellsbaneConfig = configManager.getConfig(classOf[FredsShellsbaneConfig])
 	@Provides def provideCerbConfig(configManager: ConfigManager): CerberusConfig = configManager.getConfig(classOf[CerberusConfig])
+	@Provides def provideVardorvisConfig(configManager: ConfigManager): FredsVardorvisConfig = configManager.getConfig(classOf[FredsVardorvisConfig])
 
 	@Provides def provideHespori(configManager: ConfigManager): FredsHesporiConfig = configManager.getConfig(classOf[FredsHesporiConfig])
 	@Provides def provideThermy(configManager: ConfigManager): FredsThermyConfig = configManager.getConfig(classOf[FredsThermyConfig])

@@ -143,18 +143,19 @@ class KrakenHelper @Inject()(override val parent: PvmDebuggerPlugin, override va
 //					cooldown = if(InventoryUtils.wieldItem(ItemID.WARPED_SCEPTRE)) 2 else 0
 //				}
 				else if (localPlayer.getInteracting == null || localPlayer.getInteracting != kraken) {
+					val explosivesWidgetOpt = Inventory.search().withId(ItemID.FISHING_EXPLOSIVE).first().toScala
+
 					if(kraken.getId == NpcID.SLAYER_KRAKEN_BOSS) {
 						countdownTillFirstAttack = 1
-					} else if(config.autoExplosive() && InventoryUtils.contains(ItemID.FISHING_EXPLOSIVE) && localPlayer.getInteracting == null) {
-						InteractionUtils.useItemOnNPC(ItemID.FISHING_EXPLOSIVE, kraken)
-						countdownTillFirstAttack = Random.nextInt(3) + 1
-						cooldown = 4
-//						val explosivesWidgetOpt = Inventory.search().withId(ItemID.FISHING_EXPLOSIVE).first().toScala
-//						explosivesWidgetOpt.foreach(explosivesW => {
-//							InteractionUtils.useWidgetOnNPC(explosivesW, kraken)
-//							countdownTillFirstAttack = Random.nextInt(3) + 1
-//							cooldown = 4
-//						})
+					} else if(config.autoExplosive() && /*InventoryUtils.contains(ItemID.FISHING_EXPLOSIVE) &&*/ explosivesWidgetOpt.isDefined && localPlayer.getInteracting == null) {
+//						InteractionUtils.useItemOnNPC(ItemID.FISHING_EXPLOSIVE, kraken)
+
+						explosivesWidgetOpt.foreach(explosivesW => {
+							InteractionUtils.useWidgetOnNPC(explosivesW, kraken)
+							countdownTillFirstAttack = Random.nextInt(3) + 1
+							cooldown = 4
+							addExplosiveMenu = false
+						})
 					}
 				}
 			}

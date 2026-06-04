@@ -87,6 +87,8 @@ public final class ProjectileID
     public static final int JUSTICIAR_LEASH = 1515;
     public static final int MAGE_ARENA_BOSS_FREEZE = 368;
 
+    public static final int VARDORVIS_MAGIC_PROJ_ID = 2520;
+    public static final int VARDORVIS_RANGED_PROJ_ID = 2521;
     /**
      * missing: superior dark beast
      */

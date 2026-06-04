@@ -223,7 +223,7 @@ public class InteractionUtils
 
 	public static void useItemOnNPC(int id, NPC npc)
 	{
-		Optional<Widget> widget = Inventory.search().filter(i -> i.getItemId() == id).first();
+		Optional<Widget> widget = Inventory.search().withId(id).first();
 
 		widget.ifPresent(value -> useWidgetOnNPC(value, npc));
 	}
