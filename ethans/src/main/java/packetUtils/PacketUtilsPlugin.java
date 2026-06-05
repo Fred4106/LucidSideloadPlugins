@@ -93,7 +93,7 @@ public class PacketUtilsPlugin extends Plugin {
 			});
 			return;
 		}
-		//setupNeverlog();
+		setupNeverlog();
 		int feature = Runtime.version().feature();
 		if (feature != 11) {
 			for (int i = 0; i < 10; i++) {
