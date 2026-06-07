@@ -17,7 +17,8 @@ import net.runelite.api.Tile
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.coords.WorldArea
 import net.runelite.api.coords.WorldPoint
-
+import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters.*
 import scala.util.chaining.*
 object LocationExtensions extends  ShimUtils.Logging() {
 	extension (e: WorldArea) {
@@ -60,6 +61,9 @@ object LocationExtensions extends  ShimUtils.Logging() {
 	extension (e: WorldPoint) {
 		def getTemplate: WorldPoint = {
 			TWorldPoint.get(e)
+		}
+		def getInstanced: List[WorldPoint] = {
+			TWorldPoint.translate(e).toList
 		}
 		def packed: Int = {
 			((e.getX & 16383) << 14) | (e.getY & 16383) | ((e.getPlane & 0x3) << 28)

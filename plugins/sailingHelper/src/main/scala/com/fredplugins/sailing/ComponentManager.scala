@@ -50,7 +50,7 @@ import scala.util.Random
 import scala.util.Success
 import scala.util.Try
 
-class ComponentManager @Inject()(val client: Client, val eventBus: EventBus, val overlayManager: OverlayManager, val infoBoxManager: InfoBoxManager, val gameEventManager: GameEventManager, val config: FredsSailingConfig, val components: Set[PluginLifecycleComponent]) {
+class ComponentManager @Inject()(val client: Client, val eventBus: EventBus, val overlayManager: OverlayManager, val infoBoxManager: InfoBoxManager, val gameEventManager: GameEventManager, val config: FredsSailingConfig, val components: Set[PluginLifecycleComponent])extends ShimUtils.Logging() {
 
 	private val states: mutable.HashMap[PluginLifecycleComponent, Boolean] = mutable.HashMap.empty[PluginLifecycleComponent, Boolean]
 

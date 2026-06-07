@@ -11,7 +11,7 @@ import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.services.TimedBoostsService
 import com.fredplugins.common.services.TimedBoostsService.{MagicBoostChanged, getCachedValue, isActive, isLocked}
 import com.fredplugins.pvmDebugger
-import com.fredplugins.pvmDebugger.dt2.FredsVardorvisConfig.{DefensivePrayer, OffensivePrayer}
+import com.fredplugins.pvmDebugger.dt2.FredsVardorvisConfig.ExtraPrayer
 import com.fredplugins.pvmDebugger.{HelperModule, PvmDebuggerPlugin, WithOverlay, WithPanel}
 import com.google.inject.{Inject, Singleton}
 import ethanApiPlugin.EthanApiPlugin
@@ -24,6 +24,7 @@ import net.runelite.api.coords.{LocalPoint, WorldArea, WorldPoint}
 import net.runelite.api.events.*
 import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID, SpotanimID}
 import net.runelite.client.eventbus.Subscribe
+import net.runelite.client.events.ConfigChanged
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, ProgressPieComponent, TitleComponent}
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
@@ -67,6 +68,39 @@ class FredsVardorvisHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		curInRegion = false
 		clearState()
 	}
+
+	@Subscribe
+	private def onConfigChanged(event: ConfigChanged): Unit = {
+		def readPrayerList(s: String): List[ExtraPrayer] = {
+			s.stripPrefix("[").stripSuffix("]").split(',').toList
+				.map(_.trim.stripPrefix("\"").stripSuffix("\""))
+				.flatMap(ss => {
+					Try(ExtraPrayer.valueOf(ss.trim)).toOption.toList
+			})
+		}
+		def writePrayerList(prayers: List[ExtraPrayer]): String = {
+			prayers.map(p => s"\"${p.name()}\"").mkString("[", ",", "]")
+		}
+		if (event.getGroup.equals(moduleName)){
+			if(event.getKey.equals("extraPrayers")) {
+				val oldValue = readPrayerList(event.getOldValue)
+				val newValue = readPrayerList(event.getNewValue)
+				log.debug(s"value changed from \"${oldValue}\" to \"${newValue}\"")
+				val added = newValue.filterNot(np => oldValue.contains(np))
+				val removed = oldValue.filterNot(np => newValue.contains(np))
+
+				log.debug(s"added \"${added}\" and removed \"${removed}\"")
+				val toDisable = added.flatMap(_.blocks()).distinct
+				val containsBadPrayer = toDisable.exists(dp => newValue.contains(dp))
+				log.debug(s"should disable \"${toDisable}\", {}", containsBadPrayer)
+				if(containsBadPrayer) {
+					val toWriteValue = newValue.filterNot(np => toDisable.contains(np))
+					log.debug(s"changing config from \"${newValue}\" to \"${toWriteValue}\"")
+					parent.getConfigManager.setConfiguration(event.getGroup(), event.getKey(), writePrayerList(toWriteValue))
+				}
+			}
+		}
+	}
 //
 //	@Subscribe
 //	def onMenuEntryAdded(me: MenuEntryAdded): Unit = {
@@ -95,23 +129,24 @@ class FredsVardorvisHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 		})
 
 		val vardorvisOpt = ethanApiPlugin.collections.NPCs.search().withName("Vardorvis").nearestToPlayer().toScala
-		val vardorvisPrayerOpt = vardorvisOpt.flatMap(v => Option.when(!v.isDead)(Prayer.PROTECT_FROM_MELEE))
-
-		val projectilePrayerOpt = projectiles.headOption.filter(_._2.ticksRemaining <= 2).map(_._1).collect {
+		val vardorvisPrayerOpt: Option[Prayer] = vardorvisOpt.flatMap(v => Option.when(!v.isDead)(Prayer.PROTECT_FROM_MELEE))
+		val extraPrayers: List[Prayer] = Option.when(vardorvisPrayerOpt.isDefined)(config.extraPrayers().asScala.toList.map(_.getPrayer)).getOrElse(List.empty[Prayer])
+		val projectilePrayerOpt: Option[Prayer] = projectiles.headOption.filter(_._2.ticksRemaining <= 2).map(_._1).collect {
 			case VardorvisProjectiles.Range => Prayer.PROTECT_FROM_MISSILES
 			case VardorvisProjectiles.Mage => Prayer.PROTECT_FROM_MAGIC
 		}
 
-		val projectilePrayers = projectilePrayerOpt
+		val projectilePrayers: List[Prayer] = projectilePrayerOpt
 			.orElse(vardorvisPrayerOpt)
 			.toList
 //			.foreach(p => {
 //				CombatUtils.activatePrayer(p)
 //			})
-		val offensivePrayers = Option(config.offensivePrayer()).filter(_ => vardorvisOpt.isDefined).filter(_ != OffensivePrayer.NONE).map(_.getPrayer).toList
-		val defensivePrayers = Option(config.defensivePrayer()).filter(_ => vardorvisOpt.isDefined).filter(_ != DefensivePrayer.NONE && !config.offensivePrayer().isDefensive).map(_.getPrayer).toList
 
-		val enabledPrayers = projectilePrayers.appendedAll(offensivePrayers).appendedAll(defensivePrayers)
+//		val offensivePrayers = Option(config.offensivePrayer()).filter(_ => vardorvisOpt.isDefined).filter(_ != OffensivePrayer.NONE).map(_.getPrayer).toList
+//		val defensivePrayers = Option(config.defensivePrayer()).filter(_ => vardorvisOpt.isDefined).filter(_ != DefensivePrayer.NONE && !config.offensivePrayer().isDefensive).map(_.getPrayer).toList
+
+		val enabledPrayers = projectilePrayers.appendedAll(extraPrayers)
 		CombatUtils.activatePrayers(enabledPrayers *)
 //		if(config.offensivePrayer() != OffensivePrayer.NONE) {
 //			config.offensivePrayer().getPrayer
@@ -289,8 +324,9 @@ class FredsVardorvisHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 				OverlayUtil.renderTextLocation(g, textLocation, text, color)
 		}
 		def renderTile(tile: WorldPoint, color: Color): Unit = {
-			val poly = Perspective.getCanvasTilePoly(client, tile.getLocalPoint)
-			if (poly != null) OverlayUtil.renderPolygon(g, poly, color)
+			tile.getInstanced.map(t => Perspective.getCanvasTilePoly(client, t.getLocalPoint)).filter(_ != null).foreach{p =>
+				OverlayUtil.renderPolygon(g, p, color)
+			}
 		}
 		if(!curInRegion) return null.asInstanceOf[Dimension]
 		client.getNpcs.asScala.toList.foreach(n => {
@@ -318,6 +354,17 @@ class FredsVardorvisHelper @Inject()(override val parent: PvmDebuggerPlugin, ove
 				overlays.renderProjectileOverlay(p, tp.entryName)(2, 2, color)
 				overlays.renderTileOverlay(p.worldLocation, s"${p.ticksRemaining}", color, false)
 			}
+
+		spikeyBois.toList
+			.foreach {(spawnedTick, wp) =>
+				val age = (client.getTickCount - spawnedTick)
+				overlays.renderTileOverlay(wp, s"${age}", Color.PINK, true)
+			}
+
+		vardorvisArea.polygons.foreach{p =>
+			OverlayUtil.renderPolygon(g, p, Color.LIGHT_GRAY)
+		}
+		overlays.renderTileOverlay(vardorvisArea.origin, "", Color.DARK_GRAY, true)
 		null.asInstanceOf[Dimension]
 	}
 }

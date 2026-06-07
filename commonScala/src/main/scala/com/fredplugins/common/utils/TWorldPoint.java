@@ -25,11 +25,11 @@ public class TWorldPoint
         return fromInstance(worldPoint);
     }
 
-    public static WorldPoint translate(WorldPoint worldPoint)
+    public static WorldPoint[] translate(WorldPoint worldPoint)
     {
         assert(clientRef!=null);
         assert(clientThreadRef!=null);
-        return toInstance(worldPoint).get(0);
+        return toInstance(worldPoint).toArray(new WorldPoint[] {});
     }
 
     /**

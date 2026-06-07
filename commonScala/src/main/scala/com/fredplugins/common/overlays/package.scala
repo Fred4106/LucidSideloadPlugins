@@ -11,11 +11,13 @@ import org.locationtech.jts
 import org.locationtech.jts.geom.{Coordinate as JtsCoordinate, Geometry as JtsGeometry, Point as JtsPoint, Polygon as JtsPolygon}
 
 import java.awt.Polygon
+import scala.math.Numeric.Implicits.infixNumericOps
 //import org.locationtech.jts.geom.Polygon => JtsPolygon
 
 import java.awt.geom.Rectangle2D
 import java.awt.{BasicStroke, Color, Font, FontMetrics, Graphics2D, Rectangle, Shape}
 import scala.util.chaining.*
+import com.fredplugins.common.extensions.LocationExtensions.*
 
 package object overlays {
 	def toJtsGeometry(shape:Polygon): JtsGeometry = {
@@ -171,23 +173,21 @@ package object overlays {
 	}
 
 	def renderTileOverlay(worldLocation: WorldPoint, text: String, fillColor: Color, dashed: Boolean)(using g: Graphics2D, client: Client): Unit = {
-		val localPoint = LocalPoint.fromWorld(client.getTopLevelWorldView, worldLocation)
-//		val poly       = Perspective.getCanvasTilePoly(client, localPoint)
-//		if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(fillColor, 255), fillColor, getStroke(2, dashed))
-		if(localPoint != null) {
-			renderTileArea(localPoint, (1, 1), .4, 0, ColorUtil.colorWithAlpha(fillColor,32), fillColor.getAlpha, dashed)
+		worldLocation.getInstanced.flatMap(wl => {
+			Option(LocalPoint.fromWorld(client.getTopLevelWorldView, wl))
+		}).foreach(localPoint => {
+			renderTileArea(localPoint, (1, 1), .4, 0, ColorUtil.colorWithAlpha(fillColor, 32), fillColor.getAlpha, dashed)
 			renderMinimapArea(localPoint, (1, 1), .4, ColorUtil.colorWithAlpha(fillColor, 32), fillColor.getAlpha, dashed)
 
 			val textLocation = getCanvasTextLocation(localPoint, text, 0)
 			if (textLocation != null) {
 				val (x, y, b) = textLocation
-				val padding        = 5
+				val padding = 5
 				val textBackground = new Rectangle(x - padding, y - padding - (b.getHeight.toInt / 2), b.getWidth.toInt + padding * 2, b.getHeight.toInt + padding * 2)
 				OverlayUtil.renderPolygon(summon[Graphics2D], textBackground, Color.BLACK, ColorUtil.colorWithAlpha(Color.WHITE, 64), overlays.getStroke(2, true))
 				OverlayUtil.renderTextLocation(g, new Point(x, y), text, Color.BLACK)
 			}
-		}
-
+		})
 //		val textLocation = Perspective.getCanvasTextLocation(client, g, localPoint, text, 0)
 	}
 

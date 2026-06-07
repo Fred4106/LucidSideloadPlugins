@@ -8,6 +8,8 @@ import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 
 import java.awt.*;
+import java.util.Collections;
+import java.util.Set;
 
 @ConfigGroup(value = "FredsVardorvisHelper", secondaryConfig = true)
 public interface FredsVardorvisConfig extends Config
@@ -67,28 +69,15 @@ public interface FredsVardorvisConfig extends Config
 	}
 
 	@ConfigItem(
-		name = "Offensive Prayer",
-		description = "What offensive prayer to keep enabled when first activating prayers. De-activates when vard dies",
+		name = "Prayers",
+		description = "What prayers to enable (non cb ones included for air mage)",
 		position = 13,
-		keyName = "offensivePrayer",
+		keyName = "extraPrayers",
 		section = helperSection
 	)
-	default OffensivePrayer offensivePrayer()
+	default Set<ExtraPrayer> extraPrayers()
 	{
-		return OffensivePrayer.NONE;
-	}
-
-
-	@ConfigItem(
-		name = "Defensive Prayer",
-		description = "What defensive prayer to keep enabled when first activating prayers. De-activates when vard dies",
-		position = 14,
-		keyName = "defensivePrayer",
-		section = helperSection
-	)
-	default DefensivePrayer defensivePrayer()
-	{
-		return DefensivePrayer.NONE;
+		return Collections.emptySet();
 	}
 
 	@ConfigItem(
@@ -146,43 +135,218 @@ public interface FredsVardorvisConfig extends Config
 		return Color.RED;
 	}
 
-	enum OffensivePrayer {
-		MYSTIC_MIGHT(Prayer.MYSTIC_MIGHT), AUGURY(Prayer.AUGURY, true),
-		EAGLE_EYE(Prayer.EAGLE_EYE), RIGOUR(Prayer.RIGOUR, true),
-		ULTIMATE_STRENGTH(Prayer.ULTIMATE_STRENGTH), CHIVALRY(Prayer.CHIVALRY, true), PIETY(Prayer.PIETY, true),
-		NONE(null);
+	enum ExtraPrayer {
+		THICK_SKIN(Prayer.THICK_SKIN),
+		ROCK_SKIN(Prayer.ROCK_SKIN),
+		STEEL_SKIN(Prayer.STEEL_SKIN),
+
+		SHARP_EYE(Prayer.SHARP_EYE),
+		HAWK_EYE(Prayer.HAWK_EYE),
+		EAGLE_EYE(Prayer.EAGLE_EYE),
+
+		MYSTIC_WILL(Prayer.MYSTIC_WILL),
+		MYSTIC_LORE(Prayer.MYSTIC_LORE),
+		MYSTIC_MIGHT(Prayer.MYSTIC_MIGHT),
+
+		BURST_OF_STRENGTH(Prayer.BURST_OF_STRENGTH),
+		SUPERHUMAN_STRENGTH(Prayer.SUPERHUMAN_STRENGTH),
+		ULTIMATE_STRENGTH(Prayer.ULTIMATE_STRENGTH),
+
+		CLARITY_OF_THOUGHT(Prayer.CLARITY_OF_THOUGHT),
+		IMPROVED_REFLEXES(Prayer.IMPROVED_REFLEXES),
+		INCREDIBLE_REFLEXES(Prayer.INCREDIBLE_REFLEXES),
+
+		PIETY(Prayer.PIETY),
+		RAPID_RESTORE(Prayer.RAPID_RESTORE),
+		RAPID_HEAL(Prayer.RAPID_HEAL),
+		PROTECT_ITEM(Prayer.PROTECT_ITEM),
+		PRESERVE(Prayer.PRESERVE);
 		private final Prayer prayer;
-		private final boolean defensive;
-
-		OffensivePrayer(Prayer prayer) {
-			this(prayer, false);
-		}
-
-		OffensivePrayer(Prayer prayer, boolean defensive) {
-			this.prayer = prayer;
-			this.defensive = defensive;
-		}
-
-		public Prayer getPrayer() {
-			return this.prayer;
-		}
-
-		public boolean isDefensive() {
-			return this.defensive;
-		}
-	}
-
-	enum DefensivePrayer {
-		THICK_SKIN(Prayer.THICK_SKIN), ROCK_SKIN(Prayer.ROCK_SKIN), STEEL_SKIN(Prayer.STEEL_SKIN), NONE(null);
-
-		private final Prayer prayer;
-
-		DefensivePrayer(Prayer prayer) {
+		ExtraPrayer(Prayer prayer) {
 			this.prayer = prayer;
 		}
 
 		public Prayer getPrayer() {
 			return this.prayer;
+		}
+
+		public ExtraPrayer[] blocks() {
+			switch (this) {
+				case THICK_SKIN:
+					return new ExtraPrayer[] {
+						STEEL_SKIN,
+						ROCK_SKIN,
+						PIETY
+					};
+				case ROCK_SKIN:
+					return new ExtraPrayer[] {
+						THICK_SKIN,
+						STEEL_SKIN,
+						PIETY
+					};
+				case STEEL_SKIN:
+					return new ExtraPrayer[] {
+						THICK_SKIN,
+						ROCK_SKIN,
+						PIETY
+					};
+				case MYSTIC_LORE:
+					return new ExtraPrayer[] {
+						SHARP_EYE,
+						HAWK_EYE,
+						EAGLE_EYE,
+						MYSTIC_WILL,
+						MYSTIC_MIGHT,
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						ULTIMATE_STRENGTH,
+						INCREDIBLE_REFLEXES,
+						PIETY
+					};
+				case MYSTIC_WILL:
+					return new ExtraPrayer[] {
+						SHARP_EYE,
+						HAWK_EYE,
+						EAGLE_EYE,
+						MYSTIC_MIGHT,
+						MYSTIC_LORE,
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						ULTIMATE_STRENGTH,
+						INCREDIBLE_REFLEXES,
+						PIETY
+					};
+				case MYSTIC_MIGHT:
+					return new ExtraPrayer[] {
+						SHARP_EYE,
+						HAWK_EYE,
+						EAGLE_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						ULTIMATE_STRENGTH,
+						INCREDIBLE_REFLEXES,
+						PIETY
+					};
+				case HAWK_EYE:
+					return new ExtraPrayer[] {
+						SHARP_EYE,
+						EAGLE_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						MYSTIC_MIGHT,
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						ULTIMATE_STRENGTH,
+						INCREDIBLE_REFLEXES,
+						PIETY
+					};
+				case SHARP_EYE:
+					return new ExtraPrayer[] {
+						EAGLE_EYE,
+						HAWK_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						MYSTIC_MIGHT,
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						ULTIMATE_STRENGTH,
+						INCREDIBLE_REFLEXES,
+						PIETY
+					};
+				case EAGLE_EYE:
+					return new ExtraPrayer[] {
+						SHARP_EYE,
+						HAWK_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						MYSTIC_MIGHT,
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						ULTIMATE_STRENGTH,
+						INCREDIBLE_REFLEXES,
+						PIETY
+					};
+				case BURST_OF_STRENGTH:
+				case CLARITY_OF_THOUGHT:
+					return new ExtraPrayer[] {
+						ULTIMATE_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						INCREDIBLE_REFLEXES,
+						IMPROVED_REFLEXES,
+						SHARP_EYE,
+						HAWK_EYE,
+						EAGLE_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						MYSTIC_MIGHT,
+						PIETY
+					};
+				case SUPERHUMAN_STRENGTH:
+				case IMPROVED_REFLEXES:
+					return new ExtraPrayer[] {
+						BURST_OF_STRENGTH,
+						ULTIMATE_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						INCREDIBLE_REFLEXES,
+						SHARP_EYE,
+						HAWK_EYE,
+						EAGLE_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						MYSTIC_MIGHT,
+						PIETY
+					};
+				case ULTIMATE_STRENGTH:
+				case INCREDIBLE_REFLEXES:
+					return new ExtraPrayer[] {
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						SHARP_EYE,
+						HAWK_EYE,
+						EAGLE_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						MYSTIC_MIGHT,
+						PIETY
+					};
+				case PIETY:
+					return new ExtraPrayer[] {
+						ROCK_SKIN,
+						THICK_SKIN,
+						STEEL_SKIN,
+						SHARP_EYE,
+						HAWK_EYE,
+						EAGLE_EYE,
+						MYSTIC_WILL,
+						MYSTIC_LORE,
+						MYSTIC_MIGHT,
+						BURST_OF_STRENGTH,
+						SUPERHUMAN_STRENGTH,
+						CLARITY_OF_THOUGHT,
+						IMPROVED_REFLEXES,
+						ULTIMATE_STRENGTH,
+						INCREDIBLE_REFLEXES
+					};
+
+				default:
+					return new ExtraPrayer[] {};
+			}
 		}
 	}
 }

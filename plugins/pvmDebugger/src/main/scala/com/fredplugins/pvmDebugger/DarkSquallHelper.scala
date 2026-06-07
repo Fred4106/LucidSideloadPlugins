@@ -1,6 +1,6 @@
 package com.fredplugins.pvmDebugger
 
-import com.fredplugins.common.extensions.LocationExtensions._
+import com.fredplugins.common.extensions.LocationExtensions.given
 import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.DarkSquallIds.AgileWarriorNpcId

@@ -8,7 +8,7 @@ import scala.util.chaining.*
 
 object ShimUtils {
 	trait Logging(level: String = "DEBUG") {
-		val log: Logger = {
+		protected val log: Logger = {
 			Try{
 				import ch.qos.logback.classic.{Level => LogbackLevel, Logger => LogbackLogger}
 				val temp: Logger = LoggerFactory.getLogger(this.getClass)
