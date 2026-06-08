@@ -37,12 +37,12 @@ public final class ProjectileID
 
     public static final int TELEKINETIC_SPELL = 143;
 
-    public static final int LIZARDMAN_SHAMAN_AOE = 1293;
     public static final int CRAZY_ARCHAEOLOGIST_AOE = 1260;
-    public static final int ICE_DEMON_RANGED_AOE = 1324;
-    public static final int ICE_DEMON_ICE_BARRAGE_AOE = 366;
     public static final int VASA_AWAKEN_AOE = 1327;
     public static final int VASA_RANGED_AOE = 1329;
+    public static final int LIZARDMAN_SHAMAN_AOE = 1293;
+    public static final int ICE_DEMON_RANGED_AOE = 1324;
+    public static final int ICE_DEMON_ICE_BARRAGE_AOE = 366;
     public static final int TEKTON_METEOR_AOE = 660;
 
     public static final int OLM_FALLING_CRYSTAL = 1357;
