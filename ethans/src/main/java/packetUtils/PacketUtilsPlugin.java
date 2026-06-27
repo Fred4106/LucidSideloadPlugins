@@ -52,7 +52,7 @@ public class PacketUtilsPlugin extends Plugin {
 	static Client staticClient;
 	public static Method addNodeMethod;
 	public static boolean usingClientAddNode = false;
-	public static final int CLIENT_REV = 238;
+	public static final int CLIENT_REV = 239;
 	private static String loadedConfigName = "";
 	@Inject
 	private PluginManager pluginManager;
@@ -121,6 +121,9 @@ public class PacketUtilsPlugin extends Plugin {
 				}
 			}
 		});
+
+		Method getPacketBufferNode = PacketReflection.getGetPacketBufferNode();
+		System.out.println("getPacketBufferNode" + getPacketBufferNode.toGenericString());
 	}
 
 	@SneakyThrows

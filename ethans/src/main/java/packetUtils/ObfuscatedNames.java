@@ -54,17 +54,17 @@ public final class ObfuscatedNames
 		{"v"},
 		{"v"},
 	};
-//	public static final String MOVE_GAMECLICK_OBFUSCATEDNAME = "eo";
-//	public static final String MOVE_GAMECLICK_WRITE1 = "5";
-//	public static final String MOVE_GAMECLICK_WRITE2 = "worldPointY";
-//	public static final String MOVE_GAMECLICK_WRITE3 = "worldPointX";
-//	public static final String MOVE_GAMECLICK_WRITE4 = "ctrlDown";
-//	public static final String[][] MOVE_GAMECLICK_WRITES = new String[][]{
-//		{"v"},
-//		{"v", "r 8"},
-//		{"r 8", "v"},
-//		{"v"},
-//	};
+	public static final String MOVE_GAMECLICK_OBFUSCATEDNAME = "ea";
+	public static final String MOVE_GAMECLICK_WRITE1 = "5";
+	public static final String MOVE_GAMECLICK_WRITE2 = "worldPointX";
+	public static final String MOVE_GAMECLICK_WRITE3 = "worldPointY";
+	public static final String MOVE_GAMECLICK_WRITE4 = "ctrlDown";
+	public static final String[][] MOVE_GAMECLICK_WRITES = new String[][]{
+		{"v"},
+		{"v", "r 8"},
+		{"v", "r 8"},
+		{"s 128"},
+	};
 //	public static final String OPHELDD_OBFUSCATEDNAME = "bb";
 //	public static final String OPHELDD_WRITE1 = "selectedId"; // cj
 //	public static final String OPHELDD_WRITE2 = "selectedChildIndex"; // eb
@@ -410,29 +410,29 @@ public final class ObfuscatedNames
 //	public static final String[][] SET_HEADING_WRITES = new String[][]{
 //		{"s 0"},
 //	};
-//	public static final String offsetMultiplier = "228932457";
-//	public static final String indexMultiplier = "-661977895";
-//	public static final String addNodeGarbageValue = "-2131500547";
-//	public static final String getPacketBufferNodeGarbageValue = "-124";
-//	public static final String packetWriterFieldName = "aq";
-//	public static final String isaacCipherFieldName = "av";
-//	public static final String addNodeMethodName = "az";
+	public static final String offsetMultiplier = "-1278253407";
+	public static final String indexMultiplier = "769523041";
+	public static final String addNodeGarbageValue = "2034800314";
+	public static final String getPacketBufferNodeGarbageValue = "-2111588182"; //TODO wrong garbaqge
+	public static final String packetWriterFieldName = "ad";
+	public static final String isaacCipherFieldName = "aa";
+	public static final String addNodeMethodName = "ae";
 	public static final String clientPacketClassName = "jf";
-//	public static final String packetWriterClassName = "df";
-//	public static final String classContainingGetPacketBufferNodeName = "gi";
-//	public static final String packetBufferNodeClassName = "jm";
-//	public static final String packetBufferFieldName = "ay";
-//	public static final String bufferOffsetField = "au";
-//	public static final String bufferArrayField = "al";
-//	public static final String MouseHandler_lastPressedTimeMillisClass = "tj";
-//	public static final String MouseHandler_lastPressedTimeMillisField = "af";
-//	public static final String mouseHandlerMillisMultiplier = "3767455460529623151";
-//	public static final String clientMillisMultiplier = "-6682804461438542089";
-//	public static final String clientMillisField = "gx";
+	public static final String classContainingGetPacketBufferNodeName = "xt";
+	public static final String packetWriterClassName = "dw";
+	public static final String packetBufferNodeClassName = "jr";
+	public static final String packetBufferFieldName = "al";
+	public static final String bufferOffsetField = "ab";
+	public static final String bufferArrayField = "ak";
+	public static final String MouseHandler_lastPressedTimeMillisClass = "sw";
+	public static final String MouseHandler_lastPressedTimeMillisField = "av";
+	public static final String mouseHandlerMillisMultiplier = "4865206394403847849";
+	public static final String clientMillisMultiplier = "5323891611902821573";
+	public static final String clientMillisField = "gx";
 //	public static final int getAnimationMultiplier = 685222699;
 //	public static final int skullIconMultiplier = 0;
 //	public static final String skullIconField = "null";
 //	public static final int pathLengthMultiplier = 0;
-//	public static final String doActionClassName = "qd";
-//	public static final String doActionMethodName = "fa";
+	public static final String doActionClassName = "ek";
+	public static final String doActionMethodName = "fu";
 }

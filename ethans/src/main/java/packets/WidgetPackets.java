@@ -8,7 +8,6 @@ import lombok.SneakyThrows;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.util.Text;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -105,7 +104,7 @@ public class WidgetPackets {
 	}
 
 	public static void queueResumePause(int widgetId, int childId) {
-		PacketReflection.sendPacket(PacketDef.getResumePausebutton(), widgetId, childId);
+		PacketReflection.sendPacket(PacketDef.getResumePauseButton(), widgetId, childId);
 	}
 
 	public static void queueResumeCount(int id) {

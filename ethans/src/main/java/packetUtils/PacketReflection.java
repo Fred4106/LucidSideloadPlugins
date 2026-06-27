@@ -91,8 +91,10 @@ public class PacketReflection {
 
 
 	public static void sendPacket(PacketDef def, Object... objects) {
+		if(def == null) return;
 		Object packetBufferNode = null;
 		Method getPacketBufferNode = getGetPacketBufferNode();
+		System.out.println("getPacketBufferNode" + getPacketBufferNode.toGenericString());
 		Class ClientPacket = getClientPacketClass();
 		Object isaac = getIsaacObject();
 		getPacketBufferNode.setAccessible(true);
