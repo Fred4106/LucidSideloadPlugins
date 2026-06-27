@@ -11,6 +11,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
 public class PacketReflection {
 	public static Client getClient(){
 		return RuneLite.getInjector().getInstance(Client.class);
@@ -91,10 +92,8 @@ public class PacketReflection {
 
 
 	public static void sendPacket(PacketDef def, Object... objects) {
-		if(def == null) return;
 		Object packetBufferNode = null;
 		Method getPacketBufferNode = getGetPacketBufferNode();
-		System.out.println("getPacketBufferNode" + getPacketBufferNode.toGenericString());
 		Class ClientPacket = getClientPacketClass();
 		Object isaac = getIsaacObject();
 		getPacketBufferNode.setAccessible(true);
@@ -102,7 +101,7 @@ public class PacketReflection {
 		if (garbageValue < 256) {
 			try {
 				packetBufferNode = getPacketBufferNode.invoke(null, fetchPacketField(def.name).get(ClientPacket),
-						isaac, Byte.parseByte(ObfuscatedNames.getPacketBufferNodeGarbageValue));
+					isaac, Byte.parseByte(ObfuscatedNames.getPacketBufferNodeGarbageValue));
 			} catch (IllegalAccessException | InvocationTargetException e) {
 				e.printStackTrace();
 			}
@@ -111,7 +110,7 @@ public class PacketReflection {
 				//System.out.println("getPacketBufferNode: "+getPacketBufferNode);
 				//System.out.println("isaac: "+isaac);
 				packetBufferNode = getPacketBufferNode.invoke(null, fetchPacketField(def.name).get(ClientPacket),
-						isaac, Short.parseShort(ObfuscatedNames.getPacketBufferNodeGarbageValue));
+					isaac, Short.parseShort(ObfuscatedNames.getPacketBufferNodeGarbageValue));
 				//System.out.println("packetBufferNode: "+packetBufferNode);
 			} catch (IllegalAccessException | InvocationTargetException e) {
 				e.printStackTrace();
@@ -119,7 +118,7 @@ public class PacketReflection {
 		} else if (garbageValue < Integer.MAX_VALUE) {
 			try {
 				packetBufferNode = getPacketBufferNode.invoke(null, fetchPacketField(def.name).get(ClientPacket),
-						isaac, Integer.parseInt(ObfuscatedNames.getPacketBufferNodeGarbageValue));
+					isaac, Integer.parseInt(ObfuscatedNames.getPacketBufferNodeGarbageValue));
 			} catch (IllegalAccessException | InvocationTargetException e) {
 				e.printStackTrace();
 			}
@@ -170,7 +169,7 @@ public class PacketReflection {
 		}
 		if (def.type == PacketType.OPOBJT) {
 			params = List.of("objectId", "worldPointX", "worldPointY", "slot", "itemId", "widgetId",
-					"ctrlDown");
+				"ctrlDown");
 		}
 		if (def.type == PacketType.EVENT_MOUSE_CLICK) {
 			params = List.of("mouseInfo", "mouseX", "mouseY", "0");
@@ -180,11 +179,11 @@ public class PacketReflection {
 		}
 		if (def.type == PacketType.IF_BUTTONT) {
 			params = List.of("sourceWidgetId", "sourceSlot", "sourceItemId", "destinationWidgetId",
-					"destinationSlot", "destinationItemId");
+				"destinationSlot", "destinationItemId");
 		}
 		if (def.type == PacketType.OPLOCT) {
 			params = List.of("objectId", "worldPointX", "worldPointY", "slot", "itemId", "widgetId",
-					"ctrlDown");
+				"ctrlDown");
 		}
 		if (def.type == PacketType.OPPLAYERT) {
 			params = List.of("playerIndex", "itemId", "slot", "widgetId", "ctrlDown");
@@ -270,6 +269,7 @@ public class PacketReflection {
 		}
 	}
 
+
 	static Field fetchPacketField(String name) {
 		try {
 			Class ClientPacket = getClientPacketClass();
@@ -279,6 +279,7 @@ public class PacketReflection {
 			return null;
 		}
 	}
+
 
 	private static BigInteger modInverse(BigInteger val) {
 		BigInteger shift = BigInteger.ONE.shiftLeft(32);
