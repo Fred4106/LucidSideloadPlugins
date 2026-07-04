@@ -14,7 +14,7 @@ plugins {
     id("idea")
 }
 
-val javaVersion = JavaVersion.VERSION_11
+val javaVersion = JavaVersion.VERSION_17
 
 allprojects {
     group = "com.fredplugins"
