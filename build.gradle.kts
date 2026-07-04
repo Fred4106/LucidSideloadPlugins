@@ -14,7 +14,10 @@ plugins {
     id("idea")
 }
 
-val javaVersion = JavaVersion.VERSION_17
+val javaVersion = JavaLanguageVersion.of(17)
+println(javaVersion.toString())
+
+
 
 allprojects {
     group = "com.fredplugins"
@@ -48,9 +51,10 @@ allprojects {
             this.add("testImplementation", "org.pf4j:pf4j:3.10.0")
 //            this.add("testImplementation", "net.runelite:client:${Dependencies.rlVersion}")
         }
-        configure<JavaPluginExtension> {
-            sourceCompatibility = javaVersion
-            targetCompatibility = javaVersion
+        java {
+            toolchain {
+                languageVersion.set(javaVersion)
+            }
         }
         tasks {
             jar {
