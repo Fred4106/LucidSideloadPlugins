@@ -53,8 +53,8 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	private var bossAttackCount: Int = 0
 	private var bossLastAttackTick: Int = -1
 	private val bossAttackIds: Array[Int] = Array.fill(2)(-1)
-	def safeTiles: Seq[WorldArea] = {
-		if(!client.isClientThread) parent.getClientThread.runOnClientThread(() => safeTiles)
+	def safeTiles(): Seq[WorldArea] = {
+		if(!client.isClientThread) parent.getClientThread.runOnClientThread(() => safeTiles())
 		Option(bossNpc).toList.flatMap(boss => {
 			val bossWorldArea = boss.getWorldArea
 			(bossAttackIds.collect {
@@ -63,7 +63,10 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 			}).map(_.apply(boss.direction)).map(q => bossWorldArea.edge(q, 1))
 		}).toList
 	}
-
+	def tickAttackCount(): Unit = {
+		bossAttackCount = (bossAttackCount + 1) % 8
+		bossLastAttackTick = client.getTickCount
+	}
 	private def clearState(): Unit = {
 //		animations.clear()
 		bossNpc = null
@@ -85,6 +88,10 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	@Subscribe(priority = -10)
 	def afterGameTick(gameTick: GameTick): Unit = {
 		npcEvents.clear()
+		val screeches = Seq(NPC_WYRD01_SCREECH01, NPC_WYRD01_SCREECH02, NPC_WYRD01_SCREECH03)
+		Option(bossNpc).filter(b => !screeches.contains(b.getAnimation)).foreach{boss =>
+			CombatUtils.activatePrayers(Prayer.PIETY, Prayer.PROTECT_FROM_MELEE)
+		}
 	}
 	@Subscribe(priority = 10)
 	def beforeGameTick(gameTick: GameTick): Unit = {
@@ -96,15 +103,10 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	}
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
-		if(!curInRegion) return
-
-		def tickAttackCount(): Unit = {
-			bossAttackCount = (bossAttackCount + 1) % 8
-			bossLastAttackTick = client.getTickCount
-		}
 		npcEvents.foreach{
 			case e: NpcSpawned => {
 				bossNpc = e.getAsNpc().orNull
+				CombatUtils.activatePrayers(Prayer.PIETY, Prayer.PROTECT_FROM_MELEE)
 			}
 			case e: NpcDespawned => {
 				clearState()
@@ -113,8 +115,8 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 				CombatUtils.deactivatePrayers(false)
 			}
 			case e: AnimationChanged => {
-				e.getAsNpc().map(_.getAnimation)
-					.tapEach(z => log.debug("animation changed to {} on tick {}", ReflectionUtils.getAnimationName(z), client.getTickCount))
+				e.getAsNpc().map(_.getAnimation).filter(_ != -1)
+//					.tapEach(z => log.debug("animation changed to {} on tick {}", ReflectionUtils.getAnimationName(z), client.getTickCount))
 					.foreach{
 						case z@(NPC_WYRD01_PUNCH_RIGHT | NPC_WYRD01_PUNCH_LEFT) if Seq(0, 1, 3, 4).contains(bossAttackCount) => {
 							Option(bossAttackCount-3).filter(_ >= 0).filter(_ < 2).foreach(bossAttackIds(_) = z)
@@ -124,17 +126,12 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 							CombatUtils.deactivatePrayers(true)
 							tickAttackCount()
 						}
-						case z@(NPC_WYRD01_TANTRUM02 | NPC_WYRD01_TANTRUM01) if Seq(6, 7).contains(bossAttackCount) => {
-							Option(bossAttackCount - 6).filter(_ >= 0).filter(_ < 2).foreach(bossAttackIds(_) = -1)
+						case z@(NPC_WYRD01_TANTRUM02 | NPC_WYRD01_TANTRUM01) => {
+//							Option(bossAttackCount - 6).filter(_ >= 0).filter(_ < 2).foreach(bossAttackIds(_) = -1)
+							val dodgeIdIdx = bossAttackIds.indexWhere(_ != -1).pipe(j => if(j < 0) 1 else j)
+							bossAttackCount = (6 + dodgeIdIdx)
 							tickAttackCount()
-						}
-						case z@(NPC_WYRD01_TANTRUM01) => {
-							bossAttackIds(0) = -1
-							bossAttackIds(1) = -1
-							bossAttackCount = 0
-						}
-						case -1 if Seq(2,5).contains(bossAttackCount) => {
-							CombatUtils.activatePrayers(Prayer.PIETY, Prayer.PROTECT_FROM_MELEE)
+							bossAttackIds(dodgeIdIdx) = -1
 						}
 						case u => {
 							log.debug("Problem handling {} {} when bossAttackCount is {}", u, ReflectionUtils.getAnimationName(u), bossAttackCount)
@@ -142,6 +139,8 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 					}
 			}
 		}
+
+
 	}
 
 	@Subscribe
@@ -149,6 +148,7 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}")
 		if(inRegion(e.getOldRegion) && !inRegion(e.getCurRegion)) {
 			curInRegion = false
+			clearState()
 			return
 		}
 		if (!inRegion(e.getOldRegion) && inRegion(e.getCurRegion)) {
@@ -299,7 +299,7 @@ class FredsWyrdHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		}
 
 		try {
-			safeTiles.zipWithIndex.foreach((wa, ix0) => {
+			safeTiles().zipWithIndex.foreach((wa, ix0) => {
 				val c = Seq(Color.green, Color.blue, Color.yellow)(ix0)
 				wa.polygons.foreach { p =>
 					OverlayUtil.renderPolygon(summon[Graphics2D], p, c, ColorUtil.colorWithAlpha(c, 64), overlays.getStroke(2, true))
