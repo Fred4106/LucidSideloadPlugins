@@ -14,10 +14,7 @@ plugins {
     id("idea")
 }
 
-val javaVersion = JavaLanguageVersion.of(17)
-println(javaVersion.toString())
-
-
+val javaVersion = JavaVersion.VERSION_11
 
 allprojects {
     group = "com.fredplugins"
@@ -46,24 +43,18 @@ allprojects {
             compileOnly("net.runelite:client:${Dependencies.rlVersion}") {
                 exclude("net.runelite", "rlicn")
             }
- //           this.add("compileOnly", "net.runelite:client:${Dependencies.rlVersion}")
+            //           this.add("compileOnly", "net.runelite:client:${Dependencies.rlVersion}")
             this.add("testImplementation", "junit:junit:4.13.1")
             this.add("testImplementation", "org.pf4j:pf4j:3.10.0")
 //            this.add("testImplementation", "net.runelite:client:${Dependencies.rlVersion}")
         }
-        java {
-            toolchain {
-                languageVersion.set(javaVersion)
-            }
+        configure<JavaPluginExtension> {
+            sourceCompatibility = javaVersion
+            targetCompatibility = javaVersion
         }
         tasks {
             jar {
                 duplicatesStrategy = DuplicatesStrategy.WARN
-            }
-        }
-        idea {
-            module {
-
             }
         }
     }

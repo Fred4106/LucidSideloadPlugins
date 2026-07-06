@@ -114,8 +114,11 @@ object SInteractionUtils {
 			})
 		}).toList
 	}
+	
+	def getCenterTileFromWorldArea(area: WorldArea): WorldPoint = return new WorldPoint(area.getX + area.getWidth / 2, area.getY + area.getHeight / 2, area.getPlane)
+
 	def getClosestSafeLocationInNPCMeleeDistance(list: List[LocalPoint], target: NPC)(using client: Client): Option[WorldPoint] = {
-		val validTiles: WorldPoint => Boolean = target.getWorldArea.pipe(ta => {
+		val validTiles = target.getWorldArea.pipe(ta => {
 			val offArea = offset(ta, 1)
 			val corners = worldAreaCorners(offArea)
 			(wp: WorldPoint) => offArea.contains(wp) && !ta.contains(wp) && !corners.exists(wwp => wp.distanceTo(wwp) == 0)

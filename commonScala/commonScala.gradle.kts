@@ -3,6 +3,7 @@ description = "Common Scala API"
 plugins {
     scala
 }
+
 dependencies {
     implementation(project(":common"))
     api("org.scala-lang:scala3-library_3:${Dependencies.scalaVersion}")
@@ -18,4 +19,5 @@ dependencies {
 
     api("com.lihaoyi:upickle_3:4.4.2")
 }
+
 
