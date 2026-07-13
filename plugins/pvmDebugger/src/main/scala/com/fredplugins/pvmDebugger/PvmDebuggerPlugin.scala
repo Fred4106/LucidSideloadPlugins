@@ -26,7 +26,7 @@ import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneHelper
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiConfig
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiHelper
 import com.fredplugins.pvmDebugger.thermy.{FredsThermyConfig, FredsThermyHelper}
-import com.fredplugins.pvmDebugger.wyrd.{FredsWyrdConfig, FredsWyrdHelper}
+import com.fredplugins.pvmDebugger.bmr.{FredsBmrConfig, FredsBmrHelper}
 import com.fredplugins.pvmDebugger.titans.FredsTitanConfig
 import com.fredplugins.pvmDebugger.titans.FredsTitanHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
@@ -43,6 +43,8 @@ import net.runelite.api.Client
 import net.runelite.api.events.*
 import net.runelite.client.Notifier
 import net.runelite.client.callback.ClientThread
+import net.runelite.client.callback.Hooks
+import net.runelite.client.callback.RenderCallbackManager
 import net.runelite.client.chat.ChatMessageManager
 import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.EventBus
@@ -50,6 +52,7 @@ import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.events.ConfigChanged
 import net.runelite.client.game.ItemManager
 import net.runelite.client.game.NPCManager
+import net.runelite.client.game.NpcUtil
 import net.runelite.client.game.SpriteManager
 import net.runelite.client.input.KeyManager
 import net.runelite.client.plugins.PluginManager
@@ -75,44 +78,48 @@ import scala.util.chaining.*
 @PluginDependency(classOf[EthanApiPlugin])
 @Singleton
 class PvmDebuggerPlugin() extends Plugin {
-	private         val log                  : Logger                    = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
-	@Inject private val client               : Client                    = null
-	@Inject private val clientThread         : ClientThread              = null
-	@Inject private val eventBus             : EventBus                  = null
-	@Inject private val chatmessageManager   : ChatMessageManager = null
-	@Inject private val npcManager   : NPCManager         = null
-	@Inject private val keyManager   : KeyManager                 = null
-	@Inject private val modelOutlineRenderer : ModelOutlineRenderer = null
-	@Inject private val pluginManager        : PluginManager             = null
-	@Inject private val itemManager          : ItemManager       = null
-	@Inject private val spriteManager          : SpriteManager     = null
-	@Inject private val infoBoxManager          : InfoBoxManager = null
-	@Inject private val configManager        : ConfigManager             = null
-	@Inject private val notifier             : Notifier                  = null
-	@Inject private val overlayManager       : OverlayManager            = null
-	@Inject private val pvmDebuggerConfig    : FredsPvmDebuggerConfig    = null
-	@Inject private val guardiansConfig      : GrotesqueGuardiansConfig  = null
+	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
+	@Inject private val client: Client = null
+	@Inject private val clientThread: ClientThread = null
+	@Inject private val eventBus: EventBus = null
+	@Inject private val chatmessageManager: ChatMessageManager = null
+	@Inject private val npcManager: NPCManager = null
+	@Inject private val keyManager: KeyManager = null
+	@Inject private val modelOutlineRenderer: ModelOutlineRenderer = null
+	@Inject private val pluginManager: PluginManager = null
+	@Inject private val renderCallbackManager: RenderCallbackManager = null
+	@Inject private val hooks: Hooks = null
+	@Inject private val itemManager: ItemManager = null
+	@Inject private val spriteManager: SpriteManager = null
+	@Inject private val infoBoxManager: InfoBoxManager = null
+	@Inject private val configManager: ConfigManager = null
+	@Inject private val notifier: Notifier = null
+	@Inject private val overlayManager: OverlayManager = null
+	@Inject private val npcUtil: NpcUtil = null
+	
+	@Inject private val pvmDebuggerConfig: FredsPvmDebuggerConfig = null
+	@Inject private val guardiansConfig: GrotesqueGuardiansConfig = null
 	//	@Inject private val krakenConfig     : KrakenConfig             = null
-	@Inject private val krakenHelper         : KrakenHelper              = null
-	@Inject private val moonHelper           : FredsMoonHelper           = null
-	@Inject private val tormentedDemonsHelper           : FredsTormentedDemonsHelper = null
-	@Inject private val muspahHelper: FredsMuspahHelper       = null
+	@Inject private val krakenHelper: KrakenHelper = null
+	@Inject private val moonHelper: FredsMoonHelper = null
+	@Inject private val tormentedDemonsHelper: FredsTormentedDemonsHelper = null
+	@Inject private val muspahHelper: FredsMuspahHelper = null
 	@Inject private val amoxliatlHelper: FredsAmoxliatlHelper = null
 	@Inject private val hueycoatlHelper: FredsHueycoatlHelper = null
-	@Inject private val dksHelper: DksHelper                  = null
-	@Inject private val infernoHelper: FredsInfernoHelper     = null
+	@Inject private val dksHelper: DksHelper = null
+	@Inject private val infernoHelper: FredsInfernoHelper = null
 	@Inject private val vorkathHelper: FredsVorkathHelper = null
-	@Inject private val titansHelper: FredsTitanHelper    = null
-	@Inject private val yamaHelper: FredsYamaHelper             = null
+	@Inject private val titansHelper: FredsTitanHelper = null
+	@Inject private val yamaHelper: FredsYamaHelper = null
 	@Inject private val shellsbaneHelper: FredsShellsbaneHelper = null
 	@Inject private val hesporiHelper: FredsHesporiHelper = null
 	@Inject private val vardorvisHelper: FredsVardorvisHelper = null
 	@Inject private val thermyHelper: FredsThermyHelper = null
-	@Inject private val wyrdHelper: FredsWyrdHelper = null
-	@Inject private val cerbHelper: CerberusHelper              = null
+	@Inject private val bmrHelper: FredsBmrHelper = null
+	@Inject private val cerbHelper: CerberusHelper = null
 
 
-	//	@Inject private val moonConfig       : FredsMoonConfig = null
+//	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
 
 	def getClient: Client = client
@@ -126,11 +133,14 @@ class PvmDebuggerPlugin() extends Plugin {
 	def getOverlayManager: OverlayManager = overlayManager
 	def getConfig: FredsPvmDebuggerConfig = pvmDebuggerConfig
 	def getPluginManager: PluginManager = pluginManager
+	def getHooks: Hooks = hooks
+	def getRenderCallbackManager: RenderCallbackManager = renderCallbackManager
 	def getItemManager: ItemManager = itemManager
 	def getSpriteManager: SpriteManager = spriteManager
 	def getInfoBoxManager: InfoBoxManager = infoBoxManager
+	def getNpcUtil: NpcUtil = npcUtil
 	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
-	
+
 	//	//region types
 	case class InvSlotItem(index: Int, id: Int, qty: Int)
 	object InvSlotItem {
@@ -156,7 +166,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	//region state
 	var inventorySnapshot: List[InvSlotItem] = List.empty
-	var gameStateCached  : GameState         = GameState.UNKNOWN
+	var gameStateCached: GameState = GameState.UNKNOWN
 
 	//endregion
 	val debugPanel: DebugPanel = new DebugPanel()
@@ -193,7 +203,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List( vardorvisHelper, thermyHelper, wyrdHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List(vardorvisHelper, thermyHelper, bmrHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -276,8 +286,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	def onAnimationChanged(event: AnimationChanged): Unit = {
 		Option(event.getActor).collect {
 			case npc: NPC => SNpcAnimationChanged(
-				npc.getIndex, npc.getId, npc.getAnimation, SLocation(npc
-																															 .getWorldLocation)) //DebugEvent
+				npc.getIndex, npc.getId, npc.getAnimation, SLocation(npc.getWorldLocation)) //DebugEvent
 		}.foreach(debugPanel.publish)
 	}
 
@@ -336,7 +345,7 @@ class PvmDebuggerPlugin() extends Plugin {
 		//		val spotAnimId = event.getGraphicsObject.getId
 	}
 
-	lazy val darkSquallHelper       = {
+	lazy val darkSquallHelper = {
 		new DarkSquallHelper(client)
 	}
 	lazy val balanceElementalHelper = {
@@ -347,7 +356,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	//		new KrakenHelper(this, client, krakenConfig)
 	//	}
 
-	lazy val grotesqueGuardiansHelper: GrotesqueGuardiansHelper   = {
+	lazy val grotesqueGuardiansHelper: GrotesqueGuardiansHelper = {
 		new GrotesqueGuardiansHelper(this, client, guardiansConfig)
 	}
 //	lazy val tormentedDemonsHelper   : FredsTormentedDemonsHelper = {
@@ -391,13 +400,13 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideKrakenConfig(configManager: ConfigManager): KrakenConfig = configManager.getConfig(classOf[KrakenConfig])
 	@Provides def provideFredsMoonConfig(configManager: ConfigManager): FredsMoonConfig = configManager.getConfig(classOf[FredsMoonConfig])
 	@Provides def provideTormentedDemonsConfig(configManager: ConfigManager): FredsTormentedDemonConfig = configManager.getConfig(classOf[FredsTormentedDemonConfig])
-	@Provides def provideMuspahConfig(configManager: ConfigManager):FredsMuspahConfig = configManager.getConfig(classOf[FredsMuspahConfig])
-	@Provides def provideAmoxliatlConfig(configManager: ConfigManager):FredsAmoxliatlConfig = configManager.getConfig(classOf[FredsAmoxliatlConfig])
-	@Provides def provideHueycoatlConfig(configManager: ConfigManager):FredsHueycoatlConfig = configManager.getConfig(classOf[FredsHueycoatlConfig])
-	@Provides def provideVorkathConfig(configManager: ConfigManager):FredsVorkathConfig = configManager.getConfig(classOf[FredsVorkathConfig])
-	@Provides def provideTitansConfig(configManager: ConfigManager):FredsTitanConfig = configManager.getConfig(classOf[FredsTitanConfig])
-	@Provides def provideInfernoConfig(configManager: ConfigManager):FredsInfernoConfig = configManager.getConfig(classOf[FredsInfernoConfig])
-	@Provides def provideYamaConfig(configManager: ConfigManager):FredsYamaConfig = configManager.getConfig(classOf[FredsYamaConfig])
+	@Provides def provideMuspahConfig(configManager: ConfigManager): FredsMuspahConfig = configManager.getConfig(classOf[FredsMuspahConfig])
+	@Provides def provideAmoxliatlConfig(configManager: ConfigManager): FredsAmoxliatlConfig = configManager.getConfig(classOf[FredsAmoxliatlConfig])
+	@Provides def provideHueycoatlConfig(configManager: ConfigManager): FredsHueycoatlConfig = configManager.getConfig(classOf[FredsHueycoatlConfig])
+	@Provides def provideVorkathConfig(configManager: ConfigManager): FredsVorkathConfig = configManager.getConfig(classOf[FredsVorkathConfig])
+	@Provides def provideTitansConfig(configManager: ConfigManager): FredsTitanConfig = configManager.getConfig(classOf[FredsTitanConfig])
+	@Provides def provideInfernoConfig(configManager: ConfigManager): FredsInfernoConfig = configManager.getConfig(classOf[FredsInfernoConfig])
+	@Provides def provideYamaConfig(configManager: ConfigManager): FredsYamaConfig = configManager.getConfig(classOf[FredsYamaConfig])
 	@Provides def provideDksConfig(configManager: ConfigManager): DksConfig = configManager.getConfig(classOf[DksConfig])
 	@Provides def provideShellsBane(configManager: ConfigManager): FredsShellsbaneConfig = configManager.getConfig(classOf[FredsShellsbaneConfig])
 	@Provides def provideCerbConfig(configManager: ConfigManager): CerberusConfig = configManager.getConfig(classOf[CerberusConfig])
@@ -405,5 +414,5 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	@Provides def provideHespori(configManager: ConfigManager): FredsHesporiConfig = configManager.getConfig(classOf[FredsHesporiConfig])
 	@Provides def provideThermy(configManager: ConfigManager): FredsThermyConfig = configManager.getConfig(classOf[FredsThermyConfig])
-	@Provides def provideWyrd(configManager: ConfigManager): FredsWyrdConfig = configManager.getConfig(classOf[FredsWyrdConfig])
+	@Provides def provideBmr(configManager: ConfigManager): FredsBmrConfig = configManager.getConfig(classOf[FredsBmrConfig])
 }

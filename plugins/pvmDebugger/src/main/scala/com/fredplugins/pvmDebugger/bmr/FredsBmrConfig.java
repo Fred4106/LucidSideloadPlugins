@@ -1,4 +1,4 @@
-package com.fredplugins.pvmDebugger.wyrd;
+package com.fredplugins.pvmDebugger.bmr;
 
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
@@ -8,11 +8,11 @@ import net.runelite.client.config.ConfigSection;
 
 import java.awt.*;
 
-@ConfigGroup(value = "FredsWyrdHelper", secondaryConfig = true)
-public interface FredsWyrdConfig extends Config {
+@ConfigGroup(value = "FredsBmrHelper", secondaryConfig = true)
+public interface FredsBmrConfig extends Config {
 	@ConfigItem(
 		name = "Enabled",
-		description = "Is Wyrd helper enabled?",
+		description = "Is Blood Moon Rises helper enabled?",
 		position = 0,
 		keyName = "enabled"
 	)
