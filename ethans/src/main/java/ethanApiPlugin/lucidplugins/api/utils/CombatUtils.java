@@ -58,6 +58,11 @@ public class CombatUtils
             PrayerInteraction.togglePrayer(checkPrayer(prayer));
         }
     }
+    
+    public static boolean isActive(Prayer p)
+    {
+        return client.isPrayerActive(p);
+    }
 
 	public static void activatePrayers(Prayer ... prayers)
 	{
@@ -70,7 +75,6 @@ public class CombatUtils
 		{
 			if (!client.isPrayerActive(prayer))
 			{
-				
 				PrayerInteraction.togglePrayer(prayer);
 			}
 		}

@@ -144,4 +144,6 @@ public final class ProjectileID
     public static final int THERMY_RANGE_PROJ = 3665;
     public static final int THERMY_MAGE_PROJ = 3667;
     public static final int THERMY_SPEC_PROJ = 3669;
+
+    
 }

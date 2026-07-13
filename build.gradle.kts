@@ -52,6 +52,9 @@ allprojects {
             sourceCompatibility = javaVersion
             targetCompatibility = javaVersion
         }
+        tasks.withType<JavaCompile>().configureEach{
+            options.encoding ="UTF-8"
+        }
         tasks {
             jar {
                 duplicatesStrategy = DuplicatesStrategy.WARN
@@ -85,6 +88,10 @@ dependencies {
     implementation(projects.titheFarm2)
     implementation(projects.valeTotems)
     implementation(projects.zulrahHelper)
+}
+
+tasks.withType<JavaCompile>().configureEach{
+    options.encoding ="UTF-8"
 }
 
 tasks {

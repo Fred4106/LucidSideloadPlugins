@@ -9,10 +9,14 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
+
+import ch.qos.logback.classic.Level;
 import net.runelite.api.Client;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.NPC;
@@ -22,16 +26,23 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class DrakanHelperOverlay extends Overlay
-{
+public class DrakanHelperOverlay extends Overlay {
+
+	private final static Logger log;
+	static {
+		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DrakanHelperOverlay.class)).setLevel(Level.DEBUG);
+		log = LoggerFactory.getLogger(DrakanHelperOverlay.class);
+	}
+
 	private final Client client;
 	private final DrakanHelperPlugin plugin;
 	private final DrakanHelperConfig config;
 
 	@Inject
-	DrakanHelperOverlay(Client client, DrakanHelperPlugin plugin, DrakanHelperConfig config)
-	{
+	DrakanHelperOverlay(Client client, DrakanHelperPlugin plugin, DrakanHelperConfig config) {
 		this.client = client;
 		this.plugin = plugin;
 		this.config = config;
@@ -40,11 +51,9 @@ public class DrakanHelperOverlay extends Overlay
 	}
 
 	@Override
-	public Dimension render(Graphics2D graphics)
-	{
+	public Dimension render(Graphics2D graphics) {
 		final NPC boss = plugin.getBoss();
-		if (boss == null)
-		{
+		if (boss == null) {
 			return null;
 		}
 
@@ -53,15 +62,12 @@ public class DrakanHelperOverlay extends Overlay
 		final Set<Point> marks = new HashSet<>();
 		final List<LocalPoint> markLp = new ArrayList<>();
 		int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
-		for (final GraphicsObject go : client.getGraphicsObjects())
-		{
-			if (go.getId() != DrakanHelperPlugin.DANGER_MARK_GFX)
-			{
+		for (final GraphicsObject go : client.getGraphicsObjects()) {
+			if (go.getId() != DrakanHelperPlugin.DANGER_MARK_GFX) {
 				continue;
 			}
 			final LocalPoint lp = go.getLocation();
-			if (lp == null)
-			{
+			if (lp == null) {
 				continue;
 			}
 			markLp.add(lp);
@@ -76,40 +82,31 @@ public class DrakanHelperOverlay extends Overlay
 
 		final boolean bloom = marks.size() >= config.aoeThreshold();
 
-		if (bloom && config.highlightAoe())
-		{
-			for (final LocalPoint lp : markLp)
-			{
+		if (bloom && config.highlightAoe()) {
+			for (final LocalPoint lp : markLp) {
 				fillTile(graphics, lp, config.dangerColor());
 			}
-			for (int sx = minX; sx <= maxX; sx++)
-			{
-				for (int sy = minY; sy <= maxY; sy++)
-				{
-					if (!marks.contains(new Point(sx, sy)))
-					{
+			for (int sx = minX; sx <= maxX; sx++) {
+				for (int sy = minY; sy <= maxY; sy++) {
+					if (!marks.contains(new Point(sx, sy))) {
 						fillTile(graphics, sceneTile(sx, sy), config.safeColor());
 					}
 				}
 			}
 		}
-		if (config.safeClickTiles())
-		{
+		if (config.safeClickTiles()) {
 			renderSafeSequence(graphics, boss);
 		}
 
-		if (config.specialSafeSpots() && plugin.specialType() != 0)
-		{
+		if (config.specialSafeSpots() && plugin.specialType() != 0) {
 			renderSpecialSafe(graphics, boss);
 		}
 
-		if (config.specialSafeSpots() && plugin.chargeTicks() > 0)
-		{
+		if (config.specialSafeSpots() && plugin.chargeTicks() > 0) {
 			renderChargeSafe(graphics);
 		}
 
-		if (config.lungeForecast())
-		{
+		if (config.lungeForecast()) {
 			renderForecast(graphics, boss);
 		}
 
@@ -123,13 +120,11 @@ public class DrakanHelperOverlay extends Overlay
 	 * STAY PUT while the player follows the path (the plan only re-anchors on a real deviation),
 	 * so each box is a stable click target rather than an offset that chases the player.
 	 */
-	private void renderSafeSequence(Graphics2D g, NPC boss)
-	{
+	private void renderSafeSequence(Graphics2D g, NPC boss) {
 		final List<LocalPoint> tiles = plugin.plannedTiles();
 		final String chain = plugin.plannedChain();
 		final int consumed = plugin.strikesConsumed();
-		if (tiles.isEmpty() || consumed >= tiles.size() || chain.length() < tiles.size())
-		{
+		if (tiles.isEmpty() || consumed >= tiles.size() || chain.length() < tiles.size()) {
 			return;
 		}
 
@@ -138,8 +133,7 @@ public class DrakanHelperOverlay extends Overlay
 		final FontMetrics fm = g.getFontMetrics();
 		final boolean hot = plugin.clickNow();
 
-		for (int i = consumed; i < tiles.size(); i++)
-		{
+		for (int i = consumed; i < tiles.size(); i++) {
 			final LocalPoint tile = tiles.get(i);
 
 			// Numbers are PERMANENT for the combo (assigned at build, never renumbered) — the
@@ -153,15 +147,12 @@ public class DrakanHelperOverlay extends Overlay
 			fillTile(g, tile, new Color(base.getRed(), base.getGreen(), base.getBlue(), alpha));
 
 			final net.runelite.api.Point tp = Perspective.localToCanvas(client, tile, client.getPlane());
-			if (tp == null)
-			{
+			if (tp == null) {
 				continue;
 			}
-			if (thisHot)
-			{
+			if (thisHot) {
 				final Polygon poly = Perspective.getCanvasTilePoly(client, tile);
-				if (poly != null)
-				{
+				if (poly != null) {
 					final boolean on = (client.getGameCycle() / 10) % 2 == 0;
 					g.setColor(on ? Color.YELLOW : Color.WHITE);
 					g.setStroke(new BasicStroke(4));
@@ -182,63 +173,65 @@ public class DrakanHelperOverlay extends Overlay
 	 * side to be on for that strike (opposite the struck tile); '✱' marks the radial AoE (hug
 	 * Drakan or leave the ring). Struck-through past strikes are grayed, the next is yellow.
 	 */
-	private void renderForecast(Graphics2D g, NPC boss)
-	{
+	private void renderForecast(Graphics2D g, NPC boss) {
 		final String chain = plugin.forecastChain();
-		if (chain.isEmpty())
-		{
+		if (chain.isEmpty()) {
 			return;
 		}
 
 		// Which screen side is Drakan's left? Compare canvas x of his tile vs one tile to his left.
 		final LocalPoint c = boss.getLocalLocation();
-		if (c == null)
-		{
+		if (c == null) {
 			return;
 		}
 		final int[] f = cardinal(boss.getOrientation());
 		final int[] l = {-f[1], f[0]};
 		final net.runelite.api.Point p0 = Perspective.localToCanvas(client, c, client.getPlane());
-		final net.runelite.api.Point pL = Perspective.localToCanvas(client,
-			new LocalPoint(c.getX() + l[0] * Perspective.LOCAL_TILE_SIZE,
-				c.getY() + l[1] * Perspective.LOCAL_TILE_SIZE), client.getPlane());
-		if (p0 == null || pL == null)
-		{
+		final net.runelite.api.Point pL = Perspective.localToCanvas(
+			client,
+			new LocalPoint(
+				c.getX() + l[0] * Perspective.LOCAL_TILE_SIZE,
+				c.getY() + l[1] * Perspective.LOCAL_TILE_SIZE
+			), client.getPlane()
+		);
+		if (p0 == null || pL == null) {
 			return;
 		}
 		final boolean hisLeftIsScreenLeft = pL.getX() < p0.getX();
 
 		final Font font = g.getFont().deriveFont(Font.BOLD, 28f);
 		g.setFont(font);
-		final boolean glyphs = font.canDisplay('◀') && font.canDisplay('▶') && font.canDisplay('✱');
-		final char lArr = glyphs ? '◀' : '<';
-		final char rArr = glyphs ? '▶' : '>';
-		final char aoe = glyphs ? '✱' : '*';
+
+		final String[] symbs = new String[] {"<", ">", "*"};
+		final String symbolList = "\u25C1\u25B7\u25EF";
+		for(int jjj = 0; jjj < symbs.length; jjj++) {
+			int codePoint = symbolList.codePointAt(jjj);
+			char charz = symbolList.charAt(jjj);
+			String reversedCodePoint = Character.toString(codePoint);
+			log.debug("char={}, codePoint={}, reversed='{}'", charz, codePoint, reversedCodePoint);
+			if (font.canDisplay(codePoint)) {
+				symbs[jjj] = ""+charz;
+			}
+		}
 
 		final StringBuilder disp = new StringBuilder();
-		for (int i = 0; i < chain.length(); i++)
-		{
+		for (int i = 0; i < chain.length(); i++) {
 			final char s = chain.charAt(i);
-			if (s == 'B')
-			{
-				disp.append(aoe);
-			}
-			else
-			{
+			if (s == 'B') {
+				disp.append(symbs[2]);
+			} else {
 				// dodge side = opposite of the struck tile, converted to screen space
 				final boolean dodgeHisLeft = s == 'R';
-				disp.append(dodgeHisLeft == hisLeftIsScreenLeft ? lArr : rArr);
+				disp.append(dodgeHisLeft == hisLeftIsScreenLeft ? symbs[0] : symbs[1]);
 			}
-			if (i < chain.length() - 1)
-			{
+			if (i < chain.length() - 1) {
 				disp.append(' ');
 			}
 		}
 
 		final String text = disp.toString();
 		final net.runelite.api.Point loc = boss.getCanvasTextLocation(g, text, 320);
-		if (loc == null)
-		{
+		if (loc == null) {
 			return;
 		}
 		final FontMetrics fm = g.getFontMetrics();
@@ -246,11 +239,9 @@ public class DrakanHelperOverlay extends Overlay
 		int x = loc.getX();
 		final int y = loc.getY();
 		int idx = 0; // strike index (display has separator spaces)
-		for (int i = 0; i < text.length(); i++)
-		{
+		for (int i = 0; i < text.length(); i++) {
 			final String ch = String.valueOf(text.charAt(i));
-			if (!ch.equals(" "))
-			{
+			if (!ch.equals(" ")) {
 				final Color col = idx < consumed ? new Color(110, 110, 110)
 					: idx == consumed ? Color.YELLOW : Color.WHITE;
 				g.setColor(Color.BLACK);
@@ -269,11 +260,9 @@ public class DrakanHelperOverlay extends Overlay
 	 * semicircle → directly behind him (2 ranks x both lanes). A tick countdown to impact is
 	 * drawn on the safe tile nearest the player.
 	 */
-	private void renderSpecialSafe(Graphics2D g, NPC boss)
-	{
+	private void renderSpecialSafe(Graphics2D g, NPC boss) {
 		final LocalPoint c = boss.getLocalLocation();
-		if (c == null)
-		{
+		if (c == null) {
 			return;
 		}
 		final int[] f = cardinal(plugin.specialOrientation());
@@ -282,65 +271,58 @@ public class DrakanHelperOverlay extends Overlay
 		final int h = t / 2;
 
 		final List<LocalPoint> tiles = new ArrayList<>();
-		if (plugin.specialType() == 1)
-		{
+		if (plugin.specialType() == 1) {
 			// front/back wave: beside his two body ranks, 2 tiles out from each flank
-			for (int side = -1; side <= 1; side += 2)
-			{
-				for (int rank = -1; rank <= 1; rank += 2)
-				{
+			for (int side = -1; side <= 1; side += 2) {
+				for (int rank = -1; rank <= 1; rank += 2) {
 					tiles.add(new LocalPoint(
 						c.getX() + l[0] * side * (h + 2 * t) + f[0] * rank * h,
-						c.getY() + l[1] * side * (h + 2 * t) + f[1] * rank * h));
+						c.getY() + l[1] * side * (h + 2 * t) + f[1] * rank * h,
+						c.getWorldView()
+					));
 				}
 			}
-		}
-		else
-		{
+		} else {
 			// semicircle: directly behind him, both lanes, two ranks deep
-			for (int lane = -1; lane <= 1; lane += 2)
-			{
-				for (int k = 1; k <= 2; k++)
-				{
+			for (int lane = -1; lane <= 1; lane += 2) {
+				for (int k = 1; k <= 2; k++) {
 					tiles.add(new LocalPoint(
 						c.getX() - f[0] * (h + k * t) + l[0] * lane * h,
-						c.getY() - f[1] * (h + k * t) + l[1] * lane * h));
+						c.getY() - f[1] * (h + k * t) + l[1] * lane * h
+					));
 				}
 			}
 		}
 
 		final Color base = config.safeColor();
-		final Color bright = new Color(base.getRed(), base.getGreen(), base.getBlue(),
-			Math.min(255, base.getAlpha() + 60));
-		for (final LocalPoint tile : tiles)
-		{
+		final Color bright = new Color(
+			base.getRed(), base.getGreen(), base.getBlue(),
+			Math.min(255, base.getAlpha() + 60)
+		);
+		for (final LocalPoint tile : tiles) {
 			fillTile(g, tile, bright);
 		}
 
 		// countdown on the safe tile nearest the player
 		final Player local = client.getLocalPlayer();
 		final int impact = plugin.specialImpactTicks();
-		if (local == null || local.getLocalLocation() == null || impact <= 0)
-		{
+		if (local == null || local.getLocalLocation() == null || impact <= 0) {
 			return;
 		}
 		final LocalPoint p = local.getLocalLocation();
 		LocalPoint nearest = tiles.get(0);
 		long best = Long.MAX_VALUE;
-		for (final LocalPoint tile : tiles)
-		{
+		for (final LocalPoint tile : tiles) {
 			final long dx = tile.getX() - p.getX();
 			final long dy = tile.getY() - p.getY();
 			final long d2 = dx * dx + dy * dy;
-			if (d2 < best)
-			{
+			if (d2 < best) {
 				best = d2;
 				nearest = tile;
 			}
 		}
 		final net.runelite.api.Point tp = Perspective.localToCanvas(client, nearest, client.getPlane());
-		if (tp != null)
-		{
+		if (tp != null) {
 			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
 			final String label = Integer.toString(impact);
 			final FontMetrics fm = g.getFontMetrics();
@@ -357,54 +339,47 @@ public class DrakanHelperOverlay extends Overlay
 	 * sidestep ("above or below his vision"), running at or away from him stays on the line.
 	 * Paints 2 sidestep tiles on each side of where the player stood at the reappear.
 	 */
-	private void renderChargeSafe(Graphics2D g)
-	{
+	private void renderChargeSafe(Graphics2D g) {
 		final LocalPoint a = plugin.chargeAnchor();
 		final int[] perp = plugin.chargePerp();
-		if (a == null || perp == null)
-		{
+		if (a == null || perp == null) {
 			return;
 		}
 		final int t = Perspective.LOCAL_TILE_SIZE;
-		final Color base = config.safeColor();
-		final Color bright = new Color(base.getRed(), base.getGreen(), base.getBlue(),
-			Math.min(255, base.getAlpha() + 60));
+		final Color base = config.p3safeColor();
+		final Color bright = new Color(
+			base.getRed(), base.getGreen(), base.getBlue(),
+			Math.min(255, base.getAlpha() + 60)
+		);
 		final List<LocalPoint> tiles = new ArrayList<>();
-		for (int side = -1; side <= 1; side += 2)
-		{
-			for (int d = 2; d <= 3; d++)
-			{
-				tiles.add(new LocalPoint(a.getX() + perp[0] * side * d * t, a.getY() + perp[1] * side * d * t));
+		for (int side = -1; side <= 1; side += 2) {
+			for (int d = 2; d <= 3; d++) {
+				tiles.add(new LocalPoint(a.getX() + perp[0] * side * d * t, a.getY() + perp[1] * side * d * t, a.getWorldView()));
 			}
 		}
-		for (final LocalPoint tile : tiles)
-		{
+		for (final LocalPoint tile : tiles) {
 			fillTile(g, tile, bright);
 		}
 
 		// countdown on the tile nearest the player
 		final Player local = client.getLocalPlayer();
-		if (local == null || local.getLocalLocation() == null)
-		{
+		if (local == null || local.getLocalLocation() == null) {
 			return;
 		}
 		final LocalPoint p = local.getLocalLocation();
 		LocalPoint nearest = tiles.get(0);
 		long best = Long.MAX_VALUE;
-		for (final LocalPoint tile : tiles)
-		{
+		for (final LocalPoint tile : tiles) {
 			final long dx = tile.getX() - p.getX();
 			final long dy = tile.getY() - p.getY();
 			final long d2 = dx * dx + dy * dy;
-			if (d2 < best)
-			{
+			if (d2 < best) {
 				best = d2;
 				nearest = tile;
 			}
 		}
 		final net.runelite.api.Point tp = Perspective.localToCanvas(client, nearest, client.getPlane());
-		if (tp != null)
-		{
+		if (tp != null) {
 			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
 			final String label = Integer.toString(plugin.chargeTicks());
 			final FontMetrics fm = g.getFontMetrics();
@@ -416,12 +391,12 @@ public class DrakanHelperOverlay extends Overlay
 		}
 	}
 
-	/** Snap a 0..2047 orientation to a cardinal unit vector (x east, y north). */
-	private static int[] cardinal(int orientation)
-	{
+	/**
+	 * Snap a 0..2047 orientation to a cardinal unit vector (x east, y north).
+	 */
+	private static int[] cardinal(int orientation) {
 		final int s = Math.floorMod(Math.round(orientation / 512f), 4);
-		switch (s)
-		{
+		switch (s) {
 			case 0:
 				return new int[]{0, -1}; // South
 			case 1:
@@ -433,17 +408,16 @@ public class DrakanHelperOverlay extends Overlay
 		}
 	}
 
-	private static LocalPoint sceneTile(int sceneX, int sceneY)
-	{
-		return new LocalPoint(sceneX * Perspective.LOCAL_TILE_SIZE + Perspective.LOCAL_TILE_SIZE / 2,
-			sceneY * Perspective.LOCAL_TILE_SIZE + Perspective.LOCAL_TILE_SIZE / 2);
+	private static LocalPoint sceneTile(int sceneX, int sceneY) {
+		return new LocalPoint(
+			sceneX * Perspective.LOCAL_TILE_SIZE + Perspective.LOCAL_TILE_SIZE / 2,
+			sceneY * Perspective.LOCAL_TILE_SIZE + Perspective.LOCAL_TILE_SIZE / 2
+		);
 	}
 
-	private void fillTile(Graphics2D g, LocalPoint lp, Color c)
-	{
+	private void fillTile(Graphics2D g, LocalPoint lp, Color c) {
 		final Polygon poly = Perspective.getCanvasTilePoly(client, lp);
-		if (poly == null)
-		{
+		if (poly == null) {
 			return;
 		}
 		g.setColor(c);
@@ -453,47 +427,36 @@ public class DrakanHelperOverlay extends Overlay
 		g.drawPolygon(poly);
 	}
 
-	private void drawBanner(Graphics2D g)
-	{
+	private void drawBanner(Graphics2D g) {
 		String text = null;
 		Color col = Color.WHITE;
 		boolean flashing = false;
-		if (config.prayerFlash() && plugin.prayMagic())
-		{
+		if (config.prayerFlash() && plugin.prayMagic()) {
 			text = "PRAY MAGIC";
 			col = new Color(120, 180, 255);
 			flashing = true;
-		}
-		else if (config.aoeWarning() && plugin.bloomActive())
-		{
+		} else if (config.aoeWarning() && plugin.bloomActive()) {
 			text = "MOVE!  hug Drakan or get out";
 			col = new Color(255, 140, 0);
-		}
-		else if (config.aoeWarning() && plugin.lungeActive())
-		{
+		} else if (config.aoeWarning() && plugin.lungeActive()) {
 			text = "SPEAR COMBO — stay on green, back away";
 			col = Color.YELLOW;
-		}
-		else if (config.aoeWarning() && plugin.comboIncoming() > 0)
-		{
+		} else if (config.aoeWarning() && plugin.comboIncoming() > 0) {
 			text = "COMBO INCOMING — " + plugin.comboIncoming();
 			col = new Color(255, 200, 0);
 		}
 
-		if (text != null && !(flashing && (client.getGameCycle() / 25) % 2 != 0))
-		{
+		if (text != null && !(flashing && (client.getGameCycle() / 25) % 2 != 0)) {
 			drawCentered(g, text, col);
 		}
 
-		if (config.showPhase())
-		{
+		if (config.showPhase()) {
 			final int hp = plugin.hpPct();
 			drawCorner(g, plugin.phase() + "   " + (hp >= 0 ? hp + "%" : "?"));
 		}
 	}
 
-	private void drawCentered(Graphics2D g, String text, Color col)
-	{
+	private void drawCentered(Graphics2D g, String text, Color col) {
 		g.setFont(g.getFont().deriveFont(Font.BOLD, 26f));
 		final FontMetrics fm = g.getFontMetrics();
 		final int w = fm.stringWidth(text);
@@ -508,8 +471,7 @@ public class DrakanHelperOverlay extends Overlay
 		g.drawString(text, x, y);
 	}
 
-	private void drawCorner(Graphics2D g, String text)
-	{
+	private void drawCorner(Graphics2D g, String text) {
 		g.setFont(g.getFont().deriveFont(Font.BOLD, 16f));
 		final int x = client.getViewportXOffset() + 10;
 		final int y = client.getViewportYOffset() + client.getViewportHeight() - 14;

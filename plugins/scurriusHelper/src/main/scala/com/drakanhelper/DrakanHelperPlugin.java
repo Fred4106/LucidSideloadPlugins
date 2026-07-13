@@ -1,19 +1,26 @@
 package com.drakanhelper;
 
+import ch.qos.logback.classic.Level;
+import com.fredplugins.common.utils.ReflectionUtils$;
+import com.fredplugins.common.utils.TWorldPoint;
 import com.google.inject.Provides;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 
 import com.google.inject.Singleton;
 import ethanApiPlugin.EthanApiPlugin;
+import ethanApiPlugin.lucidplugins.api.utils.CombatUtils;
 import net.runelite.api.ActorSpotAnim;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
 import net.runelite.api.Perspective;
 import net.runelite.api.Player;
+import net.runelite.api.Prayer;
 import net.runelite.api.Projectile;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.AnimationChanged;
@@ -31,6 +38,8 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper for Lowerniel Drakan (Untethered, The Blood Moon Rises finale).
@@ -49,6 +58,12 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Singleton
 public class DrakanHelperPlugin extends Plugin
 {
+	private final static Logger log;
+	static {
+		((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DrakanHelperPlugin.class)).setLevel(Level.DEBUG);
+		log = LoggerFactory.getLogger(DrakanHelperPlugin.class);
+	}
+
 	static final int DRAKAN_ID = 16204;
 	static final int DANGER_MARK_GFX = 2953;
 
@@ -221,9 +236,10 @@ public class DrakanHelperPlugin extends Plugin
 		final int dx = p.getX() - b.getX();
 		final int dy = p.getY() - b.getY();
 		// charge axis = dominant approach axis; sidestep axis = the other one
-		chargePerp = Math.abs(dx) >= Math.abs(dy) ? new int[]{0, 1} : new int[]{1, 0};
+		chargePerp = (Math.abs(dx) >= Math.abs(dy)) ? new int[]{0, 1} : new int[]{1, 0};
 		chargeAnchor = snapToTile(p);
 		chargeTicks = 4;
+		log.debug("chargePerp={{}, {}}, chargeAnchor={}, chargeTicks={}", chargePerp[0],chargePerp[1], chargeAnchor, chargeTicks);
 	}
 
 	@Subscribe
@@ -239,6 +255,7 @@ public class DrakanHelperPlugin extends Plugin
 	@Subscribe
 	public void onNpcChanged(NpcChanged e)
 	{
+		log.debug("NpcChanged: oldId = {}, newId = {}", ReflectionUtils$.MODULE$.getNpcName(e.getOld().getId()), ReflectionUtils$.MODULE$.getNpcName(e.getNpc().getId()));
 		if (e.getNpc().getId() == DRAKAN_ID)
 		{
 			boss = e.getNpc();
@@ -377,6 +394,20 @@ public class DrakanHelperPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onGraphicChangedAfterImages(GraphicChanged e)
+	{
+		if(e.getActor() instanceof NPC) {
+			NPC n = (NPC) e.getActor();
+			List<ActorSpotAnim> spotAnimations = StreamSupport.stream(n.getSpotAnims().spliterator(), false).collect(Collectors.toList());
+			String spots = spotAnimations.stream().map(sa -> {
+				String san = ReflectionUtils$.MODULE$.getSpotAnimationName(sa.getId());
+				return san;
+			}).collect(Collectors.joining(", ", "[", "]"));
+			log.debug("graphicsChanged: npcId={}, 1x={}, loc={}, spots={}", n.getId(), n.getIndex(), TWorldPoint.get(n.getWorldLocation()), spots);
+		}
+	}
+
+	@Subscribe
 	public void onProjectileMoved(ProjectileMoved e)
 	{
 		if (boss == null)
@@ -432,6 +463,14 @@ public class DrakanHelperPlugin extends Plugin
 		}
 
 		updateDodgePlan();
+	}
+
+	@Subscribe(priority = 10)
+	public void preGameTick(GameTick e)
+	{
+		if(boss == null) return;
+		Prayer protectPrayer = prayMagic() ? Prayer.PROTECT_FROM_MAGIC : Prayer.PROTECT_FROM_MELEE;
+		CombatUtils.activatePrayers(protectPrayer, Prayer.PIETY);
 	}
 
 	/**
@@ -686,7 +725,9 @@ public class DrakanHelperPlugin extends Plugin
 		final int t = Perspective.LOCAL_TILE_SIZE;
 		return new LocalPoint(
 			Math.floorDiv(p.getX(), t) * t + t / 2,
-			Math.floorDiv(p.getY(), t) * t + t / 2);
+			Math.floorDiv(p.getY(), t) * t + t / 2,
+			p.getWorldView()
+		);
 	}
 
 	private static int chebTiles(LocalPoint a, LocalPoint b)

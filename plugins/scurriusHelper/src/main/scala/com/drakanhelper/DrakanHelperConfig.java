@@ -123,8 +123,21 @@ public interface DrakanHelperConfig extends Config
 		return new Color(0, 230, 0, 70);
 	}
 
+
+	@Alpha
 	@ConfigItem(
 		position = 12,
+		keyName = "p3SafeColor",
+		name = "P3 Safe colour",
+		description = "Colour for phase 3 dash attack safe tiles."
+	)
+	default Color p3safeColor()
+	{
+		return new Color(0, 0, 230, 70);
+	}
+
+	@ConfigItem(
+		position = 20,
 		keyName = "aoeThreshold",
 		name = "AoE tile threshold",
 		description = "Number of blood-mark tiles above which the attack is treated as the big radial AoE."
