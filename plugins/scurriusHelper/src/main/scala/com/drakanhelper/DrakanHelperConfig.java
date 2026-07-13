@@ -1,6 +1,9 @@
 package com.drakanhelper;
 
 import java.awt.Color;
+
+import com.fredplugins.common.constants.FontStyle;
+import com.fredplugins.common.constants.FontTypes;
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
@@ -145,5 +148,39 @@ public interface DrakanHelperConfig extends Config
 	default int aoeThreshold()
 	{
 		return 20;
+	}
+
+	@ConfigItem(
+		position = 30,
+		keyName = "fontType",
+		name = "Font Type",
+		description = "Change the overlay font"
+	)
+	default FontTypes fontType() {
+		return FontTypes.REGULAR;
+	}
+	@Range(
+		min = 8,
+		max = 50
+	)
+	@ConfigItem(
+		position = 31,
+		keyName = "fontSize",
+		name = "Font Size",
+		description = "Change the overlay font size"
+	)
+	default int fontSize() {
+		return 16;
+	}
+
+	@ConfigItem(
+		name = "Font style",
+		description = "Bold/Italics/Plain",
+		position = 32,
+		keyName = "fontStyle"
+	)
+	default FontStyle fontStyle()
+	{
+		return FontStyle.PLAIN;
 	}
 }

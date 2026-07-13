@@ -1,9 +1,12 @@
 package com.drakanhelper;
 
 import ch.qos.logback.classic.Level;
+import com.fredplugins.common.constants.FontTypes;
 import com.fredplugins.common.utils.ReflectionUtils$;
 import com.fredplugins.common.utils.TWorldPoint;
 import com.google.inject.Provides;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,9 +37,11 @@ import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.ProjectileMoved;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,6 +166,16 @@ public class DrakanHelperPlugin extends Plugin
 		return configManager.getConfig(DrakanHelperConfig.class);
 	}
 
+	private Font cachedFont = null;//config.fontType().//FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
+
+	public Font getFont() {
+		if(cachedFont == null) {
+			cachedFont = (config.fontType() != FontTypes.REGULAR) ?
+				new Font(config.fontType().toString(), config.fontStyle().getFont(), config.fontSize()) :
+				FontManager.getRunescapeFont().deriveFont(config.fontStyle().getFont(), config.fontSize());
+		}
+		return cachedFont;
+	}
 	@Override
 	protected void startUp()
 	{
@@ -249,6 +264,20 @@ public class DrakanHelperPlugin extends Plugin
 		{
 			boss = null;
 			bossVanished = true;
+		}
+	}
+	@Subscribe
+	public void onConfigChanged(ConfigChanged e)
+	{
+		if(e.getGroup().equalsIgnoreCase("drakanhelper")) {
+			switch (e.getKey()) {
+				case "fontType":
+				case "fontSize":
+				case "fontStyle":
+					cachedFont = null;
+					break;
+				default:
+			}
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.fredplugins.attacktimer;
 
+import com.fredplugins.common.constants.FontTypes;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;

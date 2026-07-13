@@ -1,4 +1,4 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.common.constants;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

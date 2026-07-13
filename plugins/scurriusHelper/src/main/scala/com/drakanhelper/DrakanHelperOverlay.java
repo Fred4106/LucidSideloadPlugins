@@ -56,7 +56,7 @@ public class DrakanHelperOverlay extends Overlay {
 		if (boss == null) {
 			return null;
 		}
-
+		graphics.setFont(plugin.getFont());
 		// Live blood marks — only trustworthy for the big radial AoE (for the spear lunge they
 		// render offset from the real strike, so the lunge is driven off the animation instead).
 		final Set<Point> marks = new HashSet<>();
@@ -128,8 +128,8 @@ public class DrakanHelperOverlay extends Overlay {
 			return;
 		}
 
-		final Font font = g.getFont().deriveFont(Font.BOLD, 16f);
-		g.setFont(font);
+//		final Font font = g.getFont().deriveFont(Font.BOLD, 16f);
+//		g.setFont(font);
 		final FontMetrics fm = g.getFontMetrics();
 		final boolean hot = plugin.clickNow();
 
@@ -199,8 +199,9 @@ public class DrakanHelperOverlay extends Overlay {
 		}
 		final boolean hisLeftIsScreenLeft = pL.getX() < p0.getX();
 
-		final Font font = g.getFont().deriveFont(Font.BOLD, 28f);
-		g.setFont(font);
+		final Font font = g.getFont();
+//		final Font font = g.getFont().deriveFont(Font.BOLD, 28f);
+//		g.setFont(font);
 
 		final String[] symbs = new String[] {"<", ">", "*"};
 		final String symbolList = "\u25C1\u25B7\u25EF";
@@ -208,7 +209,6 @@ public class DrakanHelperOverlay extends Overlay {
 			int codePoint = symbolList.codePointAt(jjj);
 			char charz = symbolList.charAt(jjj);
 			String reversedCodePoint = Character.toString(codePoint);
-			log.debug("char={}, codePoint={}, reversed='{}'", charz, codePoint, reversedCodePoint);
 			if (font.canDisplay(codePoint)) {
 				symbs[jjj] = ""+charz;
 			}
@@ -323,7 +323,7 @@ public class DrakanHelperOverlay extends Overlay {
 		}
 		final net.runelite.api.Point tp = Perspective.localToCanvas(client, nearest, client.getPlane());
 		if (tp != null) {
-			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
+//			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
 			final String label = Integer.toString(impact);
 			final FontMetrics fm = g.getFontMetrics();
 			final int lx = tp.getX() - fm.stringWidth(label) / 2;
@@ -380,7 +380,7 @@ public class DrakanHelperOverlay extends Overlay {
 		}
 		final net.runelite.api.Point tp = Perspective.localToCanvas(client, nearest, client.getPlane());
 		if (tp != null) {
-			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
+//			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
 			final String label = Integer.toString(plugin.chargeTicks());
 			final FontMetrics fm = g.getFontMetrics();
 			final int lx = tp.getX() - fm.stringWidth(label) / 2;
@@ -457,7 +457,8 @@ public class DrakanHelperOverlay extends Overlay {
 	}
 
 	private void drawCentered(Graphics2D g, String text, Color col) {
-		g.setFont(g.getFont().deriveFont(Font.BOLD, 26f));
+//		g.setFont(g.getFont().deriveFont(Font.BOLD, 26f));
+//		g.setFont(plugin.getFont());
 		final FontMetrics fm = g.getFontMetrics();
 		final int w = fm.stringWidth(text);
 		final int cx = client.getViewportXOffset() + client.getViewportWidth() / 2;
@@ -472,7 +473,7 @@ public class DrakanHelperOverlay extends Overlay {
 	}
 
 	private void drawCorner(Graphics2D g, String text) {
-		g.setFont(g.getFont().deriveFont(Font.BOLD, 16f));
+//		g.setFont(g.getFont().deriveFont(Font.BOLD, 16f));
 		final int x = client.getViewportXOffset() + 10;
 		final int y = client.getViewportYOffset() + client.getViewportHeight() - 14;
 		g.setColor(Color.BLACK);

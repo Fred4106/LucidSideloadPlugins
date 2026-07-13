@@ -1,5 +1,6 @@
 package com.fredplugins.attacktimer;
 
+import com.fredplugins.common.constants.FontTypes;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
