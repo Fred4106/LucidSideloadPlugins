@@ -31,7 +31,11 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import net.runelite.client.util.ColorUtil
 import com.fredplugins.common.api.WorldRegion
 import com.fredplugins.common.api.WorldRegion.{given_Conversion_WorldArea_WorldRegion, *}
+import com.fredplugins.common.constants.FontTypes
+import net.runelite.client.events.ConfigChanged
+import net.runelite.client.ui.FontManager
 
+import java.awt.Font
 import java.awt.{Color, Dimension, Graphics2D, Polygon, Shape}
 import scala.collection.mutable
 import scala.compiletime.uninitialized
@@ -46,32 +50,51 @@ class FredsBmrHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 	private def clientThread  = parent.getClientThread
 	given Client = client
 
-	var wyrdHelper: FredsWyrdHelper = uninitialized
-	var drakanHelper: FredsDrakanHelper = uninitialized
-	
-	override def init(): Unit = {
-		wyrdHelper = if (wyrdHelper == null) new FredsWyrdHelper(parent, config) else wyrdHelper
-		wyrdHelper.init()
-		parent.getEventBus.register(wyrdHelper)
+	lazy val wyrdHelper: FredsWyrdHelper = new FredsWyrdHelper(parent, config)
+	lazy val drakanHelper: FredsDrakanHelper = new FredsDrakanHelper(this, config)
+	private var cachedFont:  Font = null //config.fontType().//FontManager.getRunescapeFont.deriveFont(if (config.getFontBold) 1 else 0, config.getFontSize)
 
-		drakanHelper = if (drakanHelper == null) new FredsDrakanHelper(parent, config) else drakanHelper
+	def getFont(): Font = {
+		if (cachedFont == null) {
+			val nFont =
+				if(config.fontType != FontTypes.REGULAR)
+					Font.getFont(config.fontType.getName)
+				else
+					FontManager.getRunescapeFont
+
+			cachedFont = nFont.deriveFont(config.fontStyle.getFont, config.fontSize)
+		}
+		cachedFont
+	}
+
+	@Subscribe
+	def onConfigChanged(e: ConfigChanged): Unit = {
+		if (!e.getGroup.equalsIgnoreCase("FredsBmrHelper")) return
+
+		Option(e.getKey).foreach {
+			case k@("fontType" | "fontSize"| "fontStyle") => cachedFont = null
+			case o =>
+		}
+	}
+
+	override def init(): Unit = {
+		wyrdHelper.init()
 		drakanHelper.init()
+		parent.getEventBus.register(wyrdHelper)
 		parent.getEventBus.register(drakanHelper)
 	}
 
 	override def cleanup(): Unit = {
 		parent.getEventBus.unregister(wyrdHelper)
-		wyrdHelper.cleanup()
-		wyrdHelper = null
-
 		parent.getEventBus.unregister(drakanHelper)
+
+		wyrdHelper.cleanup()
 		drakanHelper.cleanup()
-		drakanHelper = null
 	}
 
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
 		val wyrdElements = Option(wyrdHelper).map(_.createPanelElements()).getOrElse(Seq.empty[LayoutableRenderableEntity])
-		val drakanElements = Option(drakanHelper).map(_.createPanelElements()).getOrElse(Seq.empty[LayoutableRenderableEntity])
+		val drakanElements = Seq.empty[LayoutableRenderableEntity]//Option(drakanHelper).map(_.createPanelElements()).getOrElse(Seq.empty[LayoutableRenderableEntity])
 		Seq(wyrdElements, drakanElements).flatMap{
 			case e: LayoutableRenderableEntity => Seq(e)
 			case le: Seq[_] => le.collect{
@@ -79,6 +102,7 @@ class FredsBmrHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 			}
 		}
 	}
+
 	override def renderOverlay(g: Graphics2D): Dimension = {
 		given Graphics2D = g
 		given ModelOutlineRenderer = parent.getModelOutlineRenderer
@@ -121,7 +145,7 @@ class FredsBmrHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 		}
 
 		Option(wyrdHelper).foreach(_.renderOverlay(renderNpcOverlay, renderNpcText, renderTile))
-		Option(drakanHelper).foreach(_.renderOverlay(renderNpcOverlay, renderNpcText, renderTile))
+//		Option(drakanHelper).foreach(_.renderOverlay(renderNpcOverlay, renderNpcText, renderTile))
 
 		null.asInstanceOf[Dimension]
 	}
