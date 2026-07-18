@@ -153,7 +153,7 @@ public class DrakanHelperOverlay extends Overlay {
 			if (thisHot) {
 				final Polygon poly = Perspective.getCanvasTilePoly(client, tile);
 				if (poly != null) {
-					final boolean on = (client.getGameCycle() / 10) % 2 == 0;
+					final boolean on = (client.getGameCycle() / 20) % 2 == 0;
 					g.setColor(on ? Color.YELLOW : Color.WHITE);
 					g.setStroke(new BasicStroke(4));
 					g.drawPolygon(poly);

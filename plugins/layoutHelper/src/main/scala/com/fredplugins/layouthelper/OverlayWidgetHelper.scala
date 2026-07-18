@@ -2,7 +2,8 @@ package com.fredplugins.layouthelper
 
 import com.fredplugins.layouthelper.OverlayWidgetHelper.{componentIdField, resizableField, snappableField}
 import net.runelite.client.chat.{ChatColorType, ChatMessageBuilder}
-import net.runelite.client.ui.overlay.{Overlay, OverlayManager, OverlayPosition, WidgetOverlay}
+import net.runelite.client.ui.overlay.WidgetOverlays
+import net.runelite.client.ui.overlay.{Overlay, OverlayManager, OverlayPosition}
 import org.slf4j.LoggerFactory
 import packetUtils.WidgetInfoExtended
 
@@ -13,14 +14,14 @@ import scala.util.chaining.*
 object OverlayWidgetHelper {
   private val log = LoggerFactory.getLogger(classOf[OverlayWidgetHelper])
 
-  val componentIdField: Field = classOf[WidgetOverlay].getDeclaredField("componentId").tap(_.setAccessible(true))
+  val componentIdField: Field = classOf[WidgetOverlays#WidgetOverlay].getDeclaredField("componentId").tap(_.setAccessible(true))
   val snappableField: Field = classOf[Overlay].getDeclaredField("snappable").tap(_.setAccessible(true))
   val resizableField: Field = classOf[Overlay].getDeclaredField("resizable").tap(_.setAccessible(true))
   val overlayManager_getOverlaysMethod: Method = classOf[OverlayManager].getDeclaredMethod("getOverlays").tap(_.setAccessible(true))
 
   def getOverlays(manager: OverlayManager): List[OverlayWidgetHelper] = overlayManager_getOverlaysMethod.invoke(manager).asInstanceOf[java.util.List[Overlay]].asScala.toList.flatMap(o =>
-    Option.when(o.isInstanceOf[WidgetOverlay]) {
-      OverlayWidgetHelper(o.asInstanceOf[WidgetOverlay])
+    Option.when(o.isInstanceOf[WidgetOverlays#WidgetOverlay]) {
+      OverlayWidgetHelper(o.asInstanceOf[WidgetOverlays#WidgetOverlay])
     }
   )
 
@@ -78,7 +79,7 @@ object OverlayWidgetHelper {
     }
   }
 }
-class OverlayWidgetHelper(private val wo: WidgetOverlay) {
+class OverlayWidgetHelper(private val wo: WidgetOverlays#WidgetOverlay) {
   var cachedLocation : Point = wo.getPreferredLocation
   var cachedPosition : OverlayPosition = wo.getPreferredPosition
   def size: Dimension = wo.getBounds.getSize

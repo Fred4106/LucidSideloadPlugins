@@ -35,6 +35,7 @@ import net.runelite.api.events.NpcChanged;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.ProjectileMoved;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -69,7 +70,6 @@ public class DrakanHelperPlugin extends Plugin
 		log = LoggerFactory.getLogger(DrakanHelperPlugin.class);
 	}
 
-	static final int DRAKAN_ID = 16204;
 	static final int DANGER_MARK_GFX = 2953;
 
 	private static final int BLOOM_ANIM = 14325;
@@ -229,7 +229,10 @@ public class DrakanHelperPlugin extends Plugin
 	@Subscribe
 	public void onNpcSpawned(NpcSpawned e)
 	{
-		if (e.getNpc().getId() != DRAKAN_ID)
+		if (
+			e.getNpc().getId() != NpcID.MYQ6_LOWERNIEL_FINAL_COMBAT &&
+			e.getNpc().getId() != NpcID.LOWERNIEL_DRAKAN_AFTERIMAGE_HOLDER
+		)
 		{
 			return;
 		}
@@ -281,19 +284,19 @@ public class DrakanHelperPlugin extends Plugin
 		}
 	}
 
-	@Subscribe
-	public void onNpcChanged(NpcChanged e)
-	{
-		log.debug("NpcChanged: oldId = {}, newId = {}", ReflectionUtils$.MODULE$.getNpcName(e.getOld().getId()), ReflectionUtils$.MODULE$.getNpcName(e.getNpc().getId()));
-		if (e.getNpc().getId() == DRAKAN_ID)
-		{
-			boss = e.getNpc();
-		}
-		else if (e.getNpc() == boss)
-		{
-			boss = null;
-		}
-	}
+//	@Subscribe
+//	public void onNpcChanged(NpcChanged e)
+//	{
+//		log.debug("NpcChanged: oldId = {}, newId = {}", e.getOld().getId(), e.getNpc().getId());
+//		if (e.getNpc().getId() == DRAKAN_ID)
+//		{
+//			boss = e.getNpc();
+//		}
+//		else if (e.getNpc() == boss)
+//		{
+//			boss = null;
+//		}
+//	}
 
 	@Subscribe
 	public void onAnimationChanged(AnimationChanged e)
@@ -417,24 +420,24 @@ public class DrakanHelperPlugin extends Plugin
 			return;
 		}
 		if (BLOOM_WINDUP_SPOTANIM.contains(boss.getGraphic()))
+		if (BLOOM_WINDUP_SPOTANIM.contains(boss.getGraphic()))
 		{
 			bloomTicks = Math.max(bloomTicks, 3);
 		}
 	}
 
-	@Subscribe
-	public void onGraphicChangedAfterImages(GraphicChanged e)
-	{
-		if(e.getActor() instanceof NPC) {
-			NPC n = (NPC) e.getActor();
-			List<ActorSpotAnim> spotAnimations = StreamSupport.stream(n.getSpotAnims().spliterator(), false).collect(Collectors.toList());
-			String spots = spotAnimations.stream().map(sa -> {
-				String san = ReflectionUtils$.MODULE$.getSpotAnimationName(sa.getId());
-				return san;
-			}).collect(Collectors.joining(", ", "[", "]"));
-			log.debug("graphicsChanged: npcId={}, 1x={}, loc={}, spots={}", n.getId(), n.getIndex(), TWorldPoint.get(n.getWorldLocation()), spots);
-		}
-	}
+//	@Subscribe
+//	public void onGraphicChangedAfterImages(GraphicChanged e)
+//	{
+//		if(e.getActor() instanceof NPC) {
+//			NPC n = (NPC) e.getActor();
+//			List<ActorSpotAnim> spotAnimations = StreamSupport.stream(n.getSpotAnims().spliterator(), false).collect(Collectors.toList());
+//			String spots = spotAnimations.stream().map(sa -> {
+//				String san = ReflectionUtils$.MODULE$.getSpotAnimationName(sa.getId());
+//				return san;
+//			}).collect(Collectors.joining(", ", "[", "]"));
+//		}
+//	}
 
 	@Subscribe
 	public void onProjectileMoved(ProjectileMoved e)
