@@ -118,19 +118,17 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 		if(boss == null) return
 		projectiles = projectiles.filterNot(_.hasHit)
 
-		if (castDeathCharge == false && !DeathCharge.isActive && !DeathCharge.isLocked) {
+		if (config.deathChargeEnabled() && castDeathCharge == false && !DeathCharge.isActive && !DeathCharge.isLocked) {
 			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.DEATH_CHARGE, "Cast")
 			castDeathCharge = true
 		}
-
-		if (castThrall == false && !SummonThrall.isActive && !SummonThrall.isLocked) {
+		
+		if (config.thrallsEnabled() && castThrall == false && !SummonThrall.isActive && !SummonThrall.isLocked) {
 			InteractionUtils.widgetInteract(InterfaceID.MagicSpellbook.RESURRECT_GREATER_ZOMBIE, "Cast")
 			castThrall = true
 		}
 
 		val handItem = EquipmentUtils.getItemInSlot(EquipmentInventorySlot.GLOVES)
-		val divinePotionWidget = Inventory.search().withId(23685, 23688, 23691, 23694).result().asScala.toList.maxByOption(w => w.getItemId)
-		val prayerRegenPotionWidget = Inventory.search().withId(30125, 30128, 30131, 30134).result().asScala.toList.maxByOption(w => w.getItemId)
 
 		log.debug("handItem={}, boss.HealthPercent={}, invContainsSlaughter={}", handItem, boss.wrapped.healthPercent, InventoryUtils.contains(ItemID.BRACELET_OF_SLAUGHTER))
 		if (equipSlaughter == false
@@ -141,12 +139,15 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 			InventoryUtils.wieldItem(ItemID.BRACELET_OF_SLAUGHTER)
 			equipSlaughter = true
 		}
-
-		if (drinkCombatPotion == false && Divine_combat.getCachedValue < 15 && divinePotionWidget.isDefined) {
+		
+		val divinePotionWidget = Inventory.search().withId(23685, 23688, 23691, 23694).result().asScala.toList.maxByOption(w => w.getItemId)
+		if (config.divineSuperCombatsEnabled() && drinkCombatPotion == false && Divine_combat.getCachedValue < 15 && divinePotionWidget.isDefined) {
 			InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
 			drinkCombatPotion = true
 		}
-		if (drinkPrayerRegeneration == false && Prayer_regeneration.getCachedValue < 15 && prayerRegenPotionWidget.isDefined) {
+
+		val prayerRegenPotionWidget = Inventory.search().withId(30125, 30128, 30131, 30134).result().asScala.toList.maxByOption(w => w.getItemId)
+		if (config.prayerRegensEnabled() && drinkPrayerRegeneration == false && Prayer_regeneration.getCachedValue < 15 && prayerRegenPotionWidget.isDefined) {
 			InteractionUtils.widgetInteract(prayerRegenPotionWidget.get, "drink")
 			drinkPrayerRegeneration = true
 		}

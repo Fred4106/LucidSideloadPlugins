@@ -31,6 +31,53 @@ public interface FredsShellsbaneConfig extends Config {
 	)
 	String baseSection = "General";
 
+	@ConfigItem(
+		name = "Thralls Enabled",
+		description = "Auto recast summon thrall.",
+		position = 10,
+		keyName = "thrallsEnabled",
+		section = baseSection
+	)
+	default boolean thrallsEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		name = "Death Charge Enabled",
+		description = "Auto recast death charge.",
+		position = 11,
+		keyName = "deathChargeEnabled",
+		section = baseSection
+	)
+	default boolean deathChargeEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		name = "Divine Super Combat Enabled",
+		description = "Auto drink divine super combat potions as needed.",
+		position = 12,
+		keyName = "divineSuperCombatsEnabled",
+		section = baseSection
+	)
+	default boolean divineSuperCombatsEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		name = "Prayer Regen Enabled",
+		description = "Auto drink prayer regeneration potions as needed.",
+		position = 13,
+		keyName = "prayerRegensEnabled",
+		section = baseSection
+	)
+	default boolean prayerRegensEnabled()
+	{
+		return false;
+	}
 
 	@ConfigSection(
 		name = "Colors",
