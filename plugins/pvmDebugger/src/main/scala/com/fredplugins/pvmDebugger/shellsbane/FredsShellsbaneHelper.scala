@@ -2,12 +2,13 @@ package com.fredplugins.pvmDebugger.shellsbane
 
 import com.fredplugins.common.ProjectileID
 import com.fredplugins.common.constants.magic.SMagicBoost.{DeathCharge, SummonThrall}
-import com.fredplugins.common.constants.magic.STimedPotion.Divine_combat
+import com.fredplugins.common.constants.magic.STimedPotion.{Divine_combat, Prayer_regeneration}
 import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.common.extensions.ActorExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.services.TimedBoostsService.{MagicBoostChanged, getCachedValue, isActive, isLocked}
 import com.fredplugins.common.services.TimedBoostsService
+import com.fredplugins.common.services.TimedBoostsService.PotionEffectChanged
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -15,6 +16,7 @@ import com.fredplugins.pvmDebugger.WithOverlay
 import com.fredplugins.pvmDebugger.WithPanel
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import ethanApiPlugin.collections.TileObjects
 import ethanApiPlugin.collections.{Equipment, Inventory}
 import ethanApiPlugin.interactionApi.InventoryInteraction
 import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InteractionUtils, InventoryUtils}
@@ -34,6 +36,7 @@ import net.runelite.api.events.GraphicsObjectCreated
 import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.events.ProjectileMoved
+import net.runelite.api.gameval.ItemID.{BRACELET_OF_SLAUGHTER, HUNDRED_GAUNTLETS_LEVEL_10}
 import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID}
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
@@ -85,7 +88,9 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	var projectiles: List[Projectile] = List.empty[Projectile]
 	var castDeathCharge: Boolean = false
 	var castThrall: Boolean = false
+	var equipSlaughter: Boolean = false
 	var drinkCombatPotion: Boolean = false
+	var drinkPrayerRegeneration: Boolean = false
 
 	private def clearState(): Unit = {
 		boss = null
@@ -93,11 +98,14 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 		castDeathCharge = false
 		castThrall = false
 		drinkCombatPotion = false
+		drinkPrayerRegeneration = false
 	}
 
 	override def init(): Unit = {
 		curRegion = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
-		clearState()
+		for (npc <- client.getTopLevelWorldView.npcs.asScala) {
+			onNpcSpawned(new NpcSpawned(npc))
+		}
 	}
 
 	override def cleanup(): Unit = {
@@ -107,7 +115,7 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
-		if(boss == null || curRegion != ShellsbaneRegion) return
+		if(boss == null) return
 		projectiles = projectiles.filterNot(_.hasHit)
 
 		if (castDeathCharge == false && !DeathCharge.isActive && !DeathCharge.isLocked) {
@@ -121,18 +129,27 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 		}
 
 		val handItem = EquipmentUtils.getItemInSlot(EquipmentInventorySlot.GLOVES)
-		if (boss.wrapped.healthPercent < 25
+		val divinePotionWidget = Inventory.search().withId(23685, 23688, 23691, 23694).result().asScala.toList.maxByOption(w => w.getItemId)
+		val prayerRegenPotionWidget = Inventory.search().withId(30125, 30128, 30131, 30134).result().asScala.toList.maxByOption(w => w.getItemId)
+
+		log.debug("handItem={}, boss.HealthPercent={}, invContainsSlaughter={}", handItem, boss.wrapped.healthPercent, InventoryUtils.contains(ItemID.BRACELET_OF_SLAUGHTER))
+		if (equipSlaughter == false
+			&& boss.wrapped.healthPercent < 25
 			&& handItem.getId != ItemID.BRACELET_OF_SLAUGHTER
 			&& InventoryUtils.contains(ItemID.BRACELET_OF_SLAUGHTER)
 		) {
 			InventoryUtils.wieldItem(ItemID.BRACELET_OF_SLAUGHTER)
+			equipSlaughter = true
 		}
 
-//		val divinePotionWidget = Inventory.search().withId(23685,23688,23691, 23694).result().asScala.toList.maxByOption(w => w.getItemId)
-//		if (drinkCombatPotion == false && timedBoostsService.checkTimer(Divine_combat) < 15 && divinePotionWidget.isDefined) {
-//			InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
-//			drinkCombatPotion = true
-//		}
+		if (drinkCombatPotion == false && Divine_combat.getCachedValue < 15 && divinePotionWidget.isDefined) {
+			InteractionUtils.widgetInteract(divinePotionWidget.get, "drink")
+			drinkCombatPotion = true
+		}
+		if (drinkPrayerRegeneration == false && Prayer_regeneration.getCachedValue < 15 && prayerRegenPotionWidget.isDefined) {
+			InteractionUtils.widgetInteract(prayerRegenPotionWidget.get, "drink")
+			drinkPrayerRegeneration = true
+		}
 	}
 
 	@Subscribe
@@ -144,33 +161,36 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 		curRegion = e.getCurRegion
 	}
 
-	@Subscribe
-	def onLocalDestinationChanged(e: LocalDestinationChanged): Unit = {
-		if(curRegion == ShellsbaneRegion) log.info(s"Destination changed from ${e.getFrom} to ${e.getTo}")
-	}
-
-	@Subscribe
-	def onLocalPositionChanged(e: LocalPositionChanged): Unit = {
-		if(curRegion == ShellsbaneRegion) log.info(s"Position changed from ${e.getFrom} to ${e.getTo}")
-	}
+//	@Subscribe
+//	def onLocalDestinationChanged(e: LocalDestinationChanged): Unit = {
+//		if(curRegion == ShellsbaneRegion) log.info(s"Destination changed from ${e.getFrom} to ${e.getTo}")
+//	}
+//
+//	@Subscribe
+//	def onLocalPositionChanged(e: LocalPositionChanged): Unit = {
+//		if(curRegion == ShellsbaneRegion) log.info(s"Position changed from ${e.getFrom} to ${e.getTo}")
+//	}
 
 	@Subscribe
 	def onNpcSpawned(e: NpcSpawned): Unit = {
-		if(curRegion == ShellsbaneRegion) {
+		if(e.getNpc.templateRegion == ShellsbaneRegion) {
 			Shellsbane.tryBuild(e.getActor)
 				.foreach{sb =>
 					boss = sb.tap(_.spawnTick = client.getTickCount)
+					CombatUtils.activatePrayers(Prayer.PIETY, Prayer.PROTECT_FROM_MELEE)
 				}
 		}
 	}
 
 	@Subscribe
 	def onNpcDespawned(e: NpcDespawned): Unit = {
-		if(curRegion == ShellsbaneRegion) {
+		if(e.getNpc.templateRegion == ShellsbaneRegion) {
 			if(Option(boss).map(_.wrapped).contains(e.getNpc)){
-				if(InventoryUtils.contains(7462)) {
-					InventoryUtils.wieldItem(7462)
+				if(InventoryUtils.contains(HUNDRED_GAUNTLETS_LEVEL_10)) {
+					InventoryUtils.wieldItem(HUNDRED_GAUNTLETS_LEVEL_10)
+					equipSlaughter = false
 				}
+				CombatUtils.deactivatePrayers(false)
 				clearState()
 			}
 		}
@@ -201,40 +221,17 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 			if(e.boost == SummonThrall) castThrall = false
 		}
 	}
-
-//	@Subscribe
-//	def onMagicBoostActiveChanged(e: MagicBoostActiveChanged): Unit = {
-//		log.debug(s"MagicBoost {}'s active changed from {} to {}", e.boost, e.oldValue, e.newValue)
-//		if(e.boost ==DeathCharge && e.newValue == 1 && e.oldValue == 0) {
-//			castDeathCharge = false
-//		}
-//		if (e.boost == SummonThrall && e.newValue == 1 && e.oldValue == 0) {
-//			castThrall = false
-//		}
-//	}
-//	@Subscribe
-//	def onTimedPotionChanged(e:TimedPotionValueChanged): Unit = {
-//		log.debug(s"TimedPotion {}'s value changed from {} to {}", e.boost, e.oldValue, e.newValue)
-//		if (e.boost == Divine_combat && e.newValue > e.oldValue) {
-//			drinkCombatPotion = false
-//		}
-//	}
-
-//	@Subscribe
-//	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
-//		if (curRegion == ShellsbaneRegion) {
-//			if (e.getGameObject.getId == 54279) {
-//				iceTiles.add(e.getGameObject)
-//			}
-//		}
-//	}
-//
-//	@Subscribe
-//	def onGameObjectDespawned(e: GameObjectDespawned): Unit = {
-//		if(curRegion == ShellsbaneRegion){
-////			iceTiles.remove(e.getGameObject)
-//		}
-//	}
+	@Subscribe
+	def onPotionEffectChanged(e: PotionEffectChanged): Unit = {
+		if(e.oldValue >= e.newValue) return
+		log.debug(s"PotionEffectChanged {}",e)
+		if(e.potion == Divine_combat) {
+			drinkCombatPotion = false
+		}
+		if(e.potion == Prayer_regeneration) {
+			drinkPrayerRegeneration = false
+		}
+	}
 
 	def decodeAnimationId(id: Int): String = {
 		id match {
@@ -253,7 +250,7 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 
 	@Subscribe
 	def onAnimationChanged(e: AnimationChanged): Unit = {
-		if (curRegion == ShellsbaneRegion) {
+		if (e.getActor.templateRegion == ShellsbaneRegion) {
 			if(
 				Option(boss).exists(_.wrapped == e.getActor)
 			) {

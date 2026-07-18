@@ -2,7 +2,7 @@ package com.fredplugins.common.services
 
 import com.fredplugins.common.constants.magic.SMagicBoost
 import com.fredplugins.common.constants.magic.{SMagicBoost, STimedPotion}
-import com.fredplugins.common.services.TimedBoostsService.{MagicBoostChanged, MagicBoostValue, State, getCachedValue}
+import com.fredplugins.common.services.TimedBoostsService.{MagicBoostChanged, MagicBoostValue, State, getCachedValue, isActive, PotionEffectChanged}
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Singleton}
 import net.runelite.api.*
@@ -22,12 +22,15 @@ import scala.util.{Random, Try}
 
 object TimedBoostsService {
 	case class MagicBoostChanged(boost: SMagicBoost, oldValue: MagicBoostValue, newValue: MagicBoostValue)
+	case class PotionEffectChanged(potion: STimedPotion, oldValue: Int, newValue: Int) {}
+//	case class PotionEffectEnabled(potion: STimedPotion)
+//	case class PotionEffectDisabled(potion: STimedPotion)
 
 	type MagicBoostValue = (active: Int, cooldown: Int)
 
 	private object State {
 		var active: Boolean = false
-		var cachedPotionTimes: Map[STimedPotion, Int] = Map.empty
+		var cachedPotionTimes: mutable.Map[STimedPotion, Int] = mutable.HashMap.empty
 		val cachedValues: mutable.Map[SMagicBoost, (MagicBoostValue)] = mutable.HashMap.empty
 	}
 	private val emptyBoostValue: MagicBoostValue = (0, 0)
@@ -36,6 +39,11 @@ object TimedBoostsService {
 		def getCachedValue: MagicBoostValue = State.cachedValues.getOrElse(mb, emptyBoostValue)
 		def isActive: Boolean = mb.getCachedValue.active == 1
 		def isLocked: Boolean = mb.getCachedValue.cooldown == 1
+	}
+
+	extension (mb: STimedPotion) {
+		def getCachedValue: Int = State.cachedPotionTimes.getOrElse(mb, 0)
+		def isActive: Boolean = mb.getCachedValue > 0
 	}
 }
 
@@ -48,7 +56,7 @@ class TimedBoostsService @Inject()(val client: Client, val clientThread: ClientT
 		if (!State.active) {
 			State.active = true
 			State.cachedValues.clear()
-			State.cachedPotionTimes =    clientThread.runOnClientThread(() => {STimedPotion.values.map(b => b -> client.getVarbitValue(b.varbit))}).toMap
+			State.cachedPotionTimes.clear()// =    clientThread.runOnClientThread(() => {STimedPotion.values.map(b => b -> client.getVarbitValue(b.varbit))}).toMap
 			eventBus.register(this)
 		}
 	}
@@ -58,17 +66,24 @@ class TimedBoostsService @Inject()(val client: Client, val clientThread: ClientT
 			eventBus.unregister(this)
 			State.active = false
 			State.cachedValues.clear()
-			State.cachedPotionTimes = Map.empty
+			State.cachedPotionTimes.clear()
 		}
 	}
 
 	@Subscribe(priority=20000.0f)
-	def tick(mb: GameTick):Unit = {
+	def tick(e: GameTick):Unit = {
 		SMagicBoost.values.flatMap(mb => {
-			val oldValue: MagicBoostValue = mb.getCachedValue
-			val nValue: MagicBoostValue = (client.getVarbitValue(mb.activeVarbit), client.getVarbitValue(mb.cooldownVarbit))
-			Option.when(oldValue!=nValue){MagicBoostChanged(mb, oldValue, nValue)}
-		}).toList.tapEach(x => State.cachedValues.update(x.boost, x.newValue))
+				val oldValue: MagicBoostValue = mb.getCachedValue
+				val nValue: MagicBoostValue = (client.getVarbitValue(mb.activeVarbit), client.getVarbitValue(mb.cooldownVarbit))
+				Option.when(oldValue!=nValue){MagicBoostChanged(mb, oldValue, nValue)}
+			}).toList.tapEach(x => State.cachedValues.update(x.boost, x.newValue))
+			.foreach(eventBus.post(_))
+
+		STimedPotion.values.flatMap (mb => {
+				val oldValue = mb.getCachedValue
+				val nValue = client.getVarbitValue(mb.varbit)
+				Option.when(oldValue != nValue) {PotionEffectChanged(mb, oldValue, nValue)}
+			}).toList.tapEach(x => State.cachedPotionTimes.update(x.potion, x.newValue))
 			.foreach(eventBus.post(_))
 	}
 
