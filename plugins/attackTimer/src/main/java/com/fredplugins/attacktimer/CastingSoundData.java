@@ -50,6 +50,7 @@ enum CastingSoundData {
 	ARCEUUS_SUPERIOR_DEMONBANE(5027, Spellbook.ARCEUUS),
 	ARCEUUS_UNDEAD_GRASP(5030, Spellbook.ARCEUUS);
 
+
 	private static final ImmutableMap<Integer, CastingSoundData> sounds;
 
 	static {

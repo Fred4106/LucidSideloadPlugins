@@ -136,7 +136,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	private AttackStyle getAttackStyle() {
 		final int currentAttackStyleVarbit = client.getVarpValue(VarPlayer.ATTACK_STYLE);
 		final int currentEquippedWeaponTypeVarbit = client.getVarbitValue(Varbits.EQUIPPED_WEAPON_TYPE);
-		AttackStyle[] attackStyles = WeaponType.getWeaponType(currentEquippedWeaponTypeVarbit).getAttackStyles();
+		AttackStyle[] attackStyles = WeaponType.getWeaponType(currentEquippedWeaponTypeVarbit).getAttackStyles(client);
 
 		if(currentAttackStyleVarbit < attackStyles.length) {
 			return attackStyles[currentAttackStyleVarbit];

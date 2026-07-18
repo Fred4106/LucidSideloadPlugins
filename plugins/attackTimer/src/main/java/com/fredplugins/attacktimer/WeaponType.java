@@ -2,72 +2,158 @@ package com.fredplugins.attacktimer;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
+import net.runelite.api.Client;
+import net.runelite.api.EnumID;
+import net.runelite.api.ParamID;
+import net.runelite.api.StructComposition;
 
 import java.util.Map;
-
 import static com.fredplugins.attacktimer.AttackStyle.ACCURATE;
 import static com.fredplugins.attacktimer.AttackStyle.AGGRESSIVE;
 import static com.fredplugins.attacktimer.AttackStyle.CASTING;
-import static com.fredplugins.attacktimer.AttackStyle.CONTROLLED;
 import static com.fredplugins.attacktimer.AttackStyle.DEFENSIVE;
 import static com.fredplugins.attacktimer.AttackStyle.DEFENSIVE_CASTING;
-import static com.fredplugins.attacktimer.AttackStyle.LONGRANGE;
 import static com.fredplugins.attacktimer.AttackStyle.OTHER;
-import static com.fredplugins.attacktimer.AttackStyle.RANGING;
+import static com.fredplugins.attacktimer.AttackType.CRUSH;
+import static com.fredplugins.attacktimer.AttackType.MAGIC;
+import static com.fredplugins.attacktimer.AttackType.NONE;
+import static com.fredplugins.attacktimer.AttackType.RANGED;
+import static com.fredplugins.attacktimer.AttackType.SLASH;
+import static com.fredplugins.attacktimer.AttackType.STAB;
 
-enum WeaponType {
-	TYPE_0(ACCURATE, AGGRESSIVE, null, DEFENSIVE),
-	TYPE_1(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE),
-	TYPE_2(ACCURATE, AGGRESSIVE, null, DEFENSIVE),
-	TYPE_3(RANGING, RANGING, null, LONGRANGE),
-	TYPE_4(ACCURATE, AGGRESSIVE, CONTROLLED, DEFENSIVE),
-	TYPE_5(RANGING, RANGING, null, LONGRANGE),
-	TYPE_6(AGGRESSIVE, RANGING, CASTING, null),
-	TYPE_7(RANGING, RANGING, null, LONGRANGE),
-	TYPE_8(OTHER, AGGRESSIVE, null, null),
-	TYPE_9(ACCURATE, AGGRESSIVE, CONTROLLED, DEFENSIVE),
-	TYPE_10(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE),
-	TYPE_11(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE),
-	TYPE_12(CONTROLLED, AGGRESSIVE, null, DEFENSIVE),
-	TYPE_13(ACCURATE, AGGRESSIVE, null, DEFENSIVE),
-	TYPE_14(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE),
-	TYPE_15(CONTROLLED, CONTROLLED, CONTROLLED, DEFENSIVE),
-	TYPE_16(ACCURATE, AGGRESSIVE, CONTROLLED, DEFENSIVE),
-	TYPE_17(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE),
-	TYPE_18(ACCURATE, AGGRESSIVE, null, DEFENSIVE, CASTING, DEFENSIVE_CASTING),
-	TYPE_19(RANGING, RANGING, null, LONGRANGE),
-	TYPE_20(ACCURATE, CONTROLLED, null, DEFENSIVE),
-	TYPE_21(ACCURATE, AGGRESSIVE, null, DEFENSIVE, CASTING, DEFENSIVE_CASTING),
-	TYPE_22(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE),
-	TYPE_23(CASTING, CASTING, null, DEFENSIVE_CASTING),
-	TYPE_24(ACCURATE, AGGRESSIVE, CONTROLLED, DEFENSIVE),
-	TYPE_25(CONTROLLED, AGGRESSIVE, null, DEFENSIVE),
-	TYPE_26(AGGRESSIVE, AGGRESSIVE, null, AGGRESSIVE),
-	TYPE_27(ACCURATE, null, null, OTHER),
-	TYPE_28(ACCURATE, ACCURATE, LONGRANGE),
-	TYPE_29(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE),
-	TYPE_30(ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE); // Keris weirdness - even though its the same as 29.
+public enum WeaponType
+{
+	// https://oldschool.runescape.wiki/w/Weapons/Types
+	// * Note this ordering the ordering in which the enum is defined by the client you should not re-order
+	//   this list
+	// * Note the ordering of attack types is arbitrary and also defined by the client and should not be
+	//   re-ordered. Where nulls are empty spots. Arrays are either 4 or 6 items long.
+	//
+	// Taken from
+	// https://github.com/Joshua-F/cs2-scripts/blob/562819dbac880d2890daa40adcb209eb7413d2dd/scripts/%5Bclientscript%2Ccombat_interface_setup%5D.cs2
+	// Not sure why the latest update to that repo has this script deleted but the gathered data from the
+	// older commit still seem fine.
+	UNARMED(CRUSH, CRUSH, null, CRUSH),
+	AXE(SLASH, SLASH, CRUSH, SLASH),
+	BLUNT(CRUSH, CRUSH, null, CRUSH),
+	BOW(RANGED, RANGED, null, RANGED),
+	CLAW(SLASH, SLASH, STAB, SLASH),
+	HEAVY_RANGED(RANGED, RANGED, null, RANGED),
+	SALAMANDER(SLASH, RANGED, MAGIC, null),
+	CHINCHOMPA(RANGED, RANGED, null, RANGED),
+	GUN(NONE, CRUSH, null, null),
+	SLASH_SWORD(SLASH, SLASH, STAB, SLASH),
+	TWO_HANDED_SWORD(SLASH, SLASH, CRUSH, SLASH),
+	PICKAXE(STAB, STAB, CRUSH, STAB),
+	POLEARM(STAB, SLASH, null, STAB),
+	POLESTAFF(CRUSH, CRUSH, null, CRUSH),
+	SCYTHE(SLASH, SLASH, CRUSH, SLASH),
+	SPEAR(STAB, SLASH, CRUSH, STAB),
+	SPIKED(CRUSH, CRUSH, STAB, CRUSH),
+	STAB_SWORD(STAB, STAB, SLASH, STAB),
+	STAFF(CRUSH, CRUSH, null, CRUSH, MAGIC, MAGIC),
+	THROWN(RANGED, RANGED, null, RANGED),
+	WHIP(SLASH, SLASH, null, SLASH),
+	BLADED_STAFF(STAB, SLASH, null, CRUSH, MAGIC, MAGIC),
+	TWO_HANDED_SWORD_GODSWORD(STAB, SLASH, null, CRUSH, MAGIC, MAGIC),
+	POWERED_STAFF(SLASH, SLASH, CRUSH, SLASH),
+	BANNER(MAGIC, MAGIC, null, MAGIC),
+	POLEARM_CRYSTAL_HALBERD(STAB, SLASH, CRUSH, STAB),
+	BLUDGEON(STAB, SLASH, null, STAB),
+	BULWARK(CRUSH, CRUSH, null, CRUSH),
+	POWERED_WAND(CRUSH, null, null, NONE),
+	PARTISAN(MAGIC, MAGIC, null, MAGIC),
+	PARTISAN_2(STAB, STAB, CRUSH, STAB), // 30
+	PLACE_HOLDER_0(null, null, null), // 31
+	PLACE_HOLDER_1(null, null, null), // 32
+	PLACE_HOLDER_2(null, null, null), // 33
+	PLACE_HOLDER_3(null, null, null), // 34
+	FLAIL(SLASH, SLASH, null, SLASH); // 35
 
-	private static final Map<Integer, WeaponType> weaponTypes;
+	private static final Map<Integer, WeaponType> WEAPON_TYPES;
 
-	static {
+	@Getter
+	private final AttackType[] attackTypes;
+
+	static
+	{
 		ImmutableMap.Builder<Integer, WeaponType> builder = new ImmutableMap.Builder<>();
 
-		for(WeaponType weaponType : values()) {
+		for (WeaponType weaponType : values())
+		{
 			builder.put(weaponType.ordinal(), weaponType);
 		}
 
-		weaponTypes = builder.build();
+		WEAPON_TYPES = builder.build();
 	}
 
-	@Getter
-	private final AttackStyle[] attackStyles;
-
-	WeaponType(AttackStyle... attackStyles) {
-		this.attackStyles = attackStyles;
+	WeaponType(AttackType... attackTypes)
+	{
+		this.attackTypes = attackTypes;
 	}
 
-	public static WeaponType getWeaponType(int id) {
-		return weaponTypes.get(id);
+	// Copied from https://github.com/runelite/runelite/commit/ffe16454ba894d673db91e2d1fd8d3c4c265b2c7
+	// runelite-client\src\main\java\net\runelite\client\plugins\attackstyles\AttackStylesPlugin.java IMO This
+	// code should remain fairly in-sync with the upstream unless there is good reason to fork. License was
+	// in-sync at time of copying. Credit: [Adam-](https://github.com/Adam-)
+	// [honeyhoney](https://github.com/honeyhoney)
+	//
+	// It seems that at some point the code to generate an attack style started to come from the client rather
+	// than being hardcoded. However this only generates the Style of attack not the attack type which is
+	// still hardcoded.
+	public AttackStyle[] getAttackStyles(Client client)
+	{
+		// from script4525
+		int weaponType = this.ordinal();
+		int weaponStyleEnum = client.getEnum(EnumID.WEAPON_STYLES).getIntValue(weaponType);
+		if (weaponStyleEnum == -1)
+		{
+			// Blue moon spear
+			if (weaponType == 22)
+			{
+				return new AttackStyle[]{
+					ACCURATE, AGGRESSIVE, null, DEFENSIVE, CASTING, DEFENSIVE_CASTING,
+				};
+			}
+
+			if (weaponType == 30)
+			{
+				// Partisan
+				return new AttackStyle[]{
+					ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE,
+				};
+			}
+			return new AttackStyle[0];
+		}
+		int[] weaponStyleStructs = client.getEnum(weaponStyleEnum).getIntVals();
+
+		AttackStyle[] styles = new AttackStyle[weaponStyleStructs.length];
+		int i = 0;
+		for (int style : weaponStyleStructs)
+		{
+			StructComposition attackStyleStruct = client.getStructComposition(style);
+			String attackStyleName = attackStyleStruct.getStringValue(ParamID.ATTACK_STYLE_NAME);
+			AttackStyle attackStyle = AttackStyle.valueOf(attackStyleName.toUpperCase());
+			if (attackStyle == OTHER)
+			{
+				// "Other" is used for no style
+				++i;
+				continue;
+			}
+
+			// "Defensive" is used for Defensive and also Defensive casting
+			if (i == 5 && attackStyle == DEFENSIVE)
+			{
+				attackStyle = DEFENSIVE_CASTING;
+			}
+
+			styles[i++] = attackStyle;
+		}
+		return styles;
+	}
+
+	public static WeaponType getWeaponType(int id)
+	{
+		return WEAPON_TYPES.get(id);
 	}
 }
