@@ -222,7 +222,7 @@ class FredsWyrdHelper(parent: PvmDebuggerPlugin, config: FredsBmrConfig) extends
 					renderNpcText(boss, s"T: ${bossAttackCount}, A1: ${a1}, A2: ${a2}", Color.GRAY, 20)
 				}
 			} catch {
-				ex => //log.error("problem rendering: {}", ex)
+				case ex => log.error("problem rendering: {}", ex)
 			}
 	
 			try {
@@ -234,7 +234,7 @@ class FredsWyrdHelper(parent: PvmDebuggerPlugin, config: FredsBmrConfig) extends
 					overlays.renderTileOverlay(wa.center, s"${ix0}", c, false)
 				})
 			} catch {
-				ex => //log.error("problem rendering: {}", ex)
+				case ex => log.error("problem rendering: {}", ex)
 			}
 		}
 	}

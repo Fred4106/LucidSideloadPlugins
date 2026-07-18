@@ -49,9 +49,11 @@ import net.runelite.client.ui.overlay.components.LineComponent
 import net.runelite.client.ui.overlay.components.TitleComponent
 import net.runelite.client.util.ColorUtil
 
+import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics2D
+import java.awt.Point
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
@@ -61,8 +63,8 @@ import scala.math.Ordered.orderingToOrdered
 import scala.util.chaining.*
 import scala.util.Random
 import scala.util.Try
-
 import scala.math.Ordered.orderingToOrdered
+
 case class DustTile(location: WorldPoint, spawnCycle: Int, finishedCycle: Int, spawnTick: Int)
 case class FlashElement(startCycle: Long, direction: "L" | "R", discorveryIndex: Long)
 
@@ -140,11 +142,10 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 		// each element: {startCycle, side(0=L,1=R), discoveryIndex}
 		private[FredsDrakanHelper] val flashes = mutable.ArrayBuffer.empty[FlashElement]
 		private[FredsDrakanHelper] val seenFlashKeys = mutable.HashSet.empty[Long]
-		private[FredsDrakanHelper] var bloomStartCycle = Long.MaxValue
+		private[FredsDrakanHelper] var bloomStartCycle = Long.MinValue
 		private[FredsDrakanHelper] var flashDiscovery = 0
 		private[FredsDrakanHelper] var forecastTicks = 0
 		private[FredsDrakanHelper] var strikesConsumed = 0
-
 
 		private[FredsDrakanHelper] def resetForecast(): Unit = {
 			flashes.clear()
@@ -161,14 +162,12 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 		}
 		//</editor-fold>
 
-
 		//<editor-fold desc="wind-up special state">
 		private[FredsDrakanHelper] var specialType = 0 // 0 = none, 1 = front/back (safe: sides), 2 = semicircle (safe: behind)
 		private[FredsDrakanHelper] var specialImpactTicks = 0 // ticks until the strike lands (goes negative during wave linger)
 		private[FredsDrakanHelper] var specialLingerTicks = 0 // how long past impact the zone stays painted (traveling waves)
 		private[FredsDrakanHelper] var specialOrientation = 0 // boss orientation locked at wind-up
 		//</editor-fold>
-
 
 		// ---- dodge plan: world-locked click tiles for the forecast combo ----
 		// Built once per combo (and extended as late flashes surface); tiles do NOT track the player.
@@ -206,24 +205,15 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 		}
 	}
 
-
-	private var curInRegion: Boolean = false
-
 	//</editor-fold>
 
-	def inRegion(wp: WorldPoint): Boolean =
-		Option(wp).map(TWorldPoint.get(_)).map(_.getRegionID).fold(false)(inRegion)
-
-	def inRegion(rid: Int): Boolean = Seq(14132, 10106).contains(rid)
-
 	def init(): Unit = {
-		curInRegion = Option(client.getLocalPlayer).map(_.templateRegion).fold(false)(inRegion) //.map(inRegion).getOrElse(false)
 		parent.parent.getRenderCallbackManager.register(this)
+		State.reset()
 	}
 
 	def cleanup(): Unit = {
 		parent.parent.getRenderCallbackManager.unregister(this)
-		curInRegion = false
 		State.reset()
 	}
 
@@ -269,7 +259,7 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	def onAnimationChanged(e: AnimationChanged): Unit = {
 		if (State.boss == null || (e.getActor != State.boss)) return
 		val a = State.boss.getAnimation
-		if (a ==  BLOOM_ANIM) {
+		if (a == BLOOM_ANIM) {
 			State.bloomTicks = 2
 			State.strikesConsumed += 1
 		}
@@ -352,8 +342,8 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 					else Math.min(State.bloomStartCycle, s.getStartCycle)
 					else State.flashes.addOne(
 						FlashElement(
-							s.getStartCycle, 
-							if (left) "L" else "R", 
+							s.getStartCycle,
+							(if (left) "L" else "R").asInstanceOf["L" | "R"],
 							{State.flashDiscovery += 1; State.flashDiscovery - 1}
 						)
 					)
@@ -362,6 +352,9 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 		}
 	}
 
+	override def addEntity(renderable: Renderable, ui: Boolean): Boolean = {
+		super.addEntity(renderable, ui)
+	}
 	@Subscribe
 	def onGraphicChanged(e: GraphicChanged): Unit = {
 		if (State.boss == null || (e.getActor != State.boss)) return
@@ -372,7 +365,7 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	def onProjectileMoved(e: ProjectileMoved): Unit = {
 		if (State.boss == null) return
 		val p = e.getProjectile
-		if (MAGIC_PROJECTILES.contains(p.getId) && (p.getInteracting eq client.getLocalPlayer)) {
+		if (MAGIC_PROJECTILES.contains(p.getId) && (p.getInteracting == client.getLocalPlayer)) {
 			val ticks = Math.ceil(p.getRemainingCycles / 30.0).toInt
 			State.prayMagicTicks = Math.max(State.prayMagicTicks, ticks)
 		}
@@ -415,7 +408,7 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 		val local = client.getLocalPlayer
 		if (local == null || local.getLocalLocation == null) return
 		val p = snapToTile(local.getLocalLocation)
-		val fluid = strikesConsumed eq 0
+		val fluid = strikesConsumed == 0
 		if (plannedChain.isEmpty) buildFresh(chain, p)
 		else if (!(chain.startsWith(plannedChain))) {
 			// chain re-ordered (e.g. a late bloom slot inserted mid-chain)
@@ -424,8 +417,8 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 		}
 		else if (chain.length > plannedChain.length) {
 			// chain grew — extend from the tail state, against the LOCKED boss anchor
-			appendPlanSteps(chain, plannedChain.length)
-		}
+				appendPlanSteps(chain, plannedChain.length)
+			}
 		State.plannedChain = chain
 		if (fluid) {
 			// FROZEN through the wind-up against small shuffling (1-tile melee micro-moves made
@@ -478,8 +471,8 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	 */
 	@Subscribe
 	def onHitsplatApplied(e: HitsplatApplied): Unit = {
-		if (e.getActor ne client.getLocalPlayer) return
-		if (State.boss == null || State.forecastTicks <= 0 || (strikesConsumed eq 0) || State.planC == null || plannedChain.isEmpty || plannedTiles.size <= strikesConsumed) return
+		if (e.getActor != client.getLocalPlayer) return
+		if (State.boss == null || State.forecastTicks <= 0 || (strikesConsumed == 0) || State.planC == null || plannedChain.isEmpty || plannedTiles.size <= strikesConsumed) return
 		State.pendingHitReplan = true
 		State.recoveryTicks = 2
 		State.offPathStreak = 0
@@ -523,7 +516,7 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	}
 
 	private def appendPlanSteps(chain: String, from: Int): Unit = {
-		if (State.	planC == null) return
+		if (State.planC == null) return
 		val t = Perspective.LOCAL_TILE_SIZE
 		val h = t / 2
 		// Plain retreat cadence for every slot, flares included. Empirically (90%-run analysis)
@@ -591,14 +584,14 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 
 	// ---- accessors for the overlay ----// ---- accessors for the overlay ----
 
-	 def getBoss: NPC = return State.boss
+	def getBoss: NPC = return State.boss
 
-	 def comboActive: Boolean = return State.comboTicks > 0
+	def comboActive: Boolean = return State.comboTicks > 0
 
-	 def lungeActive: Boolean = return State.lungeTicks > 0 && State.dangerLeft >= 0
+	def lungeActive: Boolean = return State.lungeTicks > 0 && State.dangerLeft >= 0
 
 	/** Ticks until the first spear strike lands (from the wind-up), else 0. */
-	 def comboIncoming: Int = return State.comboIncomingTicks
+	def comboIncoming: Int = return State.comboIncomingTicks
 
 	/**
 	 * Predicted strike sequence for the active combo, in order: 'L' = strike on Drakan's left
@@ -610,12 +603,12 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	 * bloom leaves a double gap between its neighbours. Inferring it up front means the chain is
 	 * complete at first build and the click tiles never re-shuffle mid-wind-up.
 	 */
-	 def forecastChain: String = {
+	def forecastChain: String = {
 		if (State.forecastTicks <= 0 || State.flashes.isEmpty) return ""
 		val sorted = State.flashes.toList
 			.sortWith((x: FlashElement, y: FlashElement) =>
 				(if (x.startCycle != y.startCycle) compare(x.startCycle, y.startCycle)
-				else compare(x.discorveryIndex, y.discorveryIndex)) > 0
+				else compare(x.discorveryIndex, y.discorveryIndex)) < 0
 			)
 
 		val haveCluster = State.bloomStartCycle != Long.MinValue
@@ -644,7 +637,7 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	}
 
 	/** How many strikes of the current combo have already fired (indexes into forecastChain). */
-	 def strikesConsumed: Int = return strikesConsumed
+	def strikesConsumed: Int = State.strikesConsumed
 
 	/**
 	 * True when clicking the next tile procs the dodge roll. The roll — not the tile — is the
@@ -652,7 +645,7 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	 * player there to stand and be hit ("clicking to dodge before that will lead to you taking
 	 * hits" — wiki). Strike i lands at wind-up +3+i ticks; the window opens one tick before.
 	 */
-	 def clickNow: Boolean = {
+	def clickNow: Boolean = {
 		if (State.forecastTicks <= 0 || plannedTiles.isEmpty || strikesConsumed >= plannedTiles.size) return false
 		// sub-tick precision: game cycles are 20ms; the window opens at wind-up + 2 ticks per
 		// pending strike, shifted by the user-tuned beat delay
@@ -661,34 +654,34 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 	}
 
 	/** World-locked dodge tiles for the forecast combo, index-aligned with plannedChain(). */
-	 def plannedTiles: List[LocalPoint] = return State.plannedTiles.toList
+	def plannedTiles: List[LocalPoint] = return State.plannedTiles.toList
 
 	/** The chain the current plan was built for ('L'/'R'/'B' per step). */
-	 def plannedChain: String = return State.plannedChain
+	def plannedChain: String = return State.plannedChain
 
 	/** Active wind-up special: 0 = none, 1 = front/back wave (safe: sides), 2 = semicircle (safe: behind). */
-	 def specialType: Int = return State.specialType
+	def specialType: Int = return State.specialType
 
 	/** Ticks until the special's strike lands (negative during the post-impact wave linger). */
-	 def specialImpactTicks: Int = return State.specialImpactTicks
+	def specialImpactTicks: Int = return State.specialImpactTicks
 
 	/** Boss orientation locked at the special's wind-up (final strike facing = nearest cardinal). */
-	 def specialOrientation: Int = return State.specialOrientation
+	def specialOrientation: Int = return State.specialOrientation
 
 	/** Ticks remaining on the reappear-charge warning (0 = none/resolved as barrage). */
-	 def chargeTicks: Int = return State.chargeTicks
+	def chargeTicks: Int = return State.chargeTicks
 
 	/** Player tile at the reappear — sidestep tiles anchor here. */
-	 def chargeAnchor: LocalPoint = return State.chargeAnchor
+	def chargeAnchor: LocalPoint = return State.chargeAnchor
 
 	/** Sidestep axis (perpendicular to his charge line). */
-	 def chargePerp: Array[Int] = return State.chargePerp
+	def chargePerp: Array[Int] = return State.chargePerp
 
-	 def bloomActive: Boolean = return State.bloomTicks > 0
+	def bloomActive: Boolean = return State.bloomTicks > 0
 
-	 def prayMagic: Boolean = return State.prayMagicTicks > 0
+	def prayMagic: Boolean = return State.prayMagicTicks > 0
 
-	 def phase: String = {
+	def phase: String = {
 		val pct = hpPct
 		if (pct < 0) return "P1"
 		if (pct > 70) return "P1"
@@ -696,11 +689,308 @@ class FredsDrakanHelper(parent: FredsBmrHelper, config: FredsBmrConfig) extends 
 		else "P3"
 	}
 
-	 def hpPct: Int = {
+	def hpPct: Int = {
 		if (State.boss == null) return -(1)
 		val r = State.boss.getHealthRatio
 		val s = State.boss.getHealthScale
 		return if ((s > 0 && r >= 0)) 100 * r / s
 		else -(1)
+	}
+
+	def createPanelElements(): Seq[LayoutableRenderableEntity] = {
+		val regionLine: LayoutableRenderableEntity = LineComponent.builder().left("Region").right(s"${Option(client.getLocalPlayer).map(_.templateRegion).getOrElse(-1)}").rightColor(if (State.boss != null) Color.GREEN else Color.RED).build
+		val bossLines: Seq[LayoutableRenderableEntity] = {
+			(if (State.boss != null) Seq(
+				("comboTicks" -> State.comboTicks),
+				("bloomTicks" -> State.bloomTicks),
+				("prayMagicTicks" -> State.prayMagicTicks),
+				("lungeTicks" -> State.lungeTicks),
+				("comboIncomingTicks" -> State.comboIncomingTicks),
+				("dangerLeft" -> State.dangerLeft)
+			)
+			else Seq.empty[LayoutableRenderableEntity])
+				.map {
+					case (lbl, vlue) =>
+						LineComponent.builder().left(lbl).right(s"${vlue}").build
+				}
+				.pipe(tl => if (tl.isEmpty) tl else tl.prepended(TitleComponent.builder().text("Boss").color(Color.CYAN).build()))
+		}
+		Seq(regionLine, bossLines).flatMap {
+			case e: LayoutableRenderableEntity => Seq(e)
+			case le: Seq[_] => le.collect {
+				case e: LayoutableRenderableEntity => e
+			}
+		}
+	}
+
+	def renderOverlay()(using g: Graphics2D): Unit = {
+		if(State.boss == null) return
+		g.setFont(parent.getFont())
+
+		def fillTile(lp: LocalPoint, c: Color): Unit = {
+			val poly = Perspective.getCanvasTilePoly(client, lp)
+			if (poly == null) return
+			g.setColor(c)
+			g.fillPolygon(poly)
+			g.setColor(new Color(c.getRed, c.getGreen, c.getBlue, Math.min(255, c.getAlpha + 130)))
+			g.setStroke(new BasicStroke(2))
+			g.drawPolygon(poly)
+		}
+		def renderBloom(): Unit = {
+			val marks = mutable.Set.empty[Point]
+			val markLp = mutable.ListBuffer.empty[LocalPoint]
+			var minX = Int.MaxValue
+			var maxX = Int.MinValue
+			var minY = Int.MaxValue
+			var maxY = Int.MinValue
+			for (go <- client.getGraphicsObjects.asScala.toList) {
+				val lp = go.getLocation
+				if (go.getId == FredsDrakanHelper.DANGER_MARK_GFX && lp != null) {
+					markLp.appended(lp)
+					val sx = lp.getSceneX
+					val sy = lp.getSceneY
+					marks.addOne(new Point(sx, sy))
+					minX = math.min(minX, sx)
+					maxX = math.max(maxX, sx)
+					minY = math.min(minY, sy)
+					maxY = math.max(maxY, sy)
+				}
+			}
+
+			if (marks.size >= config.aoeThreshold()) {
+				markLp.toList.foreach(lp =>
+					fillTile(lp, config.dangerColor())
+				)
+				for (sx <- minX to maxX) {
+					for (sy <- minY to maxY) {
+						if (!marks.toList.contains(new Point(sx, sy))) {
+							fillTile(
+								LocalPoint(
+									sx * Perspective.LOCAL_TILE_SIZE + Perspective.LOCAL_TILE_SIZE / 2,
+									sy * Perspective.LOCAL_TILE_SIZE + Perspective.LOCAL_TILE_SIZE / 2
+								), config.safeColor()
+							)
+						}
+					}
+				}
+			}
+		}
+		def renderSafeSequence(): Unit = {
+			val tiles = plannedTiles
+			val chain = plannedChain
+			val consumed = strikesConsumed
+			if (tiles.isEmpty || consumed >= tiles.size || chain.length < tiles.size) return
+
+			val fm = g.getFontMetrics
+			val hot = clickNow
+			for(i <- consumed until(tiles.size)) {
+				val tile: LocalPoint = tiles(i)
+				// Numbers are PERMANENT for the combo (assigned at build, never renumbered) — the// Numbers are PERMANENT for the combo (assigned at build, never renumbered) — the
+
+				// renumbering cascade after each strike read as "tiles jumping around". Consumed
+				// tiles simply vanish; the pulsing HOT outline — not the numbers — marks the current
+				// click. The next tile stays cold until its click window opens: clicking early walks
+				// the player onto it to stand and be auto-hit; the roll only procs on an on-beat click.
+				val base = config.safeColor
+				val thisHot = (i == consumed) && hot
+				val alpha = if (thisHot) Math.min(255, base.getAlpha + 80) else base.getAlpha
+				fillTile(tile, new Color(base.getRed, base.getGreen, base.getBlue, alpha))
+
+				val tp = Perspective.localToCanvas(client, tile, client.getPlane)
+				if(tp != null) {
+					if (thisHot) {
+						val poly = Perspective.getCanvasTilePoly(client, tile)
+						if (poly != null) {
+							val on = (client.getGameCycle / 10) % 2 == 0
+							g.setColor(if (on) Color.YELLOW else Color.WHITE)
+							g.setStroke(new BasicStroke(4))
+							g.drawPolygon(poly)
+						}
+					}
+					val label = if (chain.charAt(i) == 'B') s"${i + 1}*" else s"${i+1}"
+					val lx = tp.getX - fm.stringWidth(label) / 2
+					g.setColor(Color.BLACK)
+					g.drawString(label, lx + 1, tp.getY + 1)
+					g.setColor(if (thisHot) Color.YELLOW else Color.WHITE)
+					g.drawString(label, lx, tp.getY)
+				}
+			}
+		}
+
+		def renderForecast(): Unit = {
+			val chain = forecastChain
+			if (chain.isEmpty) return
+			// Which screen side is Drakan's left? Compare canvas x of his tile vs one tile to his left.
+			val c = State.boss.getLocalLocation
+			if (c == null) return
+			val f = cardinal(State.boss.getOrientation)
+			val l = Array(-f(1), f(0))
+			val p0 = Perspective.localToCanvas(client, c, client.getPlane)
+			val pL = Perspective.localToCanvas(client, LocalPoint(c.getX + l(0) * Perspective.LOCAL_TILE_SIZE, c.getY + l(1) * Perspective.LOCAL_TILE_SIZE), client.getPlane)
+			if (p0 == null || pL == null) return
+			val hisLeftIsScreenLeft = pL.getX < p0.getX
+			val font = g.getFont
+			val symbs = Array[String]("<", ">", "*")
+			val symbolList = "\u25C1\u25B7\u25EF"
+			for (jjj <- symbs.indices) {
+				val codePoint = symbolList.codePointAt(jjj)
+				val charz = symbolList.charAt(jjj)
+				val reversedCodePoint = Character.toString(codePoint)
+				if (font.canDisplay(codePoint)) symbs(jjj) = "" + charz
+			}
+			val disp = StringBuilder()
+			for (i <- 0 until chain.length) {
+				val s = chain.charAt(i)
+				if (s == 'B') disp.append(symbs(2))
+				else {
+					// dodge side = opposite of the struck tile, converted to screen space
+					val dodgeHisLeft = s == 'R'
+					disp.append(if (dodgeHisLeft == hisLeftIsScreenLeft) symbs(0) else symbs(1))
+				}
+				if (i < chain.length - 1) disp.append(' ')
+			}
+			val text = disp.toString
+			val loc = State.boss.getCanvasTextLocation(g, text, 320)
+			if (loc == null) return
+			val fm = g.getFontMetrics
+			val consumed = strikesConsumed
+			var x = loc.getX
+			val y = loc.getY
+			var idx = 0 // strike index (display has separator spaces)
+
+			for (i <- 0 until text.length) {
+				val ch = String.valueOf(text.charAt(i))
+				if (!(ch == " ")) {
+					val col = if (idx < consumed) new Color(110, 110, 110) else if (idx == consumed) Color.YELLOW else Color.WHITE
+					g.setColor(Color.BLACK)
+					g.drawString(ch, x + 2, y + 2)
+					g.setColor(col)
+					g.drawString(ch, x, y)
+					idx += 1
+				}
+				x += fm.stringWidth(ch)
+			}
+		}
+
+		def renderSpecialSafe(): Unit = {
+			val c = State.boss.getLocalLocation
+			if (c == null) return
+			val f = cardinal(specialOrientation)
+			val l = Array(-f(1), f(0))
+			val t = Perspective.LOCAL_TILE_SIZE
+			val h = t / 2
+			val tiles = mutable.ListBuffer.empty[LocalPoint]
+			if (specialType == 1) {
+				// front/back wave: beside his two body ranks, 2 tiles out from each flank
+				var side = -1
+				while (side <= 1) {
+					var rank = -1
+					while (rank <= 1) {
+						tiles.addOne(new LocalPoint(c.getX + l(0) * side * (h + 2 * t) + f(0) * rank * h, c.getY + l(1) * side * (h + 2 * t) + f(1) * rank * h, c.getWorldView))
+
+						rank += 2
+					}
+
+					side += 2
+				}
+			}
+			else {
+				// semicircle: directly behind him, both lanes, two ranks deep
+				var lane = -1
+				while (lane <= 1) {
+					for (k <- 1 to 2) {
+						tiles.addOne(new LocalPoint(c.getX - f(0) * (h + k * t) + l(0) * lane * h, c.getY - f(1) * (h + k * t) + l(1) * lane * h))
+					}
+
+					lane += 2
+				}
+			}
+			val base = config.safeColor
+			val bright = new Color(base.getRed, base.getGreen, base.getBlue, Math.min(255, base.getAlpha + 60))
+			for (tile <- tiles) {
+				fillTile(tile, bright)
+			}
+			// countdown on the safe tile nearest the player
+			val local = client.getLocalPlayer
+			val impact = specialImpactTicks
+			if (local == null || local.getLocalLocation == null || impact <= 0) return
+			val p = local.getLocalLocation
+			var nearest = tiles.head
+			var best = Long.MaxValue
+			for (tile <- tiles) {
+				val dx = tile.getX - p.getX
+				val dy = tile.getY - p.getY
+				val d2 = dx * dx + dy * dy
+				if (d2 < best) {
+					best = d2
+					nearest = tile
+				}
+			}
+			val tp = Perspective.localToCanvas(client, nearest, client.getPlane)
+			if (tp != null) {
+				//			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
+				val label = Integer.toString(impact)
+				val fm = g.getFontMetrics
+				val lx = tp.getX - fm.stringWidth(label) / 2
+				g.setColor(Color.BLACK)
+				g.drawString(label, lx + 1, tp.getY + 1)
+				g.setColor(Color.YELLOW)
+				g.drawString(label, lx, tp.getY)
+			}
+		}
+
+		def renderChargeSafe(): Unit = {
+			val a = chargeAnchor
+			val perp = chargePerp
+			if (a == null || perp == null) return
+			val t = Perspective.LOCAL_TILE_SIZE
+			val base = config.p3safeColor
+			val bright = new Color(base.getRed, base.getGreen, base.getBlue, Math.min(255, base.getAlpha + 60))
+			val tiles = mutable.ListBuffer.empty[LocalPoint]
+			var side = -1
+			while (side <= 1) {
+				for (d <- 2 to 3) {
+					tiles.addOne(LocalPoint(a.getX + perp(0) * side * d * t, a.getY + perp(1) * side * d * t, a.getWorldView))
+				}
+
+				side += 2
+			}
+
+			for (tile <- tiles) {
+				fillTile(tile, bright)
+			}
+			// countdown on the tile nearest the player
+			val local = client.getLocalPlayer
+			if (local == null || local.getLocalLocation == null) return
+			val p = local.getLocalLocation
+			var nearest = tiles.head
+			var best = Long.MaxValue
+			for (tile <- tiles) {
+				val dx = tile.getX - p.getX
+				val dy = tile.getY - p.getY
+				val d2 = dx * dx + dy * dy
+				if (d2 < best) {
+					best = d2
+					nearest = tile
+				}
+			}
+			val tp = Perspective.localToCanvas(client, nearest, client.getPlane)
+			if (tp != null) {
+				//			g.setFont(g.getFont().deriveFont(Font.BOLD, 22f));
+				val label = s"${chargeTicks}"
+				val fm = g.getFontMetrics
+				val lx = tp.getX - fm.stringWidth(label) / 2
+				g.setColor(Color.BLACK)
+				g.drawString(label, lx + 1, tp.getY + 1)
+				g.setColor(Color.YELLOW)
+				g.drawString(label, lx, tp.getY)
+			}
+		}
+
+		if(config.highlightAoe()) renderBloom()
+		if(config.safeClickTiles()) renderSafeSequence()
+		if(config.specialSafeSpots() && specialType != 0) renderSpecialSafe()
+		if(config.specialSafeSpots() && chargeTicks > 0) renderChargeSafe()
+		if(config.lungeForecast()) renderForecast()
 	}
 }

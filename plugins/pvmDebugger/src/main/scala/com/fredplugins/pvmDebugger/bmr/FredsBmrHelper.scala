@@ -94,7 +94,7 @@ class FredsBmrHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
 		val wyrdElements = Option(wyrdHelper).map(_.createPanelElements()).getOrElse(Seq.empty[LayoutableRenderableEntity])
-		val drakanElements = Seq.empty[LayoutableRenderableEntity]//Option(drakanHelper).map(_.createPanelElements()).getOrElse(Seq.empty[LayoutableRenderableEntity])
+		val drakanElements = Option(drakanHelper).map(_.createPanelElements()).getOrElse(Seq.empty[LayoutableRenderableEntity])
 		Seq(wyrdElements, drakanElements).flatMap{
 			case e: LayoutableRenderableEntity => Seq(e)
 			case le: Seq[_] => le.collect{
@@ -145,7 +145,7 @@ class FredsBmrHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 		}
 
 		Option(wyrdHelper).foreach(_.renderOverlay(renderNpcOverlay, renderNpcText, renderTile))
-//		Option(drakanHelper).foreach(_.renderOverlay(renderNpcOverlay, renderNpcText, renderTile))
+		Option(drakanHelper).foreach(_.renderOverlay())
 
 		null.asInstanceOf[Dimension]
 	}
