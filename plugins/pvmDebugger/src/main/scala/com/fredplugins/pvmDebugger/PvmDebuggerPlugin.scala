@@ -26,7 +26,6 @@ import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneHelper
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiConfig
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiHelper
 import com.fredplugins.pvmDebugger.thermy.{FredsThermyConfig, FredsThermyHelper}
-import com.fredplugins.pvmDebugger.bmr.{FredsBmrConfig, FredsBmrHelper}
 import com.fredplugins.pvmDebugger.titans.FredsTitanConfig
 import com.fredplugins.pvmDebugger.titans.FredsTitanHelper
 import com.fredplugins.pvmDebugger.tormenteddemons.*
@@ -115,7 +114,6 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val hesporiHelper: FredsHesporiHelper = null
 	@Inject private val vardorvisHelper: FredsVardorvisHelper = null
 	@Inject private val thermyHelper: FredsThermyHelper = null
-	@Inject private val bmrHelper: FredsBmrHelper = null
 	@Inject private val cerbHelper: CerberusHelper = null
 
 
@@ -203,7 +201,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(vardorvisHelper, thermyHelper, bmrHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List(vardorvisHelper, thermyHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -414,5 +412,4 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	@Provides def provideHespori(configManager: ConfigManager): FredsHesporiConfig = configManager.getConfig(classOf[FredsHesporiConfig])
 	@Provides def provideThermy(configManager: ConfigManager): FredsThermyConfig = configManager.getConfig(classOf[FredsThermyConfig])
-	@Provides def provideBmr(configManager: ConfigManager): FredsBmrConfig = configManager.getConfig(classOf[FredsBmrConfig])
 }
