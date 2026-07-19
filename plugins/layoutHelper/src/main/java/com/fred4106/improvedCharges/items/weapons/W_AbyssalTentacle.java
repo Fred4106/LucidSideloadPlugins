@@ -17,6 +17,7 @@ public class W_AbyssalTentacle extends ChargedItem {
 
         this.items = new TriggerItem[]{
             new TriggerItem(ItemId.ABYSSAL_TENTACLE),
+            new TriggerItem(ItemId.LEAGUE_3_WHIP_TENTACLE)
         };
 
         this.triggers.addAll(List.of(

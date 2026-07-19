@@ -1439,6 +1439,7 @@ public final class ItemId {
 
     // Abyssal Tentacle Whip
     public static final int ABYSSAL_TENTACLE = ItemID.ABYSSAL_TENTACLE;
+    public static final int LEAGUE_3_WHIP_TENTACLE = ItemID.LEAGUE_3_WHIP_TENTACLE;
 
     // Arclight
     public static final int ARCLIGHT = ItemID.ARCLIGHT;

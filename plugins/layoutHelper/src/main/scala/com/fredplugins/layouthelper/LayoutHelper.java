@@ -18,6 +18,7 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.OverlayOrigin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import packets.MousePackets;
@@ -67,7 +68,7 @@ public class LayoutHelper extends Plugin {
     @Inject
     private LeaguesToggleHelper leaguesHelper;
 
-    scala.collection.immutable.List<OverlayWidgetHelper> overlays = List$.MODULE$.empty();
+    scala.collection.immutable.Seq<OverlayWidgetHelper> overlays = List$.MODULE$.empty();
 
     private void sendMessage(ChatMessageType tpe, String message) {
         chatMessageManager.queue(QueuedMessage.builder().type(tpe).runeLiteFormattedMessage(message).build());
@@ -82,11 +83,24 @@ public class LayoutHelper extends Plugin {
             log.debug("id: {}, name: {}", i, ReflectionUtils.getItemName(i));
         });
 
-        overlays = OverlayWidgetHelper.getOverlays(overlayManager).filter(o ->
-            o.groupId() == 164 && o.childId() >= 94 && o.childId() <= 96
-        );
+        OverlayWidgetHelper TABS1 = OverlayWidgetHelper.getOverlay(overlayManager, InterfaceID.ToplevelPreEoc.SIDE_STATIC_LAYER).getOrElse(null);
+        OverlayWidgetHelper TABS2 = OverlayWidgetHelper.getOverlay(overlayManager, InterfaceID.ToplevelPreEoc.SIDE_MOVABLE_LAYER).getOrElse(null);
+        OverlayWidgetHelper INVENTORY_PARENT = OverlayWidgetHelper.getOverlay(overlayManager, InterfaceID.ToplevelPreEoc.SIDE_CONTAINER).getOrElse(null);
+
+        overlays = (scala.collection.immutable.Seq<OverlayWidgetHelper>) overlays.appended(TABS1).appended(TABS2);
+        overlays = (scala.collection.immutable.Seq<OverlayWidgetHelper>) overlays.appended(INVENTORY_PARENT);
+
+//        overlays = OverlayWidgetHelper.getOverlays(overlayManager).filter(o ->
+//            o.groupId() == 164 && o.childId() >= 94 && o.childId() <= 96
+//        );
+//        overlays = OverlayWidgetHelper.getOverlays(overlayManager, new int[] {InterfaceID.ToplevelPreEoc.SIDE_STATIC_LAYER, InterfaceID.ToplevelPreEoc.SIDE_MOVABLE_LAYER, InterfaceID.ToplevelPreEoc.SIDE_CONTAINER});
         overlays.foreach(o -> {
             o.snappable_$eq(false);
+            if(o != INVENTORY_PARENT) {
+                o.movable_$eq(false);
+                o.origin_$eq(OverlayOrigin.SIDEPANEL);
+                o.revalidate();
+            }
             log.debug("{}", o);
             return -1;
         });
@@ -144,6 +158,9 @@ public class LayoutHelper extends Plugin {
         eventBus.unregister(leaguesHelper);
         overlays.foreach(o -> {
             o.snappable_$eq(true);
+            o.movable_$eq(true);
+            o.reset(overlayManager);
+            o.revalidate();
             return -1;
         });
         overlays = List$.MODULE$.empty();
