@@ -1,0 +1,105 @@
+package com.fredplugins.attacktimer.VariableSpeed;
+
+/*
+ * Copyright (c) 2024-2025, Lexer747 <https://github.com/Lexer747>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import com.fredplugins.attacktimer.AnimationData;
+import com.fredplugins.attacktimer.AttackProcedure;
+import com.fredplugins.attacktimer.VariableSpeed.State.IStateTracker;
+import com.fredplugins.attacktimer.VariableSpeed.State.MarkOfDarkness;
+import com.fredplugins.attacktimer.VariableSpeed.State.TickCount;
+import com.fredplugins.attacktimer.VariableSpeed.State.Yama;
+import net.runelite.api.Client;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameTick;
+
+public class VariableSpeed {
+	/**
+	 * computeSpeed will forward the client, animation data and current weapon speed to all the known classes
+	 * which can affect the base speed of a weapon. See implementations of IVariableSpeed.
+	 */
+	public static int computeSpeed(
+		final Client client, final AnimationData curAnimation, final AttackProcedure atkType,
+		final int damageDealt, final int lastSpecDelta, final int baseSpeed
+	) {
+		int newSpeed = baseSpeed;
+		for (IVariableSpeed i : TO_APPLY) {
+			newSpeed = i.apply(client, curAnimation, atkType, damageDealt, lastSpecDelta, baseSpeed, newSpeed);
+		}
+		return newSpeed;
+	}
+
+	public static void onGameTick(final Client client, final GameTick tick) {
+		for (IStateTracker i : TO_TRACK) {
+			i.onGameTick(client, tick);
+		}
+		for (IStateTracker i : TO_APPLY) {
+			i.onGameTick(client, tick);
+		}
+	}
+
+	public static void onChatMessage(final Client client, final ChatMessage event) {
+		for (IStateTracker i : TO_TRACK) {
+			i.onChatMessage(client, event);
+		}
+		for (IStateTracker i : TO_APPLY) {
+			i.onChatMessage(client, event);
+		}
+	}
+
+	private static final Yama YAMA = new Yama();
+	private static final MarkOfDarkness MARK_OF_DARKNESS = new MarkOfDarkness();
+	private static final TickCount TC = new TickCount();
+
+	private static final IStateTracker[] TO_TRACK = {
+		// State tracking, these do not contribute themselves to any variable speed weapon/mechanic but
+		// provide state tracking which is shared across more than one variable speed weapon/mechanic.
+		TC,
+		YAMA,
+		MARK_OF_DARKNESS,
+	};
+	private static final IVariableSpeed[] TO_APPLY = {
+		// Order matters, apply leagues first, then any incremental modifications like rapid, or set
+		// effects.
+		// Then overriding speeds last, which set a speed.
+
+		// Incremental:
+		new BloodMoonSet(),
+		new RapidAttackStyle(),
+		new RedKerisSpec(),
+		new PurgingStaffSpec(YAMA),
+		new EyeOfAyak(),
+		new TormentedDemons(TC),
+
+		// Overriding modifiers:
+		new Scurrius(),
+		new TombsOfAmascut(),
+	};
+
+	// Variable speed that doesn't neatly fit in to the IVariable speed pattern (it's not weapon related
+	// but boss related).
+	public static final ShadowCrash SHADOW_CRASH = new ShadowCrash(YAMA, MARK_OF_DARKNESS, TC);
+
+}

@@ -1,4 +1,4 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed;
 
 /*
  * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
@@ -25,15 +25,29 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+import com.fredplugins.attacktimer.AnimationData;
+import com.fredplugins.attacktimer.AttackProcedure;
+import com.fredplugins.attacktimer.AttackType;
+import com.fredplugins.attacktimer.ClientUtils.Utils;
+import net.runelite.api.Client;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+/**
+ * There is no cooldown when attacking the skulls with melee.
+ */
+public class TombsOfAmascut implements IVariableSpeed {
+	// The skulls during p3 wardens.
+	// https://oldschool.runescape.wiki/w/Energy_Siphon
+	private static final int ENERGY_SIPHON_ID = 11772;
+
+	public int apply(
+		final Client client, final AnimationData curAnimation, final AttackProcedure atkType,
+		final int damageDealt, final int lastSpecDelta, final int baseSpeed, final int curSpeed
+	) {
+		final int targetId = Utils.getTargetId(client);
+		final AttackType attkType = Utils.getAttackType(client);
+		if (targetId == ENERGY_SIPHON_ID && attkType.IsMelee()) {
+			return 1;
+		}
+		return curSpeed;
 	}
 }

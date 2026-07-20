@@ -1,7 +1,7 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed.State;
 
 /*
- * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
+ * Copyright (c) 2026, Lexer747 <https://github.com/Lexer747>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,15 +25,32 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+import net.runelite.api.Client;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameTick;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+public interface IStateTracker {
+	/**
+	 * onGameTick is a subscription method, an implementation can implement this if the condition for
+	 * the variable speed requires some larger state tracking and cannot be implemented in apply alone.
+	 *
+	 * @param client the RuneScape client.
+	 * @param tick   the current tick.
+	 */
+	default public void onGameTick(final Client client, final GameTick tick) {
 	}
+
+	;
+
+	/**
+	 * onChatMessage is a subscription method, an implementation can implement this if the condition for
+	 * the variable speed requires some larger state tracking and cannot be implemented in apply alone.
+	 *
+	 * @param client the RuneScape client.
+	 * @param event  the chat message event.
+	 */
+	default public void onChatMessage(final Client client, final ChatMessage event) {
+	}
+
+	;
 }

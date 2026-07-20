@@ -1,7 +1,7 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed;
 
 /*
- * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
+ * Copyright (c) 2025, Lexer747 <https://github.com/Lexer747>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,15 +25,24 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+import com.fredplugins.attacktimer.AnimationData;
+import com.fredplugins.attacktimer.AttackProcedure;
+import net.runelite.api.Client;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+public class EyeOfAyak implements IVariableSpeed {
+	public int apply(
+		final Client client, final AnimationData curAnimation, final AttackProcedure atkType,
+		final int damageDealt, final int lastSpecDelta, final int baseSpeed, final int curSpeed
+	) {
+		// https://oldschool.runescape.wiki/w/Eye_of_ayak#Charged
+		// https://oldschool.runescape.wiki/w/Eye_of_ayak#Special_attack
+		if (curAnimation == AnimationData.MAGIC_EYE_OF_AYAK_SPEC) {
+			// This is unclear if the Ayak spec "sets" the speed to 5 or adds two ticks. We can't know until
+			// leagues. If it does set it too 5 this code is correct and it's order in
+			// `src\main\java\com\attacktimer\VariableSpeed\VariableSpeed.java` is correct. However if it's
+			// actually a +2 this code is wrong and it *might* need to come before the leagues modifier.
+			return 5;
+		}
+		return curSpeed;
 	}
 }

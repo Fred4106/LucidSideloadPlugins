@@ -91,6 +91,24 @@ object LocationExtensions extends  ShimUtils.Logging("INFO") {
 				log.debug("Edges: {}", edgeList)
 			})
 		}
+
+		def getDirectionOf(other: WorldPoint): Seq[Direction] = {
+			val dx = other.getX - e.getX
+			val dy = other.getY - e.getY
+			val s1 = Option(dx).filter(_ != 0).map {x =>
+				Seq.fill(math.abs(x))(
+					if (x > 0) Direction.EAST else Direction.WEST
+				)
+			}.getOrElse(Seq.empty[Direction])
+
+			val s2 = Option(dy).filter(_ != 0).map { y =>
+				Seq.fill(math.abs(y))(
+					if (y > 0) Direction.NORTH else Direction.SOUTH
+				)
+			}.getOrElse(Seq.empty[Direction])
+
+			s1.appendedAll(s2).sorted
+		}
 	}
 	extension (e: WorldPoint) {
 		def getTemplate: WorldPoint = {

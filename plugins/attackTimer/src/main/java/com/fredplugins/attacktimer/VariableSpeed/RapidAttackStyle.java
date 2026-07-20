@@ -1,6 +1,7 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed;
 
 /*
+ * Copyright (c) 2022, Nick Graves <https://github.com/ngraves95>
  * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
  * All rights reserved.
  *
@@ -25,15 +26,24 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+import com.fredplugins.attacktimer.AnimationData;
+import com.fredplugins.attacktimer.AttackProcedure;
+import com.fredplugins.attacktimer.AttackStyle;
+import com.fredplugins.attacktimer.ClientUtils.Utils;
+import net.runelite.api.Client;
+import net.runelite.api.gameval.VarPlayerID;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+public class RapidAttackStyle implements IVariableSpeed {
+	public int apply(
+		final Client client, final AnimationData curAnimation, final AttackProcedure atkType,
+		final int damageDealt, final int lastSpecDelta, final int baseSpeed, final int curSpeed
+	) {
+		// index 1 == rapid
+		final boolean isRapid = client.getVarpValue(VarPlayerID.COM_MODE) == 1;
+		if (atkType == AttackProcedure.MELEE_OR_RANGE && Utils.getAttackStyle(client) == AttackStyle.RANGING && isRapid) {
+			// Also works for salamanders which attack 1 tick faster when using the ranged style
+			return curSpeed - 1;
+		}
+		return curSpeed;
 	}
 }

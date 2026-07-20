@@ -1,7 +1,7 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed.State;
 
 /*
- * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
+ * Copyright (c) 2026, Lexer747 <https://github.com/Lexer747>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,15 +25,32 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+import net.runelite.api.Client;
+import net.runelite.api.events.GameTick;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+/**
+ * TickCount increments on each game tick. Due to 6 hour logs this cannot overflow or wrap around.
+ */
+public class TickCount implements IStateTracker {
+	private int tickCount;
+
+	public int get() {
+		return tickCount;
+	}
+
+	public void onGameTick(Client client, GameTick tick) {
+		tickCount++;
+	}
+
+	/**
+	 * isWithinNTicks returns true if the current game tick count is within N ticks of the argument
+	 * `toCheckAgainst`
+	 *
+	 * @param toCheckAgainst some fixed point that occurred in the past (in game ticks)
+	 * @param N              the number of ticks of generosity
+	 * @return true if the current counter is N or less ticks away from `toCheckAgainst`
+	 */
+	public boolean isWithinNTicks(int toCheckAgainst, int N) {
+		return this.tickCount <= toCheckAgainst + N && this.tickCount >= toCheckAgainst;
 	}
 }

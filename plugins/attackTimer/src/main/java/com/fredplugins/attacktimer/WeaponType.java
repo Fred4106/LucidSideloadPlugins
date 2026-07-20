@@ -1,13 +1,39 @@
 package com.fredplugins.attacktimer;
 
+/*
+ * Copyright (c) 2017, honeyhoney <https://github.com/honeyhoney>
+ * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 import com.google.common.collect.ImmutableMap;
-import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.api.EnumID;
 import net.runelite.api.ParamID;
 import net.runelite.api.StructComposition;
 
 import java.util.Map;
+
 import static com.fredplugins.attacktimer.AttackStyle.ACCURATE;
 import static com.fredplugins.attacktimer.AttackStyle.AGGRESSIVE;
 import static com.fredplugins.attacktimer.AttackStyle.CASTING;
@@ -21,8 +47,7 @@ import static com.fredplugins.attacktimer.AttackType.RANGED;
 import static com.fredplugins.attacktimer.AttackType.SLASH;
 import static com.fredplugins.attacktimer.AttackType.STAB;
 
-public enum WeaponType
-{
+public enum WeaponType {
 	// https://oldschool.runescape.wiki/w/Weapons/Types
 	// * Note this ordering the ordering in which the enum is defined by the client you should not re-order
 	//   this list
@@ -72,23 +97,19 @@ public enum WeaponType
 
 	private static final Map<Integer, WeaponType> WEAPON_TYPES;
 
-	@Getter
 	private final AttackType[] attackTypes;
 
-	static
-	{
+	static {
 		ImmutableMap.Builder<Integer, WeaponType> builder = new ImmutableMap.Builder<>();
 
-		for (WeaponType weaponType : values())
-		{
+		for (WeaponType weaponType : values()) {
 			builder.put(weaponType.ordinal(), weaponType);
 		}
 
 		WEAPON_TYPES = builder.build();
 	}
 
-	WeaponType(AttackType... attackTypes)
-	{
+	WeaponType(AttackType... attackTypes) {
 		this.attackTypes = attackTypes;
 	}
 
@@ -101,23 +122,19 @@ public enum WeaponType
 	// It seems that at some point the code to generate an attack style started to come from the client rather
 	// than being hardcoded. However this only generates the Style of attack not the attack type which is
 	// still hardcoded.
-	public AttackStyle[] getAttackStyles(Client client)
-	{
+	public AttackStyle[] getAttackStyles(Client client) {
 		// from script4525
 		int weaponType = this.ordinal();
 		int weaponStyleEnum = client.getEnum(EnumID.WEAPON_STYLES).getIntValue(weaponType);
-		if (weaponStyleEnum == -1)
-		{
+		if (weaponStyleEnum == -1) {
 			// Blue moon spear
-			if (weaponType == 22)
-			{
+			if (weaponType == 22) {
 				return new AttackStyle[]{
 					ACCURATE, AGGRESSIVE, null, DEFENSIVE, CASTING, DEFENSIVE_CASTING,
 				};
 			}
 
-			if (weaponType == 30)
-			{
+			if (weaponType == 30) {
 				// Partisan
 				return new AttackStyle[]{
 					ACCURATE, AGGRESSIVE, AGGRESSIVE, DEFENSIVE,
@@ -129,21 +146,18 @@ public enum WeaponType
 
 		AttackStyle[] styles = new AttackStyle[weaponStyleStructs.length];
 		int i = 0;
-		for (int style : weaponStyleStructs)
-		{
+		for (int style : weaponStyleStructs) {
 			StructComposition attackStyleStruct = client.getStructComposition(style);
 			String attackStyleName = attackStyleStruct.getStringValue(ParamID.ATTACK_STYLE_NAME);
 			AttackStyle attackStyle = AttackStyle.valueOf(attackStyleName.toUpperCase());
-			if (attackStyle == OTHER)
-			{
+			if (attackStyle == OTHER) {
 				// "Other" is used for no style
 				++i;
 				continue;
 			}
 
 			// "Defensive" is used for Defensive and also Defensive casting
-			if (i == 5 && attackStyle == DEFENSIVE)
-			{
+			if (i == 5 && attackStyle == DEFENSIVE) {
 				attackStyle = DEFENSIVE_CASTING;
 			}
 
@@ -152,8 +166,11 @@ public enum WeaponType
 		return styles;
 	}
 
-	public static WeaponType getWeaponType(int id)
-	{
+	public static WeaponType getWeaponType(int id) {
 		return WEAPON_TYPES.get(id);
+	}
+
+	public AttackType[] getAttackTypes() {
+		return this.attackTypes;
 	}
 }

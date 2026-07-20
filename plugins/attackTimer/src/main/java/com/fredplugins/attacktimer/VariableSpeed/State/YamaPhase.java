@@ -1,7 +1,7 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed.State;
 
 /*
- * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
+ * Copyright (c) 2026, Lexer747 <https://github.com/Lexer747>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,15 +25,18 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+public enum YamaPhase {
+	P1, P2, P3;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+	public YamaPhase nextPhase() {
+		switch (this) {
+			case P1:
+				return P2;
+			case P2:
+				return P3;
+			case P3:
+				return P3;
+		}
+		return P1;
 	}
 }

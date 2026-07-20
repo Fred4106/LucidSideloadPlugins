@@ -1,5 +1,6 @@
 package com.fredplugins.pvmDebugger
 
+import com.fredplugins.attacktimer.AttackTimerMetronomePlugin
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.DebugPanel.ClearEvent
 import com.fredplugins.pvmDebugger.amoxliatl.FredsAmoxliatlConfig
@@ -75,6 +76,7 @@ import scala.util.chaining.*
 	tags = Array("pvm", "prayer", "helper", "maps", "debugger"),
 	hidden = false)
 @PluginDependency(classOf[EthanApiPlugin])
+@PluginDependency(classOf[AttackTimerMetronomePlugin])
 @Singleton
 class PvmDebuggerPlugin() extends Plugin {
 	private val log: Logger = ShimUtils.getLogger(this.getClass.getName, "DEBUG")
@@ -116,6 +118,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val thermyHelper: FredsThermyHelper = null
 	@Inject private val cerbHelper: CerberusHelper = null
 
+	@Inject private val attackTimerPlugin: AttackTimerMetronomePlugin = null
+
 
 //	@Inject private val moonConfig       : FredsMoonConfig = null
 //	@Inject private val tormentedDemonsConfig: FredsTormentedDemonConfig = null
@@ -137,6 +141,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	def getSpriteManager: SpriteManager = spriteManager
 	def getInfoBoxManager: InfoBoxManager = infoBoxManager
 	def getNpcUtil: NpcUtil = npcUtil
+
+	def getAttackTimerPlugin: AttackTimerMetronomePlugin = attackTimerPlugin;
 	def isEnabled: Boolean = pluginManager.isPluginEnabled(this)
 
 	//	//region types

@@ -1,4 +1,4 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed;
 
 /*
  * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
@@ -25,15 +25,19 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+import com.fredplugins.attacktimer.AnimationData;
+import com.fredplugins.attacktimer.AttackProcedure;
+import net.runelite.api.Client;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+public class RedKerisSpec implements IVariableSpeed {
+	public int apply(
+		final Client client, final AnimationData curAnimation, final AttackProcedure atkType,
+		final int damageDealt, final int lastSpecDelta, final int baseSpeed, final int curSpeed
+	) {
+		if (curAnimation == AnimationData.MELEE_RED_KERIS_SPEC) {
+			// TODO add miss/hit tracking code, if we missed this delay is not applied
+			return curSpeed + 4;
+		}
+		return curSpeed;
 	}
 }

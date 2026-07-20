@@ -25,15 +25,8 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
-
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
-	}
+public enum AttackProcedure {
+	POWERED_STAVE,
+	MANUAL_AUTO_CAST,
+	MELEE_OR_RANGE
 }

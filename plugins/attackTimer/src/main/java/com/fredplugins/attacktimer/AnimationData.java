@@ -1,11 +1,33 @@
 package com.fredplugins.attacktimer;
 
+/*
+ * Copyright (c) 2021, Matsyir <https://github.com/matsyir>
+ * Copyright (c) 2020, Mazhar <https://twitter.com/maz_rs>
+ * Copyright (c) 2024-2026, Lexer747 <https://github.com/Lexer747>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 import com.google.common.collect.ImmutableMap;
-import lombok.Getter;
-import net.runelite.api.HeadIcon;
-import net.runelite.api.SpriteID;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.security.InvalidParameterException;
 import java.util.Arrays;
@@ -14,6 +36,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 public enum AnimationData {
 	// MELEE
@@ -240,36 +264,8 @@ public enum AnimationData {
 	HIGH_ALCH(713, AttackStyle.NON_ATTACK);
 
 	private static final Map<Integer, AnimationData> DATA;
-	private static final Map<Spellbook, Set<AnimationData>> spellBookAnimations;
-	private static final Map<Integer, AnimationData> notAttacks;
-
-	static {
-		ImmutableMap.Builder<Integer, AnimationData> builder = new ImmutableMap.Builder<>();
-		ImmutableMap.Builder<Integer, AnimationData> notAttacksBuilder = new ImmutableMap.Builder<>();
-		Map<Spellbook, Set<AnimationData>> spellBookBuilder = new HashMap<>();
-
-		for(Spellbook s : Spellbook.values()) {
-			spellBookBuilder.put(s, new HashSet<AnimationData>());
-		}
-
-		for(AnimationData data : values()) {
-			builder.put(data.animationId, data);
-
-			if(data.spellbook != null) {
-				if(data.attackStyle != AttackStyle.MAGIC) {
-					throw new InvalidParameterException("Spell book should only be magic animations");
-				}
-				spellBookBuilder.get(data.spellbook).add(data);
-			}
-			if(data.attackStyle == AttackStyle.NON_ATTACK) {
-				notAttacksBuilder.put(data.animationId, data);
-			}
-		}
-
-		DATA = builder.build();
-		notAttacks = notAttacksBuilder.build();
-		spellBookAnimations = spellBookBuilder;
-	}
+	private static final Map<Spellbook, Set<AnimationData>> SPELL_BOOK_ANIMATIONS;
+	private static final Map<Integer, AnimationData> NOT_ATTACKS;
 
 	public final int animationId;
 	public final boolean isSpecial;
@@ -278,7 +274,7 @@ public enum AnimationData {
 
 	// Simple animation data constructor for all melee and range attacks
 	AnimationData(int animationId, AttackStyle attackStyle) {
-		if(attackStyle == null) {
+		if (attackStyle == null) {
 			throw new InvalidParameterException("Attack Style must be valid for AnimationData");
 		}
 		this.animationId = animationId;
@@ -289,7 +285,7 @@ public enum AnimationData {
 
 	// Simple animation data constructor for all melee and range attacks w/ special
 	AnimationData(int animationId, AttackStyle attackStyle, boolean isSpecial) {
-		if(attackStyle == null) {
+		if (attackStyle == null) {
 			throw new InvalidParameterException("Attack Style must be valid for AnimationData");
 		}
 		this.animationId = animationId;
@@ -300,7 +296,7 @@ public enum AnimationData {
 
 	// Simple animation data constructor for all magic attacks
 	AnimationData(int animationId, AttackStyle attackStyle, Spellbook book) {
-		if(attackStyle == null) {
+		if (attackStyle == null) {
 			throw new InvalidParameterException("Attack Style must be valid for AnimationData");
 		}
 		this.animationId = animationId;
@@ -309,56 +305,84 @@ public enum AnimationData {
 		this.spellbook = book;
 	}
 
+	static {
+		ImmutableMap.Builder<Integer, AnimationData> builder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Integer, AnimationData> notAttacksBuilder = new ImmutableMap.Builder<>();
+		Map<Spellbook, Set<AnimationData>> spellBookBuilder = new HashMap<>();
+
+		for (Spellbook s : Spellbook.values()) {
+			spellBookBuilder.put(s, new HashSet<AnimationData>());
+		}
+
+		for (AnimationData data : values()) {
+			builder.put(data.animationId, data);
+
+			if (data.spellbook != null) {
+				if (data.attackStyle != AttackStyle.MAGIC) {
+					throw new InvalidParameterException("Spell book should only be magic animations");
+				}
+				spellBookBuilder.get(data.spellbook).add(data);
+			}
+			if (data.attackStyle == AttackStyle.NON_ATTACK) {
+				notAttacksBuilder.put(data.animationId, data);
+			}
+		}
+
+		DATA = builder.build();
+		NOT_ATTACKS = notAttacksBuilder.build();
+		SPELL_BOOK_ANIMATIONS = spellBookBuilder;
+	}
+
 	public static AnimationData fromId(int animationId) {
 		return DATA.get(animationId);
 	}
 
 	public static Set<AnimationData> getAnimationsForSpellbook(Spellbook s) {
-		return spellBookAnimations.get(s);
+		return SPELL_BOOK_ANIMATIONS.get(s);
 	}
 
 	public static boolean isManualCasting(AnimationData animationData) {
 		// This check ensures we don't treat staff animations which are magic attacks as a "manual cast".
-		if(animationData != null && animationData.spellbook != null) {
+		if (animationData != null && animationData.spellbook != null) {
 			// We tell a manual cast by the animation data:
 			return animationData.attackStyle == AttackStyle.MAGIC &&
-					spellBookAnimations.get(animationData.spellbook).contains(animationData);
+				SPELL_BOOK_ANIMATIONS.get(animationData.spellbook).contains(animationData);
 		}
 		return false;
 	}
 
 	public static boolean isBlockListAnimation(int animationId) {
-		return notAttacks.containsKey(animationId);
+		return NOT_ATTACKS.containsKey(animationId);
 	}
 
 	@Override
 	public String toString() {
 		String[] words = super.toString().toLowerCase().split("_");
 		Arrays.stream(words)
-				.map(StringUtils::capitalize).collect(Collectors.toList()).toArray(words);
+			.map(StringUtils::capitalize).collect(Collectors.toList()).toArray(words)
+		;
 
 		return String.join(" ", words);
 	}
 
 	public boolean matchesSpellbook(Spellbook s) {
-		if(this.spellbook != null) {
+		if (this.spellbook != null) {
 			return this.spellbook == s;
 		}
 		return false;
 	}
 
+
 	// An enum of combat styles (including stab, slash, crush).
-	// An enum of combat styles (including stab, slash, crush).
-	public enum AttackStyle
-	{
+	public enum AttackStyle {
 		MELEE,
 		RANGED,
 		MAGIC,
 		NON_ATTACK;
 
 		@Override
-		public String toString()
-		{
+		public String toString() {
 			return StringUtils.capitalize(super.toString().toLowerCase());
 		}
-	}}
+	}
+}

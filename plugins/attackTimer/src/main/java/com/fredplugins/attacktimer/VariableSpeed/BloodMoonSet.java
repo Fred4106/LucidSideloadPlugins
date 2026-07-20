@@ -1,4 +1,4 @@
-package com.fredplugins.attacktimer;
+package com.fredplugins.attacktimer.VariableSpeed;
 
 /*
  * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
@@ -25,15 +25,20 @@ package com.fredplugins.attacktimer;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public enum AttackType {
-	CRUSH,
-	SLASH,
-	STAB,
-	RANGED,
-	MAGIC,
-	NONE;
+import com.fredplugins.attacktimer.AnimationData;
+import com.fredplugins.attacktimer.AttackProcedure;
+import net.runelite.api.Client;
 
-	public boolean IsMelee() {
-		return this.equals(CRUSH) || this.equals(SLASH) || this.equals(STAB);
+public class BloodMoonSet implements IVariableSpeed {
+	private static final int BLOOD_MOON_SET_ANIM_ID = 2792;
+
+	public int apply(
+		final Client client, final AnimationData curAnimation, final AttackProcedure atkType,
+		final int damageDealt, final int lastSpecDelta, final int baseSpeed, final int curSpeed
+	) {
+		if (client.getLocalPlayer().hasSpotAnim(BLOOD_MOON_SET_ANIM_ID)) {
+			return curSpeed - 1;
+		}
+		return curSpeed;
 	}
 }

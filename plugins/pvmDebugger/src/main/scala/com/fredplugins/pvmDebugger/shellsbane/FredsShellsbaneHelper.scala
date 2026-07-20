@@ -1,14 +1,20 @@
 package com.fredplugins.pvmDebugger.shellsbane
 
+import com.fredplugins.attacktimer.LocalPlayerAttacked
 import com.fredplugins.common.ProjectileID
+import com.fredplugins.common.api.WorldRegion
 import com.fredplugins.common.constants.magic.SMagicBoost.{DeathCharge, SummonThrall}
 import com.fredplugins.common.constants.magic.STimedPotion.{Divine_combat, Prayer_regeneration}
 import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.common.extensions.ActorExtensions.*
+import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
+import com.fredplugins.common.overlays
 import com.fredplugins.common.services.TimedBoostsService.{MagicBoostChanged, getCachedValue, isActive, isLocked}
 import com.fredplugins.common.services.TimedBoostsService
 import com.fredplugins.common.services.TimedBoostsService.PotionEffectChanged
+import com.fredplugins.common.utils.ReflectionUtils
+import com.fredplugins.common.utils.SInteractionUtils
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -23,6 +29,7 @@ import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, Inter
 import ethanApiPlugin.services.localPlayer.events.LocalDestinationChanged
 import ethanApiPlugin.services.localPlayer.events.LocalPositionChanged
 import ethanApiPlugin.services.localPlayer.events.LocalRegionChanged
+import net.runelite.api.coords.Direction
 import net.runelite.api.{Actor, Client, EquipmentInventorySlot, GameObject, GameState, GraphicsObject, NPC, NPCComposition, Perspective, Player, Point, Prayer, Projectile, WorldView}
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.coords.WorldArea
@@ -37,6 +44,7 @@ import net.runelite.api.events.NpcDespawned
 import net.runelite.api.events.NpcSpawned
 import net.runelite.api.events.ProjectileMoved
 import net.runelite.api.gameval.ItemID.{BRACELET_OF_SLAUGHTER, HUNDRED_GAUNTLETS_LEVEL_10}
+import net.runelite.api.gameval.ObjectID
 import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID}
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
@@ -58,6 +66,9 @@ import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import scala.util.Try
 import scala.util.chaining.scalaUtilChainingOps
+import net.runelite.api.gameval.ObjectID1.{GRYPHON_BOSS_WHIRLWIND_ACTIVE_1 as ACTIVE_1, GRYPHON_BOSS_WHIRLWIND_ACTIVE_2 as ACTIVE_2, GRYPHON_BOSS_WHIRLWIND_ACTIVE_3 as ACTIVE_3, GRYPHON_BOSS_WHIRLWIND_ACTIVE_4 as ACTIVE_4, GRYPHON_BOSS_WHIRLWIND_ACTIVE_5 as ACTIVE_5, GRYPHON_BOSS_WHIRLWIND_INITIAL_1 as INITIAL_1, GRYPHON_BOSS_WHIRLWIND_INITIAL_2 as INITIAL_2, GRYPHON_BOSS_WHIRLWIND_INITIAL_3 as INITIAL_3, GRYPHON_BOSS_WHIRLWIND_INITIAL_4 as INITIAL_4, GRYPHON_BOSS_WHIRLWIND_INITIAL_5 as INITIAL_5}
+
+import java.util.concurrent.Callable
 
 class Shellsbane(val wrapped: NPC) {
 	assert(wrapped != null && wrapped.getId == NpcID.GRYPHON_BOSS)
@@ -79,7 +90,11 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	given Client = client
 
 	val ShellsbaneRegion: Int = 12682
-	case class WhirlwindData(spawnedTick: Int)
+	case class WhirlwindData(go: GameObject, spawnedTick: Int) {
+		def isActive: Boolean = (go.getId - INITIAL_1) % 2 == 1
+		def getSize: Int = (go.getId - INITIAL_1) / 2
+	}
+	private val whirlwinds: mutable.ArrayBuffer[WhirlwindData] = mutable.ArrayBuffer.empty[WhirlwindData]
 
 	//	private var ticks         = -1
 	private var curRegion = -1;
@@ -91,7 +106,10 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	var equipSlaughter: Boolean = false
 	var drinkCombatPotion: Boolean = false
 	var drinkPrayerRegeneration: Boolean = false
-
+	var moveBack: Boolean = false
+	private var prayerOnTick = -1
+	private var moveTileCachedOn: Int = -1
+	private var moveTileCache: WorldPoint = null
 	private def clearState(): Unit = {
 		boss = null
 		projectiles = List.empty[Projectile]
@@ -99,6 +117,10 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 		castThrall = false
 		drinkCombatPotion = false
 		drinkPrayerRegeneration = false
+		moveBack = false
+		moveTileCache = null
+		moveTileCachedOn = -1
+		prayerOnTick = -1
 	}
 
 	override def init(): Unit = {
@@ -111,6 +133,29 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 	override def cleanup(): Unit = {
 		curRegion = -1
 		clearState()
+	}
+
+
+	def movebackTile: WorldPoint = {
+		val runnable: Callable[(WorldPoint, Int)] = () => {
+			val bl: WorldPoint = boss.wrapped.getWorldArea.center.getTemplate
+			val ll: WorldPoint = client.getLocalPlayer.templateLocation
+			val directions = bl.getDirectionOf(ll)
+			val toMoveDirs = Direction.values().filter(d => directions.contains(d)).map(d => directions.count(d2 => d2 == d) -> d).sortBy(_._1)
+			log.debug("movebackTile: boss[{}], local[{}]{}", bl, ll, toMoveDirs.mkString("\n\tdirections\n\t", ",\n\t", ""))
+			toMoveDirs.map {
+				case (c, d) => d.delta(1)(client.getLocalPlayer.getWorldLocation)
+			}.findLast(mbl => InteractionUtils.isWalkable(mbl)).getOrElse(null) -> client.getTickCount
+		}
+		if(moveTileCachedOn != client.getTickCount)
+			moveTileCache = null
+		if(moveTileCache == null) {
+			val z = if(client.isClientThread) runnable.call() else parent.getClientThread.runOnClientThread[(WorldPoint, Int)](runnable)
+			moveTileCache = z._1
+			moveTileCachedOn = z._2
+			log.debug("moveTileCache={} on tick {}", moveTileCache, moveTileCachedOn)
+		}
+		moveTileCache
 	}
 
 	@Subscribe
@@ -151,6 +196,15 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 			InteractionUtils.widgetInteract(prayerRegenPotionWidget.get, "drink")
 			drinkPrayerRegeneration = true
 		}
+
+		if(moveBack) {
+			Option(movebackTile).foreach(InteractionUtils.walk(_))
+			moveBack = false
+		}
+
+		if(prayerOnTick == client.getTickCount) {
+			CombatUtils.activatePrayers(Prayer.PIETY)
+		}
 	}
 
 	@Subscribe
@@ -171,6 +225,18 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 //	def onLocalPositionChanged(e: LocalPositionChanged): Unit = {
 //		if(curRegion == ShellsbaneRegion) log.info(s"Position changed from ${e.getFrom} to ${e.getTo}")
 //	}
+
+	@Subscribe
+	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
+		if (e.getGameObject.getId >= INITIAL_1 && e.getGameObject.getId <= ACTIVE_5) {
+			whirlwinds.addOne(WhirlwindData(e.getGameObject, client.getTickCount))
+		}
+	}
+
+	@Subscribe
+	def onGameObjectDespawned(e: GameObjectDespawned): Unit = {
+		whirlwinds.filterInPlace(_.go != e.getGameObject)
+	}
 
 	@Subscribe
 	def onNpcSpawned(e: NpcSpawned): Unit = {
@@ -207,10 +273,14 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 				.getRegionID == ShellsbaneRegion || e
 				.getProjectile
 				.templateTargetLocation
-				.getRegionID == ShellsbaneRegion) &&
+				.getRegionID == ShellsbaneRegion
+			) &&
 			projectile.justSpawned
 		) {
 			projectiles = projectiles.appended(projectile)
+			if(projectile.getId == ProjectileID.GRYPHON_SPIT_PROJECTILE) {
+				moveBack = true
+			}
 		}
 	}
 
@@ -247,6 +317,12 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 			case 12557 => "DEATH"
 			case _ => s"UNKOWN(${id})"
 		}
+	}
+
+	@Subscribe
+	def onLocalPlayerAttacked(e: LocalPlayerAttacked): Unit = {
+		prayerOnTick = client.getTickCount + e.getAttackInterval - 1
+		CombatUtils.deactivatePrayers(Prayer.PIETY)
 	}
 
 	@Subscribe
@@ -355,20 +431,23 @@ class FredsShellsbaneHelper @Inject()(override val parent: PvmDebuggerPlugin, ov
 			val textPoint = new Point(xOffset, yOffset)
 			OverlayUtil.renderTextLocation(g, textPoint, text, Color.WHITE)
 		}
-//
-//		def renderTile(tile: GameObject, color: Color): Unit = {
-//			val lp   = tile.getLocalLocation
-//			val poly = Perspective.getCanvasTilePoly(client, lp)
-//			if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(color, 200))
-//		}
+
+		def renderTile(tile: GameObject, color: Color): Unit = {
+			val lp   = tile.getLocalLocation
+			val poly = Perspective.getCanvasTilePoly(client, lp)
+			if (poly != null) OverlayUtil.renderPolygon(g, poly, ColorUtil.colorWithAlpha(color, 200))
+		}
 
 		if(curRegion == ShellsbaneRegion){
 //			dangerousTiles.values.toList.foreach(dt => {
 //				renderDangerousTile(dt, Color.ORANGE)
 //			})
-//			iceTiles.toList.foreach(iceTile => {
-//				renderIceTile(iceTile, Color.RED)
-//			})
+			whirlwinds.toList.foreach(ww => {
+				overlays.renderGameObjectOverlay(ww.go, s"size=${ww.getSize}, age=${(client.getTickCount - ww.spawnedTick)}, active=${ww.isActive}")(2, 2, ColorUtil.colorWithAlpha(if(ww.isActive) config.acidColor() else config.whirlwindColor(), 65))
+			})
+			Option(movebackTile).foreach{mbt =>
+				overlays.renderTileOverlay(mbt, s"moveBackTile", ColorUtil.colorWithAlpha(Color.PINK, 64), false)
+			}
 
 			Option(boss)
 				.foreach {sb =>

@@ -1,73 +1,173 @@
 package com.fredplugins.attacktimer;
 
+/*
+ * Copyright (c) 2018, Chdata
+ * Copyright (c) 2018, Tomas Slusny <slusnucky@gmail.com>
+ * Copyright (c) 2022, Nick Graves <https://github.com/ngraves95>
+ * Copyright (c) 2025-2026, Pedro Alves <https://github.com/PedroSilvaAlves>
+ * Copyright (c) 2024-2026, Lexer747 <https://github.com/Lexer747>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import lombok.NonNull;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayPriority;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.awt.*;
+import net.runelite.client.util.ImageUtil;
+import org.jetbrains.annotations.NotNull;
 
 @Singleton
 class AttackTimerBarOverlay extends Overlay {
 	private static final Color BAR_FILL_COLOR = new Color(201, 161, 28);
-
 	private static final Color BAR_BG_COLOR = Color.black;
 	private static final Dimension ATTACK_BAR_SIZE = new Dimension(30, 5);
-
-	private final Client client;
+	private static final BufferedImage HD_FRONT_BAR = ImageUtil.loadImageResource(
+		AttackTimerMetronomePlugin.class,
+		"front.png"
+	);
+	private static final BufferedImage HD_BACK_BAR = ImageUtil.loadImageResource(
+		AttackTimerMetronomePlugin.class,
+		"back.png"
+	);
+	private final @NonNull Client client;
 	private final AttackTimerMetronomeConfig config;
 	private final AttackTimerMetronomePlugin plugin;
 
+	private boolean shouldShowBar = false;
+
 	@Inject
-	private AttackTimerBarOverlay(final Client client, final AttackTimerMetronomeConfig config, final AttackTimerMetronomePlugin plugin) {
+	private AttackTimerBarOverlay(final @NotNull Client client, final AttackTimerMetronomeConfig config, final AttackTimerMetronomePlugin plugin) {
 		this.client = client;
 		this.config = config;
 		this.plugin = plugin;
 
 		setPosition(OverlayPosition.DYNAMIC);
-		setPriority(OverlayPriority.HIGH);
+		setPriority(Overlay.PRIORITY_HIGH);
 		setLayer(OverlayLayer.UNDER_WIDGETS);
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics) {
-		if(shouldShowBar()) {
-			final int height = client.getLocalPlayer().getLogicalHeight() + config.heightOffset() - 20;
-			final LocalPoint localLocation = client.getLocalPlayer().getLocalLocation();
-			final Point canvasPoint = Perspective.localToCanvas(client, localLocation, client.getTopLevelWorldView().getPlane(), height);
+		//onTick section
+		shouldShowBar = true;
 
-			int denomMod = (config.barEmpties()) ? 1 : 0;
-			int numerMod = (config.barFills()) ? 1 : 0;
-			float ratio = (float) (plugin.getTicksUntilNextAttack() - numerMod) / (float) (plugin.getWeaponPeriod() - denomMod);
-			if(!config.barDirection()) {
-				ratio = Math.max(1.0f - ratio, 0f);
-			}
+		if (!config.enableMetronome()) {
+			shouldShowBar = false;
+		}
 
-			// Draw bar
-			final int barX = canvasPoint.getX() - 15;
-			final int barY = canvasPoint.getY();
-			final int barWidth = ATTACK_BAR_SIZE.width;
-			final int barHeight = ATTACK_BAR_SIZE.height;
+		if (!config.showBar()) {
+			shouldShowBar = false;
+		}
 
-			// Restricted by the width to prevent the bar from being too long while you are boosted above your real prayer level.
+		if (!plugin.isAttackCooldownPending()) {
+			shouldShowBar = false;
+		}
+		//end section
+
+		if (!shouldShowBar) {
+			return null;
+		}
+		if (client == null) {
+			return null;
+		}
+
+		final int height = client.getLocalPlayer().getLogicalHeight() + config.heightOffset() + 5;
+		final LocalPoint localLocation = client.getLocalPlayer().getLocalLocation();
+		if (localLocation == null) {
+			return null;
+		}
+		final Point canvasPoint = Perspective.localToCanvas(
+			client, localLocation,
+			client.getTopLevelWorldView().getPlane(), height
+		);
+		if (canvasPoint == null) {
+			return null;
+		}
+
+		int denomMod = (config.barEmpties()) ? 1 : 0;
+		int numerMod = (config.barFills()) ? 1 : 0;
+		float ratio = (float) (plugin.getTicksUntilNextAttack() - numerMod) / (float) (plugin.getWeaponPeriod() - denomMod);
+		// barDirection:
+		// true  -> drain -> moves right to left  each tick
+		// false -> fills -> move  left  to right each tick
+		ratio = config.barDirection() ? clampBetween0and1(ratio) : clampBetween0and1(1.0f - ratio);
+
+		AttackBarStyle barStyle = config.barStyle();
+		boolean useHD = barStyle == AttackBarStyle.HIGH_DETAIL || (barStyle == AttackBarStyle.AUTO
+			&& client.getSpriteOverrides().containsKey(SpriteID.StandardHealth30._0));
+
+		if (useHD) {
+			final int barWidth = HD_FRONT_BAR.getWidth();
+			final int barHeight = HD_FRONT_BAR.getHeight();
+			final int barX = canvasPoint.getX() - barWidth / 2;
+			final int barY = canvasPoint.getY() + 7;
+
 			final int progressFill = (int) Math.ceil(Math.min((barWidth * ratio), barWidth));
 
-			graphics.setColor(BAR_BG_COLOR);
-			graphics.fillRect(barX, barY, barWidth, barHeight);
-			graphics.setColor(BAR_FILL_COLOR);
-			graphics.fillRect(barX, barY, progressFill, barHeight);
+			graphics.drawImage(HD_BACK_BAR, barX, barY, barWidth, barHeight, null);
+			// if progress is less than 1 then there's no "sub-bar" to draw as it would either have fractional
+			// pixels (not possible) or negative pixels (also not possible) fixes
+			// (https://github.com/ngraves95/attacktimer/issues/92)
+			if (progressFill < 1) {
+				return null;
+			}
+			// else draw a smaller bar as the "filler" image
+			var subImage = HD_FRONT_BAR.getSubimage(0, 0, progressFill, barHeight);
+			graphics.drawImage(subImage, barX, barY, progressFill, barHeight, null);
+			return null;
 		}
+		// Draw bar
+		final int barX = canvasPoint.getX() - 15;
+		final int barY = canvasPoint.getY() + 7;
+		final int barWidth = ATTACK_BAR_SIZE.width;
+		final int barHeight = ATTACK_BAR_SIZE.height;
+
+		// Restricted by the width to prevent the bar from being too long while you are boosted above your
+		// real prayer level.
+		final int progressFill = (int) Math.ceil(Math.min((barWidth * ratio), barWidth));
+
+		graphics.setColor(BAR_BG_COLOR);
+		graphics.fillRect(barX, barY, barWidth, barHeight);
+		graphics.setColor(BAR_FILL_COLOR);
+		graphics.fillRect(barX, barY, progressFill, barHeight);
+
 		return null;
 	}
 
-	private boolean shouldShowBar() {
-//		shouldShowBar = config.showBar() && plugin.isAttackCooldownPending();
-		return config.showBar() && plugin.isAttackCooldownPending();
+	private float clampBetween0and1(float x) {
+		return Math.max(Math.min(x, 1.0f), 0.0f);
 	}
 }

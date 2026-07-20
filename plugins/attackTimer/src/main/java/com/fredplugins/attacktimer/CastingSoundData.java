@@ -1,5 +1,30 @@
 package com.fredplugins.attacktimer;
 
+/*
+ * Copyright (c) 2024, Lexer747 <https://github.com/Lexer747>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 import com.google.common.collect.ImmutableMap;
 
 enum CastingSoundData {
@@ -50,19 +75,6 @@ enum CastingSoundData {
 	ARCEUUS_SUPERIOR_DEMONBANE(5027, Spellbook.ARCEUUS),
 	ARCEUUS_UNDEAD_GRASP(5030, Spellbook.ARCEUUS);
 
-
-	private static final ImmutableMap<Integer, CastingSoundData> sounds;
-
-	static {
-		ImmutableMap.Builder<Integer, CastingSoundData> builder = new ImmutableMap.Builder<>();
-
-		for(CastingSoundData data : values()) {
-			builder.put(data.id, data);
-		}
-
-		sounds = builder.build();
-	}
-
 	private final int id;
 	private final Spellbook spellbook;
 
@@ -71,14 +83,27 @@ enum CastingSoundData {
 		this.spellbook = b;
 	}
 
+
+	private static final ImmutableMap<Integer, CastingSoundData> SOUNDS;
+
+	static {
+		ImmutableMap.Builder<Integer, CastingSoundData> builder = new ImmutableMap.Builder<>();
+
+		for (CastingSoundData data : values()) {
+			builder.put(data.id, data);
+		}
+
+		SOUNDS = builder.build();
+	}
+
 	public static boolean isCastingSound(int id) {
-		return sounds.containsKey(id);
+		return SOUNDS.containsKey(id);
 	}
 
 	public static Spellbook getSpellBookFromId(int id) {
-		if(!sounds.containsKey(id)) {
+		if (!SOUNDS.containsKey(id)) {
 			return null;
 		}
-		return sounds.get(id).spellbook;
+		return SOUNDS.get(id).spellbook;
 	}
 }
