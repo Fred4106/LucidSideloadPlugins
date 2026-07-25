@@ -136,8 +136,10 @@ object FredsTemporossLogic {
 							timeout=timeout-1
 						}
 						if (ammoCrateOpt.isDefined) {
-							log.debug(s"Should be auto filling {}", expandNpcToStr(ammoCrateOpt))
-							NPCInteraction.interact(ammoCrateOpt.get, "Fill")
+							plugin.clientThread.invokeLater(() => {
+								log.debug(s"Should be auto filling {}", expandNpcToStr(ammoCrateOpt))
+								NPCInteraction.interact(ammoCrateOpt.get, "Fill")
+							})
 							//getObjectComposition(ammoCrateOpt.get.getId).getId
 //							TileObjectInteraction.interact("Ammunition crate", "Fill")
 						}
@@ -183,11 +185,13 @@ object FredsTemporossLogic {
 				if (plugin.config.doubleSpotNotification) plugin.notifier.notify("A double Harpoonfish spot has appeared.")
 				if (plugin.client.getItemContainer(InventoryID.INVENTORY).pipe(ic => ic.size - ic.count) > 0) {
 					if(canAutoFishDouble) plugin.clientThread.runOnSeparateThread(() => {
-						log.debug(s"Should be auto fishing {}", expandNpcToStr(Option(npcSpawned.getNpc)))
 						//						if (npcSpawned.getNpc) {
 						Thread.sleep((Random.nextDouble() * 500 + 200).toLong)
-						NPCInteraction.interact(npcSpawned.getNpc, "Harpoon")
-						canAutoFishDouble = false
+						plugin.clientThread.invokeLater(() => {
+							log.debug(s"Should be auto fishing {}", expandNpcToStr(Option(npcSpawned.getNpc)))
+							NPCInteraction.interact(npcSpawned.getNpc, "Harpoon")
+							canAutoFishDouble = false
+						})
 //						}
 					})
 				}
