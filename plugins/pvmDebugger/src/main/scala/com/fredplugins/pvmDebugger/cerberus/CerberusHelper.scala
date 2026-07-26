@@ -6,6 +6,7 @@ import com.fredplugins.common.extensions.GeneralExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.extensions.LocatableExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
+import com.fredplugins.common.utils.ReflectionUtils
 import com.fredplugins.common.utils.ShimUtils
 import com.fredplugins.pvmDebugger.HelperModule
 import com.fredplugins.pvmDebugger.PvmDebuggerPlugin
@@ -25,6 +26,7 @@ import net.runelite.api.MenuAction
 import net.runelite.api.MenuEntry
 import net.runelite.api.NPC
 import net.runelite.api.Prayer
+import net.runelite.api.Projectile
 import net.runelite.api.Skill
 import net.runelite.api.events.AnimationChanged
 import net.runelite.api.events.GameTick
@@ -48,6 +50,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Rectangle
+import java.util.Optional
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
@@ -78,6 +81,7 @@ class CerberusHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 	private val SUMMONED_SOUL_IDS: Seq[Int] = List(SPECTRE_RANGED, SPECTRE_MAGIC, SPECTRE_MELEE)
 
 	var enabled: Boolean = false
+	var projectiles: List[Projectile] = List.empty[Projectile]
 
 	override def init(): Unit = {
 		enabled = Option(client.getLocalPlayer).map(_.templateLocation.getRegionID).exists(x => REGION_IDS.contains(x))
@@ -85,6 +89,7 @@ class CerberusHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 
 	override def cleanup(): Unit = {
 		enabled = false
+		projectiles = List.empty[Projectile]
 	}
 
 	@Subscribe
@@ -94,8 +99,10 @@ class CerberusHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 
 	@Subscribe
 	def onProjectileMoved(e: ProjectileMoved): Unit = {
-		if(enabled && e.getProjectile.justSpawned) {
-			log.debug("[ProjectileSpawned] id={}, ticksRemaining={}, srcLoc={}, targLoc={}", e.getProjectile.getId, e.getProjectile.ticksRemaining, e.getProjectile.templateSourceLocation, e.getProjectile.templateTargetLocation)
+		val projectile = e.getProjectile
+		if(enabled && !projectiles.contains(projectile) && projectile.justSpawned) {
+			projectiles = projectiles.appended(projectile)
+			log.debug("[ProjectileSpawned] id={}, animation={}, ticksRemaining={}, srcLoc={}, targLoc={}", projectile.getId, Option(projectile.getAnimation).map(_.getId).getOrElse(-1), projectile.ticksRemaining, projectile.templateSourceLocation, projectile.templateTargetLocation)
 		}
 	}
 
@@ -125,15 +132,20 @@ class CerberusHelper @Inject()(override val parent: PvmDebuggerPlugin, override 
 
 	@Subscribe
 	def onGameTick(e: GameTick): Unit = {
+		projectiles = projectiles.filterNot(_.hasHit)
 	}
 
 	@Subscribe
 	def onAnimationChanged(e: AnimationChanged): Unit = {
 		if(enabled) {
-			val (npcId, animId) = Option(e.getActor).collect {
-				case npc: NPC => (npc.getId, npc.getAnimation)
-			}.getOrElse((-1, -1))
-			log.debug("[AnimationChanged] npcId={}, npcAnim={}", npcId, animId)
+			Option(e.getActor)
+				.collect {
+					case npc: NPC => (npc.getId, npc.getAnimation)
+				}
+				.filter(_._1 != -1)
+				.foreach{
+					case (npcId, animId) => log.debug("[AnimationChanged] npcId={}, npcAnim={}", ReflectionUtils.getNpcName(npcId), ReflectionUtils.getAnimationName(animId))
+				}
 		}
 	}
 

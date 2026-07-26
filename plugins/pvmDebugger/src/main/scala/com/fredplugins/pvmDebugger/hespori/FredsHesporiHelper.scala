@@ -55,7 +55,7 @@ import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import scala.util.Try
-import scala.util.chaining.scalaUtilChainingOps
+import scala.util.chaining.given
 
 //	/**
 //	 * Hespori
