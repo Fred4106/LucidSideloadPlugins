@@ -8,6 +8,7 @@ import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.common.extensions.ActorExtensions.*
 import com.fredplugins.common.extensions.GeneralExtensions.withAlpha
 import com.fredplugins.common.extensions.LocationExtensions.*
+import com.fredplugins.common.extensions.ObjectExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.{ProjectileID, overlays}
 import com.fredplugins.common.services.TimedBoostsService
@@ -21,10 +22,10 @@ import ethanApiPlugin.interactionApi.InventoryInteraction
 import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InteractionUtils, InventoryUtils}
 import ethanApiPlugin.services.localPlayer.events.{LocalDestinationChanged, LocalPositionChanged, LocalRegionChanged}
 import net.runelite.api.coords.{Direction, LocalPoint, WorldArea, WorldPoint}
-import net.runelite.api.events.{AnimationChanged, GameObjectDespawned, GameObjectSpawned, GameStateChanged, GameTick, GraphicsObjectCreated, NpcDespawned, NpcSpawned, ProjectileMoved}
+import net.runelite.api.events.{ActorDeath, AnimationChanged, GameObjectDespawned, GameObjectSpawned, GameStateChanged, GameTick, GraphicsObjectCreated, NpcDespawned, NpcSpawned, ProjectileMoved}
 import net.runelite.api.gameval.ItemID.{BRACELET_OF_SLAUGHTER, HUNDRED_GAUNTLETS_LEVEL_10}
 import net.runelite.api.gameval.ObjectID1.{GRYPHON_BOSS_WHIRLWIND_ACTIVE_1 as ACTIVE_1, GRYPHON_BOSS_WHIRLWIND_ACTIVE_2 as ACTIVE_2, GRYPHON_BOSS_WHIRLWIND_ACTIVE_3 as ACTIVE_3, GRYPHON_BOSS_WHIRLWIND_ACTIVE_4 as ACTIVE_4, GRYPHON_BOSS_WHIRLWIND_ACTIVE_5 as ACTIVE_5, GRYPHON_BOSS_WHIRLWIND_INITIAL_1 as INITIAL_1, GRYPHON_BOSS_WHIRLWIND_INITIAL_2 as INITIAL_2, GRYPHON_BOSS_WHIRLWIND_INITIAL_3 as INITIAL_3, GRYPHON_BOSS_WHIRLWIND_INITIAL_4 as INITIAL_4, GRYPHON_BOSS_WHIRLWIND_INITIAL_5 as INITIAL_5}
-import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID, ObjectID}
+import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID, ObjectID, SpotanimID}
 import net.runelite.api.{Actor, Client, EquipmentInventorySlot, GameObject, GameState, GraphicsObject, NPC, NPCComposition, Perspective, Player, Point, Prayer, Projectile, WorldView}
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
@@ -52,7 +53,7 @@ class FredsSireHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	override def init(): Unit = {
 		curRegion = Option(client.getLocalPlayer).map(_.templateLocation).map(_.getRegionID).getOrElse(-1)
 		for (npc <- client.getTopLevelWorldView.npcs.asScala) {
-//			onNpcSpawned(new NpcSpawned(npc))
+			onNpcSpawned(new NpcSpawned(npc))
 		}
 	}
 
@@ -61,68 +62,94 @@ class FredsSireHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		clearState()
 	}
 
-	var prayerOnTick: Int = -1
-	var offensivePrayer: Prayer = uninitialized
+//	var prayerOnTick: Int = -1
+//	var offensivePrayer: Prayer = uninitialized
+	var lastTickSireType: SireMode = uninitialized
 
 	private def clearState(): Unit = {
-		prayerOnTick = -1
-		offensivePrayer= null
+//		prayerOnTick = -1
+//		offensivePrayer= null
+		lastTickSireType=null
+	}
+
+	def logevent[caller <: String & scala.Singleton : ValueOf](o: String = ""): Unit = {
+		log.debug(s"${valueOf[caller]}[${client.getTickCount}]${if(o.nonEmpty) o.prependedAll(" = ") else ""}")
 	}
 
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
 		if(!sireRegions.contains(curRegion)) return
-//		boss = NPCs.search().withId(NpcID.MUSPAH_TELEPORT).first().toScala
-		if(prayerOnTick == client.getTickCount && offensivePrayer != null) {
-			CombatUtils.activatePrayers(offensivePrayer)
+		logevent["onGameTick"]()
+
+		val bossOpt: Option[(SireMode, NPC)] = NPCs.search().alive().filter(NpcType.Sire.unapply).nearestToPlayer().toScala.flatMap(SireMode.unapply)
+		//			.filter(_ != lastTickSireType)
+		bossOpt.filter(_._1 != lastTickSireType).foreach {(sireMode, sire) =>
+			sireMode match {
+				case SireMode.Sleeping =>
+				case SireMode.Awake =>
+					if(lastTickSireType == SireMode.Stunned) CombatUtils.deactivatePrayers(Prayer.DEADEYE)
+					val spellWidget = client.getWidget(InterfaceID.MagicSpellbook.SHADOW_BARRAGE)
+					InteractionUtils.useWidgetOnNPC(spellWidget, sire)
+				case SireMode.Stunned => CombatUtils.activatePrayers(Prayer.DEADEYE)
+				case SireMode.Puppet => CombatUtils.activatePrayers((if(sire.health <= 220) Prayer.PROTECT_FROM_MISSILES else Prayer.PROTECT_FROM_MELEE), Prayer.PIETY)
+				case SireMode.Wandering =>
+				case SireMode.Panicking =>
+				case SireMode.Apocalypse =>
+			}
 		}
+
+		//		if(prayerOnTick == client.getTickCount && offensivePrayer != null) {
+		//			CombatUtils.activatePrayers(offensivePrayer)
+		//		}
+
+		bossOpt.map(_._1).orNull.tap(v => if(v != lastTickSireType) lastTickSireType = v)
 	}
 
 	@Subscribe
 	def onLocalRegionChanged(e: LocalRegionChanged): Unit = {
-		log.info(s"Region changed from ${e.getOldRegion} to ${e.getCurRegion}")
+		logevent["onLocalRegionChanged"](s"from ${e.getOldRegion} to ${e.getCurRegion}")
 		if(e.getCurRegion == 12106) {
 			clearState()
 		}
 		curRegion = e.getCurRegion
 	}
 
-//	@Subscribe
-//	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
-//		if (e.getGameObject.getId >= INITIAL_1 && e.getGameObject.getId <= ACTIVE_5) {
-//			whirlwinds.addOne(WhirlwindData(e.getGameObject, client.getTickCount))
-//		}
-//	}
-//
-//	@Subscribe
-//	def onGameObjectDespawned(e: GameObjectDespawned): Unit = {
-//		whirlwinds.filterInPlace(_.go != e.getGameObject)
-//	}
+	@Subscribe
+	def onGameObjectSpawned(e: GameObjectSpawned): Unit = {
+		if(sireRegions.contains(e.getGameObject.getWorldLocation.getRegionID))
+			logevent["onGameObjectSpawned"](s"${ReflectionUtils.getObjectName(e.getGameObject.getId)} a:${ReflectionUtils.getAnimationName(e.getGameObject.animationOpt.fold(-1)(_.getId))} @ ${e.getGameObject.getWorldLocation}")
+	}
 
-//	@Subscribe
-//	def onNpcSpawned(e: NpcSpawned): Unit = {
-//		if(e.getNpc.templateRegion == ShellsbaneRegion) {
-//			Shellsbane.tryBuild(e.getActor)
-//				.foreach{sb =>
-//					boss = sb.tap(_.spawnTick = client.getTickCount)
-//					CombatUtils.activatePrayers(Prayer.PIETY, Prayer.PROTECT_FROM_MELEE)
-//				}
-//		}
-//	}
-//
-//	@Subscribe
-//	def onNpcDespawned(e: NpcDespawned): Unit = {
-//		if(e.getNpc.templateRegion == ShellsbaneRegion) {
-//			if(Option(boss).map(_.wrapped).contains(e.getNpc)){
-//				if(InventoryUtils.contains(HUNDRED_GAUNTLETS_LEVEL_10)) {
-//					InventoryUtils.wieldItem(HUNDRED_GAUNTLETS_LEVEL_10)
-//					equipSlaughter = false
-//				}
-//				CombatUtils.deactivatePrayers(false)
-//				clearState()
-//			}
-//		}
-//	}
+	@Subscribe
+	def onGameObjectDespawned(e: GameObjectDespawned): Unit = {
+		if(sireRegions.contains(e.getGameObject.getWorldLocation.getRegionID))
+			logevent["onGameObjectDespawned"](s"${ReflectionUtils.getObjectName(e.getGameObject.getId)} a:${ReflectionUtils.getAnimationName(e.getGameObject.animationOpt.fold(-1)(_.getId))} @ ${e.getGameObject.getWorldLocation}")
+	}
+
+	@Subscribe
+	def onNpcSpawned(e: NpcSpawned): Unit = {
+		if(sireRegions.contains(e.getNpc.region))
+			logevent["onNpcSpawned"](s"${ReflectionUtils.getNpcName(e.getNpc.getId)}[${e.getNpc.getIndex}] a:${ReflectionUtils.getAnimationName(e.getNpc.getAnimation)} @ ${e.getNpc.getWorldLocation}")
+	}
+
+	@Subscribe
+	def onNpcDespawned(e: NpcDespawned): Unit = {
+		if (sireRegions.contains(e.getNpc.region))
+			logevent["onNpcDespawned"](s"${ReflectionUtils.getNpcName(e.getNpc.getId)}[${e.getNpc.getIndex}] @ ${e.getNpc.getWorldLocation}")
+	}
+
+	@Subscribe
+	def onActorDeath(e: ActorDeath): Unit = {
+		e.getAsNpc()
+			.filter(n => sireRegions.contains(n.region))
+			.foreach(n => {
+				logevent["onActorDeath"](s"${ReflectionUtils.getNpcName(n.getId)}[${n.getIndex}] @ ${n.getWorldLocation}")
+				SireMode.values.find(_.npcId == n.getId).foreach(sireMode => {
+					CombatUtils.deactivatePrayers(false)
+					clearState()
+				})
+			})
+	}
 
 //	@Subscribe
 //	def onProjectileMoved(e: ProjectileMoved): Unit = {
@@ -147,23 +174,49 @@ class FredsSireHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 
 	@Subscribe
 	def onLocalPlayerAttacked(e: LocalPlayerAttacked): Unit = {
-		prayerOnTick = client.getTickCount + e.getAttackInterval - 1
-		offensivePrayer =
-			e.getStyle match {
-				case AttackStyle.RANGING => Prayer.DEADEYE
-				case AttackStyle.LONGRANGE => Prayer.DEADEYE
-				case AttackStyle.CASTING => Prayer.MYSTIC_VIGOUR
-				case AttackStyle.DEFENSIVE_CASTING => Prayer.MYSTIC_VIGOUR
-				case _ => Prayer.PIETY
-			}
-		CombatUtils.deactivatePrayers(Prayer.PIETY, Prayer.MYSTIC_VIGOUR, Prayer.DEADEYE)
+//		prayerOnTick = client.getTickCount + e.getAttackInterval - 1
+//		offensivePrayer =
+//			e.getStyle match {
+//				case AttackStyle.RANGING => Prayer.DEADEYE
+//				case AttackStyle.LONGRANGE => Prayer.DEADEYE
+//				case AttackStyle.CASTING => Prayer.MYSTIC_VIGOUR
+//				case AttackStyle.DEFENSIVE_CASTING => Prayer.MYSTIC_VIGOUR
+//				case _ => Prayer.PIETY
+//			}
+//		CombatUtils.deactivatePrayers(Prayer.PIETY, Prayer.MYSTIC_VIGOUR, Prayer.DEADEYE)
+	}
+
+	@Subscribe
+	def onGraphicsObjectCreated(e: GraphicsObjectCreated): Unit = {
+		val go = e.getGraphicsObject
+		val name = ReflectionUtils.getSpotAnimationName(go.getId)
+		if(!sireRegions.contains(go.worldLocation.getRegionID)) return
+			//ticksSinceDangerousTiles = 5
+		logevent["onGraphicsObjectCreated"](s"${name} a:${ReflectionUtils.getAnimationName(go.animationId)} @ ${go.worldLocation}")
+
+		//			Option(
+//				if (graphicsObject.getId == SpotanimID.VFX_HUEYCOATL_PRAYER_02) {
+//					LightingTile(graphicsObject.templateLocation, client.getGameCycle, graphicsObject.getStartCycle, client.getTickCount)
+//				} else if (HueyShockwaveIds.contains(graphicsObject.getId)) {
+//					val goDuration = (graphicsObject.getStartCycle - client.getGameCycle)
+//					val fakeDuration = Math.min(120, goDuration)
+//					val fakeSpawnCycle = graphicsObject.getStartCycle - fakeDuration
+//					val fakeSpawnTick = ((goDuration - fakeDuration) / 30.0).floor.toInt + client.getTickCount
+//					WaveTile(graphicsObject.templateLocation, fakeSpawnCycle, graphicsObject.getStartCycle, fakeSpawnTick)
+//				} else null
+//			).foreach(dt => {
+//				state = state.map(_.withDangerousTile(dt))
+//			}
+//			)
 	}
 
 	override protected def createPanelElements(): Seq[LayoutableRenderableEntity] = {
 		if(curRegion != 12106 && !sireRegions.contains(curRegion)) return Seq.empty[LayoutableRenderableEntity]
 
 		val regionLine = LineComponent.builder().left("Region").right(s"$curRegion").rightColor(if(sireRegions.contains(curRegion)) Color.GREEN else if(curRegion == 12106) Color.YELLOW else Color.RED).build
-		val myNpcs: List[(NpcType, NPC)] = NPCs.search().alive().result().asScala.toList.flatMap(NpcType.unapply).sortBy(_._1.pipe(NpcType.values.indexOf(_)))
+		val myNpcs: List[(NpcType, NPC)] = clientThread.runOnClientThread(() => {
+			NPCs.search().alive().result().asScala.toList
+		}).flatMap(NpcType.unapply).sortBy(_._1.pipe(NpcType.values.indexOf(_)))
 
 		val npcLines = myNpcs.map {
 			case (NpcType.Sire, n) => {
@@ -198,8 +251,8 @@ class FredsSireHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		given Graphics2D = g
 		given ModelOutlineRenderer = parent.getModelOutlineRenderer
 		def renderNpcOverlay(npc: NPC, text: String)(zoffset: Int, color: Color, textColor: Color = Color.WHITE ): Unit = {
-			var poly = npc.getConvexHull
-			if(poly!= null) OverlayUtil.renderPolygon(g, poly, Color(0, 0, 0, 0), color.withAlpha(config.fillAlpha))
+//			var poly = npc.getConvexHull
+//			if(poly!= null) OverlayUtil.renderPolygon(g, poly, color, color.withAlpha(config.fillAlpha))
 			parent.getModelOutlineRenderer.drawOutline(npc, 2, color, 2)
 			//			val poly = npc.getCanvasTilePoly
 			//			if (poly != null) OverlayUtil.renderPolygon(g, poly, fillColor)
@@ -217,7 +270,7 @@ class FredsSireHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		}
 
 		if (curRegion == 12106 || sireRegions.contains(curRegion)) {
-			NPCs.search().alive().filter(NpcType.Sire.unapply).nearestToPlayer().toScala.flatMap(SireMode.unapply)
+			clientThread.runOnClientThread(() => NPCs.search().alive().filter(NpcType.Sire.unapply).nearestToPlayer().toScala.flatMap(SireMode.unapply))
 				.foreach {(sireType, sire) =>
 					val sireColor = sireType match {
 						case SireMode.Sleeping => config.sireSleepingColor

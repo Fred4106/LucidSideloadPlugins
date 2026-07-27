@@ -2,6 +2,7 @@ package com.fredplugins.pvmDebugger
 
 import com.fredplugins.common.ProjectileID
 import com.fredplugins.common.api.WorldRegion
+import com.fredplugins.common.api.WorldRegion.*
 import com.fredplugins.common.utils.{ShimUtils, TWorldPoint}
 import net.runelite.api.NPC
 import net.runelite.api.gameval.*
@@ -21,7 +22,10 @@ package object sire {
 		inline val Group: "FredsSireHelper" = constValue["FredsSireHelper"]
 		inline val Colors: "Colors" = constValue["Colors"]
 	}
-
+	val area1 = new WorldArea(3093, 4745, 36, 54, 0)
+	val area2 = new WorldArea(3088, 4809, 36, 54, 0)
+	val area3 = new WorldArea(2953, 4745, 36, 54, 0)
+	val area4 = new WorldArea(2962, 4809, 36, 54, 0)
 	inline def sireRegions: Set[Int] = Set(
 		12363,12362, 11851, 11850
 	)

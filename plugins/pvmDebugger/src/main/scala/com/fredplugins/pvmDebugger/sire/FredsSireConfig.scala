@@ -1,6 +1,7 @@
 package com.fredplugins.pvmDebugger.sire
 
 import net.runelite.client.config.{Config, ConfigGroup, ConfigItem, ConfigSection}
+import net.runelite.client.util.ColorUtil
 
 import java.awt.Color
 import scala.compiletime.uninitialized
@@ -22,7 +23,8 @@ trait FredsSireConfig extends Config {
 		name = "Fill Transparancy",
 		description = "Fill color alpha for all highlights",
 		keyName = "fillAlpha",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 0
 	)
 	def fillAlpha = 64
 
@@ -30,56 +32,63 @@ trait FredsSireConfig extends Config {
 		name = "Sleeping Color",
 		description = "Color to highlight abyssal sire when sleeping.",
 		keyName = "sireSleepingColor",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 10
 	)
-	def sireSleepingColor: Color = Color.CYAN
+	def sireSleepingColor: Color = new Color(83,83,83)
 
 	@ConfigItem(
 		name = "Awake Color",
 		description = "Color to highlight abyssal sire when awake.",
 		keyName = "sireAwakeColor",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 11
 	)
-	def sireAwakeColor: Color = Color.CYAN
+	def sireAwakeColor: Color = new Color(255,135,0)
 
 	@ConfigItem(
 		name = "Stunned Color",
 		description = "Color to highlight abyssal sire when stunned.",
 		keyName = "sireStunnedColor",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 12
 	)
-	def sireStunnedColor: Color = Color.CYAN
+	def sireStunnedColor: Color = new Color(0,255,255)
 
 	@ConfigItem(
 		name = "Puppet Color",
 		description = "Color to highlight abyssal sire when puppeted.",
 		keyName = "sirePuppetColor",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 13
 	)
-	def sirePuppetColor: Color = Color.CYAN
+	def sirePuppetColor: Color = new Color(255,0,250)
 
 	@ConfigItem(
 		name = "Wandering Color",
 		description = "Color to highlight abyssal sire when wandering.",
 		keyName = "sireWanderingColor",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 14
 	)
-	def sireWanderingColor: Color = Color.CYAN
+	def sireWanderingColor: Color = new Color(0,38,255)
 
 	@ConfigItem(
 		name = "Panicking Color",
 		description = "Color to highlight abyssal sire when panicking.",
 		keyName = "sirePanickingColor",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 15
 	)
-	def sirePanickingColor: Color = Color.CYAN
+	def sirePanickingColor: Color = new Color(0,255,0)
 
 	@ConfigItem(
 		name = "Apocalypse Color",
 		description = "Color to highlight abyssal sire when in apocalypse mode.",
 		keyName = "sireApocalypseColor",
-		section = ConfigDef.Colors
+		section = ConfigDef.Colors,
+		position = 16
 	)
-	def sireApocalypseColor: Color = Color.CYAN
+	def sireApocalypseColor: Color = new Color(255,0,0)
 //	endregion
 }

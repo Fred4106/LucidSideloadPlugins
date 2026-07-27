@@ -39,9 +39,13 @@ object ObjectExtensions {
 		}
 	}
 	extension (e: GraphicsObject)(using client: Client) {
-		def templateLocation: WorldPoint = {
-			TWorldPoint.get(WorldPoint.fromLocalInstance(client, e.getLocation))//WorldPointUtils.toTemplate(WorldPoint.fromLocalInstance(client, e.getLocation))
+		def worldLocation: WorldPoint = {
+			WorldPoint.fromLocalInstance(client, e.getLocation)
 		}
+		def templateLocation: WorldPoint = {
+			TWorldPoint.get(e.worldLocation)//WorldPointUtils.toTemplate(WorldPoint.fromLocalInstance(client, e.getLocation))
+		}
+		def animationId: Int = Option(e.getAnimation).fold(-1)(_.getId)
 	}
 	extension (e: TileObject)(using client: Client) {
 		def wrapped: TileObjectWrapper = TileObjectWrapper(e)
