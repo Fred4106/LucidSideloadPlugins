@@ -2,6 +2,7 @@ package com.fred4106.improvedCharges.items.utils;
 
 import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
+import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.store.*;
 import net.runelite.api.Skill;
 import com.fred4106.improvedCharges.FredsItemChargesPlugin;
@@ -13,7 +14,9 @@ import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
+import static com.fred4106.improvedCharges.FredsItemChargesPlugin.getNumberFromWordRepresentation;
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.BANK;
 import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
 
@@ -56,7 +59,19 @@ public class U_FurPouch extends ChargedItemWithStorageEmptyable {
             // Empty.
             new OnChatMessage("Your fur pouch is currently holding 0 fur.").emptyStorage(),
             new OnChatMessage("Your fur pouch is empty.").emptyStorage(),
-
+            new OnChatMessage("Your fur pouch is currently holding (?<quantity>.+) fur.").matcherConsumer((m) -> {
+                final int quantity = Integer.parseInt(m.group("quantity"));
+                List<StorageItem> x = storage.getStorage().getItems();
+                StorageItem head = (!x.isEmpty()) ? x.get(0) : null;
+                int tailCount = IntStream.range(1, x.size()).map(i -> x.get(i).getQuantity()).sum();
+                int newQty = quantity-tailCount;
+                System.out.println("head=(id=" + ((head!=null)?head.getId():-1) + ", qty="+ ((head != null)?head.getQuantity():0) + "), regexQty="+quantity+", tailCount="+ tailCount+", newQty="+ newQty + ".");
+                if(head != null) {
+                    storage.put(head.getId(), newQty);
+//                    storage.remove(head.getId(), head.getQuantity());
+//                    storage.add(head.getId(), quantity-tailCount);
+                }
+            }).onMenuOption("Check"),
             // Fill from inventory.
             new OnItemContainerChanged(ItemContainerId.INVENTORY).fillStorageFromInventory().onMenuOption("Fill"),
 
