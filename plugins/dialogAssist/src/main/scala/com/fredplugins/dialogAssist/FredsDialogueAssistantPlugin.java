@@ -318,6 +318,9 @@ public class FredsDialogueAssistantPlugin extends Plugin
 				case "nieve":
 					lastInteractionId=NpcID.SLAYER_MASTER_NIEVE;
 					break;
+				case "mortimer":
+					lastInteractionId=NpcID.SLAYER_MASTER_MORTIMER_VIS;
+					break;
 				default:
 					break;
 			}
