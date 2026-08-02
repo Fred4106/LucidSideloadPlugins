@@ -76,6 +76,8 @@ object ActorExtensions {
 		//		def region: Int = p.getWorldLocation.getRegionID
 		//		def templateRegion: Int = templateLocation.getRegionID
 
+		def isLocal(using c: Client): Boolean = c.getLocalPlayer.getId == p.getId
+
 		def niceString: String = {
 			s"Player(id=${p.getId}, name=${p.getName}, level=${p.getCombatLevel}, sLoc=${p.getLocalLocation.pipe(ll => s"(${ll.getSceneX}, ${ll.getSceneY})")}, tLoc=${p.templateLocation})"
 		}
