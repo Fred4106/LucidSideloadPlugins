@@ -483,6 +483,11 @@ public class BankItemWidget implements Widget {
     }
 
 	@Override
+	public @org.jetbrains.annotations.Nullable String[][] getSubOps() {
+		return new String[0][];
+	}
+
+	@Override
 	public Widget createChild(int index, int type) {
 		return null;
 	}
@@ -499,6 +504,11 @@ public class BankItemWidget implements Widget {
 
 	@Override
 	public void setAction(int index, String action) {
+
+	}
+
+	@Override
+	public void setSubOp(int index, int subop, String option) {
 
 	}
 

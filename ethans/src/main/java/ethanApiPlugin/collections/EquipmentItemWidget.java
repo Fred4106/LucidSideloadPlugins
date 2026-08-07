@@ -20,6 +20,7 @@ import java.util.Optional;
 public class EquipmentItemWidget implements Widget {
 	String name;
 	String[] actions;
+	String[][] subops;
 	int packedId;
 	int index;
 	EquipmentInventorySlot slot;
@@ -33,6 +34,7 @@ public class EquipmentItemWidget implements Widget {
 //		assert slot != null;
 		this.name = wrapped.getName();
 		this.actions = wrapped.getActions();
+		this.subops = wrapped.getSubOps();
 		this.packedId = wrapped.getId();
 		this.equipmentItem = item;
 		this.slot = slot;
@@ -479,6 +481,11 @@ public class EquipmentItemWidget implements Widget {
 	}
 
 	@Override
+	public @org.jetbrains.annotations.Nullable String[][] getSubOps() {
+		return subops;
+	}
+
+	@Override
 	public Widget createChild(int index, int type) {
 		return null;
 	}
@@ -495,6 +502,11 @@ public class EquipmentItemWidget implements Widget {
 
 	@Override
 	public void setAction(int index, String action) {
+
+	}
+
+	@Override
+	public void setSubOp(int index, int subop, String option) {
 
 	}
 
