@@ -10,8 +10,10 @@ import net.runelite.client.RuneLite;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,23 +32,36 @@ public class TileItemQuery {
 		this.tileItems = new ArrayList<ETileItem>(tileItems);
 	}
 
-	public TileItemQuery withId(int id) {
-		tileItems = this.tileItems.stream().filter(tileItem -> tileItem.tileItem.getId() == id).collect(Collectors.toList());
+	public TileItemQuery withId(int ... ids) {
+		tileItems = this.tileItems.stream().filter(tileItem -> ArrayUtils.contains(ids, tileItem.tileItem.getId())).collect(Collectors.toList());
 		return this;
 	}
 
 	@SneakyThrows
-	public TileItemQuery withName(String name) {
-		tileItems = tileItems.stream().filter(tileItem ->
-		{
+	public TileItemQuery withName(String ... names) {
+		List<String> namesList = Arrays.stream(names).map(s -> Text.removeTags(s.toLowerCase())).collect(Collectors.toList());
+		tileItems = this.tileItems.stream().filter(tileItem -> {
 			try {
-				return EthanApiPlugin.itemDefs.get(tileItem.tileItem.getId()).getName().equals(name);
+				return namesList.contains(Text.removeTags(EthanApiPlugin.itemDefs.get(tileItem.tileItem.getId()).getName().toLowerCase()));
 			} catch (ExecutionException e) {
 				throw new RuntimeException(e);
 			}
 		}).collect(Collectors.toList());
 		return this;
 	}
+//
+//	@SneakyThrows
+//	public TileItemQuery withName(String name) {
+//		tileItems = tileItems.stream().filter(tileItem ->
+//		{
+//			try {
+//				return EthanApiPlugin.itemDefs.get(tileItem.tileItem.getId()).getName().equals(name);
+//			} catch (ExecutionException e) {
+//				throw new RuntimeException(e);
+//			}
+//		}).collect(Collectors.toList());
+//		return this;
+//	}
 
 	public TileItemQuery nameContains(String name) {
 		tileItems = tileItems.stream().filter(tileItem ->

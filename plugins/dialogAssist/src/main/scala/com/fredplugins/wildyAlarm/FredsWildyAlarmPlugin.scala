@@ -8,6 +8,9 @@ import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.utils.ShimUtils
 import com.google.inject.{Inject, Provides, Singleton}
 import ethanApiPlugin.EthanApiPlugin
+import ethanApiPlugin.collections.{Inventory, TileItems}
+import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils
+import net.runelite.api.TileItem.OWNERSHIP_OTHER
 import net.runelite.api.events.{GameTick, PlayerDespawned}
 import net.runelite.api.gameval.{InterfaceID, VarbitID}
 import net.runelite.api.widgets.Widget
@@ -17,6 +20,7 @@ import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.events.ConfigChanged
 import net.runelite.client.plugins.{Plugin, PluginDependency, PluginDescriptor}
 import net.runelite.client.ui.overlay.OverlayManager
+import packets.TileItemPackets
 
 import java.util.regex.{Matcher, Pattern}
 import scala.collection.mutable
@@ -61,6 +65,7 @@ class FredsWildyAlarmPlugin  extends Plugin with ShimUtils.Logging("Debug") {
 	def onPlayerDespawned(event: PlayerDespawned): Unit = {
 		playerToTimeInRange.remove(event.getPlayer)
 	}
+
 	var shouldFlash: Boolean = false
 	var playersToHighlight: Set[Player] = Set.empty
 	var wildRange: Option[(Int, Int)] = Option.empty
@@ -75,9 +80,31 @@ class FredsWildyAlarmPlugin  extends Plugin with ShimUtils.Logging("Debug") {
 		}
 		wildRange = getWildernessRange
 		// Keep track of how long players have been in range if timeout is enabled
-		updatePlayersInRange()
+
+		/*
+		 *updatePlayersInRange()
+		 */
+		val currentPosition = client.getLocalPlayer.getWorldLocation
+		val alarmRadius = config.alarmRadius
+		val players = client.getTopLevelWorldView.players.asScala.toList
+		val inRange: Seq[Player] = players.filter(_.getWorldLocation.distanceTo(currentPosition) <= alarmRadius)
+		playerToTimeInRange.filterInPlace((p, v) => inRange.contains(p))
+		inRange.foreach {
+			playerToTimeInRange.updateWith(_)(_.map(_ + Constants.GAME_TICK_LENGTH).orElse(Option(0)))
+		}
+		//end updatePlayersInRange
 		playersToHighlight = playerToTimeInRange.toMap.keySet.filter(shouldPlayerTriggerAlarm)
 		shouldFlash = playersToHighlight.nonEmpty
+		import net.runelite.api.TileItem.OWNERSHIP_GROUP
+		import net.runelite.api.TileItem.OWNERSHIP_OTHER
+		import net.runelite.api.TileItem.OWNERSHIP_SELF
+		val gnomeTreeSeedTele: Widget = Inventory.search().withId(19564).first().toScala.orNull
+		val valuableDrops = TileItems.search.withName("Voidwaker blade", "Dragon 2h sword", "Rune pickaxe", "Dragon pickaxe", "Skull of vet'ion", "Ring of the gods").result().asScala.toList
+		if(shouldFlash && gnomeTreeSeedTele != null && valuableDrops.isEmpty) {
+			if(currentPosition.getTemplate.getRegionID == 7604) {
+				InteractionUtils.widgetInteract(gnomeTreeSeedTele, "Commune")
+			}
+		}
 	}
 
 	private def isInPvp: Boolean = {
@@ -92,21 +119,6 @@ class FredsWildyAlarmPlugin  extends Plugin with ShimUtils.Logging("Debug") {
 		pvp
 	}
 
-	private def getPlayersInRange = {
-		val currentPosition = client.getLocalPlayer.getWorldLocation
-		val alarmRadius = config.alarmRadius
-		val players = client.getTopLevelWorldView.players.asScala.toList
-		players.filter(_.getWorldLocation.distanceTo(currentPosition) <= alarmRadius)
-	}
-
-	private def updatePlayersInRange(): Unit = {
-		// Update players that are still in range
-		val inRange: Seq[Player] = getPlayersInRange
-		playerToTimeInRange.filterInPlace((p, v) => inRange.contains(p))
-		inRange.foreach{
-			playerToTimeInRange.updateWith(_)(_.map(_ + Constants.GAME_TICK_LENGTH).orElse(Option(0)))
-		}
-	}
 	private val WILDERNESS_LEVEL_PATTERN: Regex = """^Level: (\d+)<br>(\d+)-(\d+)$""".r
 
 //	private def getWildernessLevel: Int = {

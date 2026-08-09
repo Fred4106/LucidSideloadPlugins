@@ -177,7 +177,7 @@ public class InteractionUtils
 		if (w != null && w.getActions() != null)
 		{
 			if(Arrays.stream(w.getActions()).filter(v -> v != null).map(String::toLowerCase).map(Text::removeTags).anyMatch(v -> v.equalsIgnoreCase(action))){
-				MousePackets.queueClickPacket();
+				MousePackets.queueClickPacket(w);
 				WidgetPackets.queueWidgetAction(w, action);
 			}
 		}
@@ -624,48 +624,48 @@ public class InteractionUtils
 	{
 		return new WorldPoint(area.getX() + area.getWidth() / 2, area.getY() + area.getHeight() / 2, area.getPlane());
 	}
-
-	public static List<ETileItem> getAllTileItems(Predicate<ETileItem> filter)
-	{
-		return TileItems.search().filter(filter).result();
-	}
-
-	public static Optional<ETileItem> nearestTileItem(Predicate<ETileItem> filter)
-	{
-		return TileItems.search().filter(filter).nearestToPlayer();
-	}
-
-	public static boolean tileItemNameExistsWithinDistance(String name, int distance)
-	{
-		ETileItem item = TileItems.search().nameContains(name).withinDistance(distance).result().stream().findFirst().orElse(null);
-		return item != null;
-	}
-
-	public static boolean tileItemIdExistsWithinDistance(int itemId, int distance)
-	{
-		ETileItem item = TileItems.search().withId(itemId).withinDistance(distance).result().stream().findFirst().orElse(null);
-		return item != null;
-	}
-
-	public static void interactWithTileItem(int itemId, String action)
-	{
-		TileItems.search().withId(itemId).nearestToPlayer().ifPresent(item -> TileItemPackets.queueTileItemAction(item, false));
-
-	}
-
-	public static void interactWithTileItem(String name, String action)
-	{
-		TileItems.search().nameContains(name).nearestToPlayer().ifPresent(item -> TileItemPackets.queueTileItemAction(item, false));
-
-	}
-
-	public static void interactWithTileItem(ETileItem item, String action)
-	{
-		if (item != null)
-		{
-			TileItemPackets.queueTileItemAction(item, false);
-		}
-	}
+//
+//	public static List<ETileItem> getAllTileItems(Predicate<ETileItem> filter)
+//	{
+//		return TileItems.search().filter(filter).result();
+//	}
+//
+//	public static Optional<ETileItem> nearestTileItem(Predicate<ETileItem> filter)
+//	{
+//		return TileItems.search().filter(filter).nearestToPlayer();
+//	}
+//
+//	public static boolean tileItemNameExistsWithinDistance(String name, int distance)
+//	{
+//		ETileItem item = TileItems.search().nameContains(name).withinDistance(distance).result().stream().findFirst().orElse(null);
+//		return item != null;
+//	}
+//
+//	public static boolean tileItemIdExistsWithinDistance(int itemId, int distance)
+//	{
+//		ETileItem item = TileItems.search().withId(itemId).withinDistance(distance).result().stream().findFirst().orElse(null);
+//		return item != null;
+//	}
+//
+//	public static void interactWithTileItem(int itemId, String action)
+//	{
+//		TileItems.search().withId(itemId).nearestToPlayer().ifPresent(item -> TileItemPackets.queueTileItemAction(item, false));
+//
+//	}
+//
+//	public static void interactWithTileItem(String name, String action)
+//	{
+//		TileItems.search().nameContains(name).nearestToPlayer().ifPresent(item -> TileItemPackets.queueTileItemAction(item, false));
+//
+//	}
+//
+//	public static void interactWithTileItem(ETileItem item, String action)
+//	{
+//		if (item != null)
+//		{
+//			TileItemPackets.queueTileItemAction(item, false);
+//		}
+//	}
 
 	public static void showNonModalMessageDialog(String message, String title)
 	{
