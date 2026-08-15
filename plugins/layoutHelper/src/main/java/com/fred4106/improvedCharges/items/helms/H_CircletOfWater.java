@@ -1,22 +1,25 @@
 package com.fred4106.improvedCharges.items.helms;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class H_CircletOfWater extends ChargedItem {
-    public H_CircletOfWater(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.CIRCLET_OF_WATER, ItemId.CIRCLET_OF_WATER, provider);
+    public H_CircletOfWater(Provider provider) {
+        super(FredsItemChargesConfig.circlet_of_water, ItemID.WATER_CIRCLET_CHARGED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.CIRCLET_OF_WATER_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.CIRCLET_OF_WATER).needsToBeEquipped(),
+            new TriggerItem(ItemID.WATER_CIRCLET).fixedCharges(0),
+            new TriggerItem(ItemID.WATER_CIRCLET_CHARGED).needsToBeEquipped(),
         };
 
         this.triggers.addAll(List.of(
@@ -33,10 +36,7 @@ public class H_CircletOfWater extends ChargedItem {
             new OnChatMessage("You add .+ charges? to your circlet. It now has (?<charges>.+) charges?.").setDynamicallyCharges(),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Circlet of water using (?<waterrune>.+)x Water rune.").matcherConsumer(m -> {
-                final int waterRunes = Integer.parseInt(m.group("waterrune"));
-                increaseCharges(waterRunes / 5);
-            })
+            new OnAutoChargeMessage("Circlet of water", "Water rune", 0.2, this)
         ));
     }
 }

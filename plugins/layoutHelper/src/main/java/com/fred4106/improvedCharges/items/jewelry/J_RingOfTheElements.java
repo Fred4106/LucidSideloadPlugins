@@ -1,25 +1,30 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.OnVarbitChanged;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_RingOfTheElements extends ChargedItem {
-    public J_RingOfTheElements(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.RING_OF_THE_ELEMENTS, ItemId.RING_OF_THE_ELEMENTS, provider);
+    public J_RingOfTheElements(Provider provider) {
+        super(FredsItemChargesConfig.ring_of_the_elements, ItemID.RING_OF_ELEMENTS_CHARGED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.RING_OF_THE_ELEMENTS),
-            new TriggerItem(ItemId.RING_OF_THE_ELEMENTS_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.RING_OF_ELEMENTS_CHARGED),
+            new TriggerItem(ItemID.RING_OF_ELEMENTS).fixedCharges(0),
         };
 
         this.triggers.addAll(List.of(
             // Teleport.
-            new OnVarbitChanged(13707).setDynamically(),
+            new OnVarbitChanged(VarbitID.RING_OF_THE_ELEMENTS_CHARGES).setDynamically(),
 
             // Unified menu entry.
             new OnMenuEntryAdded("Rub").replaceOption("Teleport"),

@@ -1,25 +1,21 @@
 package com.fred4106.improvedCharges.events;
 
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.events.ChatMessage;
+import net.runelite.api.*;
 
 public class CustomChatMessage {
-    public final ChatMessageType type;
-    public final String message;
-    private final String sender;
+    public ChatMessageType type;
+    public String message;
 
-    public CustomChatMessage(final ChatMessage event) {
-        this.type = event.getType();
-        this.message = event.getMessage().replaceAll("</?col.*?>", "").replaceAll("<br>", " ").replaceAll("\u00A0"," ");
-        this.sender = event.getSender();
+    public CustomChatMessage(ChatMessageType type, String message) {
+        this.type = type;
+        this.message = message;
     }
 
     @Override
     public String toString() {
         return ("MESSAGE | " +
             "type: " + type.name() +
-            ", message: " + message +
-            ", sender: " + sender
+            ", message: " + message
         );
     }
 }

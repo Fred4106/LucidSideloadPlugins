@@ -1,0 +1,57 @@
+package com.fred4106.improvedCharges.items.weapons.venator;
+
+import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
+import com.fred4106.improvedCharges.item.storage.StorableItem;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.ids.*;
+
+import java.util.List;
+
+public abstract class _VenatorBow extends ChargedItemWithStorage {
+    public _VenatorBow(String configKey, int itemId, int itemIdUncharged, String itemName, Provider provider) {
+        super(configKey, itemId, provider);
+
+        this.items = new TriggerItem[]{
+            new TriggerItem(itemIdUncharged).fixedCharges(0),
+            new TriggerItem(itemId),
+        };
+
+        this.storage.storableItems(
+            new StorableItem(ItemID.ANCIENT_ESSENCE)
+        ).emptyIsNegative();
+
+        this.triggers.addAll(List.of(
+            // Charging the bow with essence - Check to see if the bow is already fully charged.
+            new OnChatMessage(itemName + " is already fully charged.").onItemClick().consumer(() -> {
+                storage.clearAndPut(ItemID.ANCIENT_ESSENCE, 50000);
+            }),
+
+            // Charging the bow with essence - For charging your echo venator bow, as of March 2026, the game doesn't explicitly say "echo venator bow", but I'll include it just in case
+            new OnChatMessage("You use .+ ancient essence to charge your " + itemName.toLowerCase() + ". It now has (?<charges>.+) charges.").onItemClick().matcherConsumer(m -> {
+                storage.clearAndPut(ItemID.ANCIENT_ESSENCE, FredsItemChargesPlugin.getNumberFromCommaString(m.group("charges")));
+            }),
+
+            // Uncharge (you can only uncharge ALL charges at once)
+            new OnChatMessage("You fully uncharge your " + itemName.toLowerCase() + ", regaining (?<charges>.+) ancient essence in the process.").consumer(() -> storage.clear()),
+
+            // Check.
+            new OnChatMessage("Your " + itemName.toLowerCase() + " has (?<charges>.+) charges? remaining.").onItemClick().matcherConsumer(m -> {
+                storage.clearAndPut(ItemID.ANCIENT_ESSENCE, FredsItemChargesPlugin.getNumberFromCommaString(m.group("charges")));
+            }),
+
+            // Attack.
+            new OnGraphicChanged(2289).isEquipped().consumer(() -> {
+                storage.remove(ItemID.ANCIENT_ESSENCE, 1);
+            })
+        ));
+    }
+}

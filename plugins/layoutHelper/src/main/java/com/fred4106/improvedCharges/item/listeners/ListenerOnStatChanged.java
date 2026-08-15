@@ -1,24 +1,27 @@
 package com.fred4106.improvedCharges.item.listeners;
 
-import net.runelite.api.Skill;
-import net.runelite.api.events.StatChanged;
+import com.fred4106.improvedCharges.events.CustomStatChanged;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnStatChanged;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ListenerOnStatChanged extends ListenerBase {
-    public ListenerOnStatChanged(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnStatChanged(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final StatChanged event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) continue;
-            final OnStatChanged trigger = (OnStatChanged) triggerBase;
+    public void trigger(CustomStatChanged event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) continue;
+            OnStatChanged trigger = (OnStatChanged) triggerBase;
             boolean triggerUsed = false;
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -26,16 +29,15 @@ public class ListenerOnStatChanged extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final StatChanged event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, CustomStatChanged event) {
         if (!(triggerBase instanceof OnStatChanged)) return false;
-        final OnStatChanged trigger = (OnStatChanged) triggerBase;
-        final Skill skill = event.getSkill();
+        OnStatChanged trigger = (OnStatChanged) triggerBase;
 
         // Skill check.
-        if (trigger.skill != skill) {
+        if (trigger.skill != event.skill) {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

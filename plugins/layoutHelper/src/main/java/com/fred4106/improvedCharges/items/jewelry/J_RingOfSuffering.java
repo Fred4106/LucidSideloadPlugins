@@ -1,31 +1,35 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItemWithStatus;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnHitsplatApplied;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
+import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_RingOfSuffering extends ChargedItemWithStatus {
-    public J_RingOfSuffering(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.RING_OF_SUFFERING, ItemId.RING_OF_SUFFERING_UNCHARGED, provider);
+    public J_RingOfSuffering(Provider provider) {
+        super(FredsItemChargesConfig.ring_of_suffering, ItemID.ZENYTE_RING_ENCHANTED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.RING_OF_SUFFERING_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.RING_OF_SUFFERING_UNCHARGED_IMBUED_NMZ).fixedCharges(0),
-            new TriggerItem(ItemId.RING_OF_SUFFERING_UNCHARGED_IMBUED_SW).fixedCharges(0),
-            new TriggerItem(ItemId.RING_OF_SUFFERING_UNCHARGED_IMBUED_PVP).fixedCharges(0),
-            new TriggerItem(ItemId.RING_OF_SUFFERING).needsToBeEquipped(),
-            new TriggerItem(ItemId.RING_OF_SUFFERING_IMBUED_NMZ).needsToBeEquipped(),
-            new TriggerItem(ItemId.RING_OF_SUFFERING_IMBUED_SW).needsToBeEquipped(),
-            new TriggerItem(ItemId.RING_OF_SUFFERING_IMBUED_PVP).needsToBeEquipped(),
+            new TriggerItem(ItemID.ZENYTE_RING_ENCHANTED).fixedCharges(0),
+            new TriggerItem(ItemID.NZONE_ZENYTE_RING_ENCHANTED).fixedCharges(0),
+            new TriggerItem(ItemID.SW_ZENYTE_RING_ENCHANTED).fixedCharges(0),
+            new TriggerItem(ItemID.PVPA_ZENYTE_RING_ENCHANTED).fixedCharges(0),
+            new TriggerItem(ItemID.ZENYTE_RING_ENCHANTED_RECOIL).needsToBeEquipped(),
+            new TriggerItem(ItemID.NZONE_ZENYTE_RING_ENCHANTED_RECOIL).needsToBeEquipped(),
+            new TriggerItem(ItemID.SW_ZENYTE_RING_ENCHANTED_RECOIL).needsToBeEquipped(),
+            new TriggerItem(ItemID.PVPA_ZENYTE_RING_ENCHANTED_RECOIL).needsToBeEquipped(),
         };
 
         this.triggers.addAll(List.of(
@@ -46,10 +50,7 @@ public class J_RingOfSuffering extends ChargedItemWithStatus {
             new OnChatMessage("You enable the recoil effect of your ring.").activate(),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Ring of suffering.* using (?<ringofrecoil>.+)x Ring of recoil.").matcherConsumer(m -> {
-                final int ringOfRecoils = Integer.parseInt(m.group("ringofrecoil"));
-                increaseCharges(ringOfRecoils * 40);
-            })
+            new OnAutoChargeMessage("Ring of suffering.*", "Ring of recoil", 40, this)
         ));
     }
 }

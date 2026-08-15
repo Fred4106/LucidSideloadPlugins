@@ -2,12 +2,13 @@ package com.fred4106.improvedCharges.item.triggers;
 
 import com.fred4106.improvedCharges.store.utils.DynamicReplaceTarget;
 import com.fred4106.improvedCharges.store.utils.ReplaceTarget;
+import com.fred4106.improvedCharges.store.utils.*;
 
-import java.util.Optional;
-import java.util.concurrent.Callable;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class OnMenuEntryAdded extends TriggerBase {
-    public final Optional<String> menuEntryOption;
+    public Optional<String> menuEntryOption;
     public Optional<Boolean> hide = Optional.empty();
     public Optional<String> replaceOption = Optional.empty();
     public Optional<ReplaceTarget[]> replaceTargets = Optional.empty();
@@ -19,7 +20,7 @@ public class OnMenuEntryAdded extends TriggerBase {
         this.menuEntryOption = Optional.empty();
     }
 
-    public OnMenuEntryAdded(final String option) {
+    public OnMenuEntryAdded(String option) {
         this.menuEntryOption = Optional.of(option);
     }
 
@@ -28,26 +29,26 @@ public class OnMenuEntryAdded extends TriggerBase {
         return this;
     }
 
-    public OnMenuEntryAdded replaceOption(final String option) {
+    public OnMenuEntryAdded replaceOption(String option) {
         this.replaceOption = Optional.of(option);
         return this;
     }
 
-    public OnMenuEntryAdded replaceTarget(final String target, final String replace) {
+    public OnMenuEntryAdded replaceTarget(String target, String replace) {
         return replaceTargets(new ReplaceTarget(target, replace));
     }
 
-    public OnMenuEntryAdded replaceTargetDynamically(final String target, final Callable<String> dynamicTarget) {
+    public OnMenuEntryAdded replaceTargetDynamically(String target, Callable<String> dynamicTarget) {
         this.replaceTargetDynamically = Optional.of(new DynamicReplaceTarget(target, dynamicTarget));
         return this;
     }
 
-    public OnMenuEntryAdded replaceTargets(final ReplaceTarget ...targets) {
+    public OnMenuEntryAdded replaceTargets(ReplaceTarget ...targets) {
         this.replaceTargets = Optional.of(targets);
         return this;
     }
 
-    public OnMenuEntryAdded isReplaceImpostorId(final int ...impostorIds) {
+    public OnMenuEntryAdded isReplaceImpostorId(int ...impostorIds) {
         this.replaceImpostorIds = Optional.of(impostorIds);
         return this;
     }

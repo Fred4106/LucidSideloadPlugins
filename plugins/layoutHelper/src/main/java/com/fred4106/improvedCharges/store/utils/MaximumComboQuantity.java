@@ -1,10 +1,12 @@
 package com.fred4106.improvedCharges.store.utils;
 
-public class MaximumComboQuantity {
-    public final int[] itemIds;
-    public final int quantity;
+import java.util.*;
 
-    public MaximumComboQuantity(final int[] itemIds, final int quantity) {
+public class MaximumComboQuantity {
+    public List<Integer> itemIds;
+    public int quantity;
+
+    public MaximumComboQuantity(List<Integer> itemIds, int quantity) {
         this.itemIds = itemIds;
         this.quantity = quantity;
     }

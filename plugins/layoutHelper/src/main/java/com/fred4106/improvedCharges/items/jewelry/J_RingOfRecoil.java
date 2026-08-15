@@ -1,21 +1,28 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
-import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnHitsplatApplied;
+import com.fred4106.improvedCharges.item.triggers.OnWidgetLoaded;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
+import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_RingOfRecoil extends ChargedItem {
-    public J_RingOfRecoil(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.RING_OF_RECOIL, ItemId.RING_OF_RECOIL, provider);
+    public J_RingOfRecoil(Provider provider) {
+        super(FredsItemChargesConfig.ring_of_recoil, ItemID.RING_OF_RECOIL, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.RING_OF_RECOIL).needsToBeEquipped(),
+            new TriggerItem(ItemID.RING_OF_RECOIL).needsToBeEquipped(),
         };
 
         this.triggers.addAll(List.of(

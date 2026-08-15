@@ -2,20 +2,24 @@ package com.fred4106.improvedCharges.item.triggers;
 
 import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.item.storage.StorageItems;
+import com.fred4106.improvedCharges.store.utils.WidgetMenuAction;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.store.utils.*;
 
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.regex.Pattern;
+import java.util.*;
+import java.util.function.*;
+import java.util.regex.*;
 
 public abstract class TriggerBase {
     // Checks.
     public Optional<int[]> requiredItem = Optional.empty();
     public Optional<int[]> unallowedItem = Optional.empty();
     public Optional<String[]> onMenuOption = Optional.empty();
-    public Optional<int[]> onMenuOptionId = Optional.empty();
+    public Optional<int[]> onMenuOptionEventId = Optional.empty();
     public Optional<String[]> onMenuTarget = Optional.empty();
     public Optional<int[]> onMenuImpostor = Optional.empty();
     public Optional<Boolean> onItemClick = Optional.empty();
+    public Optional<WidgetMenuAction> onWidgetMenuAction = Optional.empty();
     public boolean onHover = false;
     public Optional<StorageItem[]> onUseStorageItemOnChargedItem = Optional.empty();
     public Optional<StorageItem[]> onUseChargedItemOnStorageItem = Optional.empty();
@@ -25,6 +29,7 @@ public abstract class TriggerBase {
     public Optional<int[]> varbitCheck = Optional.empty();
     public Optional<int[][]> isWidgetVisible = Optional.empty();
     public Optional<int[]> itemEquipped = Optional.empty();
+    public Optional<int[]> hasAnimationId = Optional.empty();
     public boolean multiTrigger = false;
 
     // Actions.
@@ -38,6 +43,7 @@ public abstract class TriggerBase {
     public Optional<Boolean> emptyStorageToInventory = Optional.empty();
     public Optional<Boolean> fillStorageFromInventory = Optional.empty();
     public Optional<Boolean> emptyStorageToBank = Optional.empty();
+    public Optional<Boolean> fillStorageFromBank = Optional.empty();
     public Optional<Boolean> pickUpToStorage = Optional.empty();
     public Optional<int[]> addToStorage = Optional.empty();
 
@@ -49,17 +55,17 @@ public abstract class TriggerBase {
     public Optional<Consumer<StorageItems>> onInventoryDifference = Optional.empty();
     public Optional<Consumer<StorageItems>> onBankDifference = Optional.empty();
 
-    public TriggerBase setFixedCharges(final int charges) {
+    public TriggerBase setFixedCharges(int charges) {
         this.fixedCharges = Optional.of(charges);
         return this;
     }
 
-    public TriggerBase increaseCharges(final int charges) {
+    public TriggerBase increaseCharges(int charges) {
         this.increaseCharges = Optional.of(charges);
         return this;
     }
 
-    public TriggerBase decreaseCharges(final int charges) {
+    public TriggerBase decreaseCharges(int charges) {
         this.decreaseCharges = Optional.of(charges);
         return this;
     }
@@ -79,43 +85,58 @@ public abstract class TriggerBase {
         return this;
     }
 
+    public TriggerBase fillStorageFromBank() {
+        this.fillStorageFromBank = Optional.of(true);
+        return this;
+    }
+
     public TriggerBase fillStorageFromInventory() {
         this.fillStorageFromInventory = Optional.of(true);
         return this;
     }
 
-    public TriggerBase requiredItem(final int ...itemIds) {
+    public TriggerBase requiredItem(int ...itemIds) {
         this.requiredItem = Optional.of(itemIds);
         return this;
     }
 
-    public TriggerBase unallowedItem(final int ...itemIds) {
+    public TriggerBase unallowedItem(int ...itemIds) {
         this.unallowedItem = Optional.of(itemIds);
         return this;
     }
 
-    public TriggerBase onMenuOption(final String ...options) {
+    public TriggerBase onMenuOption(String ...options) {
         this.onMenuOption = Optional.of(options);
         return this;
     }
 
-    public TriggerBase onMenuOptionId(final int ...menuOptionIds) {
-        this.onMenuOptionId = Optional.of(menuOptionIds);
+    public TriggerBase onMenuOptionEventId(int ...menuOptionEventIds) {
+        this.onMenuOptionEventId = Optional.of(menuOptionEventIds);
         return this;
     }
 
-    public TriggerBase onMenuTarget(final String ...targets) {
+    public TriggerBase onMenuTarget(String ...targets) {
         this.onMenuTarget = Optional.of(targets);
         return this;
     }
 
-    public TriggerBase onMenuImpostor(final int ...impostorIds) {
+    public TriggerBase onMenuTarget(List<String> targets) {
+        this.onMenuTarget = Optional.of(targets.toArray(String[]::new));
+        return this;
+    }
+
+    public TriggerBase onMenuImpostor(int ...impostorIds) {
         this.onMenuImpostor = Optional.of(impostorIds);
         return this;
     }
 
     public TriggerBase onItemClick() {
         this.onItemClick = Optional.of(true);
+        return this;
+    }
+    
+    public TriggerBase onWidgetMenuAction(WidgetMenuAction widgetMenuAction) {
+        this.onWidgetMenuAction = Optional.of(widgetMenuAction);
         return this;
     }
 
@@ -129,12 +150,12 @@ public abstract class TriggerBase {
         return this;
     }
 
-    public TriggerBase onUseStorageItemOnChargedItem(final StorageItem[] storeableItems) {
+    public TriggerBase onUseStorageItemOnChargedItem(StorageItem[] storeableItems) {
         this.onUseStorageItemOnChargedItem = Optional.of(storeableItems);
         return this;
     }
 
-    public TriggerBase onUseChargedItemOnStorageItem(final StorageItem[] storeableItems) {
+    public TriggerBase onUseChargedItemOnStorageItem(StorageItem[] storeableItems) {
         this.onUseChargedItemOnStorageItem = Optional.of(storeableItems);
         return this;
     }
@@ -154,12 +175,17 @@ public abstract class TriggerBase {
         return this;
     }
 
-    public TriggerBase consumer(final Runnable consumer) {
+    public TriggerBase hasAnimationId(int ...animationId) {
+        this.hasAnimationId = Optional.of(animationId);
+        return this;
+    }
+
+    public TriggerBase consumer(Runnable consumer) {
         this.consumer = Optional.of(consumer);
         return this;
     }
 
-    public TriggerBase runConsumerOnNextGameTick(final Runnable consumer) {
+    public TriggerBase runConsumerOnNextGameTick(Runnable consumer) {
         this.runConsumerOnNextGameTick = Optional.of(true);
         this.consumer = Optional.of(consumer);
         return this;
@@ -170,12 +196,12 @@ public abstract class TriggerBase {
         return this;
     }
 
-    public TriggerBase addToStorage(final int itemId, final int quantity) {
+    public TriggerBase addToStorage(int itemId, int quantity) {
         this.addToStorage = Optional.of(new int[]{itemId, quantity});
         return this;
     }
 
-    public TriggerBase addToStorage(final int itemId) {
+    public TriggerBase addToStorage(int itemId) {
         this.addToStorage = Optional.of(new int[]{itemId, 1});
         return this;
     }
@@ -195,22 +221,22 @@ public abstract class TriggerBase {
         return this;
     }
 
-    public TriggerBase hasChatMessage(final String message) {
+    public TriggerBase hasChatMessage(String message) {
         this.hasChatMessage = Optional.of(Pattern.compile(message));
         return this;
     }
 
-    public TriggerBase varbitCheck(final int varbitId, final int varbitValue) {
+    public TriggerBase varbitCheck(int varbitId, int varbitValue) {
         this.varbitCheck = Optional.of(new int[]{varbitId, varbitValue});
         return this;
     }
 
-    public TriggerBase isWidgetVisible(final int[] ...widgetIds) {
+    public TriggerBase isWidgetVisible(int[] ...widgetIds) {
         this.isWidgetVisible = Optional.of(widgetIds);
         return this;
     }
 
-    public TriggerBase itemEquipped(final int ...itemId) {
+    public TriggerBase itemEquipped(int ...itemId) {
         this.itemEquipped = Optional.of(itemId);
         return this;
     }

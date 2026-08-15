@@ -1,19 +1,21 @@
 package com.fred4106.improvedCharges.items.barrows;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class DharoksHelm extends _BarrowsItem {
-    public DharoksHelm(final Provider provider) {
-        super("Dharok's helmet", ItemId.DHAROKS_HELM, provider);
+    public DharoksHelm(Provider provider) {
+        super("Dharok's helmet", ItemID.BARROWS_DHAROK_HEAD, provider);
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.DHAROKS_HELM).fixedCharges(1000),
-            new TriggerItem(ItemId.DHAROKS_HELM_100),
-            new TriggerItem(ItemId.DHAROKS_HELM_75),
-            new TriggerItem(ItemId.DHAROKS_HELM_50),
-            new TriggerItem(ItemId.DHAROKS_HELM_25),
-            new TriggerItem(ItemId.DHAROKS_HELM_0).fixedCharges(0),
+            new TriggerItem(ItemID.BARROWS_DHAROK_HEAD).fixedCharges(1000),
+            new TriggerItem(ItemID.BARROWS_DHAROK_HEAD_100),
+            new TriggerItem(ItemID.BARROWS_DHAROK_HEAD_75),
+            new TriggerItem(ItemID.BARROWS_DHAROK_HEAD_50),
+            new TriggerItem(ItemID.BARROWS_DHAROK_HEAD_25),
+            new TriggerItem(ItemID.BARROWS_DHAROK_HEAD_BROKEN).fixedCharges(0),
         };
     }
 }

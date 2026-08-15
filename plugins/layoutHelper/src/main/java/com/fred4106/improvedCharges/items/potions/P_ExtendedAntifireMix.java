@@ -1,14 +1,16 @@
 package com.fred4106.improvedCharges.items.potions;
 
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import net.runelite.api.gameval.*;
 
 public class P_ExtendedAntifireMix extends _Potion {
-    public P_ExtendedAntifireMix(final Provider provider) {
+    public P_ExtendedAntifireMix(Provider provider) {
         super("extended_antifire_mix", new TriggerItem[]{
-            new TriggerItem(ItemId.EXTENDED_ANTIFIRE_MIX_1).fixedCharges(1),
-            new TriggerItem(ItemId.EXTENDED_ANTIFIRE_MIX_2).fixedCharges(2),
+            new TriggerItem(ItemID.BRUTAL_1DOSE2ANTIDRAGON).fixedCharges(1),
+            new TriggerItem(ItemID.BRUTAL_2DOSE2ANTIDRAGON).fixedCharges(2),
         }, provider);
     }
 }

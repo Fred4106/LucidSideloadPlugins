@@ -1,36 +1,39 @@
 package com.fred4106.improvedCharges.item.listeners;
 
-import net.runelite.api.events.WidgetLoaded;
-import net.runelite.api.widgets.Widget;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnWidgetLoaded;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.events.*;
+import net.runelite.api.widgets.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.Optional;
-import java.util.regex.Matcher;
+import java.util.*;
+import java.util.regex.*;
 
-import static com.fred4106.improvedCharges.FredsItemChargesPlugin.getNumberFromCommaString;
+import static com.fred4106.improvedCharges.FredsItemChargesPlugin.*;
 
 public class ListenerOnWidgetLoaded extends ListenerBase {
-    public ListenerOnWidgetLoaded(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnWidgetLoaded(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final WidgetLoaded event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) continue;
+    public void trigger(WidgetLoaded event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) continue;
 
             boolean triggerUsed = false;
-            final OnWidgetLoaded trigger = (OnWidgetLoaded) triggerBase;
-            final Optional<Widget> widget = FredsItemChargesPlugin.getWidget(provider.client, trigger.groupId, trigger.childId, trigger.subChildId);
+            OnWidgetLoaded trigger = (OnWidgetLoaded) triggerBase;
+            Optional<Widget> widget = FredsItemChargesPlugin.getWidget(provider.client, trigger.groupId, trigger.childId, trigger.subChildId);
             if (!widget.isPresent()) continue;
 
             if (trigger.text.isPresent()) {
-                final String text = FredsItemChargesPlugin.getCleanText(widget.get().getText());
-                final Matcher matcher = trigger.text.get().matcher(text);
+                String text = FredsItemChargesPlugin.getCleanText(widget.get().getText());
+                Matcher matcher = trigger.text.get().matcher(text);
                 matcher.find();
 
                 if (trigger.setDynamically.isPresent()) {
@@ -49,7 +52,7 @@ public class ListenerOnWidgetLoaded extends ListenerBase {
                 triggerUsed = true;
             }
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -57,9 +60,9 @@ public class ListenerOnWidgetLoaded extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final WidgetLoaded event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, WidgetLoaded event) {
         if (!(triggerBase instanceof OnWidgetLoaded)) return false;
-        final OnWidgetLoaded trigger = (OnWidgetLoaded) triggerBase;
+        OnWidgetLoaded trigger = (OnWidgetLoaded) triggerBase;
 
         // Widget group check.
         if (event.getGroupId() != trigger.groupId) {
@@ -67,19 +70,19 @@ public class ListenerOnWidgetLoaded extends ListenerBase {
         }
 
         // Widget existance check.
-        final Optional<Widget> widget = FredsItemChargesPlugin.getWidget(provider.client, trigger.groupId, trigger.childId, trigger.subChildId);
+        Optional<Widget> widget = FredsItemChargesPlugin.getWidget(provider.client, trigger.groupId, trigger.childId, trigger.subChildId);
         if (!widget.isPresent()) {
             return false;
         }
 
         // Text check.
         if (trigger.text.isPresent()) {
-            final Matcher matcher = trigger.text.get().matcher(FredsItemChargesPlugin.getCleanText(widget.get().getText()));
+            Matcher matcher = trigger.text.get().matcher(FredsItemChargesPlugin.getCleanText(widget.get().getText()));
             if (!matcher.find()) {
                 return false;
             }
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

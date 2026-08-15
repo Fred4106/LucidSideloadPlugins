@@ -1,25 +1,27 @@
 package com.fred4106.improvedCharges.items.utils;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import net.runelite.api.Skill;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItemWithStatus;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
 import com.fred4106.improvedCharges.item.triggers.OnXpDrop;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import net.runelite.api.*;
+import net.runelite.api.gameval.ItemID;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
-import java.util.List;
+import java.util.*;
 
 public class U_BoneCrusher extends ChargedItemWithStatus {
-    public U_BoneCrusher(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.BONECRUSHER, ItemId.BONECRUSHER, provider);
+    public U_BoneCrusher(Provider provider) {
+        super(FredsItemChargesConfig.bonecrusher, ItemID.BONECRUSHER, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.BONECRUSHER),
-            new TriggerItem(ItemId.BONECRUSHER_NECKLACE)
+            new TriggerItem(ItemID.BONECRUSHER),
+            new TriggerItem(ItemID.BONECRUSHER_NECKLACE)
         };
 
         this.triggers.addAll(List.of(
@@ -46,10 +48,7 @@ public class U_BoneCrusher extends ChargedItemWithStatus {
             new OnXpDrop(Skill.PRAYER).isActivated().decreaseCharges(1),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Bonecrusher( necklace)? using (?<ectotoken>.+)x Ecto-token.").matcherConsumer(m -> {
-                final int ectoTokens = Integer.parseInt(m.group("ectotoken"));
-                increaseCharges(ectoTokens * 25);
-            }),
+            new OnAutoChargeMessage("Bonecrusher( necklace)?", "Ecto-token", 25, this),
 
             // Hide destroy.
             new OnMenuEntryAdded("Destroy").hide()

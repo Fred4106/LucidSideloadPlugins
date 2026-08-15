@@ -1,16 +1,18 @@
 package com.fred4106.improvedCharges.items.potions;
 
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import net.runelite.api.gameval.*;
 
 public class P_ExtremeEnergy extends _Potion {
     public P_ExtremeEnergy(Provider provider) {
         super("extreme_energy", new TriggerItem[]{
-            new TriggerItem(ItemId.EXTREME_ENERGY_POTION_1).fixedCharges(1),
-            new TriggerItem(ItemId.EXTREME_ENERGY_POTION_2).fixedCharges(2),
-            new TriggerItem(ItemId.EXTREME_ENERGY_POTION_3).fixedCharges(3),
-            new TriggerItem(ItemId.EXTREME_ENERGY_POTION_4).fixedCharges(4),
+            new TriggerItem(ItemID._1DOSE3ENERGY).fixedCharges(1),
+            new TriggerItem(ItemID._2DOSE3ENERGY).fixedCharges(2),
+            new TriggerItem(ItemID._3DOSE3ENERGY).fixedCharges(3),
+            new TriggerItem(ItemID._4DOSE3ENERGY).fixedCharges(4),
         }, provider);
     }
 }

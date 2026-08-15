@@ -2,14 +2,16 @@ package com.fred4106.improvedCharges.item;
 
 import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ChargedItemWithStorageMultipleCharges extends ChargedItemWithStorage {
-    public ChargedItemWithStorageMultipleCharges(final String configKey, final int itemId, final Provider provider) {
+    public ChargedItemWithStorageMultipleCharges(String configKey, int itemId, Provider provider) {
         super(configKey, itemId, provider);
     }
 
     @Override
-    public String getChargesString(final int itemId) {
+    public String getChargesString(int itemId) {
         return getTotalChargesString();
     }
 
@@ -18,7 +20,7 @@ public class ChargedItemWithStorageMultipleCharges extends ChargedItemWithStorag
         String individualCharges = "";
 
         int validItems = 0;
-        for (final StorageItem storageItem : getStorage().getItems()) {
+        for (StorageItem storageItem : getStorage().getItems()) {
             if (storageItem.getQuantity() >= 0) {
                 individualCharges += storageItem.getQuantity() + "/";
                 validItems++;

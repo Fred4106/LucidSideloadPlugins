@@ -1,25 +1,30 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnAnimationChanged;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
-import com.fred4106.improvedCharges.store.ids.AnimationId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.ids.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_CrawsBow extends ChargedItem {
-    public W_CrawsBow(final Provider provider) {
-        this(com.fred4106.improvedCharges.Constants.CRAWS_BOW, ItemId.CRAWS_BOW_UNCHARGED, provider);
+    public W_CrawsBow(Provider provider) {
+        this(FredsItemChargesConfig.craws_bow, ItemID.WILD_CAVE_BOW_UNCHARGED, provider);
 
         this.items = new TriggerItem[]{
-                new TriggerItem(ItemId.CRAWS_BOW_UNCHARGED).fixedCharges(0),
-                new TriggerItem(ItemId.CRAWS_BOW),
+                new TriggerItem(ItemID.WILD_CAVE_BOW_UNCHARGED).fixedCharges(0),
+                new TriggerItem(ItemID.WILD_CAVE_BOW_CHARGED),
         };
     }
 
-    protected W_CrawsBow(final String configKey, final int itemId, final Provider provider) {
+    protected W_CrawsBow(String configKey, int itemId, Provider provider) {
         super(configKey, itemId, provider);
 
         this.triggers.addAll(List.of(
@@ -33,7 +38,7 @@ public class W_CrawsBow extends ChargedItem {
             new OnChatMessage("You add( a further)? .* revenant ether to your weapon, giving it a total of (?<charges>.+) charges.").onItemClick().setDynamicallyCharges(),
 
             // Attack.
-            new OnAnimationChanged(AnimationId.HUMAN_BOW).isEquipped().decreaseCharges(1)
+            new OnAnimationChanged(AnimationID.HUMAN_BOW).isEquipped().decreaseCharges(1)
         ));
     }
 }

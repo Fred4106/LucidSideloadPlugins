@@ -1,24 +1,26 @@
 package com.fred4106.improvedCharges.item.overlays;
 
-import com.fred4106.improvedCharges.Constants;
-import net.runelite.client.ui.overlay.infobox.InfoBox;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.client.ui.overlay.infobox.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.awt.Color;
-import java.util.Optional;
+import java.awt.*;
+import java.util.*;
 
 import static com.fred4106.improvedCharges.FredsItemChargesPlugin.INFINITE_SYMBOL;
 
 public class ChargedItemInfobox extends InfoBox {
-    private final Provider provider;
-    private final ChargedItemBase chargedItem;
+    private Provider provider;
+    private ChargedItemBase chargedItem;
 
     private int itemId;
 
     public ChargedItemInfobox(
-        final Provider provider,
-        final ChargedItemBase chargedItem
+        Provider provider,
+        ChargedItemBase chargedItem
     ) {
         super(provider.itemManager.getImage(chargedItem.itemId), provider.plugin);
         this.provider = provider;
@@ -74,8 +76,8 @@ public class ChargedItemInfobox extends InfoBox {
     }
 
     private boolean isChargedItemInfoboxEnabled() {
-        final String configKey = chargedItem.getConfigKey() + Constants._INFOBOX;
-        final Optional<String> visible = Optional.ofNullable(provider.configManager.getConfiguration(Constants.GROUP, configKey));
+        String configKey = chargedItem.getConfigKey() + FredsItemChargesConfig._infobox;
+        Optional<String> visible = Optional.ofNullable(provider.configManager.getConfiguration(FredsItemChargesConfig.group, configKey));
         return visible.isPresent() && visible.get().equals("true");
     }
 }

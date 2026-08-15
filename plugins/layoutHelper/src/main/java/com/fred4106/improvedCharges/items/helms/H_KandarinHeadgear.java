@@ -1,25 +1,26 @@
 package com.fred4106.improvedCharges.items.helms;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
 import com.fred4106.improvedCharges.item.triggers.OnResetDaily;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class H_KandarinHeadgear extends ChargedItem {
-    public H_KandarinHeadgear(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.KANDARIN_HEADGEAR, ItemId.KANDARIN_HEADGEAR_3, provider);
+    public H_KandarinHeadgear(Provider provider) {
+        super(FredsItemChargesConfig.kandarin_headgear, ItemID.SEERS_HEADBAND_HARD, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.KANDARIN_HEADGEAR_3),
-            new TriggerItem(ItemId.KANDARIN_HEADGEAR_4).fixedCharges(ChargeId.UNLIMITED),
+            new TriggerItem(ItemID.SEERS_HEADBAND_HARD),
+            new TriggerItem(ItemID.SEERS_HEADBAND_ELITE).unlimitedCharges(),
         };
 
         this.triggers.addAll(List.of(
@@ -30,7 +31,7 @@ public class H_KandarinHeadgear extends ChargedItem {
             new OnGraphicChanged(111).onItemClick().decreaseCharges(1),
 
             // Daily reset.
-            new OnResetDaily().specificItem(ItemId.KANDARIN_HEADGEAR_3).setFixedCharges(1)
+            new OnResetDaily().specificItem(ItemID.SEERS_HEADBAND_HARD).setFixedCharges(1)
         ));
     }
 }

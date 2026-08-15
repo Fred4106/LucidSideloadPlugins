@@ -1,20 +1,27 @@
 package com.fred4106.improvedCharges.item;
 
-import net.runelite.client.ui.JagexColors;
-import net.runelite.client.util.ColorUtil;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.storage.Storage;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.item.storage.StorageItems;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.enums.StorageDisplay;
+import net.runelite.client.ui.*;
+import net.runelite.client.util.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
 
-import java.awt.Color;
-import java.util.Optional;
+import java.awt.*;
+import java.util.*;
 
 public class ChargedItemWithStorage extends ChargedItemBase {
     public Storage storage;
 
-    public ChargedItemWithStorage(final String configKey, final int itemId, final Provider provider) {
+    public ChargedItemWithStorage(String configKey, int itemId, Provider provider) {
         super(configKey, itemId, provider);
         this.storage = new Storage(this, configKey, provider);
         provider.clientThread.invokeLater(this::loadCharges);
@@ -22,13 +29,17 @@ public class ChargedItemWithStorage extends ChargedItemBase {
 
     @Override
     public String getTooltip() {
+        if (getQuantities() == 0) {
+            return "";
+        }
+
         String tooltip = "";
 
-        for (final StorableItem storableItem : storage.getStorableItems()) {
-            final Optional<StorageItem> storageItem = storage.getStorage().getItem(storableItem.getId());
+        for (StorableItem storableItem : storage.getStorableItems()) {
+            Optional<StorageItem> storageItem = storage.getStorage().getItem(storableItem.itemId);
             if (storageItem.isPresent() && storageItem.get().getQuantity() > 0) {
                 // Name
-                tooltip += (storableItem.displayName.isPresent() ? storableItem.displayName.get() : provider.itemManager.getItemComposition(storageItem.get().getId()).getName()) + ": ";
+                tooltip += (storableItem.displayName.isPresent() ? storableItem.displayName.get() : provider.itemManager.getItemComposition(storageItem.get().itemId).getName()) + ": ";
                 // Quantity
                 tooltip += ColorUtil.wrapWithColorTag(String.valueOf(storageItem.get().getQuantity()), JagexColors.MENU_TARGET) + "</br>";
             }
@@ -41,16 +52,33 @@ public class ChargedItemWithStorage extends ChargedItemBase {
         return this.storage.getStorage();
     }
 
-    public Optional<StorageItem> getStorageItemFromName(final String name, final int quantity) {
+    public Optional<StorageItem> getStorageItemFromName(String name, int quantity) {
         return storage.getStorageItemFromName(name, quantity);
     }
 
+    private boolean isDisplayIndividual() {
+        Optional<String> display = Optional.ofNullable(provider.configManager.getConfiguration(FredsItemChargesConfig.group, getConfigKey() + FredsItemChargesConfig._display));
+        return display.isPresent() && display.get().equals(StorageDisplay.INDIVIDUAL);
+    }
+
     private int getQuantities() {
+        for (TriggerItem item : items) {
+            if (item.itemId == itemId && item.fixedCharges.isPresent()) {
+                return item.fixedCharges.get();
+            }
+        }
+
         int quantity = 0;
 
-        for (final StorageItem storageItem : getStorage().getItems()) {
+        for (StorageItem storageItem : getStorage().getItems()) {
             if (storageItem.getQuantity() > 0) {
-                quantity += storageItem.getQuantity();
+                if (isDisplayIndividual()) {
+                    if (storageItem.getQuantity() > quantity) {
+                        quantity = storageItem.getQuantity();
+                    }
+                } else {
+                    quantity += storageItem.getQuantity();
+                }
             }
         }
 
@@ -68,6 +96,11 @@ public class ChargedItemWithStorage extends ChargedItemBase {
     }
 
     private Color getStorageTextColor() {
+        // Empty storage is negative
+        if (storage.emptyIsNegative && storage.isEmpty()) {
+            return provider.config.getColorEmpty();
+        }
+
         // Full storage is positive.
         if (storage.emptyIsNegative && storage.isFull()) {
             return provider.config.getColorActivated();
@@ -75,8 +108,8 @@ public class ChargedItemWithStorage extends ChargedItemBase {
 
         // Full storage is negative.
         if (
-            storage.emptyIsNegative && storage.isEmpty() ||
-            !storage.emptyIsNegative && storage.getMaximumTotalQuantity().isPresent() && getChargesString(itemId).equals(String.valueOf(storage.getMaximumTotalQuantity().get()))
+            !storage.emptyIsNegative && storage.getMaximumTotalQuantity().isPresent() && getChargesString(itemId).equals(String.valueOf(storage.getMaximumTotalQuantity().get())) ||
+            isDisplayIndividual() && storage.maximumIndividualQuantity.isPresent() && storage.maximumIndividualQuantity.get() == getQuantities()
         ) {
             return provider.config.getColorEmpty();
         }
@@ -95,7 +128,7 @@ public class ChargedItemWithStorage extends ChargedItemBase {
     }
 
     @Override
-    public Color getTextColor(final int itemId) {
+    public Color getTextColor(int itemId) {
         return getStorageTextColor();
     }
 

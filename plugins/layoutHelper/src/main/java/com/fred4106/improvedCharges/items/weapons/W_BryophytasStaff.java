@@ -1,24 +1,27 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import net.runelite.api.Skill;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnXpDrop;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.*;
+import net.runelite.api.gameval.ItemID;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_BryophytasStaff extends ChargedItem {
-    public W_BryophytasStaff(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.BRYOPHYTAS_STAFF, ItemId.BRYOPHYTAS_STAFF, provider);
+    public W_BryophytasStaff(Provider provider) {
+        super(FredsItemChargesConfig.bryophytas_staff, ItemID.NATURE_STAFF_CHARGED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.BRYOPHYTAS_STAFF_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.BRYOPHYTAS_STAFF)
+            new TriggerItem(ItemID.NATURE_STAFF_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.NATURE_STAFF_CHARGED)
         };
 
         this.triggers.addAll(List.of(
@@ -32,10 +35,7 @@ public class W_BryophytasStaff extends ChargedItem {
             new OnChatMessage("Your Bryophyta's staff now has (?<charges>.+) charges?.").setDynamicallyCharges(),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Bryophyta's staff using (?<naturerune>.+)x Nature rune.").matcherConsumer(m -> {
-                final int natureRunes = Integer.parseInt(m.group("naturerune"));
-                increaseCharges(natureRunes);
-            }),
+            new OnAutoChargeMessage("Bryophyta's staff", "Nature rune", 1, this),
 
             // Regular spellbook.
             new OnXpDrop(Skill.MAGIC).isEquipped().onMenuOption("Cast").onMenuTarget(

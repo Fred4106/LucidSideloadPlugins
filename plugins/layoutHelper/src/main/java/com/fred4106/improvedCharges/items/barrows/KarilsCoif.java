@@ -1,19 +1,21 @@
 package com.fred4106.improvedCharges.items.barrows;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class KarilsCoif extends _BarrowsItem {
-    public KarilsCoif(final Provider provider) {
-        super("Karil's coif", ItemId.KARILS_COIF, provider);
+    public KarilsCoif(Provider provider) {
+        super("Karil's coif", ItemID.BARROWS_KARIL_HEAD, provider);
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.KARILS_COIF).fixedCharges(1000),
-            new TriggerItem(ItemId.KARILS_COIF_100),
-            new TriggerItem(ItemId.KARILS_COIF_75),
-            new TriggerItem(ItemId.KARILS_COIF_50),
-            new TriggerItem(ItemId.KARILS_COIF_25),
-            new TriggerItem(ItemId.KARILS_COIF_0).fixedCharges(0)
+            new TriggerItem(ItemID.BARROWS_KARIL_HEAD).fixedCharges(1000),
+            new TriggerItem(ItemID.BARROWS_KARIL_HEAD_100),
+            new TriggerItem(ItemID.BARROWS_KARIL_HEAD_75),
+            new TriggerItem(ItemID.BARROWS_KARIL_HEAD_50),
+            new TriggerItem(ItemID.BARROWS_KARIL_HEAD_25),
+            new TriggerItem(ItemID.BARROWS_KARIL_HEAD_BROKEN).fixedCharges(0)
         };
     }
 }

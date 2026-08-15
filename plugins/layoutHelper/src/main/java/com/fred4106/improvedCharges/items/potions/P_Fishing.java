@@ -1,16 +1,18 @@
 package com.fred4106.improvedCharges.items.potions;
 
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import net.runelite.api.gameval.*;
 
 public class P_Fishing extends _Potion {
-    public P_Fishing(final Provider provider) {
+    public P_Fishing(Provider provider) {
         super("fishing", new TriggerItem[]{
-            new TriggerItem(ItemId.FISHING_POTION_1).fixedCharges(1),
-            new TriggerItem(ItemId.FISHING_POTION_2).fixedCharges(2),
-            new TriggerItem(ItemId.FISHING_POTION_3).fixedCharges(3),
-            new TriggerItem(ItemId.FISHING_POTION_4).fixedCharges(4),
+            new TriggerItem(ItemID._1DOSEFISHERSPOTION).fixedCharges(1),
+            new TriggerItem(ItemID._2DOSEFISHERSPOTION).fixedCharges(2),
+            new TriggerItem(ItemID._3DOSEFISHERSPOTION).fixedCharges(3),
+            new TriggerItem(ItemID._4DOSEFISHERSPOTION).fixedCharges(4),
         }, provider);
     }
 }

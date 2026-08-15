@@ -1,17 +1,22 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import net.runelite.api.gameval.VarbitID;
-import com.fred4106.improvedCharges.Constants;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
 import com.fred4106.improvedCharges.item.ChargedItemWithStatus;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnMenuOptionClicked;
+import com.fred4106.improvedCharges.item.triggers.OnUserAction;
+import com.fred4106.improvedCharges.item.triggers.OnVarbitChanged;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.ids.ChargeId;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
 import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.*;
-import com.fred4106.improvedCharges.store.ids.ChargeId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import com.fred4106.improvedCharges.store.ids.*;
 
 import java.awt.*;
-import java.time.Duration;
-import java.time.Instant;
+import java.time.*;
 import java.util.List;
 
 public class J_EscapeCrystal extends ChargedItemWithStatus {
@@ -19,11 +24,11 @@ public class J_EscapeCrystal extends ChargedItemWithStatus {
     private boolean alertedAboutActivation = false;
     private boolean inGauntletWithEscapeCrystal = false;
 
-    public J_EscapeCrystal(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.ESCAPE_CRYSTAL, ItemId.ESCAPE_CRYSTAL, provider);
+    public J_EscapeCrystal(Provider provider) {
+        super(FredsItemChargesConfig.escape_crystal, ItemID.TOB_TELEPORT, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.ESCAPE_CRYSTAL).quantityCharges().hideOverlay(),
+            new TriggerItem(ItemID.TOB_TELEPORT).quantityCharges().hideOverlay(),
         };
 
         this.triggers.addAll(List.of(
@@ -38,7 +43,7 @@ public class J_EscapeCrystal extends ChargedItemWithStatus {
 
             // Inactivity timer.
             new OnVarbitChanged(VarbitID.TELEPORT_CRYSTAL_AFK_DELAY).varbitValueConsumer((value) -> {
-                provider.configManager.setConfiguration(Constants.GROUP, com.fred4106.improvedCharges.Constants.ESCAPE_CRYSTAL_INACTIVITY_PERIOD, value);
+                provider.configManager.setConfiguration(FredsItemChargesConfig.group, FredsItemChargesConfig.escape_crystal_inactivity_period, value);
             }),
 
             // Keyboard or mouse actions.
@@ -48,9 +53,9 @@ public class J_EscapeCrystal extends ChargedItemWithStatus {
 
             // Enter Gauntlet detection.
             new OnMenuOptionClicked("Enter", "Enter-corrupted").onMenuTarget("The Gauntlet").consumer(() -> {
-                if (provider.store.inventoryContainsItem(ItemId.ESCAPE_CRYSTAL)) {
+                if (provider.store.inventoryContainsItem(ItemID.TOB_TELEPORT)) {
                     inGauntletWithEscapeCrystal = true;
-                } else if (provider.store.equipmentContainsItem(ItemId.ESCAPE_CRYSTAL)) {
+                } else if (provider.store.equipmentContainsItem(ItemID.TOB_TELEPORT)) {
                     provider.notifier.notify("Escape crystal disabled, because it was not in the inventory!");
                     inGauntletWithEscapeCrystal = false;
                 } else {
@@ -103,14 +108,19 @@ public class J_EscapeCrystal extends ChargedItemWithStatus {
     }
 
     @Override
-    public String getChargesString(final int itemId) {
+    public String getChargesString(int itemId) {
+        return getLongChargesString(itemId);
+    }
+
+    @Override
+    public String getLongChargesString(int itemId) {
         return getTotalChargesString();
     }
 
     @Override
     public String getTotalChargesString() {
         if (
-            provider.config.getEscapeCrystalStatus() == com.fred4106.improvedCharges.Constants.ItemActivity.DEACTIVATED
+            provider.config.getEscapeCrystalStatus() == FredsItemChargesConfig.ItemActivity.DEACTIVATED
             || !inInventoryOrEquipment()
         ) {
             return FredsItemChargesPlugin.getChargesMinified(ChargeId.UNLIMITED);
@@ -120,10 +130,10 @@ public class J_EscapeCrystal extends ChargedItemWithStatus {
             return FredsItemChargesPlugin.getChargesMinified(ChargeId.UNKNOWN);
         }
 
-        final long timeRemainingUntilActivation = getTimeRemainingUntilActivation();
+        long timeRemainingUntilActivation = getTimeRemainingUntilActivation();
         if (!alertedAboutActivation && isAboutToActivate()) {
             alertedAboutActivation = true;
-            provider.notifier.notify("Escape crystal is activating in " + timeRemainingUntilActivation + (provider.config.getEscapeCrystalTimeRemainingUnit() == com.fred4106.improvedCharges.Constants.EscapeCrystalTimeRemainingUnit.SECONDS ? " seconds." : " ticks."));
+            provider.notifier.notify("Escape crystal is activating in " + timeRemainingUntilActivation + (provider.config.getEscapeCrystalTimeRemainingUnit() == FredsItemChargesConfig.EscapeCrystalTimeRemainingUnit.SECONDS ? " seconds." : " ticks."));
         }
 
         switch (provider.config.getEscapeCrystalTimeRemainingUnit()) {

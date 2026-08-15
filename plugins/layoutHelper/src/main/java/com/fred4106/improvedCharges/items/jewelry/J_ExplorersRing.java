@@ -1,25 +1,32 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import net.runelite.api.Varbits;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItemWithStorageMultipleCharges;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
-import com.fred4106.improvedCharges.item.triggers.*;
-import com.fred4106.improvedCharges.store.ids.ChargeId;
+import com.fred4106.improvedCharges.item.triggers.OnMenuOptionClicked;
+import com.fred4106.improvedCharges.item.triggers.OnResetDaily;
+import com.fred4106.improvedCharges.item.triggers.OnVarbitChanged;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.ids.ChargeId;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.ids.*;
 
-import java.util.List;
+import java.util.*;
 
 class ExplorersRingStorageItemId {
-    public static final int TELEPORTS = -1000;
-    public static final int ALCHEMY = -1001;
-    public static final int ENERGY_RESTORES = -1002;
+    public static int TELEPORTS = -1000;
+    public static int ALCHEMY = -1001;
+    public static int ENERGY_RESTORES = -1002;
 }
 
 public class J_ExplorersRing extends ChargedItemWithStorageMultipleCharges {
-    public J_ExplorersRing(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.EXPLORERS_RING, ItemId.EXPLORERS_RING_1, provider);
+    public J_ExplorersRing(Provider provider) {
+        super(FredsItemChargesConfig.explorers_ring, ItemID.LUMBRIDGE_RING_EASY, provider);
         storage = storage.storableItems(
             new StorableItem(ExplorersRingStorageItemId.ALCHEMY).displayName("Alchemy charges"),
             new StorableItem(ExplorersRingStorageItemId.TELEPORTS).displayName("Teleports"),
@@ -27,43 +34,43 @@ public class J_ExplorersRing extends ChargedItemWithStorageMultipleCharges {
         ).showIndividualCharges();
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.EXPLORERS_RING_1),
-            new TriggerItem(ItemId.EXPLORERS_RING_2),
-            new TriggerItem(ItemId.EXPLORERS_RING_3),
-            new TriggerItem(ItemId.EXPLORERS_RING_4),
+            new TriggerItem(ItemID.LUMBRIDGE_RING_EASY),
+            new TriggerItem(ItemID.LUMBRIDGE_RING_MEDIUM),
+            new TriggerItem(ItemID.LUMBRIDGE_RING_HARD),
+            new TriggerItem(ItemID.LUMBRIDGE_RING_ELITE),
         };
 
         this.triggers.addAll(List.of(
             // Use.
-            new OnVarbitChanged(Varbits.EXPLORER_RING_ALCHS).consumer(() -> updateStorage()),
-            new OnVarbitChanged(Varbits.EXPLORER_RING_RUNENERGY).consumer(() -> updateStorage()),
-            new OnVarbitChanged(Varbits.EXPLORER_RING_TELEPORTS).consumer(() -> updateStorage()),
+            new OnVarbitChanged(VarbitID.LUMBRIDGE_FREE_ALCHS).consumer(() -> updateStorage()),
+            new OnVarbitChanged(VarbitID.LUMBRIDGE_ENERGY_RESTORE).consumer(() -> updateStorage()),
+            new OnVarbitChanged(VarbitID.LUMBRIDGE_CABBAGE_TELEPORT).consumer(() -> updateStorage()),
 
             // Check.
-            new OnMenuOptionClicked("Check").onItemClick().consumer(() -> updateStorage()),
+            new OnMenuOptionClicked("Check").onItemClick().runConsumerOnNextGameTick(() -> updateStorage()),
 
-            new OnResetDaily().specificItem(ItemId.EXPLORERS_RING_1).consumer(() -> {
+            new OnResetDaily().specificItem(ItemID.LUMBRIDGE_RING_EASY).consumer(() -> {
                 storage.clear();
                 storage.put(ExplorersRingStorageItemId.ALCHEMY, 30);
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 2);
                 storage.put(ExplorersRingStorageItemId.TELEPORTS, 0);
             }),
 
-            new OnResetDaily().specificItem(ItemId.EXPLORERS_RING_2).consumer(() -> {
+            new OnResetDaily().specificItem(ItemID.LUMBRIDGE_RING_MEDIUM).consumer(() -> {
                 storage.clear();
                 storage.put(ExplorersRingStorageItemId.ALCHEMY, 30);
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 3);
                 storage.put(ExplorersRingStorageItemId.TELEPORTS, 3);
             }),
 
-            new OnResetDaily().specificItem(ItemId.EXPLORERS_RING_3).consumer(() -> {
+            new OnResetDaily().specificItem(ItemID.LUMBRIDGE_RING_HARD).consumer(() -> {
                 storage.clear();
                 storage.put(ExplorersRingStorageItemId.ALCHEMY, 30);
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 4);
                 storage.put(ExplorersRingStorageItemId.TELEPORTS, ChargeId.UNLIMITED);
             }),
 
-            new OnResetDaily().specificItem(ItemId.EXPLORERS_RING_4).consumer(() -> {
+            new OnResetDaily().specificItem(ItemID.LUMBRIDGE_RING_ELITE).consumer(() -> {
                 storage.clear();
                 storage.put(ExplorersRingStorageItemId.ALCHEMY, 30);
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 3);
@@ -76,36 +83,36 @@ public class J_ExplorersRing extends ChargedItemWithStorageMultipleCharges {
         storage.clear();
 
         // Alchemy.
-        storage.put(ExplorersRingStorageItemId.ALCHEMY, 30 - provider.client.getVarbitValue(Varbits.EXPLORER_RING_ALCHS));
+        storage.put(ExplorersRingStorageItemId.ALCHEMY, 30 - provider.client.getVarbitValue(VarbitID.LUMBRIDGE_FREE_ALCHS));
 
         // Energy restores.
-        final int energyRestoresUsed = provider.client.getVarbitValue(Varbits.EXPLORER_RING_RUNENERGY);
+        int energyRestoresUsed = provider.client.getVarbitValue(VarbitID.LUMBRIDGE_ENERGY_RESTORE);
         switch (itemId) {
-            case ItemId.EXPLORERS_RING_1:
+            case ItemID.LUMBRIDGE_RING_EASY:
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 2 - energyRestoresUsed);
                 break;
-            case ItemId.EXPLORERS_RING_2:
+            case ItemID.LUMBRIDGE_RING_MEDIUM:
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 3 - energyRestoresUsed);
                 break;
-            case ItemId.EXPLORERS_RING_3:
+            case ItemID.LUMBRIDGE_RING_HARD:
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 4 - energyRestoresUsed);
                 break;
-            case ItemId.EXPLORERS_RING_4:
+            case ItemID.LUMBRIDGE_RING_ELITE:
                 storage.put(ExplorersRingStorageItemId.ENERGY_RESTORES, 3 - energyRestoresUsed);
                 break;
         }
 
         // Teleports.
-        final int teleportsUsed = provider.client.getVarbitValue(Varbits.EXPLORER_RING_TELEPORTS);
+        int teleportsUsed = provider.client.getVarbitValue(VarbitID.LUMBRIDGE_CABBAGE_TELEPORT);
         switch (itemId) {
-            case ItemId.EXPLORERS_RING_1:
+            case ItemID.LUMBRIDGE_RING_EASY:
                 storage.put(ExplorersRingStorageItemId.TELEPORTS, 0);
                 break;
-            case ItemId.EXPLORERS_RING_2:
+            case ItemID.LUMBRIDGE_RING_MEDIUM:
                 storage.put(ExplorersRingStorageItemId.TELEPORTS, 3 - teleportsUsed);
                 break;
-            case ItemId.EXPLORERS_RING_3:
-            case ItemId.EXPLORERS_RING_4:
+            case ItemID.LUMBRIDGE_RING_HARD:
+            case ItemID.LUMBRIDGE_RING_ELITE:
                 storage.put(ExplorersRingStorageItemId.TELEPORTS, ChargeId.UNLIMITED);
                 break;
         }

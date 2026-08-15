@@ -1,20 +1,27 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_PendantOfAtes extends ChargedItem {
-    public J_PendantOfAtes(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.PENDANT_OF_ATES, ItemId.PENDANT_OF_ATES, provider);
+    public J_PendantOfAtes(Provider provider) {
+        super(FredsItemChargesConfig.pendant_of_ates, ItemID.PENDANT_OF_ATES, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.PENDANT_OF_ATES_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.PENDANT_OF_ATES),
+            new TriggerItem(ItemID.PENDANT_OF_ATES_EMPTY).fixedCharges(0),
+            new TriggerItem(ItemID.PENDANT_OF_ATES),
         };
 
         this.triggers.addAll(List.of(
@@ -34,10 +41,7 @@ public class J_PendantOfAtes extends ChargedItem {
             new OnGraphicChanged(2754).decreaseCharges(1),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Pendant of ates using (?<frozentear>.+)x Frozen tear.").matcherConsumer(m -> {
-                final int frozenTear = Integer.parseInt(m.group("frozentear"));
-                increaseCharges(frozenTear);
-            }),
+            new OnAutoChargeMessage("Pendant of ates", "Frozen tear", 1, this),
 
             // Unified menu entry.
             new OnMenuEntryAdded("Rub").replaceOption("Teleport")

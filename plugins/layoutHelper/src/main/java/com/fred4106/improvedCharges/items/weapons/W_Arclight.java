@@ -1,32 +1,33 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.item.triggers.OnAnimationChanged;
-import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
-import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
-import com.fred4106.improvedCharges.store.ids.AnimationId;
-import com.fred4106.improvedCharges.store.ids.GraphicId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
+import com.fred4106.improvedCharges.item.triggers.OnAnimationChanged;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnHitsplatApplied;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
+import com.fred4106.improvedCharges.store.ids.*;
 
-import java.util.List;
+import java.util.*;
 
-import static com.fred4106.improvedCharges.store.enums.HitsplatTarget.ENEMY;
+import static com.fred4106.improvedCharges.store.enums.HitsplatTarget.*;
 
 public class W_Arclight extends ChargedItem {
     private boolean attacked = false;
 
-    public W_Arclight(final Provider provider) {
-        super(Constants.ARCLIGHT, ItemId.ARCLIGHT, provider);
+    public W_Arclight(Provider provider) {
+        super(FredsItemChargesConfig.arclight, ItemID.ARCLIGHT, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.ARCLIGHT),
-            new TriggerItem(ItemId.ARCLIGHT_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.ARCLIGHT),
+            new TriggerItem(ItemID.ARCLIGHT_INACTIVE).fixedCharges(0),
         };
 
         this.triggers.addAll(List.of(
@@ -35,7 +36,7 @@ public class W_Arclight extends ChargedItem {
             new OnChatMessage("Your arclight has degraded.").setFixedCharges(0),
 
             // Attack
-            new OnAnimationChanged(AnimationId.HUMAN_SWORD_SLASH, AnimationId.HUMAN_SWORD_STAB).isEquipped().decreaseCharges(1).consumer(() -> {
+            new OnAnimationChanged(AnimationID.HUMAN_SWORD_SLASH, AnimationID.HUMAN_SWORD_STAB).isEquipped().decreaseCharges(1).consumer(() -> {
                 attacked = true;
             }),
             new OnHitsplatApplied(ENEMY, HitsplatGroup.BLOCKED).isEquipped().consumer(() -> {

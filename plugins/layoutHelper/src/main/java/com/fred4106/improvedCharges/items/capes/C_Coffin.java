@@ -1,44 +1,44 @@
 package com.fred4106.improvedCharges.items.capes;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ItemContainerId;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
-
-import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
+import java.util.*;
 
 public class C_Coffin extends ChargedItemWithStorageEmptyable {
-    public C_Coffin(final Provider provider) {
-        super(Constants.COFFIN, ItemId.GOLD_COFFIN, provider);
+    public C_Coffin(Provider provider) {
+        super(FredsItemChargesConfig.coffin, ItemID.SHADES_COFFIN_GOLD, provider);
         this.storage = storage.storableItems(
-            new StorableItem(ItemId.LOAR_REMAINS).checkName("Loar"),
-            new StorableItem(ItemId.PHRIN_REMAINS).checkName("Phrin"),
-            new StorableItem(ItemId.RIYL_REMAINS).checkName("Riyl"),
-            new StorableItem(ItemId.ASYN_REMAINS).checkName("Asyn"),
-            new StorableItem(ItemId.FIYR_REMAINS).checkName("Fiyr"),
-            new StorableItem(ItemId.URIUM_REMAINS).checkName("Urium")
+            new StorableItem(ItemID.SHADE_BONES1).checkName("Loar"),
+            new StorableItem(ItemID.SHADE_BONES2).checkName("Phrin"),
+            new StorableItem(ItemID.SHADE_BONES3).checkName("Riyl"),
+            new StorableItem(ItemID.SHADE_BONES4).checkName("Asyn"),
+            new StorableItem(ItemID.SHADE_BONES5).checkName("Fiyr"),
+            new StorableItem(ItemID.SHADE_BONES6).checkName("Urium")
         );
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.BROKEN_COFFIN).fixedCharges(0),
-            new TriggerItem(ItemId.BRONZE_COFFIN).maxCharges(3),
-            new TriggerItem(ItemId.BRONZE_COFFIN_OPEN).maxCharges(3),
-            new TriggerItem(ItemId.STEEL_COFFIN).maxCharges(8),
-            new TriggerItem(ItemId.STEEL_COFFIN_OPEN).maxCharges(8),
-            new TriggerItem(ItemId.BLACK_COFFIN).maxCharges(14),
-            new TriggerItem(ItemId.BLACK_COFFIN_OPEN).maxCharges(14),
-            new TriggerItem(ItemId.SILVER_COFFIN).maxCharges(20),
-            new TriggerItem(ItemId.SILVER_COFFIN_OPEN).maxCharges(20),
-            new TriggerItem(ItemId.GOLD_COFFIN).maxCharges(28),
-            new TriggerItem(ItemId.GOLD_COFFIN_OPEN).maxCharges(28),
+            new TriggerItem(ItemID.SHADES_COFFIN_BROKEN).fixedCharges(0),
+            new TriggerItem(ItemID.SHADES_COFFIN_BRONZE).maxCharges(3),
+            new TriggerItem(ItemID.SHADES_COFFIN_BRONZE_OPEN).maxCharges(3),
+            new TriggerItem(ItemID.SHADES_COFFIN_STEEL).maxCharges(8),
+            new TriggerItem(ItemID.SHADES_COFFIN_STEEL_OPEN).maxCharges(8),
+            new TriggerItem(ItemID.SHADES_COFFIN_BLACK).maxCharges(14),
+            new TriggerItem(ItemID.SHADES_COFFIN_BLACK_OPEN).maxCharges(14),
+            new TriggerItem(ItemID.SHADES_COFFIN_SILVER).maxCharges(20),
+            new TriggerItem(ItemID.SHADES_COFFIN_SILVER_OPEN).maxCharges(20),
+            new TriggerItem(ItemID.SHADES_COFFIN_GOLD).maxCharges(28),
+            new TriggerItem(ItemID.SHADES_COFFIN_GOLD_OPEN).maxCharges(28),
         };
 
         this.triggers.addAll(List.of(
@@ -50,23 +50,23 @@ public class C_Coffin extends ChargedItemWithStorageEmptyable {
             // Check.
             new OnChatMessage("Loar (?<loar>.+) / Phrin (?<phrin>.+) / Riyl (?<riyl>.+) / Asyn (?<asyn>.+) / Fiyr (?<fiyr>.+) / Urium (?<urium>.+)").matcherConsumer(m -> {
                 storage.clear();
-                storage.put(ItemId.LOAR_REMAINS, Integer.parseInt(m.group("loar")));
-                storage.put(ItemId.PHRIN_REMAINS, Integer.parseInt(m.group("phrin")));
-                storage.put(ItemId.RIYL_REMAINS, Integer.parseInt(m.group("riyl")));
-                storage.put(ItemId.ASYN_REMAINS, Integer.parseInt(m.group("asyn")));
-                storage.put(ItemId.FIYR_REMAINS, Integer.parseInt(m.group("fiyr")));
-                storage.put(ItemId.URIUM_REMAINS, Integer.parseInt(m.group("urium")));
+                storage.put(ItemID.SHADE_BONES1, Integer.parseInt(m.group("loar")));
+                storage.put(ItemID.SHADE_BONES2, Integer.parseInt(m.group("phrin")));
+                storage.put(ItemID.SHADE_BONES3, Integer.parseInt(m.group("riyl")));
+                storage.put(ItemID.SHADE_BONES4, Integer.parseInt(m.group("asyn")));
+                storage.put(ItemID.SHADE_BONES5, Integer.parseInt(m.group("fiyr")));
+                storage.put(ItemID.SHADE_BONES6, Integer.parseInt(m.group("urium")));
             }),
 
             // Try to empty already empty.
             new OnChatMessage("Your coffin is empty.").onItemClick().emptyStorage(),
 
             // Fill from inventory.
-            new OnItemContainerChanged(ItemContainerId.INVENTORY).fillStorageFromInventory().onMenuOption("Fill"),
+            new OnItemContainerChanged(InventoryID.INV).fillStorageFromInventory().onMenuOption("Fill"),
 
             // Use shades on coffin and vice versa.
-            new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onUseChargedItemOnStorageItem(storage.getStorableItems()),
-            new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onUseStorageItemOnChargedItem(storage.getStorableItems())
+            new OnItemContainerChanged(InventoryID.INV).fillStorageFromInventory().onUseChargedItemOnStorageItem(storage.getStorableItems()),
+            new OnItemContainerChanged(InventoryID.INV).fillStorageFromInventory().onUseStorageItemOnChargedItem(storage.getStorableItems())
         ));
     }
 }

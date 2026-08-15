@@ -1,20 +1,25 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.store.ids.AnimationId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnAnimationChanged;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.ids.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_SlayerStaffE extends ChargedItem {
-    public W_SlayerStaffE(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.SLAYER_STAFF_E, ItemId.SLAYER_STAFF_ENCHANTED, provider);
+    public W_SlayerStaffE(Provider provider) {
+        super(FredsItemChargesConfig.slayer_staff_e, ItemID.SLAYER_STAFF_ENCHANTED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.SLAYER_STAFF_ENCHANTED)
+            new TriggerItem(ItemID.SLAYER_STAFF_ENCHANTED)
         };
 
         this.triggers.addAll(List.of(
@@ -25,7 +30,7 @@ public class W_SlayerStaffE extends ChargedItem {
             new OnChatMessage("Your staff has (?<charges>.+) charges?.").setDynamicallyCharges(),
 
             // Attack.
-            new OnAnimationChanged(AnimationId.SLAYER_STAFF_CAST).isEquipped().decreaseCharges(1)
+            new OnAnimationChanged(AnimationID.SLAYER_MAGICDART_CAST).isEquipped().decreaseCharges(1)
         ));
     }
 }

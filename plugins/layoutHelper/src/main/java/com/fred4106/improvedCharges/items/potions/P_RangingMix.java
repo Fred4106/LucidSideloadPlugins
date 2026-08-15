@@ -1,14 +1,16 @@
 package com.fred4106.improvedCharges.items.potions;
 
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import net.runelite.api.gameval.*;
 
 public class P_RangingMix extends _Potion {
-    public P_RangingMix(final Provider provider) {
+    public P_RangingMix(Provider provider) {
         super("ranging_mix", new TriggerItem[]{
-            new TriggerItem(ItemId.RANGING_MIX_1).fixedCharges(1),
-            new TriggerItem(ItemId.RANGING_MIX_2).fixedCharges(2),
+            new TriggerItem(ItemID.BRUTAL_1DOSERANGERSPOTION).fixedCharges(1),
+            new TriggerItem(ItemID.BRUTAL_2DOSERANGERSPOTION).fixedCharges(2),
         }, provider);
     }
 }

@@ -1,27 +1,32 @@
 package com.fred4106.improvedCharges.item.listeners;
 
+import com.fred4106.improvedCharges.events.CustomItemContainerChanged;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
-import com.fred4106.improvedCharges.events.CustomItemContainerChanged;
 import com.fred4106.improvedCharges.item.storage.StorageItems;
 import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ListenerOnItemContainerChanged extends ListenerBase {
-    public ListenerOnItemContainerChanged(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnItemContainerChanged(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final CustomItemContainerChanged itemContainerChanged) {
+    public void trigger(CustomItemContainerChanged itemContainerChanged, ChargedItemBase chargedItem) {
         // Get quantity from amount in item container.
-        for (final TriggerItem triggerItem : chargedItem.items) {
+        for (TriggerItem triggerItem : chargedItem.items) {
             if (triggerItem.quantityCharges.isPresent()) {
-               for (final StorageItem item : itemContainerChanged.getItems()) {
-                    if (item.getId() == triggerItem.itemId) {
+               for (StorageItem item : itemContainerChanged.getItems()) {
+                    if (item.itemId == triggerItem.itemId) {
                         ((ChargedItem) chargedItem).setCharges(item.getQuantity());
                         break;
                     }
@@ -29,10 +34,10 @@ public class ListenerOnItemContainerChanged extends ListenerBase {
             }
         }
 
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, itemContainerChanged)) continue;
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, itemContainerChanged)) continue;
             boolean triggerUsed = false;
-            final OnItemContainerChanged trigger = (OnItemContainerChanged) triggerBase;
+            OnItemContainerChanged trigger = (OnItemContainerChanged) triggerBase;
 
             // Update storage directly from item container.
             if (trigger.updateStorage.isPresent()) {
@@ -55,7 +60,7 @@ public class ListenerOnItemContainerChanged extends ListenerBase {
                 triggerUsed = true;
             }
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -63,9 +68,9 @@ public class ListenerOnItemContainerChanged extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final CustomItemContainerChanged itemContainerChanged) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, CustomItemContainerChanged itemContainerChanged) {
         if (!(triggerBase instanceof OnItemContainerChanged)) return false;
-        final OnItemContainerChanged trigger = (OnItemContainerChanged) triggerBase;
+        OnItemContainerChanged trigger = (OnItemContainerChanged) triggerBase;
 
         // Item container type check.
         if (
@@ -73,6 +78,6 @@ public class ListenerOnItemContainerChanged extends ListenerBase {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

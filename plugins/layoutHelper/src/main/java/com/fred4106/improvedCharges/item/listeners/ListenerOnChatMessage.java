@@ -6,23 +6,27 @@ import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.regex.Matcher;
+import java.util.regex.*;
 
 import static com.fred4106.improvedCharges.FredsItemChargesPlugin.getNumberFromCommaString;
 
 public class ListenerOnChatMessage extends ListenerBase {
-    public ListenerOnChatMessage(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnChatMessage(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final CustomChatMessage event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) continue;
+    public void trigger(CustomChatMessage event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) continue;
             boolean triggerUsed = false;
-            final OnChatMessage trigger = (OnChatMessage) triggerBase;
+            OnChatMessage trigger = (OnChatMessage) triggerBase;
 
-            final Matcher matcher = trigger.message.matcher(event.message);
+            Matcher matcher = trigger.message.matcher(event.message);
             matcher.find();
 
             if (trigger.setDynamically.isPresent() && (chargedItem instanceof ChargedItem)) {
@@ -55,7 +59,7 @@ public class ListenerOnChatMessage extends ListenerBase {
                 triggerUsed = true;
             }
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -63,16 +67,16 @@ public class ListenerOnChatMessage extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final CustomChatMessage event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, CustomChatMessage event) {
         if (!(triggerBase instanceof OnChatMessage)) return false;
-        final OnChatMessage trigger = (OnChatMessage) triggerBase;
+        OnChatMessage trigger = (OnChatMessage) triggerBase;
 
         // Message check.
-        final Matcher matcher = trigger.message.matcher(event.message);
+        Matcher matcher = trigger.message.matcher(event.message);
         if (!matcher.find()) {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

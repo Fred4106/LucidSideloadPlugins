@@ -1,23 +1,26 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_EyeOfAyak  extends ChargedItem {
     public W_EyeOfAyak(Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.EYE_OF_AYAK, ItemId.EYE_OF_AYAK, provider);
+        super(FredsItemChargesConfig.eye_of_ayak, ItemID.EYE_OF_AYAK, provider);
 
         this.items = new TriggerItem[]{
-                new TriggerItem(ItemId.EYE_OF_AYAK_UNCHARGED).fixedCharges(0),
-                new TriggerItem(ItemId.EYE_OF_AYAK),
+            new TriggerItem(ItemID.EYE_OF_AYAK_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.EYE_OF_AYAK),
         };
 
         /*
@@ -30,27 +33,24 @@ public class W_EyeOfAyak  extends ChargedItem {
          */
 
         this.triggers.addAll(List.of(
-                // Check.
-                // Charge.
-                new OnChatMessage("The Eye of Ayak had been charged with (runes|demon tears). It currently has (?<charges>.+) charges?").setDynamicallyCharges(),
+            // Check
+            new OnChatMessage("The Eye of Ayak has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
 
-                // Uncharge.
-                new OnChatMessage("You uncharge the Eye of Ayak").setFixedCharges(0),
+            // Charge
+            new OnChatMessage("The Eye of Ayak has been charged with (runes|demon tears). It currently has (?<charges>.+) charges?.").setDynamicallyCharges(),
 
-                // Attack.
-                new OnGraphicChanged(12397).decreaseCharges(1),
+            // Uncharge
+            new OnChatMessage("You uncharge the Eye of Ayak.").setFixedCharges(0),
 
-                //Special attack
-                new OnGraphicChanged(12394).decreaseCharges(1),
+            // Attack
+            new OnGraphicChanged(12397).decreaseCharges(1),
 
-                // Auto-charge
-                new OnChatMessage("The banker charges your Eye of Ayak using (?<deathrune>.+)x Death rune").matcherConsumer(m -> {
-                    final int deathRunes = Integer.parseInt(m.group("deathrune"));
-                    increaseCharges(deathRunes / 2);
-                }),
+            // Special attack
+            new OnGraphicChanged(12394).decreaseCharges(1),
 
-                // Auto-charge
-                new OnChatMessage("The banker charges your Eye of Ayak using (?<charges>.+)x Demon tear").increaseDynamically()
+            // Auto-charge
+            new OnAutoChargeMessage("Eye of Ayak", "Death rune", 0.5, this),
+            new OnAutoChargeMessage("Eye of Ayak", "Demon tear", 1, this)
         ));
     }
 }

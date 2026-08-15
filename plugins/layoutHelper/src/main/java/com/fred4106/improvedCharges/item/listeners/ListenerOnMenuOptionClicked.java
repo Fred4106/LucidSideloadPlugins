@@ -1,20 +1,24 @@
 package com.fred4106.improvedCharges.item.listeners;
 
+import com.fred4106.improvedCharges.events.CustomMenuOptionClicked;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnMenuOptionClicked;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
-import com.fred4106.improvedCharges.events.CustomMenuOptionClicked;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ListenerOnMenuOptionClicked extends ListenerBase {
-    public ListenerOnMenuOptionClicked(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnMenuOptionClicked(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final CustomMenuOptionClicked event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) continue;
-            final OnMenuOptionClicked trigger = (OnMenuOptionClicked) triggerBase;
+    public void trigger(CustomMenuOptionClicked event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) continue;
+            OnMenuOptionClicked trigger = (OnMenuOptionClicked) triggerBase;
             boolean triggerUsed = false;
 
             if (trigger.menuOptionConsumer.isPresent()) {
@@ -22,7 +26,7 @@ public class ListenerOnMenuOptionClicked extends ListenerBase {
                 triggerUsed = true;
             }
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -30,13 +34,13 @@ public class ListenerOnMenuOptionClicked extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final CustomMenuOptionClicked event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, CustomMenuOptionClicked event) {
         if (!(triggerBase instanceof OnMenuOptionClicked)) return false;
-        final OnMenuOptionClicked trigger = (OnMenuOptionClicked) triggerBase;
+        OnMenuOptionClicked trigger = (OnMenuOptionClicked) triggerBase;
 
         // Option check.
         boolean optionCheck = false;
-        for (final String option : trigger.options) {
+        for (String option : trigger.options) {
             if (event.option.equals(option)) {
                 optionCheck = true;
                 break;
@@ -49,6 +53,6 @@ public class ListenerOnMenuOptionClicked extends ListenerBase {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

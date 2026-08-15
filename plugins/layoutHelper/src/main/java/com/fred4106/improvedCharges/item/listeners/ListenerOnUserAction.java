@@ -4,20 +4,23 @@ import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnUserAction;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ListenerOnUserAction extends ListenerBase {
-    public ListenerOnUserAction(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnUserAction(Provider provider) {
+        super(provider);
     }
 
-    public void trigger() {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase)) continue;
+    public void trigger(ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase)) continue;
 
-            final OnUserAction trigger = (OnUserAction) triggerBase;
+            OnUserAction trigger = (OnUserAction) triggerBase;
             boolean triggerUsed = false;
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -25,9 +28,9 @@ public class ListenerOnUserAction extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase) {
         if (!(triggerBase instanceof OnUserAction)) return false;
-        final OnUserAction trigger = (OnUserAction) triggerBase;
-        return super.isValidTrigger(trigger);
+        OnUserAction trigger = (OnUserAction) triggerBase;
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

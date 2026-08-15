@@ -1,20 +1,25 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_AlchemistsAmulet extends ChargedItem {
-    public J_AlchemistsAmulet(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.ALCHEMISTS_AMULET, ItemId.ALCHEMISTS_AMULET, provider);
+    public J_AlchemistsAmulet(Provider provider) {
+        super(FredsItemChargesConfig.alchemists_amulet, ItemID.AMULET_OF_CHEMISTRY_IMBUED_CHARGED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.ALCHEMISTS_AMULET).needsToBeEquipped(),
-            new TriggerItem(ItemId.ALCHEMISTS_AMULET_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.AMULET_OF_CHEMISTRY_IMBUED_CHARGED).needsToBeEquipped(),
+            new TriggerItem(ItemID.AMULET_OF_CHEMISTRY_IMBUED_UNCHARGED).fixedCharges(0),
         };
 
         this.triggers.addAll(List.of(
@@ -34,10 +39,7 @@ public class J_AlchemistsAmulet extends ChargedItem {
             new OnChatMessage("Your Alchemist's amulet helps you create a .-dose potion. It has (?<charges>.+) charges? left.").setDynamicallyCharges(),
 
             // Auto-charge
-            new OnChatMessage("The banker charges your Alchemist's amulet using (?<amulets>.+)x Amulet of chemistry.*").matcherConsumer(m -> {
-                final int amuletsOfChemistry = Integer.parseInt(m.group("amulets"));
-                increaseCharges(amuletsOfChemistry * 10);
-            })
+            new OnAutoChargeMessage("Alchemist's amulet", "Amulet of chemistry", 10, this)
         ));
     }
 }

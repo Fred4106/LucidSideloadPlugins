@@ -1,298 +1,154 @@
 package com.fred4106.improvedCharges.items.utils;
 
 import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
-import com.fred4106.improvedCharges.store.*;
-import net.runelite.api.Skill;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
-import com.fred4106.improvedCharges.item.triggers.*;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnConfigMenuOpened;
+import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.OnMenuOptionClicked;
+import com.fred4106.improvedCharges.item.triggers.OnXpDrop;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
-import com.fred4106.improvedCharges.store.utils.ReplaceTarget;
+import net.runelite.api.*;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.ids.*;
 
-import java.util.List;
-
-import static com.fred4106.improvedCharges.store.ids.ItemContainerId.BANK;
-import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
+import java.util.*;
 
 public class U_HerbSack extends ChargedItemWithStorageEmptyable {
-    public U_HerbSack(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.HERB_SACK, ItemId.HERB_SACK, provider);
+    public U_HerbSack(Provider provider) {
+        this(FredsItemChargesConfig.herb_sack, ItemID.SLAYER_HERB_SACK, ItemID.SLAYER_HERB_SACK_OPEN, 30, provider);
+    }
+
+    protected U_HerbSack(String configKey, int itemId, int openItemId, int maxIndividualQuantity, Provider provider) {
+        super(configKey, itemId, provider);
+
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.HERB_SACK),
-            new TriggerItem(ItemId.HERB_SACK_OPEN),
+            new TriggerItem(itemId),
+            new TriggerItem(openItemId),
         };
 
-		storage = storage.setMaximumIndividualQuantity(30).storableItems(
-			new StorableItem(ItemId.GRIMY_GUAM_LEAF).checkName("Guam leaf"),
-			new StorableItem(ItemId.GRIMY_MARRENTILL).checkName("Marrentill"),
-			new StorableItem(ItemId.GRIMY_TARROMIN).checkName("Tarromin"),
-			new StorableItem(ItemId.GRIMY_HARRALANDER).checkName("Harralander"),
-			new StorableItem(ItemId.GRIMY_RANARR_WEED).checkName("Ranarr weed"),
-			new StorableItem(ItemId.GRIMY_TOADFLAX).checkName("Toadflax"),
-			new StorableItem(ItemId.GRIMY_IRIT_LEAF).checkName("Irit leaf"),
-			new StorableItem(ItemId.GRIMY_AVANTOE).checkName("Avantoe"),
-			new StorableItem(ItemId.GRIMY_KWUARM).checkName("Kwuarm"),
-			new StorableItem(ItemId.GRIMY_SNAPDRAGON).checkName("Snapdragon"),
-			new StorableItem(ItemId.GRIMY_HUASCA).checkName("Huasca"),
-			new StorableItem(ItemId.GRIMY_CADANTINE).checkName("Cadantine"),
-			new StorableItem(ItemId.GRIMY_LANTADYME).checkName("Lantadyme"),
-			new StorableItem(ItemId.GRIMY_DWARF_WEED).checkName("Dwarf weed"),
-			new StorableItem(ItemId.GRIMY_TORSTOL).checkName("Torstol")
-		);
+        storage = storage.setMaximumIndividualQuantity(maxIndividualQuantity).storableItems(
+            new StorableItem(ItemID.UNIDENTIFIED_GUAM).checkName("Guam leaf"),
+            new StorableItem(ItemID.UNIDENTIFIED_MARENTILL).checkName("Marrentill"),
+            new StorableItem(ItemID.UNIDENTIFIED_TARROMIN).checkName("Tarromin"),
+            new StorableItem(ItemID.UNIDENTIFIED_HARRALANDER).checkName("Harralander"),
+            new StorableItem(ItemID.UNIDENTIFIED_RANARR).checkName("Ranarr weed"),
+            new StorableItem(ItemID.UNIDENTIFIED_TOADFLAX).checkName("Toadflax"),
+            new StorableItem(ItemID.UNIDENTIFIED_IRIT).checkName("Irit leaf"),
+            new StorableItem(ItemID.UNIDENTIFIED_AVANTOE).checkName("Avantoe"),
+            new StorableItem(ItemID.UNIDENTIFIED_KWUARM).checkName("Kwuarm"),
+            new StorableItem(ItemID.UNIDENTIFIED_SNAPDRAGON).checkName("Snapdragon"),
+            new StorableItem(ItemID.UNIDENTIFIED_HUASCA).checkName("Huasca"),
+            new StorableItem(ItemID.UNIDENTIFIED_CADANTINE).checkName("Cadantine"),
+            new StorableItem(ItemID.UNIDENTIFIED_LANTADYME).checkName("Lantadyme"),
+            new StorableItem(ItemID.UNIDENTIFIED_DWARF_WEED).checkName("Dwarf weed"),
+            new StorableItem(ItemID.UNIDENTIFIED_TORSTOL).checkName("Torstol")
+        );
 
-		this.triggers.addAll(List.of(
-			// Check or empty.
-			new OnChatMessage("The herb sack is empty.").emptyStorage(),
+        this.triggers.addAll(List.of(
+            // Check or empty.
+            new OnChatMessage("The herb sack is empty.").emptyStorage(),
 
-			// Pickup.
-			new OnChatMessage("You put the Grimy (?<herb>.+) herb into your herb sack.").matcherConsumer(m -> {
-				storage.add(getStorageItemFromName(m.group("herb"), 1));
-			}),
+            // Pickup.
+            new OnChatMessage("You put the Grimy (?<herb>.+) herb into your herb sack.").matcherConsumer(m -> {
+                storage.add(getStorageItemFromName(m.group("herb"), 1));
+            }),
 
-			// Check.
-			new OnChatMessage("You look in your herb sack and see:").emptyStorage(),
-			new OnChatMessage("(?<quantity>.+) x Grimy (?<herb>.+)").matcherConsumer(m -> {
-				storage.put(getStorageItemFromName(m.group("herb"), Integer.parseInt(m.group("quantity"))));
-			}),
+            // Check.
+            new OnChatMessage("You look in your herb sack and see:").emptyStorage(),
+            new OnChatMessage("(?<quantity>.+) x Grimy (?<herb>.+)").matcherConsumer(m -> {
+                storage.put(getStorageItemFromName(m.group("herb"), Integer.parseInt(m.group("quantity"))));
+            }),
 
-			// Fill from inventory.
-			new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onMenuOption("Fill"),
+            // Fill from inventory.
+            new OnItemContainerChanged(InventoryID.INV).fillStorageFromInventory().onMenuOption("Fill"),
 
-			// Empty to inventory.
-			new OnItemContainerChanged(INVENTORY).emptyStorageToInventory().onMenuOption("Empty"),
+            // Empty to inventory.
+            new OnItemContainerChanged(InventoryID.INV).emptyStorageToInventory().onMenuOption("Empty"),
 
-			// Empty to bank.
-			new OnItemContainerChanged(BANK).emptyStorageToBank().onMenuOption(FredsItemChargesPlugin.menuOptionEmptyToBank),
+            // Empty to bank.
+            new OnItemContainerChanged(InventoryID.BANK).emptyStorageToBank().onMenuOption(FredsItemChargesPlugin.menuOptionEmptyToBank),
 
-			// Empty from deposit box.
-			new OnMenuOptionClicked(FredsItemChargesPlugin.menuOptionEmptyToBank).onItemClick().isWidgetVisible(WidgetId.DEPOSIT_BOX).emptyStorage(),
+            // Empty from deposit box.
+            new OnMenuOptionClicked(FredsItemChargesPlugin.menuOptionEmptyToBank).onItemClick().isWidgetVisible(WidgetId.DEPOSIT_BOX).emptyStorage(),
 
-			// Replace "Empty" with proper "Empty to bank".
-			new OnMenuEntryAdded("Empty").replaceOption(FredsItemChargesPlugin.menuOptionEmptyToBank).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
+            // Replace "Empty" with proper "Empty to bank".
+            new OnMenuEntryAdded("Empty").replaceOption(FredsItemChargesPlugin.menuOptionEmptyToBank).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
 
-			// Hide destroy option.
-			new OnMenuEntryAdded("Destroy").hide(),
+            // Hide destroy option.
+            new OnMenuEntryAdded("Destroy").hide(),
 
-			// Pick guam leaf.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Guam herbs"
-			).onMenuImpostor(
-				26828,
-				39816
-			).addToStorage(ItemId.GRIMY_GUAM_LEAF),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				26824, 26825, 26826, 26827, 26828,
-				39812, 39813, 39814, 39815, 39816
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Guam herbs"),
-				new ReplaceTarget("Herb patch", "Guam herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick guam leaf.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Guam")
+            .addToStorage(ItemID.UNIDENTIFIED_GUAM),
 
-			// Pick marrentill.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Marrentill herbs"
-			).onMenuImpostor(
-				39751,
-				39821
-			).addToStorage(ItemId.GRIMY_MARRENTILL),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39747, 39748, 39749, 39750, 39751,
-				39816, 39817, 39818, 39819, 39821
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Marrentill herbs"),
-				new ReplaceTarget("Herb patch", "Marrentill herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick marrentill.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Marrentill")
+            .addToStorage(ItemID.UNIDENTIFIED_MARENTILL),
 
-			// Pick tarromin.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Tarromin herbs"
-			).onMenuImpostor(
-				39756,
-				39826
-			).addToStorage(ItemId.GRIMY_TARROMIN),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39752, 39753, 39754, 39755, 39756,
-				39822, 39823, 39824, 39825, 39826
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Tarromin herbs"),
-				new ReplaceTarget("Herb patch", "Tarromin herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick tarromin.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Tarromin")
+            .addToStorage(ItemID.UNIDENTIFIED_TARROMIN),
 
-			// Pick harralander.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Harralander herbs"
-			).onMenuImpostor(
-				39761,
-				39831
-			).addToStorage(ItemId.GRIMY_HARRALANDER),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39757, 39758, 39759, 39760, 39761,
-				39827, 39828, 39829, 39830, 39831
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Harralander herbs"),
-				new ReplaceTarget("Herb patch", "Harralander herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick harralander.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Harralander")
+            .addToStorage(ItemID.UNIDENTIFIED_HARRALANDER),
 
-			// Pick ranarr.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Ranarr weed herbs"
-			).onMenuImpostor(
-				39766,
-				39836
-			).addToStorage(ItemId.GRIMY_RANARR_WEED),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39762, 39763, 39764, 39765, 39766,
-				39832, 39833, 39834, 39835, 39836
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Ranarr weed herbs"),
-				new ReplaceTarget("Herb patch", "Ranarr weed herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick ranarr.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Ranarr weed")
+            .addToStorage(ItemID.UNIDENTIFIED_RANARR),
 
-			// Pick irit leaf.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Irit leaf herbs"
-			).onMenuImpostor(
-				39771,
-				39841
-			).addToStorage(ItemId.GRIMY_IRIT_LEAF),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39767, 39768, 39769, 39770, 39771,
-				39837, 39838, 39839, 39840, 39841
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Irit leaf herbs"),
-				new ReplaceTarget("Herb patch", "Irit leaf herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick irit leaf.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Irit")
+            .addToStorage(ItemID.UNIDENTIFIED_IRIT),
 
-			// Pick avantoe.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Avantoe herbs"
-			).onMenuImpostor(
-				39776,
-				39846
-			).addToStorage(ItemId.GRIMY_AVANTOE),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39772, 39773, 39774, 39775, 39776,
-				39842, 39843, 39844, 39845, 39846
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Avantoe herbs"),
-				new ReplaceTarget("Herb patch", "Avantoe herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick avantoe.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Avantoe")
+            .addToStorage(ItemID.UNIDENTIFIED_AVANTOE),
 
-			// Pick toadflax.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Toadflax herbs"
-			).onMenuImpostor(
-				39781,
-				39851
-			).addToStorage(ItemId.GRIMY_TOADFLAX),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39777, 39778, 39779, 39780, 39781,
-				39847, 39848, 39849, 39850, 39851
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Toadflax herbs"),
-				new ReplaceTarget("Herb patch", "Toadflax herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick toadflax.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Toadflax")
+            .addToStorage(ItemID.UNIDENTIFIED_TOADFLAX),
 
-			// Pick kwuarm.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Kwuarm herbs"
-			).onMenuImpostor(
-				39786,
-				39856
-			).addToStorage(ItemId.GRIMY_KWUARM),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39782, 39783, 39784, 39785, 39786,
-				39852, 39853, 39854, 39855, 39856
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Kwuarm herbs"),
-				new ReplaceTarget("Herb patch", "Kwuarm herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick kwuarm.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Kwuarm")
+            .addToStorage(ItemID.UNIDENTIFIED_KWUARM),
 
-			// Pick huasca.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Huasca herbs"
-			).onMenuImpostor(
-				55351,
-				55346
-			).addToStorage(ItemId.GRIMY_HUASCA),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				55342, 55343, 55344, 55345, 55346,
-				55347, 55348, 55349, 55350, 55351
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Huasca herbs"),
-				new ReplaceTarget("Herb patch", "Huasca herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick huasca.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Huasca")
+            .addToStorage(ItemID.UNIDENTIFIED_HUASCA),
 
-			// Pick cadantine.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Cadantine herbs"
-			).onMenuImpostor(
-				39791,
-				39861
-			).addToStorage(ItemId.GRIMY_CADANTINE),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39787, 39788, 39789, 39790, 39791,
-				39857, 39858, 39859, 39860, 39861
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Cadantine herbs"),
-				new ReplaceTarget("Herb patch", "Cadantine herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick cadantine.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Cadantine")
+            .addToStorage(ItemID.UNIDENTIFIED_CADANTINE),
 
-			// Pick lantadyme.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs", "Lantadyme herbs").onMenuImpostor(39796, 39866).addToStorage(ItemId.GRIMY_LANTADYME),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39792, 39793, 39794, 39795, 39796,
-				39862, 39863, 39864, 39865, 39866
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Lantadyme herbs"),
-				new ReplaceTarget("Herb patch", "Lantadyme herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick lantadyme.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Lantadyme")
+            .addToStorage(ItemID.UNIDENTIFIED_LANTADYME),
 
-			// Pick dwarf weed.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Dwarf weed herbs"
-			).onMenuImpostor(
-				39801,
-				39871
-			).addToStorage(ItemId.GRIMY_DWARF_WEED),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39797, 39798, 39799, 39800, 39801,
-				39867, 39868, 39869, 39870, 39871
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Dwarf weed herbs"),
-				new ReplaceTarget("Herb patch", "Dwarf weed herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick dwarf weed.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Dwarf weed")
+            .addToStorage(ItemID.UNIDENTIFIED_DWARF_WEED),
 
-			// Pick torstol.
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Torstol herbs"
-			).onMenuImpostor(
-				39806,
-				39876
-			).addToStorage(ItemId.GRIMY_TORSTOL),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39802, 39803, 39804, 39805, 39806,
-				39872, 39873, 39874, 39875, 39876
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Torstol herbs"),
-				new ReplaceTarget("Herb patch", "Torstol herbs")
-			).onMenuTarget("Herbs").onHover(),
+            // Pick torstol.
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Torstol")
+            .addToStorage(ItemID.UNIDENTIFIED_TORSTOL),
 
-			// Pick snapdragon
-			new OnXpDrop(Skill.FARMING).requiredItem(ItemId.HERB_SACK_OPEN).onMenuOption("Pick").onMenuTarget("Herbs",
-				"Snapdragon herbs"
-			).onMenuImpostor(
-				39811,
-				39881
-			).addToStorage(ItemId.GRIMY_SNAPDRAGON),
-			new OnMenuEntryAdded().isReplaceImpostorId(
-				39807, 39808, 39809, 39810, 39811,
-				39877, 39878, 39879, 39880, 39881
-			).replaceTargets(
-				new ReplaceTarget("Herbs", "Snapdragon herbs"),
-				new ReplaceTarget("Herb patch", "Snapdragon herbs")
-			).onMenuTarget("Herbs").onHover()
-		));
-	}
+            // Pick snapdragon
+            new OnXpDrop(Skill.FARMING).requiredItem(openItemId).onMenuOption("Pick").onMenuTarget("Snapdragon")
+            .addToStorage(ItemID.UNIDENTIFIED_SNAPDRAGON),
+
+            // Config menu
+            new OnConfigMenuOpened(provider, getConfigKey())
+        ));
+    }
 }

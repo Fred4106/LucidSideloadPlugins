@@ -1,24 +1,27 @@
 package com.fred4106.improvedCharges.items.utils;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import net.runelite.api.Skill;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItemWithStatus;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
 import com.fred4106.improvedCharges.item.triggers.OnXpDrop;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import net.runelite.api.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
-import java.util.List;
+import java.util.*;
 
 public class U_AshSanctifier extends ChargedItemWithStatus {
-    public U_AshSanctifier(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.ASH_SANCTIFIER, ItemId.ASH_SANCTIFIER, provider);
+    public U_AshSanctifier(Provider provider) {
+        super(FredsItemChargesConfig.ash_sanctifier, ItemID.ASH_SANCTIFIER, provider);
+
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.ASH_SANCTIFIER),
+            new TriggerItem(ItemID.ASH_SANCTIFIER),
         };
+
         this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("(The|Your) ash sanctifier has (?<charges>.+) charges?( left)?. It has been deactivated").setDynamicallyCharges().deactivate(),
@@ -38,10 +41,7 @@ public class U_AshSanctifier extends ChargedItemWithStatus {
             new OnMenuEntryAdded("Destroy").hide(),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Ash sanctifier using (?<deathrune>.+)x Death rune.").matcherConsumer(m -> {
-                final int deathRunes = Integer.parseInt(m.group("deathrune"));
-                increaseCharges(deathRunes * 10);
-            })
+            new OnAutoChargeMessage("Ash sanctifier", "Death rune", 10, this)
         ));
     }
 }

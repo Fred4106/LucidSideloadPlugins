@@ -1,20 +1,28 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.OnWidgetLoaded;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_XericsTalisman extends ChargedItem {
-    public J_XericsTalisman(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.XERICS_TALISMAN, ItemId.XERICS_TALISMAN, provider);
+    public J_XericsTalisman(Provider provider) {
+        super(FredsItemChargesConfig.xerics_talisman, ItemID.XERIC_TALISMAN, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.XERICS_TALISMAN_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.XERICS_TALISMAN),
+            new TriggerItem(ItemID.XERIC_TALISMAN_EMPTY).fixedCharges(0),
+            new TriggerItem(ItemID.XERIC_TALISMAN),
         };
 
         this.triggers.addAll(List.of(
@@ -32,10 +40,7 @@ public class J_XericsTalisman extends ChargedItem {
             new OnMenuEntryAdded("Rub").replaceOption("Teleport"),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Xeric's talisman using (?<lizardmanfang>.+)x Lizardman fang.").matcherConsumer(m -> {
-                final int lizardmanFangs = Integer.parseInt(m.group("lizardmanfang"));
-                increaseCharges(lizardmanFangs);
-            })
+            new OnAutoChargeMessage("Xeric's talisman", "Lizardman fang", 1, this)
         ));
     }
 }

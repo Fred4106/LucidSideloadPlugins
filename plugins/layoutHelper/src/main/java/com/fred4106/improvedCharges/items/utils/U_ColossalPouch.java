@@ -1,37 +1,44 @@
 package com.fred4106.improvedCharges.items.utils;
 
 import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
-import com.fred4106.improvedCharges.store.*;
-import net.runelite.api.Skill;
-import com.fred4106.improvedCharges.Constants;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
-import com.fred4106.improvedCharges.item.triggers.*;
-import com.fred4106.improvedCharges.store.ids.ItemContainerId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.OnMenuOptionClicked;
+import com.fred4106.improvedCharges.item.triggers.OnStatChanged;
+import com.fred4106.improvedCharges.item.triggers.OnVarbitChanged;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
+import net.runelite.api.*;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.ids.*;
 
 import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 
-import static com.fred4106.improvedCharges.FredsItemChargesPlugin.getNumberFromWordRepresentation;
-import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
-
+import static com.fred4106.improvedCharges.FredsItemChargesPlugin.*;
 public class U_ColossalPouch extends ChargedItemWithStorageEmptyable {
-    public U_ColossalPouch(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.COLOSSAL_POUCH, ItemId.COLOSSAL_POUCH, provider);
+    public U_ColossalPouch(Provider provider) {
+        super(FredsItemChargesConfig.colossal_pouch, ItemID.RCU_POUCH_COLOSSAL, provider);
         this.storage = storage.storableItems(
-            new StorableItem(ItemId.RUNE_ESSENCE),
-            new StorableItem(ItemId.PURE_ESSENCE),
-            new StorableItem(ItemId.DAEYALT_ESSENCE),
-            new StorableItem(ItemId.GUARDIAN_ESSENCE)
+            new StorableItem(ItemID.BLANKRUNE),
+            new StorableItem(ItemID.BLANKRUNE_HIGH),
+            new StorableItem(ItemID.BLANKRUNE_DAEYALT),
+            new StorableItem(ItemID.GOTR_GUARDIAN_ESSENCE)
         ).setMaximumTotalQuantity(40).setHoldsSingleType(true);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.COLOSSAL_POUCH),
-            new TriggerItem(ItemId.COLOSSAL_POUCH_DEGRADED),
+            new TriggerItem(ItemID.RCU_POUCH_COLOSSAL),
+            new TriggerItem(ItemID.RCU_POUCH_COLOSSAL_DEGRADE),
         };
 
         this.triggers.addAll(List.of(
@@ -40,29 +47,29 @@ public class U_ColossalPouch extends ChargedItemWithStorageEmptyable {
 
             // Guardians of the rift.
             new OnChatMessage("The rift becomes active!").consumer(() -> {
-                storage.put(ItemId.GUARDIAN_ESSENCE, 0);
+                storage.put(ItemID.GOTR_GUARDIAN_ESSENCE, 0);
             }),
             new OnVarbitChanged(13691, 0).consumer(() -> {
-                storage.put(ItemId.GUARDIAN_ESSENCE, 0);
+                storage.put(ItemID.GOTR_GUARDIAN_ESSENCE, 0);
             }),
 
             // Check.
             new OnChatMessage("There (is|are) (?<quantity>.+?) (?<essence>normal|pure|daeyalt|guardian|normal) essences? in this pouch.").matcherConsumer((m) -> {
-                final int quantity = getNumberFromWordRepresentation(m.group("quantity"));
+                int quantity = getNumberFromWordRepresentation(m.group("quantity"));
 
                 int essenceId;
                 switch (m.group("essence")) {
                     case "normal":
-                        essenceId = ItemId.RUNE_ESSENCE;
+                        essenceId = ItemID.BLANKRUNE;
                         break;
                     case "pure":
-                        essenceId = ItemId.PURE_ESSENCE;
+                        essenceId = ItemID.BLANKRUNE_HIGH;
                         break;
                     case "daeyalt":
-                        essenceId = ItemId.DAEYALT_ESSENCE;
+                        essenceId = ItemID.BLANKRUNE_DAEYALT;
                         break;
                     case "guardian":
-                        essenceId = ItemId.GUARDIAN_ESSENCE;
+                        essenceId = ItemID.GOTR_GUARDIAN_ESSENCE;
                         break;
                     default:
                         return;
@@ -73,34 +80,34 @@ public class U_ColossalPouch extends ChargedItemWithStorageEmptyable {
 
             // Decay.
             new OnChatMessage("Your pouch has decayed through use.").onMenuOption("Fill").consumer(() -> {
-                provider.configManager.setConfiguration(Constants.GROUP, Constants.COLOSSAL_POUCH_DECAY_COUNT, provider.config.getColossalPouchDecayCount() + 1);
+                provider.configManager.setConfiguration(FredsItemChargesConfig.group, FredsItemChargesConfig.colossal_pouch_decay_count, provider.config.getColossalPouchDecayCount() + 1);
                 storage.setMaximumTotalQuantity(getPouchCapacity());
             }),
 
             // Repair.
             new OnChatMessage("Fine. A simple transfiguration spell should resolve things for you.").consumer(() -> {
-                provider.configManager.setConfiguration(Constants.GROUP, Constants.COLOSSAL_POUCH_DECAY_COUNT, 0);
+                provider.configManager.setConfiguration(FredsItemChargesConfig.group, FredsItemChargesConfig.colossal_pouch_decay_count, 0);
                 storage.setMaximumTotalQuantity(getPouchCapacity());
             }),
 
             // Fill from inventory.
             new OnMenuOptionClicked("Fill").runConsumerOnNextGameTick(() -> {
-                if (provider.store.inventoryContainsItem(ItemId.GUARDIAN_ESSENCE)) {
-                    storage.add(ItemId.GUARDIAN_ESSENCE, provider.store.getInventoryItemQuantity(ItemId.GUARDIAN_ESSENCE));
-                } else if (provider.store.inventoryContainsItem(ItemId.DAEYALT_ESSENCE)) {
-                    storage.add(ItemId.DAEYALT_ESSENCE, provider.store.getInventoryItemQuantity(ItemId.DAEYALT_ESSENCE));
-                } else if (provider.store.inventoryContainsItem(ItemId.PURE_ESSENCE)) {
-                    storage.add(ItemId.PURE_ESSENCE, provider.store.getInventoryItemQuantity(ItemId.PURE_ESSENCE));
-                } else if (provider.store.inventoryContainsItem(ItemId.RUNE_ESSENCE)) {
-                    storage.add(ItemId.RUNE_ESSENCE, provider.store.getInventoryItemQuantity(ItemId.RUNE_ESSENCE));
+                if (provider.store.inventoryContainsItem(ItemID.GOTR_GUARDIAN_ESSENCE)) {
+                    storage.add(ItemID.GOTR_GUARDIAN_ESSENCE, provider.store.getInventoryItemQuantity(ItemID.GOTR_GUARDIAN_ESSENCE));
+                } else if (provider.store.inventoryContainsItem(ItemID.BLANKRUNE_DAEYALT)) {
+                    storage.add(ItemID.BLANKRUNE_DAEYALT, provider.store.getInventoryItemQuantity(ItemID.BLANKRUNE_DAEYALT));
+                } else if (provider.store.inventoryContainsItem(ItemID.BLANKRUNE_HIGH)) {
+                    storage.add(ItemID.BLANKRUNE_HIGH, provider.store.getInventoryItemQuantity(ItemID.BLANKRUNE_HIGH));
+                } else if (provider.store.inventoryContainsItem(ItemID.BLANKRUNE)) {
+                    storage.add(ItemID.BLANKRUNE, provider.store.getInventoryItemQuantity(ItemID.BLANKRUNE));
                 }
             }),
 
             // Use essence on pouch.
             new OnMenuOptionClicked("Use").menuOptionConsumer(advancedMenuEntry -> {
-                final Optional<StorageItem> essence = getStorageItemFromName(advancedMenuEntry.target, 0);
+                Optional<StorageItem> essence = getStorageItemFromName(advancedMenuEntry.target, 0);
                 if (essence.isPresent()) {
-                    essence.get().setQuantity(provider.store.getInventoryItemQuantity(essence.get().getId()));
+                    essence.get().setQuantity(provider.store.getInventoryItemQuantity(essence.get().itemId));
                     provider.store.nextTickQueue.add(() -> storage.add(essence));
                 }
             }).onUseStorageItemOnChargedItem(storage.getStorableItems()),
@@ -111,10 +118,10 @@ public class U_ColossalPouch extends ChargedItemWithStorageEmptyable {
             }),
 
             // Empty to inventory at bank.
-            new OnItemContainerChanged(ItemContainerId.INVENTORY).onMenuOption(FredsItemChargesPlugin.menuOptionEmptyToInventory).emptyStorageToInventory(),
+            new OnItemContainerChanged(InventoryID.INV).onMenuOption(FredsItemChargesPlugin.menuOptionEmptyToInventory).emptyStorageToInventory(),
 
             // Fill from inventory at bank.
-            new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onMenuOption(FredsItemChargesPlugin.menuOptionFillFromInventory),
+            new OnItemContainerChanged(InventoryID.INV).fillStorageFromInventory().onMenuOption(FredsItemChargesPlugin.menuOptionFillFromInventory),
 
             // Replace "Fill" with proper Fill/Empty option.
             new OnMenuEntryAdded("Fill").replaceOptionConsumer(() -> getMenuOptionForUse()).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
@@ -134,7 +141,7 @@ public class U_ColossalPouch extends ChargedItemWithStorageEmptyable {
     }
 
     @Override
-    public Color getTextColor(final int itemId) {
+    public Color getTextColor(int itemId) {
         return getTotalTextColor();
     }
 
@@ -151,14 +158,14 @@ public class U_ColossalPouch extends ChargedItemWithStorageEmptyable {
         return super.getTotalTextColor();
     }
 
-    private final int[] CAPACITY_85 = {40, 35, 30, 25, 20, 15, 10, 5};
-    private final int[] CAPACITY_75 = {27, 23, 20, 16, 13, 10, 6, 3};
-    private final int[] CAPACITY_50 = {16, 14, 12, 10, 8, 6, 4, 2};
-    private final int[] CAPACITY_25 = {8, 5, 2}; // TODO: verify these
+    private int[] CAPACITY_85 = {40, 35, 30, 25, 20, 15, 10, 5};
+    private int[] CAPACITY_75 = {27, 23, 20, 16, 13, 10, 6, 3};
+    private int[] CAPACITY_50 = {16, 14, 12, 10, 8, 6, 4, 2};
+    private int[] CAPACITY_25 = {8, 5, 2}; // TODO: verify these
 
     public int getPouchCapacity() {
-        final int decayCount = provider.config.getColossalPouchDecayCount();
-        final int runecraftLevel = provider.client.getRealSkillLevel(Skill.RUNECRAFT);
+        int decayCount = provider.config.getColossalPouchDecayCount();
+        int runecraftLevel = provider.client.getRealSkillLevel(Skill.RUNECRAFT);
 
         if (runecraftLevel >= 85) {
             return CAPACITY_85[Math.min(CAPACITY_85.length - 1, decayCount)];

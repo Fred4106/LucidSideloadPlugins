@@ -1,24 +1,26 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.item.triggers.OnAnimationChanged;
-import com.fred4106.improvedCharges.store.ids.AnimationId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
+import com.fred4106.improvedCharges.item.triggers.OnAnimationChanged;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_RingOfShadows extends ChargedItem {
-    public J_RingOfShadows(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.RING_OF_SHADOWS, ItemId.RING_OF_SHADOWS, provider);
+    public J_RingOfShadows(Provider provider) {
+        super(FredsItemChargesConfig.ring_of_shadows, ItemID.RING_OF_SHADOWS, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.RING_OF_SHADOWS_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.RING_OF_SHADOWS)
+            new TriggerItem(ItemID.RING_OF_SHADOWS_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.RING_OF_SHADOWS)
         };
 
         this.triggers.addAll(List.of(
@@ -32,13 +34,10 @@ public class J_RingOfShadows extends ChargedItem {
             new OnChatMessage("You add .+ charges? to the ring of shadows. It now has (?<charges>.+) charges?.").setDynamicallyCharges(),
 
             // Teleport.
-            new OnAnimationChanged(AnimationId.RING_OF_SHADOWS_TELEPORT).decreaseCharges(1),
+            new OnAnimationChanged(AnimationID.MAHJARRAT_HUMAN_DISAPPEAR_01_NOHELD_QUICK).decreaseCharges(1),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Ring of shadows using (?<bloodrune>.+)x Blood rune.*").matcherConsumer(m -> {
-                final int bloodRunes = Integer.parseInt(m.group("ringofrecoil"));
-                increaseCharges(bloodRunes);
-            })
+            new OnAutoChargeMessage("Ring of shadows", "Blood rune", 1, this)
         ));
     }
 }

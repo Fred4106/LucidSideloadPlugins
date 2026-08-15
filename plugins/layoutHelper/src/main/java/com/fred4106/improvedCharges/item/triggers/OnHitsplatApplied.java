@@ -3,12 +3,13 @@ package com.fred4106.improvedCharges.item.triggers;
 import com.fred4106.improvedCharges.store.enums.CombatStyle;
 import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
+import com.fred4106.improvedCharges.store.enums.*;
 
 import java.util.Optional;
 
 public class OnHitsplatApplied extends TriggerBase {
-    public final HitsplatTarget hitsplatTarget;
-    public final HitsplatGroup hitsplatGroup;
+    public HitsplatTarget hitsplatTarget;
+    public HitsplatGroup hitsplatGroup;
 
     public Optional<Boolean> moreThanZeroDamage = Optional.empty();
     public Optional<String[]> hasTargetName = Optional.empty();
@@ -16,7 +17,7 @@ public class OnHitsplatApplied extends TriggerBase {
     public Optional<CombatStyle> combatStyle = Optional.empty();
     public int triggerTick = 0;
 
-    public OnHitsplatApplied(final HitsplatTarget hitsplatTarget, final HitsplatGroup hitsplatGroup) {
+    public OnHitsplatApplied(HitsplatTarget hitsplatTarget, HitsplatGroup hitsplatGroup) {
         this.hitsplatTarget = hitsplatTarget;
         this.hitsplatGroup = hitsplatGroup;
     }
@@ -26,7 +27,7 @@ public class OnHitsplatApplied extends TriggerBase {
         return this;
     }
 
-    public OnHitsplatApplied hasTargetName(final String ...name) {
+    public OnHitsplatApplied hasTargetName(String ...name) {
         this.hasTargetName = Optional.of(name);
         return this;
     }
@@ -36,7 +37,7 @@ public class OnHitsplatApplied extends TriggerBase {
         return this;
     }
 
-    public OnHitsplatApplied combatStyle(final CombatStyle combatStyle) {
+    public OnHitsplatApplied combatStyle(CombatStyle combatStyle) {
         this.combatStyle = Optional.of(combatStyle);
         return this;
     }

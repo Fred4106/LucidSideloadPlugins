@@ -1,9 +1,12 @@
 package com.fred4106.improvedCharges.item.triggers;
 
-import java.util.Optional;
+import com.fred4106.improvedCharges.store.ids.ChargeId;
+import com.fred4106.improvedCharges.store.ids.*;
+
+import java.util.*;
 
 public class TriggerItem {
-    public final int itemId;
+    public int itemId;
 
     public Optional<Boolean> quantityCharges = Optional.empty();
     public Optional<Boolean> hideOverlay = Optional.empty();
@@ -11,12 +14,17 @@ public class TriggerItem {
     public Optional<Integer> maxCharges = Optional.empty();
     public Optional<Integer> fixedCharges = Optional.empty();
 
-    public TriggerItem(final int itemId) {
+    public TriggerItem(int itemId) {
         this.itemId = itemId;
     }
 
-    public TriggerItem fixedCharges(final int charges) {
+    public TriggerItem fixedCharges(int charges) {
         this.fixedCharges = Optional.of(charges);
+        return this;
+    }
+
+    public TriggerItem unlimitedCharges() {
+        this.fixedCharges = Optional.of(ChargeId.UNLIMITED);
         return this;
     }
 
@@ -35,7 +43,7 @@ public class TriggerItem {
         return this;
     }
 
-    public TriggerItem maxCharges(final int charges) {
+    public TriggerItem maxCharges(int charges) {
         this.maxCharges = Optional.of(charges);
         return this;
     }

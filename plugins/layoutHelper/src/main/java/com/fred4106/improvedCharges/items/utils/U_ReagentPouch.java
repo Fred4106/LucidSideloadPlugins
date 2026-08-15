@@ -1,143 +1,145 @@
 package com.fred4106.improvedCharges.items.utils;
 
 import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
-import net.runelite.api.Skill;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
-import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.OnMenuOptionClicked;
+import com.fred4106.improvedCharges.item.triggers.OnXpDrop;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
+import net.runelite.api.*;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.ids.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import static com.fred4106.improvedCharges.FredsItemChargesPlugin.getNumberFromWordRepresentation;
-import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
-
+import static com.fred4106.improvedCharges.FredsItemChargesPlugin.*;
 public class U_ReagentPouch extends ChargedItemWithStorageEmptyable {
-    public U_ReagentPouch(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.REAGENT_POUCH, ItemId.REAGENT_POUCH, provider);
-		storage.emptyIsNegative().setMaximumIndividualQuantity(26).storableItems(
-			new StorableItem(ItemId.EYE_OF_NEWT).checkName("Eye of newt"),
-			new StorableItem(ItemId.LIMPWURT_ROOT).checkName("Limpwurt root"),
-			new StorableItem(ItemId.RED_SPIDERS_EGGS).checkName("Red spider's eggs", "eggs"),
-			new StorableItem(ItemId.TOADS_LEGS).checkName("Toad's legs", "toad legs"),
-			new StorableItem(ItemId.SNAPE_GRASS).checkName("Snape grass"),
-			new StorableItem(ItemId.MORT_MYRE_FUNGUS).checkName("Mort myre fungus", "Mort Myre fungi"),
-			new StorableItem(ItemId.WHITE_BERRIES).checkName("White berries"),
-			new StorableItem(ItemId.JANGERBERRIES).checkName("Jangerberries"),
-			new StorableItem(ItemId.POISON_IVY_BERRIES).checkName("Poison ivy berries"),
-			new StorableItem(ItemId.POTATO_CACTUS).checkName("Potato cactus"),
-			new StorableItem(ItemId.CACTUS_SPINE).checkName("Cactus spine"),
-			new StorableItem(ItemId.ASHES).checkName("Ashes"),
-			new StorableItem(ItemId.CHOCOLATE_DUST).checkName("Chocolate dust"),
-			new StorableItem(ItemId.DRAGON_SCALE_DUST).checkName("Dragon scale dust", "dragon scale"),
-			new StorableItem(ItemId.GOAT_HORN_DUST).checkName("Goat horn dust", "ground desert goat horn"),
-			new StorableItem(ItemId.GORAK_CLAW_POWDER).checkName("Gorak claw powder"),
-			new StorableItem(ItemId.KEBBIT_TEETH_DUST).checkName("Kebbit teeth dust", "ground kebbit teeth"),
-			new StorableItem(ItemId.SILVER_DUST).checkName("Silver dust"),
-			new StorableItem(ItemId.UNICORN_HORN_DUST).checkName("Unicorn horn dust", "unicorn horn"),
-			new StorableItem(ItemId.WINE_OF_ZAMORAK).checkName("Wine of zamorak", "wine"),
-			new StorableItem(ItemId.ALDARIUM).checkName("Aldarium"),
-			new StorableItem(ItemId.YEW_ROOTS).checkName("Yew roots"),
-			new StorableItem(ItemId.MAGIC_ROOTS).checkName("Magic roots"),
-			new StorableItem(ItemId.CRUSHED_NEST).checkName("Crushed nest", "crushed bird nest"),
-			new StorableItem(ItemId.CRUSHED_SUPERIOR_DRAGON_BONES).checkName("Crushed superior dragon bones"),
-			new StorableItem(ItemId.NAIL_BEAST_NAILS).checkName("Nail beast nails"),
-			new StorableItem(ItemId.LILY_OF_THE_SANDS).checkName("Lily of the sands"),
-			new StorableItem(ItemId.CAVIAR).checkName("Caviar"),
-			new StorableItem(ItemId.ROE).checkName("Roe"),
-			new StorableItem(ItemId.SQUID_PASTE).checkName("Squid paste"),
-			new StorableItem(ItemId.DEMONIC_TALLOW).checkName("Demonic tallow"),
-			new StorableItem(ItemId.HADDOCK_EYE).checkName("Haddock eye")
-		);
+    public U_ReagentPouch(Provider provider) {
+        super(FredsItemChargesConfig.reagent_pouch, ItemID.MM_SECONDARY_POUCH, provider);
+        storage.emptyIsNegative().setMaximumIndividualQuantity(26).storableItems(
+            new StorableItem(ItemID.EYE_OF_NEWT).checkName("Eye of newt"),
+            new StorableItem(ItemID.LIMPWURT_ROOT).checkName("Limpwurt root"),
+            new StorableItem(ItemID.RED_SPIDERS_EGGS).checkName("Red spider's eggs", "eggs"),
+            new StorableItem(ItemID.TOADS_LEGS).checkName("Toad's legs", "toad legs"),
+            new StorableItem(ItemID.SNAPE_GRASS).checkName("Snape grass"),
+            new StorableItem(ItemID.MORTMYREMUSHROOM).checkName("Mort myre fungus", "Mort Myre fungi"),
+            new StorableItem(ItemID.WHITE_BERRIES).checkName("White berries"),
+            new StorableItem(ItemID.JANGERBERRIES).checkName("Jangerberries"),
+            new StorableItem(ItemID.POISONIVY_BERRIES).checkName("Poison ivy berries"),
+            new StorableItem(ItemID.CACTUS_POTATO).checkName("Potato cactus"),
+            new StorableItem(ItemID.CACTUS_SPINE).checkName("Cactus spine"),
+            new StorableItem(ItemID.ASHES).checkName("Ashes"),
+            new StorableItem(ItemID.CHOCOLATE_DUST).checkName("Chocolate dust"),
+            new StorableItem(ItemID.DRAGON_SCALE_DUST).checkName("Dragon scale dust", "dragon scale"),
+            new StorableItem(ItemID.GROUND_DESERT_GOAT_HORN).checkName("Goat horn dust", "ground desert goat horn"),
+            new StorableItem(ItemID.FAIRYTALE2_GROUND_GORAK_CLAWS).checkName("Gorak claw powder"),
+            new StorableItem(ItemID.HUNTINGBEAST_SABRETEETH_DUST).checkName("Kebbit teeth dust", "ground kebbit teeth"),
+            new StorableItem(ItemID.SILVER_DUST).checkName("Silver dust"),
+            new StorableItem(ItemID.UNICORN_HORN_DUST).checkName("Unicorn horn dust", "unicorn horn"),
+            new StorableItem(ItemID.WINE_OF_ZAMORAK).checkName("Wine of zamorak", "wine"),
+            new StorableItem(ItemID.ALDARIUM).checkName("Aldarium"),
+            new StorableItem(ItemID.YEW_ROOTS).checkName("Yew roots"),
+            new StorableItem(ItemID.MAGIC_ROOTS).checkName("Magic roots"),
+            new StorableItem(ItemID.CRUSHED_BIRD_NEST).checkName("Crushed nest", "crushed bird nest"),
+            new StorableItem(ItemID.CRUSHED_DRAGON_BONES).checkName("Crushed superior dragon bones"),
+            new StorableItem(ItemID.NAIL_BEAST_NAIL).checkName("Nail beast nails"),
+            new StorableItem(ItemID.LILY_OF_THE_SANDS).checkName("Lily of the sands"),
+            new StorableItem(ItemID.BRUT_CAVIAR).checkName("Caviar"),
+            new StorableItem(ItemID.BRUT_ROE).checkName("Roe"),
+            new StorableItem(ItemID.SQUID_PASTE).checkName("Squid paste"),
+            new StorableItem(ItemID.DEMONIC_TALLOW).checkName("Demonic tallow"),
+            new StorableItem(ItemID.HADDOCK_EYE).checkName("Haddock eye")
+        );
 
-		this.items = new TriggerItem[]{
-			new TriggerItem(ItemId.REAGENT_POUCH),
-			new TriggerItem(ItemId.REAGENT_POUCH_OPEN),
-		};
+        this.items = new TriggerItem[]{
+            new TriggerItem(ItemID.MM_SECONDARY_POUCH),
+            new TriggerItem(ItemID.MM_SECONDARY_POUCH_OPEN),
+        };
 
-		this.triggers.addAll(List.of(
-			// Check empty.
-			new OnChatMessage("The Reagent pouch is empty.").emptyStorage(),
+        this.triggers.addAll(List.of(
+            // Check empty.
+            new OnChatMessage("The Reagent pouch is empty.").emptyStorage(),
 
-			// Check.
-			new OnChatMessage("You look in your Reagent pouch and see:").emptyStorage(),
-			new OnChatMessage("(?<amount>.+) x (?<item>.+)").matcherConsumer(m -> {
-				final Optional<StorageItem> item = getStorageItemFromName(m.group("item"), Integer.parseInt(m.group("amount")));
-				storage.put(item);
-			}).hasChatMessage("You look in your Reagent pouch and see:"),
+            // Check.
+            new OnChatMessage("You look in your Reagent pouch and see:").emptyStorage(),
+            new OnChatMessage("(?<amount>.+) x (?<item>.+)").matcherConsumer(m -> {
+                Optional<StorageItem> item = getStorageItemFromName(m.group("item"), Integer.parseInt(m.group("amount")));
+                storage.put(item);
+            }).hasChatMessage("You look in your Reagent pouch and see:"),
 
-			// Pick up.
-			new OnChatMessage("You put the (?<item>.+) into your Reagent pouch.").matcherConsumer(m -> {
-				final Optional<StorageItem> item = getStorageItemFromName(m.group("item"), 1);
-				storage.add(item);
-			}),
+            // Pick up.
+            new OnChatMessage("You put the (?<item>.+) into your Reagent pouch.").matcherConsumer(m -> {
+                Optional<StorageItem> item = getStorageItemFromName(m.group("item"), 1);
+                storage.add(item);
+            }),
 
-			// Empty to bank.
-			new OnChatMessage("You empty your pouch into the bank").onItemClick().emptyStorage(),
+            // Empty to bank.
+            new OnChatMessage("You empty your Reagent pouch into the bank.").onItemClick().emptyStorage(),
 
-			// Empty to inventory.
-			new OnItemContainerChanged(INVENTORY).emptyStorageToInventory().onMenuOption("Empty"),
+            // Empty to inventory.
+            new OnItemContainerChanged(InventoryID.INV).emptyStorageToInventory().onMenuOption("Empty"),
 
-			// Fill from inventory.
-			new OnItemContainerChanged(INVENTORY).onInventoryDifference(inventoryDifference -> {
-				for (final StorageItem inventoryDifferenceItem : inventoryDifference.getItems()) {
-					// Item was put into the reagent pouch, but there is more in inventory, meaning that item is filled to maximum.
-					if (provider.store.inventory.hasItem(inventoryDifferenceItem.getId())) {
-						storage.put(inventoryDifferenceItem.getId(), 26);
-					}
-				}
-			}).onMenuOption("Fill", FredsItemChargesPlugin.menuOptionFillFromInventory),
+            // Fill from inventory.
+            new OnItemContainerChanged(InventoryID.INV).onInventoryDifference(inventoryDifference -> {
+                for (StorageItem inventoryDifferenceItem : inventoryDifference.getItems()) {
+                    // Item was put into the reagent pouch, but there is more in inventory, meaning that item is filled to maximum.
+                    if (provider.store.inventory.hasItem(inventoryDifferenceItem.itemId)) {
+                        storage.put(inventoryDifferenceItem.itemId, 26);
+                    }
+                }
+            }).onMenuOption("Fill", FredsItemChargesPlugin.menuOptionFillFromInventory),
 
-			new OnMenuOptionClicked("Fill", FredsItemChargesPlugin.menuOptionFillFromInventory).consumer(() -> {
-				for (final StorageItem item : provider.store.inventory.getItems()) {
-					storage.add(item);
-				}
-			}),
+            new OnMenuOptionClicked("Fill", FredsItemChargesPlugin.menuOptionFillFromInventory).consumer(() -> {
+                for (StorageItem item : provider.store.inventory.getItems()) {
+                    provider.store.addConsumerToNextTickQueue(() -> storage.add(item));
+                }
+            }),
 
-			// Replace "Use" with proper Fill/Empty option.
-			new OnMenuEntryAdded("Use").replaceOptionConsumer(this::getMenuOptionForUse).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
+            // Mix potions.
+            new OnChatMessage("You mix the (?<item>.+) into (your|the unfinished)( antifire)? (potion|antidote\\+\\+).*").matcherConsumer((m) -> {
+                Optional<StorageItem> item = getStorageItemFromName(m.group("item"), 1);
+                storage.remove(item);
+            }).requiredItem(ItemID.MM_SECONDARY_POUCH_OPEN),
 
-			// Mix potions.
-			new OnChatMessage("You mix the (?<item>.+) into (your|the unfinished)( antifire)? (potion|antidote\\+\\+).*").matcherConsumer((m) -> {
-				final Optional<StorageItem> item = getStorageItemFromName(m.group("item"), 1);
-				storage.remove(item);
-			}).requiredItem(ItemId.REAGENT_POUCH_OPEN),
+            // Harvesting
+            new OnXpDrop(Skill.FARMING).onMenuOption("Harvest").onMenuTarget("Snape grass plant").addToStorage(ItemID.SNAPE_GRASS, 1),
+            new OnChatMessage("You pick (?<quantity>.+) mushrooms? from the log.").matcherConsumer(m -> {
+                storage.add(ItemID.MORTMYREMUSHROOM, getNumberFromWordRepresentation(m.group("quantity")));
+            }),
+            new OnChatMessage("You pick some whiteberries.").requiredItem(ItemID.MM_SECONDARY_POUCH_OPEN).consumer(() -> {
+                storage.add(ItemID.WHITE_BERRIES, 1);
+            }),
+            new OnChatMessage("You pick some jangerberries.").requiredItem(ItemID.MM_SECONDARY_POUCH_OPEN).consumer(() -> {
+                storage.add(ItemID.JANGERBERRIES, 1);
+            }),
+            new OnChatMessage("You pick some poison ivy berries.").requiredItem(ItemID.MM_SECONDARY_POUCH_OPEN).consumer(() -> {
+                storage.add(ItemID.POISONIVY_BERRIES, 1);
+            }),
+            new OnChatMessage("You carefully pick a potato cactus.").requiredItem(ItemID.MM_SECONDARY_POUCH_OPEN).consumer(() -> {
+                storage.add(ItemID.CACTUS_POTATO, 1);
+            }),
+            new OnChatMessage("You carefully pick a spine from the cactus.").consumer(() -> {
+                storage.add(ItemID.CACTUS_SPINE, 1);
+            }),
 
-			// Harvesting
-			new OnXpDrop(Skill.FARMING).onMenuOption("Harvest").onMenuTarget("Snape grass plant").addToStorage(ItemId.SNAPE_GRASS, 1),
-			new OnChatMessage("You pick (?<quantity>.+) mushrooms? from the log.").matcherConsumer(m -> {
-				storage.add(ItemId.MORT_MYRE_FUNGUS, getNumberFromWordRepresentation(m.group("quantity")));
-			}),
-			new OnChatMessage("You pick some whiteberries.").requiredItem(ItemId.REAGENT_POUCH_OPEN).consumer(() -> {
-				storage.add(ItemId.WHITE_BERRIES, 1);
-			}),
-			new OnChatMessage("You pick some jangerberries.").requiredItem(ItemId.REAGENT_POUCH_OPEN).consumer(() -> {
-				storage.add(ItemId.JANGERBERRIES, 1);
-			}),
-			new OnChatMessage("You pick some poison ivy berries.").requiredItem(ItemId.REAGENT_POUCH_OPEN).consumer(() -> {
-				storage.add(ItemId.POISON_IVY_BERRIES, 1);
-			}),
-			new OnChatMessage("You carefully pick a potato cactus.").requiredItem(ItemId.REAGENT_POUCH_OPEN).consumer(() -> {
-				storage.add(ItemId.POTATO_CACTUS, 1);
-			}),
-			new OnChatMessage("You carefully pick a spine from the cactus.").consumer(() -> {
-				storage.add(ItemId.CACTUS_SPINE, 1);
-			}),
+            // Replace "Empty" with proper "Empty to bank".
+            new OnMenuEntryAdded("Empty").replaceOption(FredsItemChargesPlugin.menuOptionEmptyToBank).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
 
+            new OnMenuEntryAdded("Fill").replaceOption(FredsItemChargesPlugin.menuOptionFillFromInventory).isWidgetVisible(WidgetId.BANK, WidgetId.DEPOSIT_BOX),
 
-			// Hide destroy.
-			new OnMenuEntryAdded("Destroy").hide()
-		));
-	}
-
-	private String getMenuOptionForUse() {
-		return storage.isStorableItemInInventory()
-			? FredsItemChargesPlugin.menuOptionFillFromInventory
-			: FredsItemChargesPlugin.menuOptionEmptyToBank;
-	}
+            // Hide destroy.
+            new OnMenuEntryAdded("Destroy").hide()
+        ));
+    }
 }

@@ -1,37 +1,73 @@
 package com.fred4106.improvedCharges.store;
 
-import com.fred4106.improvedCharges.Constants;
-import net.runelite.api.Client;
-import net.runelite.api.ItemComposition;
-import net.runelite.api.Skill;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.GraphicChanged;
-import net.runelite.api.events.StatChanged;
-import net.runelite.client.config.ConfigManager;
-import net.runelite.client.game.ItemManager;
+import com.fred4106.improvedCharges.events.CustomAnimationChanged;
 import com.fred4106.improvedCharges.events.CustomChatMessage;
+import com.fred4106.improvedCharges.events.CustomGraphicChanged;
 import com.fred4106.improvedCharges.events.CustomHitsplatApplied;
-import com.fred4106.improvedCharges.events.CustomMenuOptionClicked;
-import com.fred4106.improvedCharges.item.ChargedItemBase;
-import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.events.CustomItemContainerChanged;
+import com.fred4106.improvedCharges.events.CustomMenuOptionClicked;
+import com.fred4106.improvedCharges.events.CustomScriptPreFired;
+import com.fred4106.improvedCharges.events.CustomStatChanged;
+import com.fred4106.improvedCharges.events.CustomWidgetMenuOptionClicked;
+import com.fred4106.improvedCharges.item.ChargedItemBase;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnAnimationChanged;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnChatMessage;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnCombat;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnGameTick;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnGraphicChanged;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnHitsplatApplied;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnItemContainerChanged;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnItemPickup;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnItemUsed;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnMenuOpened;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnMenuOptionClicked;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnResetDaily;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnScriptPreFired;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnStatChanged;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnUserAction;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnVarbitChanged;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnVarbitsMapChanged;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnWidgetLoaded;
+import com.fred4106.improvedCharges.item.listeners.ListenerOnXpDrop;
+import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.item.storage.StorageItems;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.ids.GraphicId;
-import com.fred4106.improvedCharges.store.ids.ItemContainerId;
+import com.fred4106.improvedCharges.store.utils.WidgetMenuAction;
+import net.runelite.api.*;
+import net.runelite.api.events.*;
+import net.runelite.api.gameval.*;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.client.chat.*;
+import net.runelite.client.config.*;
+import net.runelite.client.events.*;
+import net.runelite.client.game.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.listeners.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.ids.*;
+import com.fred4106.improvedCharges.store.utils.*;
 
+import java.time.*;
+import java.time.format.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
+import java.util.stream.*;
 
 public class Store {
-    private final Client client;
-    private final ItemManager itemManager;
-    private final ConfigManager configManager;
-    private final int HIGHEST_MONSTER_ATTACK_SPEED = 8;
+    private Client client;
+    private ItemManager itemManager;
+    private ConfigManager configManager;
+    private Provider provider;
+
+    private int HIGHEST_MONSTER_ATTACK_SPEED = 8;
 
     private int gametick = 0;
-    private int gametick_before = 0;
+    private int gametickBefore = 0;
     private int inCombatTicksRemainingDamageDoneToOthers = 0;
     private int inCombatTicksRemainingDamageDoneToMe = 0;
 
@@ -39,53 +75,83 @@ public class Store {
     private int lastChatMessagesTick = 0;
     private List<String> lastChatMessages = new ArrayList<>();
 
-    public CustomItemContainerChanged inventory = new CustomItemContainerChanged(ItemContainerId.INVENTORY, new ArrayList<>());
-    public CustomItemContainerChanged previousInventory = new CustomItemContainerChanged(ItemContainerId.INVENTORY, new ArrayList<>());
-    public CustomItemContainerChanged equipment = new CustomItemContainerChanged(ItemContainerId.EQUIPMENT, new ArrayList<>());
-    public CustomItemContainerChanged bank = new CustomItemContainerChanged(ItemContainerId.BANK, new ArrayList<>());
-    public CustomItemContainerChanged previousBank = new CustomItemContainerChanged(ItemContainerId.BANK, new ArrayList<>());
+    public CustomItemContainerChanged inventory = new CustomItemContainerChanged(InventoryID.INV, new ArrayList<>());
+    public CustomItemContainerChanged previousInventory = new CustomItemContainerChanged(InventoryID.INV, new ArrayList<>());
+    public CustomItemContainerChanged equipment = new CustomItemContainerChanged(InventoryID.WORN, new ArrayList<>());
+    public CustomItemContainerChanged bank = new CustomItemContainerChanged(InventoryID.BANK, new ArrayList<>());
+    public CustomItemContainerChanged previousBank = new CustomItemContainerChanged(InventoryID.BANK, new ArrayList<>());
 
 
-    public final Queue<Runnable> nextTickQueue = new ArrayDeque<>();
-    public final List<CustomMenuOptionClicked> menuOptionsClicked = new ArrayList<>();
-    private final Map<Skill, Integer> skillsXp = new HashMap<>();
+    public Queue<Runnable> nextTickQueue = new ArrayDeque<>();
+    public Optional<CustomMenuOptionClicked> previousMenuOptionClicked = Optional.empty();
+    public List<CustomMenuOptionClicked> menuOptionsClicked = new ArrayList<>();
+    private List<CustomWidgetMenuOptionClicked> widgetMenuActionsClicked = new ArrayList<>();
+    private Map<Skill, Integer> skillsXp = new HashMap<>();
 
-    final Pattern withdrawPattern = Pattern.compile("Withdraw-(?<amount>.+)");
+    Pattern withdrawPattern = Pattern.compile("Withdraw-(?<amount>.+)");
 
-    public Store(final Client client, final ItemManager itemManager, final ConfigManager configManager) {
+    private ListenerOnChatMessage listenerOnChatMessage;
+    private ListenerOnItemContainerChanged listenerOnItemContainerChanged;
+    private ListenerOnItemPickup listenerOnItemPickup;
+    private ListenerOnXpDrop listenerOnXpDrop;
+    private ListenerOnStatChanged listenerOnStatChanged;
+    private ListenerOnMenuEntryAdded listenerOnMenuEntryAdded;
+    private ListenerOnResetDaily listenerOnResetDaily;
+    private ListenerOnGraphicChanged listenerOnGraphicChanged;
+    private ListenerOnAnimationChanged listenerOnAnimationChanged;
+    private ListenerOnHitsplatApplied listenerOnHitsplatApplied;
+    private ListenerOnWidgetLoaded listenerOnWidgetLoaded;
+    private ListenerOnVarbitChanged listenerOnVarbitChanged;
+    private ListenerOnVarbitsMapChanged listenerOnVarbitsMapChanged;
+    private ListenerOnUserAction listenerOnUserAction;
+    private ListenerOnMenuOptionClicked listenerOnMenuOptionClicked;
+    private ListenerOnItemUsed listenerOnItemUsed;
+    private ListenerOnScriptPreFired listenerOnScriptPreFired;
+    private ListenerOnCombat listenerOnCombat;
+    private ListenerOnMenuOpened listenerOnMenuOpened;
+    private ListenerOnGameTick listenerOnGameTick;
+
+    public Store(Client client, ItemManager itemManager, ConfigManager configManager) {
         this.client = client;
         this.itemManager = itemManager;
         this.configManager = configManager;
+    }
+
+    public Store addProvider(Provider provider) {
+        this.provider = provider;
+        listenerOnChatMessage = new ListenerOnChatMessage(provider);
+        listenerOnItemContainerChanged = new ListenerOnItemContainerChanged(provider);
+        listenerOnItemPickup = new ListenerOnItemPickup(provider);
+        listenerOnXpDrop = new ListenerOnXpDrop(provider);
+        listenerOnStatChanged = new ListenerOnStatChanged(provider);
+        listenerOnMenuEntryAdded = new ListenerOnMenuEntryAdded(provider);
+        listenerOnResetDaily = new ListenerOnResetDaily(provider);
+        listenerOnGraphicChanged = new ListenerOnGraphicChanged(provider);
+        listenerOnAnimationChanged = new ListenerOnAnimationChanged(provider);
+        listenerOnHitsplatApplied = new ListenerOnHitsplatApplied(provider);
+        listenerOnWidgetLoaded = new ListenerOnWidgetLoaded(provider);
+        listenerOnVarbitChanged = new ListenerOnVarbitChanged(provider);
+        listenerOnVarbitsMapChanged = new ListenerOnVarbitsMapChanged(provider);
+        listenerOnUserAction = new ListenerOnUserAction(provider);
+        listenerOnMenuOptionClicked = new ListenerOnMenuOptionClicked(provider);
+        listenerOnItemUsed = new ListenerOnItemUsed(provider);
+        listenerOnScriptPreFired = new ListenerOnScriptPreFired(provider);
+        listenerOnCombat = new ListenerOnCombat(provider);
+        listenerOnMenuOpened = new ListenerOnMenuOpened(provider);
+        listenerOnGameTick = new ListenerOnGameTick(provider);
+
+        return this;
     }
 
     public List<String> getLastChatMessages() {
         return lastChatMessages;
     }
 
-    public void onChatMessage(final CustomChatMessage chatMessage) {
-        switch (chatMessage.type) {
-            case GAMEMESSAGE:
-            case DIALOG:
-            case SPAM:
-                break;
-            default:
-                return;
-        }
-
-        final int tick = client.getTickCount();
-        if (tick != lastChatMessagesTick) {
-            lastChatMessages = new ArrayList<>();
-            lastChatMessagesTick = tick;
-        }
-
-        lastChatMessages.add(chatMessage.message);
-    }
-
-    public void setChargedItems(final ChargedItemBase[] chargedItems) {
+    public void setChargedItems(ChargedItemBase[] chargedItems) {
         this.chargedItems = chargedItems;
     }
 
-    public Optional<Integer> getSkillXp(final Skill skill) {
+    public Optional<Integer> getSkillXp(Skill skill) {
         if (skillsXp.containsKey(skill)) {
             return Optional.of(skillsXp.get(skill));
         }
@@ -97,46 +163,52 @@ public class Store {
         return 28 - inventory.size();
     }
 
-    public void onStatChanged(final StatChanged event) {
-        skillsXp.put(event.getSkill(), event.getXp());
+    private Stream<ChargedItemBase> getInventoryAndEquipmentChargedItems() {
+        return Arrays.stream(chargedItems).filter(ChargedItemBase::inInventoryOrEquipment);
     }
 
-    public void onItemContainerChanged(final CustomItemContainerChanged itemContainerChanged) {
-        runNextGameTickQueue();
+    public void onStatChanged(StatChanged eventOriginal) {
+        CustomStatChanged event = new CustomStatChanged(eventOriginal, this);
+        skillsXp.put(event.skill, event.xp);
 
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnStatChanged.trigger(event, chargedItem);
+            listenerOnXpDrop.trigger(event, chargedItem);
+        });
+    }
+
+    public void onItemContainerChanged(CustomItemContainerChanged event) {
         if (
-            itemContainerChanged.getContainerId() == ItemContainerId.BANK ||
-            itemContainerChanged.getContainerId() == ItemContainerId.INVENTORY ||
-            itemContainerChanged.getContainerId() == ItemContainerId.EQUIPMENT
+            event.getContainerId() == InventoryID.BANK ||
+            event.getContainerId() == InventoryID.INV ||
+            event.getContainerId() == InventoryID.WORN
         ) {
             // Update inventory, save previous items.
-            if (itemContainerChanged.getContainerId() == ItemContainerId.INVENTORY) {
+            if (event.getContainerId() == InventoryID.INV) {
                 previousInventory = inventory;
-                inventory = itemContainerChanged;
-            } else if (itemContainerChanged.getContainerId() == ItemContainerId.EQUIPMENT) {
-                equipment = itemContainerChanged;
-            } else if (itemContainerChanged.getContainerId() == ItemContainerId.BANK) {
+                inventory = event;
+            } else if (event.getContainerId() == InventoryID.WORN) {
+                equipment = event;
+            } else if (event.getContainerId() == InventoryID.BANK) {
                 previousBank = bank;
-                bank = itemContainerChanged;
+                bank = event;
 
-                final StringBuilder storageStringBuilder = new StringBuilder();
-                for (final StorageItem item : itemContainerChanged.getItems()) {
-                    storageStringBuilder.append(item.getId()).append(",");
+                StringBuilder storageStringBuilder = new StringBuilder();
+                for (StorageItem item : event.getItems()) {
+                    storageStringBuilder.append(item.itemId).append(",");
                 }
-                final String storageString = storageStringBuilder.toString().replaceAll(",$", "");
-                configManager.setConfiguration(Constants.GROUP, Constants.STORAGE_BANK	, storageString);
+                String storageString = storageStringBuilder.toString().replaceAll(",$", "");
+                configManager.setConfiguration(FredsItemChargesConfig.group, FredsItemChargesConfig.storage_bank, storageString);
             }
 
-            updateChargedItemsPrimaryId(itemContainerChanged.getContainerId() == ItemContainerId.BANK);
+            updateChargedItemsPrimaryId(event.getContainerId() == InventoryID.BANK);
         }
 
-        for (final ChargedItemBase infobox : chargedItems) {
-            infobox.onItemContainerChanged(itemContainerChanged);
-        }
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> listenerOnItemContainerChanged.trigger(event, chargedItem));
     }
 
-    private void updateChargedItemsPrimaryId(final boolean checkBank) {
-        for (final ChargedItemBase chargedItem : chargedItems) {
+    private void updateChargedItemsPrimaryId(boolean checkBank) {
+        for (ChargedItemBase chargedItem : chargedItems) {
             Optional<Integer> bankItemId = Optional.empty();
             boolean bankItemDynamic = false;
 
@@ -148,11 +220,11 @@ public class Store {
 
             // Bank has the least priority.
             if (checkBank) {
-                for (final StorageItem item : bank.getItems()) {
-                    for (final TriggerItem triggerItem : chargedItem.items) {
-                        if (item.getId() == triggerItem.itemId) {
+                for (StorageItem item : bank.getItems()) {
+                    for (TriggerItem triggerItem : chargedItem.items) {
+                        if (item.itemId == triggerItem.itemId) {
                             if (!bankItemId.isPresent() || triggerItem.fixedCharges.isPresent() && !bankItemDynamic || !triggerItem.fixedCharges.isPresent()) {
-                                bankItemId = Optional.of(item.getId());
+                                bankItemId = Optional.of(item.itemId);
 
                                 if (!triggerItem.fixedCharges.isPresent()) {
                                     bankItemDynamic = true;
@@ -164,11 +236,11 @@ public class Store {
             }
 
             // Inventory is more important than bank.
-            for (final StorageItem item : inventory.getItems()) {
-                for (final TriggerItem triggerItem : chargedItem.items) {
-                    if (item.getId() == triggerItem.itemId) {
+            for (StorageItem item : inventory.getItems()) {
+                for (TriggerItem triggerItem : chargedItem.items) {
+                    if (item.itemId == triggerItem.itemId) {
                         if (!inventoryItemId.isPresent() || triggerItem.fixedCharges.isPresent() && !inventoryItemDynamic || !triggerItem.fixedCharges.isPresent()) {
-                            inventoryItemId = Optional.of(item.getId());
+                            inventoryItemId = Optional.of(item.itemId);
 
                             if (!triggerItem.fixedCharges.isPresent()) {
                                 inventoryItemDynamic = true;
@@ -179,11 +251,11 @@ public class Store {
             }
 
             // Equipment has most priority.
-            for (final StorageItem item : equipment.getItems()) {
-                for (final TriggerItem triggerItem : chargedItem.items) {
-                    if (item.getId() == triggerItem.itemId) {
+            for (StorageItem item : equipment.getItems()) {
+                for (TriggerItem triggerItem : chargedItem.items) {
+                    if (item.itemId == triggerItem.itemId) {
                         if (!equipmentItemId.isPresent() || triggerItem.fixedCharges.isPresent() && !equipmentItemDynamic || !triggerItem.fixedCharges.isPresent()) {
-                            equipmentItemId = Optional.of(item.getId());
+                            equipmentItemId = Optional.of(item.itemId);
 
                             if (!triggerItem.fixedCharges.isPresent()) {
                                 equipmentItemDynamic = true;
@@ -203,35 +275,82 @@ public class Store {
         }
     }
 
-    public void onMenuOptionClicked(final CustomMenuOptionClicked customMenuOptionClicked) {
-        checkBankWithdraw(customMenuOptionClicked);
+    public void onMenuOptionClicked(CustomMenuOptionClicked event) {
+        if (
+            // Menu option not found.
+            event.option.isEmpty() ||
+            // Not menu.
+            event.target.isEmpty() && (
+                !event.option.contains("Buy-") &&
+                !event.option.equals("Continue") &&
+                !event.option.equals("Yes") &&
+                event.eventId != 65540 && // Special event check for log basket
+                event.eventId != 65538 && // Special event check for forestry basket
+                event.eventId != 131074 && // Special event check for forestry basket
+                event.eventId != 131076 // Special event check for forestry basket
+            ) ||
+            // Cancel option.
+            event.actionName.equals("CANCEL") ||
+            // RuneLite specific action.
+            event.actionName.equals("RUNELITE") ||
+            // Use
+            event.option.equals("Use") && !event.target.contains(" -> ")
+        ) return;
+
+        checkBankWithdraw(event);
 
         // Gametick changed, clear previous menu entries since they are no longer valid.
-        if (gametick >= gametick_before + 2) {
-            gametick = 0; gametick_before = 0;
+        if (gametick >= gametickBefore + 2) {
+            gametickBefore = gametick;
             menuOptionsClicked.clear();
         }
 
         // Save menu option and target for other triggers to use.
-        menuOptionsClicked.add(customMenuOptionClicked);
+        menuOptionsClicked.add(event);
+
+        if (
+            previousMenuOptionClicked.isPresent() &&
+            previousMenuOptionClicked.get().option.equals("Use") &&
+            event.option.equals("Use") &&
+            event.target.contains("->")
+        ) {
+            event.assignUsedItemId(previousMenuOptionClicked.get().itemId);
+        }
+
+        this.previousMenuOptionClicked = Optional.of(event);
+
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnMenuOptionClicked.trigger(event, chargedItem);
+            listenerOnItemUsed.trigger(event, chargedItem);
+        });
     }
 
-    private void checkBankWithdraw(final CustomMenuOptionClicked customMenuOptionClicked) {
-        final Matcher matcher = withdrawPattern.matcher(customMenuOptionClicked.option);
+    public void onWidgetMenuOptionClicked(CustomWidgetMenuOptionClicked customWidgetMenuOptionClicked) {
+        // Gametick changed, clear previous widget menu entries since they are no longer valid.
+        if (gametick >= gametickBefore + 2) {
+            gametickBefore = gametick;
+            widgetMenuActionsClicked.clear();
+        }
+
+        widgetMenuActionsClicked.add(customWidgetMenuOptionClicked);
+    }
+
+    private void checkBankWithdraw(CustomMenuOptionClicked customMenuOptionClicked) {
+        Matcher matcher = withdrawPattern.matcher(customMenuOptionClicked.option);
         if (!matcher.find()) return;
 
-        final String amountString = matcher.group("amount");
+        String amountString = matcher.group("amount");
         if (amountString.equals("X")) return;
 
-        final int amount =
+        int amount =
             amountString.equals("All") ? bank.count(customMenuOptionClicked.itemId) :
             amountString.equals("All-but-1") ? bank.count(customMenuOptionClicked.itemId) - 1 :
             Integer.parseInt(amountString);
 
-        final ItemComposition itemComposition = itemManager.getItemComposition(customMenuOptionClicked.itemId);
+        ItemComposition itemComposition = itemManager.getItemComposition(customMenuOptionClicked.itemId);
 
         // Copy of current inventory.
-        final CustomItemContainerChanged itemContainerChanged = new CustomItemContainerChanged(inventory);
+        CustomItemContainerChanged itemContainerChanged = new CustomItemContainerChanged(inventory);
 
         // Add new items.
         if (itemComposition.isStackable() || client.getVarbitValue(3958) == 1) {
@@ -245,62 +364,33 @@ public class Store {
 
     private void runNextGameTickQueue() {
         while (!nextTickQueue.isEmpty()) {
-            final Runnable consumer = nextTickQueue.poll();
+            Runnable consumer = nextTickQueue.poll();
             consumer.run();
         }
     }
 
-    public void onGameTick(final GameTick ignored) {
+    public void onGameTick(GameTick ignored) {
         runNextGameTickQueue();
-
-        // Automatically load all skill xps.
-        if (!getSkillXp(Skill.MAGIC).isPresent()) {
-            skillsXp.put(Skill.AGILITY, client.getSkillExperience(Skill.AGILITY));
-            skillsXp.put(Skill.ATTACK, client.getSkillExperience(Skill.ATTACK));
-            skillsXp.put(Skill.CONSTRUCTION, client.getSkillExperience(Skill.CONSTRUCTION));
-            skillsXp.put(Skill.COOKING, client.getSkillExperience(Skill.COOKING));
-            skillsXp.put(Skill.CRAFTING, client.getSkillExperience(Skill.CRAFTING));
-            skillsXp.put(Skill.DEFENCE, client.getSkillExperience(Skill.DEFENCE));
-            skillsXp.put(Skill.FARMING, client.getSkillExperience(Skill.FARMING));
-            skillsXp.put(Skill.FIREMAKING, client.getSkillExperience(Skill.FIREMAKING));
-            skillsXp.put(Skill.FISHING, client.getSkillExperience(Skill.FISHING));
-            skillsXp.put(Skill.FLETCHING, client.getSkillExperience(Skill.FLETCHING));
-            skillsXp.put(Skill.HERBLORE, client.getSkillExperience(Skill.HERBLORE));
-            skillsXp.put(Skill.HITPOINTS, client.getSkillExperience(Skill.HITPOINTS));
-            skillsXp.put(Skill.HUNTER, client.getSkillExperience(Skill.HUNTER));
-            skillsXp.put(Skill.MAGIC, client.getSkillExperience(Skill.MAGIC));
-            skillsXp.put(Skill.MINING, client.getSkillExperience(Skill.MINING));
-            skillsXp.put(Skill.PRAYER, client.getSkillExperience(Skill.PRAYER));
-            skillsXp.put(Skill.RANGED, client.getSkillExperience(Skill.RANGED));
-            skillsXp.put(Skill.RUNECRAFT, client.getSkillExperience(Skill.RUNECRAFT));
-            skillsXp.put(Skill.SLAYER, client.getSkillExperience(Skill.SLAYER));
-            skillsXp.put(Skill.SMITHING, client.getSkillExperience(Skill.SMITHING));
-            skillsXp.put(Skill.STRENGTH, client.getSkillExperience(Skill.STRENGTH));
-            skillsXp.put(Skill.THIEVING, client.getSkillExperience(Skill.THIEVING));
-            skillsXp.put(Skill.WOODCUTTING, client.getSkillExperience(Skill.WOODCUTTING));
-        }
         gametick++;
 
         // Keep only last menu entry.
         if (menuOptionsClicked.size() > 1) {
-            final CustomMenuOptionClicked lastMenuEntry = menuOptionsClicked.get(menuOptionsClicked.size() - 1);
+            CustomMenuOptionClicked lastMenuEntry = menuOptionsClicked.get(menuOptionsClicked.size() - 1);
             menuOptionsClicked.clear();
             menuOptionsClicked.add(lastMenuEntry);
         }
 
         if (isInCombat()) {
-            for (final ChargedItemBase chargedItem : chargedItems) {
-                chargedItem.onCombat();
-            }
+            onCombat();
         }
 
         inCombatTicksRemainingDamageDoneToOthers = Math.max(0, inCombatTicksRemainingDamageDoneToOthers - 1);
         inCombatTicksRemainingDamageDoneToMe = Math.max(0, inCombatTicksRemainingDamageDoneToMe - 1);
     }
 
-    public boolean inMenuTargets(final int ...itemIds) {
-        for (final int itemId : itemIds) {
-            for (final CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
+    public boolean inMenuTargets(int ...itemIds) {
+        for (int itemId : itemIds) {
+            for (CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
                 if (
                     customMenuOptionClicked.itemId == itemId ||
                     // Additional target name check, because itemId can be -1 when the clicked item was not in inventory.
@@ -313,10 +403,10 @@ public class Store {
         return false;
     }
 
-    public boolean inMenuTargets(final String ...targets) {
-        for (final String target : targets) {
-            for (final CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
-                final boolean found = Pattern.compile(target).matcher(customMenuOptionClicked.target).find();
+    public boolean inMenuTargets(String ...targets) {
+        for (String target : targets) {
+            for (CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
+                boolean found = Pattern.compile(target).matcher(customMenuOptionClicked.target).find();
                 if (found) return true;
             }
         }
@@ -324,27 +414,27 @@ public class Store {
         return false;
     }
 
-    public boolean notInMenuTargets(final String ...targets) {
+    public boolean notInMenuTargets(String ...targets) {
         return !inMenuTargets(targets);
     }
 
-    public boolean notInMenuTargets(final StorageItem... storageItems) {
-        final int[] storeableItemIds = new int[storageItems.length];
+    public boolean notInMenuTargets(StorageItem... storageItems) {
+        int[] storeableItemIds = new int[storageItems.length];
 
         for (int i = 0; i < storageItems.length; i ++) {
-            storeableItemIds[i] = storageItems[i].getId();
+            storeableItemIds[i] = storageItems[i].itemId;
         }
 
         return notInMenuTargets(storeableItemIds);
     }
 
-    public boolean notInMenuTargets(final int ...itemIds) {
+    public boolean notInMenuTargets(int ...itemIds) {
         return !inMenuTargets(itemIds);
     }
 
-    public boolean inMenuOptions(final String ...options) {
-        for (final CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
-            for (final String option : options) {
+    public boolean inMenuOptions(String ...options) {
+        for (CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
+            for (String option : options) {
                 if (customMenuOptionClicked.option.equals(option)) {
                     return true;
                 }
@@ -354,13 +444,13 @@ public class Store {
         return false;
     }
 
-    public boolean notInMenuOptions(final String ...options) {
+    public boolean notInMenuOptions(String ...options) {
         return !inMenuOptions(options);
     }
 
-    public boolean inMenuOptionIds(final int ...menuOptionIds) {
-        for (final CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
-            for (final int menuOptionId : menuOptionIds) {
+    public boolean inMenuOptionIds(int ...menuOptionIds) {
+        for (CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
+            for (int menuOptionId : menuOptionIds) {
                 if (customMenuOptionClicked.eventId == menuOptionId) {
                     return true;
                 }
@@ -370,13 +460,27 @@ public class Store {
         return false;
     }
 
-    public boolean notInMenuOptionIds(final int ...menuOptionsIds) {
+    public boolean notInMenuOptionIds(int ...menuOptionsIds) {
         return !inMenuOptionIds(menuOptionsIds);
     }
 
-    public boolean inMenuImpostors(final int ...impostorIds) {
-        for (final CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
-            for (final int impostorId : impostorIds) {
+    public boolean notInWidgetMenuActions(WidgetMenuAction widgetMenuAction) {
+        for (CustomWidgetMenuOptionClicked widgetMenuOptionClicked : widgetMenuActionsClicked) {
+            if (
+                widgetMenuOptionClicked.selectedOption.equals(widgetMenuAction.selectedOption) &&
+                widgetMenuOptionClicked.options.size() > widgetMenuAction.childIndex &&
+                widgetMenuOptionClicked.options.get(widgetMenuAction.childIndex).equals(widgetMenuAction.childString)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean inMenuImpostors(int ...impostorIds) {
+        for (CustomMenuOptionClicked customMenuOptionClicked : menuOptionsClicked) {
+            for (int impostorId : impostorIds) {
                 if (customMenuOptionClicked.impostorId == impostorId) {
                     return true;
                 }
@@ -386,15 +490,15 @@ public class Store {
         return false;
     }
 
-    public boolean notInMenuImpostors(final int ...impostorIds) {
+    public boolean notInMenuImpostors(int ...impostorIds) {
         return !inMenuImpostors(impostorIds);
     }
 
-    public int getInventoryItemQuantity(final int itemId) {
+    public int getInventoryItemQuantity(int itemId) {
         int quantity = 0;
 
-        for (final StorageItem storageItem : inventory.getItems()) {
-            if (storageItem.getId() == itemId) {
+        for (StorageItem storageItem : inventory.getItems()) {
+            if (storageItem.itemId == itemId) {
                 quantity += storageItem.getQuantity();
             }
         }
@@ -402,11 +506,11 @@ public class Store {
         return quantity;
     }
 
-    public int getEquipmentItemQuantity(final int itemId) {
+    public int getEquipmentItemQuantity(int itemId) {
         int quantity = 0;
 
-        for (final StorageItem item : equipment.getItems()) {
-            if (item.getId() == itemId) {
+        for (StorageItem item : equipment.getItems()) {
+            if (item.itemId == itemId) {
                 quantity += item.getQuantity();
             }
         }
@@ -414,11 +518,11 @@ public class Store {
         return quantity;
     }
 
-    public int getPreviousInventoryItemQuantity(final int itemId) {
+    public int getPreviousInventoryItemQuantity(int itemId) {
         int quantity = 0;
 
-        for (final StorageItem storageItem : previousInventory.getItems()) {
-            if (storageItem.getId() == itemId) {
+        for (StorageItem storageItem : previousInventory.getItems()) {
+            if (storageItem.itemId == itemId) {
                 quantity += storageItem.getQuantity();
             }
         }
@@ -426,9 +530,9 @@ public class Store {
         return quantity;
     }
 
-    public boolean inventoryContainsItem(final int itemId) {
-        for (final StorageItem storageItem : inventory.getItems()) {
-            if (storageItem.getId() == itemId) {
+    public boolean inventoryContainsItem(int itemId) {
+        for (StorageItem storageItem : inventory.getItems()) {
+            if (storageItem.itemId == itemId) {
                 return true;
             }
         }
@@ -436,10 +540,10 @@ public class Store {
         return false;
     }
 
-    public boolean equipmentContainsItem(final int ...itemIds) {
-        for (final StorageItem equipmentItem : equipment.getItems()) {
-            for (final int itemId : itemIds) {
-                if (equipmentItem.getId() == itemId) {
+    public boolean equipmentContainsItem(int ...itemIds) {
+        for (StorageItem equipmentItem : equipment.getItems()) {
+            for (int itemId : itemIds) {
+                if (equipmentItem.itemId == itemId) {
                     return true;
                 }
             }
@@ -449,16 +553,16 @@ public class Store {
     }
 
     private List<StorageItem> getAllItems() {
-        final List<StorageItem> allItems = new ArrayList<>();
+        List<StorageItem> allItems = new ArrayList<>();
         allItems.addAll(inventory.getItems());
         allItems.addAll(equipment.getItems());
         allItems.addAll(bank.getItems());
         return allItems;
     }
 
-    public boolean itemInPossession(final int itemId) {
-        for (final StorageItem item : getAllItems()) {
-            if (item.getId() == itemId) {
+    public boolean itemInPossession(int itemId) {
+        for (StorageItem item : getAllItems()) {
+            if (item.itemId == itemId) {
                 return true;
             }
         }
@@ -467,32 +571,32 @@ public class Store {
     }
 
     public StorageItems getInventoryItemsDifference() {
-        final StorageItems itemsDifference = new StorageItems();
+        StorageItems itemsDifference = new StorageItems();
 
-        final Map<Integer, Integer> quantitiesNew = new HashMap<>();
-        final Map<Integer, Integer> quantitiesBefore = new HashMap<>();
+        Map<Integer, Integer> quantitiesNew = new HashMap<>();
+        Map<Integer, Integer> quantitiesBefore = new HashMap<>();
 
-        for (final StorageItem itemNew : inventory.getItems()) {
-            if (quantitiesNew.containsKey(itemNew.getId())) continue;
-            quantitiesNew.put(itemNew.getId(), inventory.count(itemNew.getId()));
+        for (StorageItem itemNew : inventory.getItems()) {
+            if (quantitiesNew.containsKey(itemNew.itemId)) continue;
+            quantitiesNew.put(itemNew.itemId, inventory.count(itemNew.itemId));
         }
 
-        for (final StorageItem itemOld : previousInventory.getItems()) {
-            if (quantitiesBefore.containsKey(itemOld.getId())) {
-                quantitiesBefore.put(itemOld.getId(), quantitiesBefore.get(itemOld.getId()) + itemOld.getQuantity());
+        for (StorageItem itemOld : previousInventory.getItems()) {
+            if (quantitiesBefore.containsKey(itemOld.itemId)) {
+                quantitiesBefore.put(itemOld.itemId, quantitiesBefore.get(itemOld.itemId) + itemOld.getQuantity());
             } else {
-                quantitiesBefore.put(itemOld.getId(), itemOld.getQuantity());
+                quantitiesBefore.put(itemOld.itemId, itemOld.getQuantity());
             }
         }
 
-        for (final int itemId : quantitiesNew.keySet()) {
-            final int quantity = quantitiesNew.get(itemId) - quantitiesBefore.getOrDefault(itemId, 0);
+        for (int itemId : quantitiesNew.keySet()) {
+            int quantity = quantitiesNew.get(itemId) - quantitiesBefore.getOrDefault(itemId, 0);
             if (quantity != 0) {
                 itemsDifference.put(new StorageItem(itemId, quantitiesNew.get(itemId) - quantitiesBefore.getOrDefault(itemId, 0)));
             }
         }
 
-        for (final int itemId : quantitiesBefore.keySet()) {
+        for (int itemId : quantitiesBefore.keySet()) {
             if (!quantitiesNew.containsKey(itemId)) {
                 itemsDifference.put(new StorageItem(itemId, -quantitiesBefore.get(itemId)));
             }
@@ -502,32 +606,32 @@ public class Store {
     }
 
     public StorageItems getBankItemsDifference() {
-        final StorageItems itemsDifference = new StorageItems();
+        StorageItems itemsDifference = new StorageItems();
 
-        final Map<Integer, Integer> quantitiesNew = new HashMap<>();
-        final Map<Integer, Integer> quantitiesBefore = new HashMap<>();
+        Map<Integer, Integer> quantitiesNew = new HashMap<>();
+        Map<Integer, Integer> quantitiesBefore = new HashMap<>();
 
-        for (final StorageItem itemNew : bank.getItems()) {
-            if (quantitiesNew.containsKey(itemNew.getId())) continue;
-            quantitiesNew.put(itemNew.getId(), bank.count(itemNew.getId()));
+        for (StorageItem itemNew : bank.getItems()) {
+            if (quantitiesNew.containsKey(itemNew.itemId)) continue;
+            quantitiesNew.put(itemNew.itemId, bank.count(itemNew.itemId));
         }
 
-        for (final StorageItem itemOld : previousBank.getItems()) {
-            if (quantitiesBefore.containsKey(itemOld.getId())) {
-                quantitiesBefore.put(itemOld.getId(), quantitiesBefore.get(itemOld.getId()) + itemOld.getQuantity());
+        for (StorageItem itemOld : previousBank.getItems()) {
+            if (quantitiesBefore.containsKey(itemOld.itemId)) {
+                quantitiesBefore.put(itemOld.itemId, quantitiesBefore.get(itemOld.itemId) + itemOld.getQuantity());
             } else {
-                quantitiesBefore.put(itemOld.getId(), itemOld.getQuantity());
+                quantitiesBefore.put(itemOld.itemId, itemOld.getQuantity());
             }
         }
 
-        for (final int itemId : quantitiesNew.keySet()) {
-            final int quantity = quantitiesNew.get(itemId) - quantitiesBefore.getOrDefault(itemId, 0);
+        for (int itemId : quantitiesNew.keySet()) {
+            int quantity = quantitiesNew.get(itemId) - quantitiesBefore.getOrDefault(itemId, 0);
             if (quantity != 0) {
                 itemsDifference.put(new StorageItem(itemId, quantitiesNew.get(itemId) - quantitiesBefore.getOrDefault(itemId, 0)));
             }
         }
 
-        for (final int itemId : quantitiesBefore.keySet()) {
+        for (int itemId : quantitiesBefore.keySet()) {
             if (!quantitiesNew.containsKey(itemId)) {
                 itemsDifference.put(new StorageItem(itemId, -quantitiesBefore.get(itemId)));
             }
@@ -536,11 +640,39 @@ public class Store {
         return itemsDifference;
     }
 
-    public void addConsumerToNextTickQueue(final Runnable consumer) {
+    public void addConsumerToNextTickQueue(Runnable consumer) {
         nextTickQueue.add(consumer);
     }
 
-    public void onHitSplatApplied(final CustomHitsplatApplied event) {
+    public void onChatMessage(CustomChatMessage event) {
+        switch (event.type) {
+            case GAMEMESSAGE:
+            case DIALOG:
+            case SPAM:
+            case MESBOX:
+                break;
+            default:
+                return;
+        }
+
+        int tick = client.getTickCount();
+        if (tick != lastChatMessagesTick) {
+            lastChatMessages = new ArrayList<>();
+            lastChatMessagesTick = tick;
+        }
+
+        lastChatMessages.add(event.message);
+
+        if (event.message.contains("The banker charges")) {
+            Arrays.stream(chargedItems).forEach(chargedItem -> listenerOnChatMessage.trigger(event, chargedItem));
+        } else {
+            getInventoryAndEquipmentChargedItems().forEach(chargedItem -> listenerOnChatMessage.trigger(event, chargedItem));
+        }
+    }
+
+    public void onHitSplatApplied(HitsplatApplied eventOriginal) {
+        CustomHitsplatApplied event = new CustomHitsplatApplied(eventOriginal, client);
+
         if (event.byMe) {
             inCombatTicksRemainingDamageDoneToOthers = HIGHEST_MONSTER_ATTACK_SPEED;
         }
@@ -548,11 +680,23 @@ public class Store {
         if (event.toMe) {
             inCombatTicksRemainingDamageDoneToMe = HIGHEST_MONSTER_ATTACK_SPEED;
         }
+
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnHitsplatApplied.trigger(event, chargedItem);
+        });
     }
 
-    public void onGraphicChanged(final GraphicChanged event) {
-        if (event.getActor() == client.getLocalPlayer() && event.getActor().getGraphic() == GraphicId.SPLASH) {
+    public void onGraphicChanged(CustomGraphicChanged graphicChanged) {
+        if (graphicChanged.hasGraphicId(GraphicId.SPLASH)) {
             inCombatTicksRemainingDamageDoneToOthers = HIGHEST_MONSTER_ATTACK_SPEED;
+        }
+
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnGraphicChanged.trigger(graphicChanged, chargedItem);
+        });
+
+        if (provider.config.showDebugIds()) {
+            graphicChanged.showDebugIds(provider.chatMessageManager);
         }
     }
 
@@ -562,5 +706,154 @@ public class Store {
 
     public boolean isLockedInCombat() {
         return inCombatTicksRemainingDamageDoneToMe > 0;
+    }
+
+    public void onWidgetLoaded(WidgetLoaded event) {
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnWidgetLoaded.trigger(event, chargedItem);
+        });
+    }
+
+    public void onVarbitChanged(VarbitChanged event) {
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnVarbitChanged.trigger(event, chargedItem);
+            listenerOnVarbitsMapChanged.trigger(event, chargedItem);
+        });
+
+        // If server minutes are 0, it's a new day!
+        if (event.getVarbitId() == VarbitID.CLOCK && client.getGameState() == GameState.LOGGED_IN && event.getValue() == 0) {
+            checkForChargesReset();
+        }
+    }
+
+    public void onAnimationChanged(AnimationChanged eventOriginal) {
+        if (eventOriginal.getActor().getAnimation() == -1) return;
+        CustomAnimationChanged event = new CustomAnimationChanged(eventOriginal);
+
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnAnimationChanged.trigger(event, chargedItem);
+        });
+
+        if (provider.config.showDebugIds()) {
+            event.showDebugIds(provider.chatMessageManager);
+        }
+    }
+
+    public void onMenuEntryAdded(MenuEntryAdded event) {
+        if (event.getOption().equals("Cancel")) return;
+
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnMenuEntryAdded.trigger(event, chargedItem);
+        });
+    }
+
+    public void onItemDespawned(ItemDespawned event) {
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnItemPickup.trigger(event, chargedItem);
+        });
+    }
+
+    public void onResetDaily(String date) {
+        configManager.setConfiguration(FredsItemChargesConfig.group, FredsItemChargesConfig.date, date);
+
+        if (provider.config.showDailyReset()) {
+            provider.chatMessageManager.queue(QueuedMessage.builder()
+                .type(ChatMessageType.CONSOLE)
+                .runeLiteFormattedMessage("<colHIGHLIGHT>Daily item charges have been reset.")
+                .build()
+            );
+        }
+
+        Arrays.stream(chargedItems).forEach(chargedItem -> {
+            listenerOnResetDaily.trigger(chargedItem);
+        });
+    }
+
+    public void onUserAction() {
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnUserAction.trigger(chargedItem);
+        });
+    }
+
+    private List<Integer> scriptIdsToIgnore = Arrays.asList(
+        44, 85, 100, 839, 900, 1004, 1005, 1045, 1445, 1972, 2100, 2101,
+        2165, 2250, 2372, 2476, 2512, 2513, 3174, 3277, 3350, 3351, 4024,
+        4029, 4482, 4517, 4518, 4666, 4667, 4668, 4669, 4671, 4672, 4716,
+        4721, 4729, 4730, 4731, 4734, 5343, 5923, 5933, 5935, 5936, 5939,
+        5943, 5944, 6015, 6016, 6063, 6152, 9625, 664
+    );
+
+    public void onScriptPreFired(ScriptPreFired eventOriginal) {
+        if (scriptIdsToIgnore.contains(eventOriginal.getScriptId())) return;
+        if (eventOriginal.getScriptEvent() == null) return;
+
+        CustomScriptPreFired event = new CustomScriptPreFired(eventOriginal);
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnScriptPreFired.trigger(event, chargedItem);
+        });
+    }
+
+    public void onCombat() {
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnCombat.trigger(chargedItem);
+        });
+    }
+
+    public void onMenuOpened(MenuOpened event) {
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnMenuOpened.trigger(event, chargedItem);
+        });
+    }
+
+    public void onGameStateChanged(GameStateChanged event) {
+        if (event.getGameState() == GameState.LOGGING_IN) {
+            checkForChargesReset();
+        }
+
+        if (event.getGameState() != GameState.LOGGED_IN) return;
+
+        // Update config version to latest
+        if (!provider.config.getVersion().equals(FredsItemChargesPlugin.pluginVersion)) {
+            configManager.setConfiguration(FredsItemChargesConfig.group, FredsItemChargesConfig.version, FredsItemChargesPlugin.pluginVersion);
+
+            // Send message about plugin updates for once.
+            if (provider.config.showUpdatesMessage()) {
+                provider.chatMessageManager.queue(QueuedMessage.builder()
+                    .type(ChatMessageType.CONSOLE)
+                    .runeLiteFormattedMessage(FredsItemChargesPlugin.pluginMessage)
+                    .build()
+                );
+            }
+        }
+    }
+
+    private void checkForChargesReset() {
+        String date = LocalDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        if (!date.equals(provider.config.getResetDate())) {
+            onResetDaily(date);
+        }
+    }
+
+    public void onConfigChanged(ConfigChanged event) {
+        if (event.getGroup().equals(FredsItemChargesConfig.group) && event.getKey().equals(FredsItemChargesConfig.debug_ids)) {
+            provider.chatMessageManager.queue(QueuedMessage.builder()
+                .type(ChatMessageType.CONSOLE)
+                .runeLiteFormattedMessage(provider.config.showDebugIds()
+                    ? "<colHIGHLIGHT>[Item Charges Improved] Debug information is now enabled."
+                    : "<colHIGHLIGHT>[Item Charges Improved] Debug information is now disabled."
+                ).build()
+            );
+        }
+    }
+
+    public boolean hasChatMessage(String message) {
+        for (String lastChatMessage : lastChatMessages) {
+            if (lastChatMessage.equals(message)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

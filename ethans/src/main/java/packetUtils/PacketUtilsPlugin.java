@@ -93,7 +93,6 @@ public class PacketUtilsPlugin extends Plugin {
 			});
 			return;
 		}
-		setupNeverlog();
 		int feature = Runtime.version().feature();
 		if (feature != 11) {
 			for (int i = 0; i < 10; i++) {
@@ -125,25 +124,7 @@ public class PacketUtilsPlugin extends Plugin {
 		Method getPacketBufferNode = PacketReflection.getGetPacketBufferNode();
 		System.out.println("getPacketBufferNode" + getPacketBufferNode.toGenericString());
 	}
-
-	@SneakyThrows
-	public static void setupNeverlog() {
-		staticClient.setIdleTimeout(42069);
-		for (Field declaredField : staticClient.getClass().getDeclaredFields()) {
-			if (declaredField.getType() == int.class && Modifier.isStatic(declaredField.getModifiers())) {
-				declaredField.setAccessible(true);
-				int value = declaredField.getInt(null);
-				if (value != 42069) {
-					declaredField.setAccessible(false);
-					continue;
-				}
-				System.out.println("found idle ticks field: " + declaredField.getName());
-				declaredField.setInt(null, Integer.MAX_VALUE);
-				declaredField.setAccessible(false);
-			}
-		}
-	}
-
+	
 	@SneakyThrows
 	public void cleanup() {
 		if (!loadedConfigName.equals(makeString())) {

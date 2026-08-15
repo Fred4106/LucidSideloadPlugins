@@ -1,24 +1,26 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_IbansStaff extends ChargedItem {
-    public W_IbansStaff(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.IBANS_STAFF, ItemId.IBANS_STAFF, provider);
+    public W_IbansStaff(Provider provider) {
+        super(FredsItemChargesConfig.ibans_staff, ItemID.IBANSTAFF, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.IBANS_STAFF),
-            new TriggerItem(ItemId.IBANS_STAFF_BROKEN),
-            new TriggerItem(ItemId.IBANS_STAFF_UPGRADED),
+            new TriggerItem(ItemID.IBANSTAFF),
+            new TriggerItem(ItemID.BROKENIBANSTAFF),
+            new TriggerItem(ItemID.IBANSTAFF_UPGRADED),
         };
 
         this.triggers.addAll(List.of(

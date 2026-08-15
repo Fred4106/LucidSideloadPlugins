@@ -1,19 +1,20 @@
 package com.fred4106.improvedCharges.item.triggers;
 
-import net.runelite.api.events.ScriptPreFired;
+import com.fred4106.improvedCharges.events.CustomScriptPreFired;
+import com.fred4106.improvedCharges.events.*;
 
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.function.*;
 
 public class OnScriptPreFired extends TriggerBase {
-    public final int scriptId;
-    public Optional<Consumer<ScriptPreFired>> scriptConsumer = Optional.empty();
+    public int scriptId;
+    public Optional<Consumer<CustomScriptPreFired>> scriptConsumer = Optional.empty();
 
-    public OnScriptPreFired(final int scriptId) {
+    public OnScriptPreFired(int scriptId) {
         this.scriptId = scriptId;
     }
 
-    public OnScriptPreFired scriptConsumer(final Consumer<ScriptPreFired> consumer) {
+    public OnScriptPreFired scriptConsumer(Consumer<CustomScriptPreFired> consumer) {
         this.scriptConsumer = Optional.of(consumer);
         return this;
     }

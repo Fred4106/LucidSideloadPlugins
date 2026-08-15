@@ -1,31 +1,37 @@
 package com.fred4106.improvedCharges.item.listeners;
 
-import net.runelite.api.HitsplatID;
 import com.fred4106.improvedCharges.events.CustomHitsplatApplied;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnHitsplatApplied;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
-import com.fred4106.improvedCharges.store.utils.WeaponAttackStyle;
 import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
+import com.fred4106.improvedCharges.store.utils.WeaponAttackStyle;
+import net.runelite.api.*;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
+import com.fred4106.improvedCharges.store.utils.*;
 
 public class ListenerOnHitsplatApplied extends ListenerBase {
-    private final WeaponAttackStyle weaponAttackStyle;
+    private WeaponAttackStyle weaponAttackStyle;
 
-    public ListenerOnHitsplatApplied(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnHitsplatApplied(Provider provider) {
+        super(provider);
 
         this.weaponAttackStyle = new WeaponAttackStyle(provider.client);
     }
 
-    public void trigger(final CustomHitsplatApplied event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) continue;
-            final OnHitsplatApplied trigger = (OnHitsplatApplied) triggerBase;
+    public void trigger(CustomHitsplatApplied event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) continue;
+            OnHitsplatApplied trigger = (OnHitsplatApplied) triggerBase;
             boolean triggerUsed = false;
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -40,9 +46,9 @@ public class ListenerOnHitsplatApplied extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final CustomHitsplatApplied event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, CustomHitsplatApplied event) {
         if (!(triggerBase instanceof OnHitsplatApplied)) return false;
-        final OnHitsplatApplied trigger = (OnHitsplatApplied) triggerBase;
+        OnHitsplatApplied trigger = (OnHitsplatApplied) triggerBase;
 
         // Hitsplat caused by other player check.
         if (!event.byMe) {
@@ -98,7 +104,7 @@ public class ListenerOnHitsplatApplied extends ListenerBase {
         // Name check.
         if (trigger.hasTargetName.isPresent()) {
             boolean nameCheck = false;
-            for (final String name : trigger.hasTargetName.get()) {
+            for (String name : trigger.hasTargetName.get()) {
                 if (event.actor.getName() != null && event.actor.getName().equals(name)) {
                     nameCheck = true;
                     break;
@@ -119,6 +125,6 @@ public class ListenerOnHitsplatApplied extends ListenerBase {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

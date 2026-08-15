@@ -1,23 +1,27 @@
 package com.fred4106.improvedCharges.items.utils;
 
-import net.runelite.api.widgets.Widget;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
 import com.fred4106.improvedCharges.item.ChargedItemWithStatus;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
+import com.fred4106.improvedCharges.item.triggers.OnScriptPreFired;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import net.runelite.api.gameval.*;
+import net.runelite.api.widgets.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
 import com.fred4106.improvedCharges.item.triggers.*;
-import com.fred4106.improvedCharges.store.ids.ItemContainerId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import com.fred4106.improvedCharges.store.enums.*;
 import com.fred4106.improvedCharges.store.Provider;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class U_BloodEssence extends ChargedItemWithStatus {
-    public U_BloodEssence(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.BLOOD_ESSENCE, ItemId.BLOOD_ESSENCE_INACTIVE, provider);
+    public U_BloodEssence(Provider provider) {
+        super(FredsItemChargesConfig.blood_essence, ItemID.BLOOD_ESSENCE_INACTIVE, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.BLOOD_ESSENCE_INACTIVE),
-            new TriggerItem(ItemId.BLOOD_ESSENCE_ACTIVE),
+            new TriggerItem(ItemID.BLOOD_ESSENCE_INACTIVE),
+            new TriggerItem(ItemID.BLOOD_ESSENCE_ACTIVE),
         };
 
         this.triggers.addAll(List.of(
@@ -34,26 +38,26 @@ public class U_BloodEssence extends ChargedItemWithStatus {
             new OnChatMessage("You activate the blood essence.").activate(),
 
             // Status from inventory.
-            new OnItemContainerChanged(ItemContainerId.INVENTORY).itemsConsumer(items -> {
-                if (items.hasItem(ItemId.BLOOD_ESSENCE_ACTIVE)) {
+            new OnItemContainerChanged(InventoryID.INV).itemsConsumer(items -> {
+                if (items.hasItem(ItemID.BLOOD_ESSENCE_ACTIVE)) {
                     activate();
-                } else if (items.hasItem(ItemId.BLOOD_ESSENCE_INACTIVE)) {
+                } else if (items.hasItem(ItemID.BLOOD_ESSENCE_INACTIVE)) {
                     deactivate();
                 }
             }),
 
             // Destroy.
             new OnScriptPreFired(1651).scriptConsumer((script) -> {
-                final Optional<Widget> destroyWidgetItem = FredsItemChargesPlugin.getWidget(provider.client, 584, 5);
+                Optional<Widget> destroyWidgetItem = FredsItemChargesPlugin.getWidget(provider.client, 584, 5);
                 if (
                     destroyWidgetItem.isPresent() &&
-                    (destroyWidgetItem.get().getItemId() == ItemId.BLOOD_ESSENCE_ACTIVE || destroyWidgetItem.get().getItemId() == ItemId.BLOOD_ESSENCE_INACTIVE) &&
-                    script.getScriptEvent().getArguments().length >= 5 &&
-                    script.getScriptEvent().getArguments()[4].toString().equals("Yes")
+                    (destroyWidgetItem.get().getItemId() == ItemID.BLOOD_ESSENCE_ACTIVE || destroyWidgetItem.get().getItemId() == ItemID.BLOOD_ESSENCE_INACTIVE) &&
+                    script.arguments.length >= 5 &&
+                    script.arguments[4].toString().equals("Yes")
                 ) {
                     provider.store.addConsumerToNextTickQueue(() -> setCharges(1000));
 
-                    if (destroyWidgetItem.get().getItemId() == ItemId.BLOOD_ESSENCE_ACTIVE) {
+                    if (destroyWidgetItem.get().getItemId() == ItemID.BLOOD_ESSENCE_ACTIVE) {
                         provider.store.addConsumerToNextTickQueue(this::deactivate);
                     }
                 }

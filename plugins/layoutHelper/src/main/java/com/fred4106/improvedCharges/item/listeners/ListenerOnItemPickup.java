@@ -1,23 +1,27 @@
 package com.fred4106.improvedCharges.item.listeners;
 
-import net.runelite.api.events.ItemDespawned;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
 import com.fred4106.improvedCharges.item.triggers.OnItemPickup;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ListenerOnItemPickup extends ListenerBase {
-    public ListenerOnItemPickup(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnItemPickup(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final ItemDespawned event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) continue;
+    public void trigger(ItemDespawned event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) continue;
 
-            final OnItemPickup trigger = (OnItemPickup) triggerBase;
+            OnItemPickup trigger = (OnItemPickup) triggerBase;
             boolean triggerUsed = false;
 
             if (trigger.pickUpToStorage.isPresent()) {
@@ -25,7 +29,7 @@ public class ListenerOnItemPickup extends ListenerBase {
                 triggerUsed = true;
             }
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -33,16 +37,16 @@ public class ListenerOnItemPickup extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final ItemDespawned event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItemBase, TriggerBase triggerBase, ItemDespawned event) {
         if (!(triggerBase instanceof OnItemPickup)) return false;
-        if (!(chargedItem instanceof ChargedItemWithStorage)) return false;
-        final OnItemPickup trigger = (OnItemPickup) triggerBase;
-        final ChargedItemWithStorage chargedItem = (ChargedItemWithStorage) this.chargedItem;
+        if (!(chargedItemBase instanceof ChargedItemWithStorage)) return false;
+        OnItemPickup trigger = (OnItemPickup) triggerBase;
+        ChargedItemWithStorage chargedItem = (ChargedItemWithStorage) chargedItemBase;
 
         // Correct item check.
         boolean correctItem = false;
-        for (final StorageItem storageItem : chargedItem.storage.getStorableItems()) {
-            if (event.getItem().getId() == storageItem.getId()) {
+        for (StorageItem storageItem : chargedItem.storage.getStorableItems()) {
+            if (event.getItem().getId() == storageItem.itemId) {
                 correctItem = true;
                 break;
             }
@@ -71,6 +75,6 @@ public class ListenerOnItemPickup extends ListenerBase {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItemBase);
     }
 }

@@ -1,44 +1,25 @@
 package com.fred4106.improvedCharges.events;
 
-import net.runelite.api.Item;
-import net.runelite.api.ItemComposition;
-import net.runelite.api.events.ItemContainerChanged;
-import net.runelite.client.game.ItemManager;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
+import com.fred4106.improvedCharges.item.storage.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class CustomItemContainerChanged {
     public final int itemContainerId;
     private final List<StorageItem> items;
 
-    public CustomItemContainerChanged(final int itemContainerId, final List<StorageItem> items) {
+    public CustomItemContainerChanged(int itemContainerId, List<StorageItem> items) {
         this.itemContainerId = itemContainerId;
         this.items = items;
     }
 
-    public CustomItemContainerChanged(final ItemContainerChanged event, final ItemManager itemManager) {
-        this.itemContainerId = event.getContainerId();
-        this.items = new ArrayList<>();
-
-        for (final Item item : event.getItemContainer().getItems()) {
-            if (item == null || item.getId() == -1 || item.getId() == 6512) continue;
-
-            final ItemComposition itemComposition = itemManager.getItemComposition(item.getId());
-            items.add(new StorageItem(
-                itemComposition.getPlaceholderTemplateId() != -1 ? itemComposition.getPlaceholderId() : item.getId(),
-                itemComposition.getPlaceholderTemplateId() != -1 ? 0 : item.getQuantity()
-            ));
-        }
-    }
-
-    public CustomItemContainerChanged(final CustomItemContainerChanged previousItemContainerChanged) {
+    public CustomItemContainerChanged(CustomItemContainerChanged previousItemContainerChanged) {
         this.itemContainerId = previousItemContainerChanged.itemContainerId;
         this.items = new ArrayList<>();
 
-        for (final StorageItem item : previousItemContainerChanged.getItems()) {
-            items.add(new StorageItem(item.getId(), item.getQuantity()));
+        for (StorageItem item : previousItemContainerChanged.getItems()) {
+            items.add(new StorageItem(item.itemId, item.getQuantity()));
         }
     }
 
@@ -54,11 +35,11 @@ public class CustomItemContainerChanged {
         return itemContainerId;
     }
 
-    public int count(final int itemId) {
+    public int count(int itemId) {
         int count = 0;
 
-        for (final StorageItem item : items) {
-            if (item.getId() == itemId) {
+        for (StorageItem item : items) {
+            if (item.itemId == itemId) {
                 count += item.getQuantity();
             }
         }
@@ -66,9 +47,9 @@ public class CustomItemContainerChanged {
         return count;
     }
 
-    public boolean hasItem(final int itemId) {
-        for (final StorageItem item : items) {
-            if (item.getId() == itemId) {
+    public boolean hasItem(int itemId) {
+        for (StorageItem item : items) {
+            if (item.itemId == itemId) {
                 return true;
             }
         }
@@ -76,18 +57,18 @@ public class CustomItemContainerChanged {
         return false;
     }
 
-    public void addStackableItem(final StorageItem itemToAdd) {
-        for (final StorageItem item : items) {
-            if (item.getId() == itemToAdd.getId()) {
+    public void addStackableItem(StorageItem itemToAdd) {
+        for (StorageItem item : items) {
+            if (item.itemId == itemToAdd.itemId) {
                 item.increaseQuantity(itemToAdd.getQuantity());
                 return;
             }
         }
     }
 
-    public void addNonStackableItem(final StorageItem itemToAdd) {
+    public void addNonStackableItem(StorageItem itemToAdd) {
         for (int i = 0; i < itemToAdd.getQuantity(); i++) {
-            items.add(new StorageItem(itemToAdd.getId(), 1));
+            items.add(new StorageItem(itemToAdd.itemId, 1));
         }
     }
 
@@ -95,8 +76,8 @@ public class CustomItemContainerChanged {
     public String toString() {
         String string = "ITEM CONTAINER CHANGED: | item container id: " + itemContainerId + "\r\n";
 
-        for (final StorageItem item : items) {
-            string += item.getId() + ", quantity: " + item.getQuantity() + "\r\n";
+        for (StorageItem item : items) {
+            string += item.itemId + ", quantity: " + item.getQuantity() + "\r\n";
         }
 
         return string;

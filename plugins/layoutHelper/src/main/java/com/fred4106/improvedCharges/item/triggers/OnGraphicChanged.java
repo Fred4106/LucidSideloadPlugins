@@ -1,9 +1,9 @@
 package com.fred4106.improvedCharges.item.triggers;
 
 public class OnGraphicChanged extends TriggerBase {
-    public final int[] graphicId;
+    public int[] graphicId;
 
-    public OnGraphicChanged(final int ...graphicId) {
+    public OnGraphicChanged(int ...graphicId) {
         this.graphicId = graphicId;
     }
 }

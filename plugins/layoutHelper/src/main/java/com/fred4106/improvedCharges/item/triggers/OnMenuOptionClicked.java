@@ -1,26 +1,33 @@
 package com.fred4106.improvedCharges.item.triggers;
 
 import com.fred4106.improvedCharges.events.CustomMenuOptionClicked;
+import com.fred4106.improvedCharges.events.*;
 
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.function.*;
 
 public class OnMenuOptionClicked extends TriggerBase {
-    public final String[] options;
+    public String[] options;
+    public Optional<String[]> target = Optional.empty();
     public Optional<Consumer<CustomMenuOptionClicked>> menuOptionConsumer = Optional.empty();
     public Optional<Integer> hasItemId = Optional.empty();
 
-    public OnMenuOptionClicked(final String ...options) {
+    public OnMenuOptionClicked(String ...options) {
         this.options = options;
     }
 
-    public OnMenuOptionClicked menuOptionConsumer(final Consumer<CustomMenuOptionClicked> consumer) {
+    public OnMenuOptionClicked menuOptionConsumer(Consumer<CustomMenuOptionClicked> consumer) {
         this.menuOptionConsumer = Optional.of(consumer);
         return this;
     }
 
-    public OnMenuOptionClicked hasItemId(final int itemId) {
+    public OnMenuOptionClicked hasItemId(int itemId) {
         this.hasItemId = Optional.of(itemId);
+        return this;
+    }
+
+    public OnMenuOptionClicked target(String... target) {
+        this.target = Optional.of(target);
         return this;
     }
 }

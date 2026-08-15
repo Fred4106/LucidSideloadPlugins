@@ -1,20 +1,27 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_GiantsoulAmulet extends ChargedItem {
-    public J_GiantsoulAmulet(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.GIANTSOUL_AMULET, ItemId.GIANTSOUL_AMULET, provider);
+    public J_GiantsoulAmulet(Provider provider) {
+        super(FredsItemChargesConfig.giantsoul_amulet, ItemID.GIANTSOUL_AMULET_CHARGED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.GIANTSOUL_AMULET_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.GIANTSOUL_AMULET),
+            new TriggerItem(ItemID.GIANTSOUL_AMULET_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.GIANTSOUL_AMULET_CHARGED),
         };
 
         this.triggers.addAll(List.of(
@@ -27,14 +34,11 @@ public class J_GiantsoulAmulet extends ChargedItem {
             // Teleport.
             new OnGraphicChanged(3226).decreaseCharges(1),
 
-            // Auto-charge.
-            new OnChatMessage("The banker charges your Giantsoul amulet using (?<bigbones>.+)x Big bones.*").matcherConsumer(m -> {
-                final int bigBones = Integer.parseInt(m.group("bigbones"));
-                increaseCharges(bigBones);
-            }),
-
             // Unified menu entry.
-            new OnMenuEntryAdded("Rub").replaceOption("Teleport")
+            new OnMenuEntryAdded("Rub").replaceOption("Teleport"),
+
+            // Auto-charge.
+            new OnAutoChargeMessage("Giantsoul amulet", "Big bones", 1, this)
         ));
     }
 }

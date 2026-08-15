@@ -1,29 +1,36 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.ids.ChargeId;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.ids.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_Camulet extends ChargedItem {
-    public J_Camulet(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.CAMULET, ItemId.CAMULET, provider);
+    public J_Camulet(Provider provider) {
+        super(FredsItemChargesConfig.camulet, ItemID.CAMULET, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.CAMULET),
+            new TriggerItem(ItemID.CAMULET),
         };
 
         this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("Your Camulet has one charge left.").setFixedCharges(1),
             new OnChatMessage("Your Camulet has (?<charges>.+) charges left.").setDynamicallyCharges(),
+
+            // Empty.
+            new OnChatMessage("Your Camulet has run out of charges.").setFixedCharges(0),
+            new OnChatMessage("Your Camulet has no charges left.").setFixedCharges(0),
 
             // Recharge.
             new OnChatMessage("You recharge the Camulet using camel dung. Yuck!").setFixedCharges(4),

@@ -1,21 +1,23 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_FlamtaerBracelet extends ChargedItem {
-    public J_FlamtaerBracelet(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.FLAMTAER_BRACELET, ItemId.FLAMTAER_BRACELET, provider);
+    public J_FlamtaerBracelet(Provider provider) {
+        super(FredsItemChargesConfig.flamtaer_bracelet, ItemID.FLAMTAER_BRACELET, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.FLAMTAER_BRACELET).needsToBeEquipped(),
+            new TriggerItem(ItemID.FLAMTAER_BRACELET).needsToBeEquipped(),
         };
 
         this.triggers.addAll(List.of(

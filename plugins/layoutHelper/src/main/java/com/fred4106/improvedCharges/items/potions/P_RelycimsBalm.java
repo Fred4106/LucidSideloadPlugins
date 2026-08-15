@@ -1,16 +1,18 @@
 package com.fred4106.improvedCharges.items.potions;
 
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import net.runelite.api.gameval.*;
 
 public class P_RelycimsBalm extends _Potion {
-    public P_RelycimsBalm(final Provider provider) {
+    public P_RelycimsBalm(Provider provider) {
         super("relicyms_balm", new TriggerItem[]{
-            new TriggerItem(ItemId.RELICYMS_BALM_1).fixedCharges(1),
-            new TriggerItem(ItemId.RELICYMS_BALM_2).fixedCharges(2),
-            new TriggerItem(ItemId.RELICYMS_BALM_3).fixedCharges(3),
-            new TriggerItem(ItemId.RELICYMS_BALM_4).fixedCharges(4),
+            new TriggerItem(ItemID.RELICYMS_BALM1).fixedCharges(1),
+            new TriggerItem(ItemID.RELICYMS_BALM2).fixedCharges(2),
+            new TriggerItem(ItemID.RELICYMS_BALM3).fixedCharges(3),
+            new TriggerItem(ItemID.RELICYMS_BALM4).fixedCharges(4),
         }, provider);
     }
 }

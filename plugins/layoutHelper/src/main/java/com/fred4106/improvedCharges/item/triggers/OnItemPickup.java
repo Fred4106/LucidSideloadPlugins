@@ -1,14 +1,15 @@
 package com.fred4106.improvedCharges.item.triggers;
 
 import com.fred4106.improvedCharges.item.storage.StorageItem;
+import com.fred4106.improvedCharges.item.storage.*;
 
-import java.util.Optional;
+import java.util.*;
 
 public class OnItemPickup extends TriggerBase {
-    public final StorageItem[] items;
+    public StorageItem[] items;
     public Optional<Boolean> isByOne = Optional.empty();
 
-    public OnItemPickup(final StorageItem[] items) {
+    public OnItemPickup(StorageItem[] items) {
         this.items = items;
     }
 

@@ -1,23 +1,25 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_SkullSceptre extends ChargedItem {
-    public W_SkullSceptre(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.SKULL_SCEPTRE, ItemId.SKULL_SCEPTRE, provider);
+    public W_SkullSceptre(Provider provider) {
+        super(FredsItemChargesConfig.skull_sceptre, ItemID.SOS_SKULL_SCEPTRE, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.SKULL_SCEPTRE),
-            new TriggerItem(ItemId.SKULL_SCEPTRE_IMBUED)
+            new TriggerItem(ItemID.SOS_SKULL_SCEPTRE),
+            new TriggerItem(ItemID.SOS_SKULL_SCEPTRE_IMBUED)
         };
 
         this.triggers.addAll(List.of(

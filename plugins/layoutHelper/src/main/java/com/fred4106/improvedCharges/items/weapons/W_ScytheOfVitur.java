@@ -1,29 +1,32 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnHitsplatApplied;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
+import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_ScytheOfVitur extends ChargedItem {
-    public W_ScytheOfVitur(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.SCYTHE_OF_VITUR, ItemId.SCYTHE_OF_VITUR, provider);
+    public W_ScytheOfVitur(Provider provider) {
+        super(FredsItemChargesConfig.scythe_of_vitur, ItemID.SCYTHE_OF_VITUR, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.SCYTHE_OF_VITUR),
-            new TriggerItem(ItemId.SCYTHE_OF_VITUR_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.HOLY_SCYTHE_OF_VITUR),
-            new TriggerItem(ItemId.HOLY_SCYTHE_OF_VITUR_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.SANGUINE_SCYTHE_OF_VITUR),
-            new TriggerItem(ItemId.SANGUINE_SCYTHE_OF_VITUR_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.SCYTHE_OF_VITUR),
+            new TriggerItem(ItemID.SCYTHE_OF_VITUR_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.SCYTHE_OF_VITUR_OR),
+            new TriggerItem(ItemID.SCYTHE_OF_VITUR_UNCHARGED_OR).fixedCharges(0),
+            new TriggerItem(ItemID.SCYTHE_OF_VITUR_BL),
+            new TriggerItem(ItemID.SCYTHE_OF_VITUR_UNCHARGED_BL).fixedCharges(0),
         };
 
         this.triggers.addAll(List.of(

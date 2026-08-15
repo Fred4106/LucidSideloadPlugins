@@ -1,43 +1,44 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import net.runelite.api.widgets.Widget;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnScriptPreFired;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import net.runelite.api.widgets.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class J_BindingNecklace extends ChargedItem {
-    public J_BindingNecklace(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.BINDING_NECKLACE, ItemId.BINDING_NECKLACE, provider);
+    public J_BindingNecklace(Provider provider) {
+        super(FredsItemChargesConfig.binding_necklace, ItemID.MAGIC_EMERALD_NECKLACE, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.BINDING_NECKLACE).needsToBeEquipped(),
+            new TriggerItem(ItemID.MAGIC_EMERALD_NECKLACE).needsToBeEquipped(),
         };
 
         this.triggers.addAll(List.of(
-            // Check, one left.
-            new OnChatMessage("You have one charge left before your Binding necklace disintegrates.").setFixedCharges(1),
-
             // Check.
-            new OnChatMessage("You have (?<charges>.+) charges left before your Binding necklace disintegrates.").setDynamicallyCharges(),
+            new OnChatMessage("You have (?<charges>.+) charges? left before your Binding necklace disintegrates.").setDynamicallyCharges(),
 
             // Charge used.
-            new OnChatMessage("You (partially succeed to )?bind the temple's power into (Mud|Lava|Steam|Dust|Smoke|Mist|Aether) runes?.").decreaseCharges(1),
+            new OnChatMessage("You bind the temple's power into (Mud|Lava|Steam|Dust|Smoke|Mist|Aether) runes?.").decreaseCharges(1),
 
             // Fully used.
             new OnChatMessage("Your Binding necklace has disintegrated.").runConsumerOnNextGameTick(() -> setCharges(16)),
 
             // Destroy.
             new OnScriptPreFired(1651).scriptConsumer((script) -> {
-                final Optional<Widget> destroyWidget = FredsItemChargesPlugin.getWidget(provider.client, 584, 0, 2);
+                Optional<Widget> destroyWidget = FredsItemChargesPlugin.getWidget(provider.client, 584, 0, 2);
                 if (
                     destroyWidget.isPresent() && destroyWidget.get().getText().equals("Destroy necklace of binding?") &&
-                    script.getScriptEvent().getArguments().length >= 5 &&
-                    script.getScriptEvent().getArguments()[4].toString().equals("Yes")
+                    script.arguments.length >= 5 &&
+                    script.arguments[4].toString().equals("Yes")
                 ) {
                     provider.store.addConsumerToNextTickQueue(() -> setCharges(16));
                 }

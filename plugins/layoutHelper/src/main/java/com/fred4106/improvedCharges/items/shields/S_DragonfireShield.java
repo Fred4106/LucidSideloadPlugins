@@ -1,25 +1,26 @@
 package com.fred4106.improvedCharges.items.shields;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
-import java.util.List;
+import java.util.*;
 
 public class S_DragonfireShield extends ChargedItem {
-    public S_DragonfireShield(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.DRAGONFIRE_SHIELD, ItemId.DRAGONFIRE_SHIELD, provider);
+    public S_DragonfireShield(Provider provider) {
+        super(FredsItemChargesConfig.dragonfire_shield, ItemID.DRAGONFIRE_SHIELD, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.DRAGONFIRE_SHIELD_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.DRAGONFIRE_SHIELD),
-            new TriggerItem(ItemId.DRAGONFIRE_WARD_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.DRAGONFIRE_WARD)
+            new TriggerItem(ItemID.DRAGONFIRE_SHIELD_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.DRAGONFIRE_SHIELD),
+            new TriggerItem(ItemID.DRAGONFIRE_WARD_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.DRAGONFIRE_WARD)
         };
 
         this.triggers.addAll(List.of(

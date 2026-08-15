@@ -1,16 +1,18 @@
 package com.fred4106.improvedCharges.items.potions;
 
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ItemId;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import net.runelite.api.gameval.*;
 
 public class P_AntidotePlusPlus extends _Potion {
-    public P_AntidotePlusPlus(final Provider provider) {
+    public P_AntidotePlusPlus(Provider provider) {
         super("antidote_plus_plus", new TriggerItem[]{
-            new TriggerItem(ItemId.ANTIDOTE_PLUS_PLUS_1).fixedCharges(1),
-            new TriggerItem(ItemId.ANTIDOTE_PLUS_PLUS_2).fixedCharges(2),
-            new TriggerItem(ItemId.ANTIDOTE_PLUS_PLUS_3).fixedCharges(3),
-            new TriggerItem(ItemId.ANTIDOTE_PLUS_PLUS_4).fixedCharges(4),
+            new TriggerItem(ItemID.ANTIDOTE__1).fixedCharges(1),
+            new TriggerItem(ItemID.ANTIDOTE__2).fixedCharges(2),
+            new TriggerItem(ItemID.ANTIDOTE__3).fixedCharges(3),
+            new TriggerItem(ItemID.ANTIDOTE__4).fixedCharges(4),
         }, provider);
     }
 }

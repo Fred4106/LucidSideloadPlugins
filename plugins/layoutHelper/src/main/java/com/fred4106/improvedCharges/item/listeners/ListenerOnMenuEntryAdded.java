@@ -1,28 +1,31 @@
 package com.fred4106.improvedCharges.item.listeners;
 
-import net.runelite.api.MenuEntry;
-import net.runelite.api.events.MenuEntryAdded;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.utils.ReplaceTarget;
+import net.runelite.api.*;
+import net.runelite.api.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.utils.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ListenerOnMenuEntryAdded extends ListenerBase {
-    public ListenerOnMenuEntryAdded(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnMenuEntryAdded(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final MenuEntryAdded event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) {
+    public void trigger(MenuEntryAdded event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) {
                 continue;
             };
-            final OnMenuEntryAdded trigger = (OnMenuEntryAdded) triggerBase;
+            OnMenuEntryAdded trigger = (OnMenuEntryAdded) triggerBase;
             boolean triggerUsed = false;
 
             if (trigger.replaceOption.isPresent()) {
@@ -34,11 +37,11 @@ public class ListenerOnMenuEntryAdded extends ListenerBase {
                 try {
                     event.getMenuEntry().setOption(trigger.replaceOptionConsumer.get().call());
                     triggerUsed = true;
-                } catch (final Exception ignored) {}
+                } catch (Exception ignored) {}
             }
 
             if (trigger.replaceTargets.isPresent()) {
-                for (final ReplaceTarget replaceTarget : trigger.replaceTargets.get()) {
+                for (ReplaceTarget replaceTarget : trigger.replaceTargets.get()) {
                     if (event.getTarget().contains(replaceTarget.target)) {
                         event.getMenuEntry().setTarget(event.getTarget().replaceAll(replaceTarget.target, replaceTarget.replace));
                         triggerUsed = true;
@@ -50,14 +53,14 @@ public class ListenerOnMenuEntryAdded extends ListenerBase {
             if (trigger.replaceTargetDynamically.isPresent() && event.getTarget().contains(trigger.replaceTargetDynamically.get().target)) {
                 try {
                     event.getMenuEntry().setTarget(event.getTarget().replaceAll(trigger.replaceTargetDynamically.get().target, trigger.replaceTargetDynamically.get().replace.call()));
-                } catch (final Exception ignored) {}
+                } catch (Exception ignored) {}
                 triggerUsed = true;
             }
 
             if (trigger.hide.isPresent() && trigger.menuEntryOption.isPresent()) {
-                final List<MenuEntry> newMenuEntries = new ArrayList<>();
+                List<MenuEntry> newMenuEntries = new ArrayList<>();
 
-                for (final MenuEntry entry : provider.client.getMenuEntries()) {
+                for (MenuEntry entry : provider.client.getMenuEntries()) {
                     if (!entry.getOption().equals(trigger.menuEntryOption.get())) {
                         newMenuEntries.add(entry);
                     }
@@ -67,7 +70,7 @@ public class ListenerOnMenuEntryAdded extends ListenerBase {
                 triggerUsed = true;
             }
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -75,19 +78,19 @@ public class ListenerOnMenuEntryAdded extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final MenuEntryAdded event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, MenuEntryAdded event) {
         if (!(triggerBase instanceof OnMenuEntryAdded)) return false;
-        final OnMenuEntryAdded trigger = (OnMenuEntryAdded) triggerBase;
+        OnMenuEntryAdded trigger = (OnMenuEntryAdded) triggerBase;
 
         // Check base triggers to avoid calling impostor id getters on client.
         impostorIdsTargetCheck: if (trigger.replaceImpostorIds.isPresent() && trigger.onMenuTarget.isPresent()) {
-            for (final String target : trigger.onMenuTarget.get()) {
+            for (String target : trigger.onMenuTarget.get()) {
                 if (event.getTarget().contains(target)) {
                     break impostorIdsTargetCheck;
                 }
             }
 
-            if (!super.isValidTrigger(trigger)) {
+            if (!super.isValidTrigger(trigger, chargedItem)) {
                 return false;
             }
         }
@@ -96,7 +99,7 @@ public class ListenerOnMenuEntryAdded extends ListenerBase {
         if (!trigger.replaceImpostorIds.isPresent()) {
             boolean idCheck = false;
 
-            for (final TriggerItem item : chargedItem.items) {
+            for (TriggerItem item : chargedItem.items) {
                 if (item.itemId == event.getMenuEntry().getItemId()) {
                     idCheck = true;
                     break;
@@ -120,7 +123,7 @@ public class ListenerOnMenuEntryAdded extends ListenerBase {
 
         // Menu target replace check.
         menuReplaceTargetsCheck: if (trigger.replaceTargets.isPresent()) {
-            for (final ReplaceTarget replaceTarget: trigger.replaceTargets.get()) {
+            for (ReplaceTarget replaceTarget: trigger.replaceTargets.get()) {
                 if (event.getTarget().contains(replaceTarget.target)) {
                     break menuReplaceTargetsCheck;
                 }
@@ -131,17 +134,17 @@ public class ListenerOnMenuEntryAdded extends ListenerBase {
 
         // Menu replace impostor id check.
         replaceImpostorIdCheck: if (trigger.replaceImpostorIds.isPresent()) {
-            for (final int impostorId : trigger.replaceImpostorIds.get()) {
+            for (int impostorId : trigger.replaceImpostorIds.get()) {
                 try {
                     if (provider.client.getObjectDefinition(event.getMenuEntry().getIdentifier()).getImpostor().getId() == impostorId) {
                         break replaceImpostorIdCheck;
                     }
-                } catch (final Exception ignored) {}
+                } catch (Exception ignored) {}
             }
 
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

@@ -1,21 +1,24 @@
 package com.fred4106.improvedCharges.item.listeners;
 
-import net.runelite.api.events.VarbitChanged;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnVarbitChanged;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ListenerOnVarbitChanged extends ListenerBase {
-    public ListenerOnVarbitChanged(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnVarbitChanged(Provider provider) {
+        super(provider);
     }
 
-    public void trigger(final VarbitChanged event) {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase, event)) continue;
-            final OnVarbitChanged trigger = (OnVarbitChanged) triggerBase;
+    public void trigger(VarbitChanged event, ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase, event)) continue;
+            OnVarbitChanged trigger = (OnVarbitChanged) triggerBase;
             boolean triggerUsed = false;
 
             // Set dynamically.
@@ -29,7 +32,7 @@ public class ListenerOnVarbitChanged extends ListenerBase {
                 triggerUsed = true;
             }
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -37,9 +40,9 @@ public class ListenerOnVarbitChanged extends ListenerBase {
         }
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase, final VarbitChanged event) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase, VarbitChanged event) {
         if (!(triggerBase instanceof OnVarbitChanged)) return false;
-        final OnVarbitChanged trigger = (OnVarbitChanged) triggerBase;
+        OnVarbitChanged trigger = (OnVarbitChanged) triggerBase;
 
         // Varbit id check.
         if (event.getVarbitId() != trigger.varbitId) {
@@ -51,6 +54,6 @@ public class ListenerOnVarbitChanged extends ListenerBase {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

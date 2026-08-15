@@ -1,25 +1,28 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.*;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnHitsplatApplied;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.enums.CombatStyle;
 import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_AmuletOfBloodFury extends ChargedItem {
-    public J_AmuletOfBloodFury(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.AMULET_OF_BLOOD_FURY, ItemId.AMULET_OF_BLOOD_FURY, provider);
+    public J_AmuletOfBloodFury(Provider provider) {
+        super(FredsItemChargesConfig.amulet_of_blood_fury, ItemID.BLOOD_AMULET, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.AMULET_OF_BLOOD_FURY),
+            new TriggerItem(ItemID.BLOOD_AMULET),
         };
 
         this.triggers.addAll(List.of(

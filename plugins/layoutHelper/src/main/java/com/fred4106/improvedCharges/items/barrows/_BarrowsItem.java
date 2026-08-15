@@ -1,23 +1,26 @@
 package com.fred4106.improvedCharges.items.barrows;
 
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.events.CustomMenuOptionClicked;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnCombat;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.events.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 import java.util.List;
 
 public class _BarrowsItem extends ChargedItem {
     public _BarrowsItem(
-            final String itemName,
-            final int itemId,
-            final Provider provider
+            String itemName,
+            int itemId,
+            Provider provider
             ) {
         super(
-            Constants.BARROWS_GEAR + "_" + itemName.toLowerCase().replaceAll("'", "").replaceAll(" ", "_"),
+            FredsItemChargesConfig.barrows_gear + "_" + itemName.toLowerCase().replace("'", "").replace(" ", "_"),
             itemId,
             provider
         );
@@ -25,12 +28,12 @@ public class _BarrowsItem extends ChargedItem {
         this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage(itemName + ": (?<percentage>.+)% remaining until the next degradation.").matcherConsumer((m) -> {
-                final int percentage = Integer.parseInt(m.group("percentage"));
-                final int chargesUsedInCurrentTier = (100 - percentage) * 250 / 100;
+                int percentage = Integer.parseInt(m.group("percentage"));
+                int chargesUsedInCurrentTier = (100 - percentage) * 250 / 100;
 
-                for (final CustomMenuOptionClicked menuOptionClicked : provider.store.menuOptionsClicked) {
+                for (CustomMenuOptionClicked menuOptionClicked : provider.store.menuOptionsClicked) {
                     if (menuOptionClicked.target.contains(provider.itemManager.getItemComposition(itemId).getName())) {
-                        final int currentTierMaxCharges = Integer.parseInt(menuOptionClicked.target.replaceAll("\\D", "")) * 10;
+                        int currentTierMaxCharges = Integer.parseInt(menuOptionClicked.target.replaceAll("\\D", "")) * 10;
                         setCharges(currentTierMaxCharges - chargesUsedInCurrentTier);
                         return;
                     }
@@ -43,14 +46,19 @@ public class _BarrowsItem extends ChargedItem {
     }
 
     @Override
-    public String getChargesString(final int itemId) {
-        final int charges = getCharges(itemId);
+    public String getChargesString(int itemId) {
+        return getLongChargesString(itemId);
+    }
+
+    @Override
+    public String getLongChargesString(int itemId) {
+        int charges = getCharges(itemId);
 
         switch (provider.config.combatTimeDegradableStyle()) {
             case PERCENTAGE:
                 return charges * 100 / 1000 + "%";
             case TIME:
-                final double hours = (double) (charges * 90 * 600) / 1000 / 3600;
+                double hours = (double) (charges * 90 * 600) / 1000 / 3600;
                 return String.format("%.1fh", hours).replaceAll("\\.0", "");
             case CHARGES:
             default:
@@ -65,6 +73,6 @@ public class _BarrowsItem extends ChargedItem {
 
     @Override
     public String getConfigKey() {
-        return Constants.BARROWS_GEAR;
+        return FredsItemChargesConfig.barrows_gear;
     }
 }

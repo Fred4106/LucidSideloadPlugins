@@ -1,77 +1,96 @@
 package com.fred4106.improvedCharges.items.capes;
 
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItemWithStorageEmptyable;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import net.runelite.api.Skill;
-import net.runelite.api.widgets.Widget;
-import com.fred4106.improvedCharges.FredsItemChargesPlugin;
-import com.fred4106.improvedCharges.item.ChargedItemWithStorage;
 import com.fred4106.improvedCharges.item.storage.StorableItem;
+import com.fred4106.improvedCharges.item.storage.Storage;
 import com.fred4106.improvedCharges.item.storage.StorageItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
+import com.fred4106.improvedCharges.item.triggers.OnItemPickup;
+import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
+import com.fred4106.improvedCharges.item.triggers.OnMenuOptionClicked;
+import com.fred4106.improvedCharges.item.triggers.OnXpDrop;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.ids.WidgetId;
+import com.fred4106.improvedCharges.store.utils.WidgetMenuAction;
+import net.runelite.api.*;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.widgets.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.storage.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.ids.*;
+import com.fred4106.improvedCharges.store.utils.*;
 
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.fred4106.improvedCharges.store.ids.ItemContainerId.BANK;
-import static com.fred4106.improvedCharges.store.ids.ItemContainerId.INVENTORY;
+import java.util.regex.*;
+import java.util.stream.*;
 
 public class C_LogBasket extends ChargedItemWithStorageEmptyable {
     private Optional<StorageItem> lastLogs = Optional.empty();
     private int infernalQuantityTracker = 0;
     private Optional<Integer> lastLogUsedFromBasketForBeehive = Optional.empty();
 
-    public C_LogBasket(final Provider provider) {
-        super(Constants.LOG_BASKET, ItemId.LOG_BASKET, provider);
-        storage.setMaximumTotalQuantity(28).storableItems(
-            new StorableItem(ItemId.LOGS).displayName("Regular logs").checkName("some logs", "x Logs"),
-            new StorableItem(ItemId.OAK_LOGS).checkName("Oak logs"),
-            new StorableItem(ItemId.WILLOW_LOGS).checkName("Willow logs"),
-            new StorableItem(ItemId.MAPLE_LOGS).checkName("Maple logs"),
-            new StorableItem(ItemId.YEW_LOGS).checkName("Yew logs"),
-            new StorableItem(ItemId.MAGIC_LOGS).checkName("Magic logs"),
-            new StorableItem(ItemId.REDWOOD_LOGS).checkName("Redwood logs"),
-            new StorableItem(ItemId.TEAK_LOGS).checkName("Teak logs"),
-            new StorableItem(ItemId.MAHOGANY_LOGS).checkName("Mahogany logs"),
-            new StorableItem(ItemId.ACHEY_TREE_LOGS).checkName("Achey tree logs"),
-            new StorableItem(ItemId.ARCTIC_PINE_LOGS).checkName("Arctic pine logs"),
-            new StorableItem(ItemId.JUNIPER_LOGS).checkName("Juniper logs"),
-            new StorableItem(ItemId.BARK).checkName("Bark"),
-            new StorableItem(ItemId.BLISTERWOOD_LOGS).checkName("Blisterwood logs"),
-            new StorableItem(ItemId.CAMPHOR_LOGS).checkName("Camphor logs"),
-            new StorableItem(ItemId.IRONWOOD_LOGS).checkName("Ironwood logs"),
-            new StorableItem(ItemId.ROSEWOOD_LOGS).checkName("Rosewood logs")
-        );
+    private List<StorableLog> storableLogs = List.of(
+        new StorableLog(ItemID.LOGS, "Logs", true).displayName("Regular logs").checkName("some logs", "x Logs"),
+        new StorableLog(ItemID.ACHEY_TREE_LOGS, "Achey tree logs", true).checkName("Achey tree logs"),
+        new StorableLog(ItemID.OAK_LOGS, "Oak logs", true).checkName("Oak logs"),
+        new StorableLog(ItemID.WILLOW_LOGS, "Willow logs", true).checkName("Willow logs"),
+        new StorableLog(ItemID.TEAK_LOGS, "Teak logs", true).checkName("Teak logs"),
+        new StorableLog(ItemID.JATOBA_LOGS, "Jatoba logs", true).checkName("Jatoba logs"),
+        new StorableLog(ItemID.JUNIPER_LOGS, "Juniper logs", true).checkName("Juniper logs"),
+        new StorableLog(ItemID.MAPLE_LOGS, "Maple logs", true).checkName("Maple logs"),
+        new StorableLog(ItemID.HOLLOW_BARK, "Bark", true).checkName("Bark"),
+        new StorableLog(ItemID.MAHOGANY_LOGS, "Mahogany logs", true).checkName("Mahogany logs"),
+        new StorableLog(ItemID.ARCTIC_PINE_LOG, "Arctic pine logs", true).checkName("Arctic pine logs"),
+        new StorableLog(ItemID.YEW_LOGS, "Yew logs", true).checkName("Yew logs"),
+        new StorableLog(ItemID.BLISTERWOOD_LOGS, "Blisterwood logs", true).checkName("Blisterwood logs"),
+        new StorableLog(ItemID.CAMPHOR_LOGS, "Camphor logs", true).checkName("Camphor logs"),
+        new StorableLog(ItemID.MAGIC_LOGS, "Magic logs", true).checkName("Magic logs"),
+        new StorableLog(ItemID.IRONWOOD_LOGS, "Ironwood logs", true).checkName("Ironwood logs"),
+        new StorableLog(ItemID.REDWOOD_LOGS, "Redwood logs", true).checkName("Redwood logs"),
+        new StorableLog(ItemID.ROSEWOOD_LOGS, "Rosewood logs", true).checkName("Rosewood logs")
+    );
 
+    public C_LogBasket(String configKey, int itemId, int openItemId, Storage storage, Provider provider) {
+        super(configKey, itemId, provider);
+        this.storage = storage;
+        setup(itemId, openItemId);
+    }
+
+    public C_LogBasket(Provider provider) {
+        super(FredsItemChargesConfig.log_basket, ItemID.LOG_BASKET_CLOSED, provider);
+        setup(ItemID.LOG_BASKET_CLOSED, ItemID.LOG_BASKET_OPEN);
+    }
+
+    public void setup(int itemId, int openItemId) {
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.LOG_BASKET),
-            new TriggerItem(ItemId.LOG_BASKET_OPEN),
+            new TriggerItem(itemId),
+            new TriggerItem(openItemId),
         };
 
-        this.triggers.addAll(List.of(
-            // Check while empty.
-            new OnChatMessage("(Your|The) basket is empty.").onItemClick().emptyStorage().consumer(() -> {
-                infernalQuantityTracker = 0;
-                lastLogs = Optional.empty();
-            }),
+        storage
+            .addStorableItems(storableLogs.stream().map(storableLog -> new StorableItem(storableLog.itemId).checkName(storableLog.checkName).displayName(storableLog.displayName)).collect(Collectors.toList()))
+            .setMaximumComboQuantity(storableLogs.stream().map(storableLog -> storableLog.itemId).collect(Collectors.toList()), 28);
 
-            // Empty to bank.
-            new OnChatMessage("You empty your basket( into the bank)?.").onItemClick().emptyStorage().consumer(() -> {
-                infernalQuantityTracker = 0;
-                lastLogs = Optional.empty();
+        this.triggers.addAll(List.of(
+            // Check while empty or empty to inventory or bank.
+            new OnChatMessage("(Your basket is empty.|The basket is empty.|You empty your basket.|You empty your basket into the bank.)").onItemClick().consumer(() -> {
+                emptyStorage();
             }),
 
             // Check.
             new OnChatMessage("The basket contains:").stringConsumer(s -> {
-                storage.clear();
+                emptyStorage();
 
-                final Pattern pattern = Pattern.compile("(?<quantity>\\d+).x.(?<logs>.*?)(,|$)");
-                final Matcher matcher = pattern.matcher(s);
+                Pattern pattern = Pattern.compile("(?<quantity>\\d+).x.(?<logs>.*?)(,|$)");
+                Matcher matcher = pattern.matcher(s);
 
                 while (matcher.find()) {
                     storage.put(getStorageItemFromName(matcher.group("logs"), Integer.parseInt(matcher.group("quantity"))));
@@ -81,77 +100,62 @@ public class C_LogBasket extends ChargedItemWithStorageEmptyable {
             }).onItemClick(),
 
             // Miscellania support.
-            new OnChatMessage("You get some maple logs and give them to Lumberjack Leif.").requiredItem(ItemId.LOG_BASKET_OPEN).addToStorage(ItemId.MAPLE_LOGS, 0),
-            new OnChatMessage("You get some teak logs and give them to Carpenter Kjallak.").requiredItem(ItemId.LOG_BASKET_OPEN).addToStorage(ItemId.TEAK_LOGS, 0),
-            new OnChatMessage("You get some mahogany logs and give them to Carpenter Kjallak.").requiredItem(ItemId.LOG_BASKET_OPEN).addToStorage(ItemId.MAHOGANY_LOGS, 0),
+            new OnChatMessage("You get some maple logs and give them to Lumberjack Leif.").requiredItem(openItemId).addToStorage(ItemID.MAPLE_LOGS, 0),
+            new OnChatMessage("You get some teak logs and give them to Carpenter Kjallak.").requiredItem(openItemId).addToStorage(ItemID.TEAK_LOGS, 0),
+            new OnChatMessage("You get some mahogany logs and give them to Carpenter Kjallak.").requiredItem(openItemId).addToStorage(ItemID.MAHOGANY_LOGS, 0),
 
 
             // Achey tree.
             new OnChatMessage("You get some logs.").onMenuTarget("Achey Tree").consumer(() -> {
-                lastLogs = Optional.of(new StorageItem(ItemId.ACHEY_TREE_LOGS, 1));
+                lastLogs = Optional.of(new StorageItem(ItemID.ACHEY_TREE_LOGS, 1));
                 storage.add(lastLogs);
                 infernalQuantityTracker++;
-            }).requiredItem(ItemId.LOG_BASKET_OPEN),
+            }).requiredItem(openItemId),
 
             // Chop.
             new OnChatMessage("You get (?<logs>some .+).").matcherConsumer(m -> {
                 lastLogs = getStorageItemFromName(m.group("logs"), 1);
                 storage.add(lastLogs);
                 infernalQuantityTracker++;
-            }).requiredItem(ItemId.LOG_BASKET_OPEN),
+            }).requiredItem(openItemId),
 
             // Extra logs from nature offerings.
-            new OnChatMessage("The nature offerings enabled you to chop an extra log.").requiredItem(ItemId.LOG_BASKET_OPEN).runConsumerOnNextGameTick(() -> {
+            new OnChatMessage("The nature offerings enabled you to chop an extra log.").requiredItem(openItemId).runConsumerOnNextGameTick(() -> {
                 if (lastLogs.isPresent()) {
-                    storage.add(lastLogs.get().getId(), 1);
+                    storage.add(lastLogs.get().itemId, 1);
                 }
             }),
 
-            new OnItemPickup(storage.getStorableItems()).isByOne().requiredItem(ItemId.LOG_BASKET_OPEN).pickUpToStorage(),
+            new OnItemPickup(storage.getStorableItems()).isByOne().requiredItem(openItemId).pickUpToStorage(),
 
             // Fill from inventory.
-            new OnItemContainerChanged(INVENTORY).onMenuOption("Fill").onItemClick().fillStorageFromInventory(),
-
-            // Fully empty to inventory.
-            new OnChatMessage("You empty your basket.").emptyStorage(),
+            new OnItemContainerChanged(InventoryID.INV).onMenuOption("Fill").onItemClick().fillStorageFromInventory(),
 
             // Partially empty to inventory.
-            new OnItemContainerChanged(INVENTORY).onMenuOption("Empty").onItemClick().emptyStorageToInventory(),
+            new OnItemContainerChanged(InventoryID.INV).onMenuOption("Empty").onItemClick().emptyStorageToInventory(),
+
+            // Empty from check dialog.
+            new OnItemContainerChanged(InventoryID.INV).onWidgetMenuAction(new WidgetMenuAction("Yes", 0, "Empty the log basket into your inventory?")).emptyStorageToInventory(),
 
             // Partially empty to inventory from check dialog.
-            new OnItemContainerChanged(INVENTORY).onMenuOption("Continue").hasChatMessage("You empty as many logs as you can carry.").emptyStorageToInventory(),
+            new OnItemContainerChanged(InventoryID.INV).onMenuOption("Continue").hasChatMessage("You empty as many logs as you can carry.").emptyStorageToInventory(),
 
             // Use log on basket.
-            new OnItemContainerChanged(INVENTORY).fillStorageFromInventory().onUseStorageItemOnChargedItem(storage.getStorableItems()),
+            new OnItemContainerChanged(InventoryID.INV).fillStorageFromInventory().onUseStorageItemOnChargedItem(storage.getStorableItems()),
 
             // Empty to bank.
-            new OnItemContainerChanged(BANK).emptyStorageToBank().onMenuOption("Empty", FredsItemChargesPlugin.menuOptionEmptyToBank),
+            new OnItemContainerChanged(InventoryID.BANK).emptyStorageToBank().onMenuOption("Empty", FredsItemChargesPlugin.menuOptionEmptyToBank),
 
             // Leprechaun.
             new OnMenuOptionClicked("Continue").consumer(() -> {
-                final Optional<Widget> bankWoodcuttingResourcesWidget = FredsItemChargesPlugin.getWidget(provider.client, 219, 1, 2);
+                Optional<Widget> bankWoodcuttingResourcesWidget = FredsItemChargesPlugin.getWidget(provider.client, 219, 1, 2);
                 if (bankWoodcuttingResourcesWidget.isPresent() && bankWoodcuttingResourcesWidget.get().getText().equals("Only bank woodcutting resources")) {
-                    storage.clear();
+                    provider.store.addConsumerToNextTickQueue(() -> emptyStorage());
                 }
             }),
 
             // Beehives.
-            new OnXpDrop(Skill.WOODCUTTING).onMenuOption("Use").onMenuTarget(
-                "Logs",
-                "Achey tree logs",
-                "Oak logs",
-                "Willow logs",
-                "Teak logs",
-                "Maple logs",
-                "Mahogany logs",
-                "Arctic pine logs",
-                "Yew logs",
-                "Magic logs",
-                "Redwood logs",
-                "Camphor logs",
-                "Ironwood logs",
-                "Rosewood logs"
-            ).consumer(this::buildBeehive),
+            new OnXpDrop(Skill.WOODCUTTING).onMenuOption("Use").onMenuTarget(storableLogs.stream().map(storableLog -> storableLog.itemName).collect(Collectors.toList())).consumer(this::buildBeehive),
             new OnChatMessage("Well done, you've completed a beehive. The bees can now be safely rehomed.").consumer(() -> {
                 if (lastLogUsedFromBasketForBeehive.isPresent()) {
                     storage.add(lastLogUsedFromBasketForBeehive.get(), 1);
@@ -168,22 +172,33 @@ public class C_LogBasket extends ChargedItemWithStorageEmptyable {
             // Infernal axe support.
             new OnXpDrop(Skill.FIREMAKING).onMenuOption("Chop down", "Cut").consumer(() -> {
                 if (infernalQuantityTracker < 29 && lastLogs.isPresent()) {
-                    storage.remove(lastLogs.get().getId(), 1);
+                    storage.remove(lastLogs.get().itemId, 1);
                     infernalQuantityTracker--;
                 }
-            }).requiredItem(ItemId.LOG_BASKET_OPEN)
+            }).requiredItem(openItemId)
         ));
     }
 
-    private void buildBeehive() {
-        final int[] logsInOrderToUse = new int[]{
-            ItemId.LOGS, ItemId.ACHEY_TREE_LOGS, ItemId.OAK_LOGS, ItemId.WILLOW_LOGS,
-            ItemId.TEAK_LOGS, ItemId.MAPLE_LOGS, ItemId.MAHOGANY_LOGS, ItemId.ARCTIC_PINE_LOGS,
-            ItemId.YEW_LOGS, ItemId.CAMPHOR_LOGS, ItemId.IRONWOOD_LOGS, ItemId.MAGIC_LOGS,
-            ItemId.REDWOOD_LOGS, ItemId.ROSEWOOD_LOGS
-        };
+    public void emptyStorage() {
+        infernalQuantityTracker = 0;
+        lastLogs = Optional.empty();
+        storableLogs.forEach(storableLog -> {
+            storage.remove(storableLog.itemId);
+        });
+    }
 
-        for (final int logsId : logsInOrderToUse) {
+    public boolean hasLogsInStorage() {
+        for (StorableLog storableLog : storableLogs) {
+            if (storage.hasItem(storableLog.itemId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void buildBeehive() {
+        for (int logsId : storableLogs.stream().filter(storableLog -> storableLog.beehiveBuildable).map(storableLog -> storableLog.itemId).collect(Collectors.toList())) {
             if (provider.store.inventoryContainsItem(logsId)) {
                 lastLogUsedFromBasketForBeehive = Optional.empty();
                 return;
@@ -193,5 +208,42 @@ public class C_LogBasket extends ChargedItemWithStorageEmptyable {
                 return;
             }
         }
+    }
+
+    @Override
+    public Color getTextColor(int itemId) {
+        return getTotalTextColor();
+    }
+
+    @Override
+    public Color getTotalTextColor() {
+        if (getTotalCharges() == 28) {
+            return provider.config.getColorEmpty();
+        }
+
+        return super.getTotalTextColor();
+    }
+}
+
+class StorableLog extends StorableItem {
+    public String itemName;
+    public boolean beehiveBuildable;
+
+    StorableLog(int itemId, String itemName, boolean beehiveBuildable) {
+        super(itemId);
+        this.itemName = itemName;
+        this.beehiveBuildable = beehiveBuildable;
+    }
+
+    @Override
+    public StorableLog displayName(String displayName) {
+        super.displayName(displayName);
+        return this;
+    }
+
+    @Override
+    public StorableLog checkName(String... checkName) {
+        super.checkName(checkName);
+        return this;
     }
 }

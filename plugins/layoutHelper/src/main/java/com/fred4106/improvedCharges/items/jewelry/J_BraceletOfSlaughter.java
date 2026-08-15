@@ -1,21 +1,23 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_BraceletOfSlaughter extends ChargedItem {
-    public J_BraceletOfSlaughter(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.BRACELET_OF_SLAUGHTER, ItemId.BRACELET_OF_SLAUGHTER, provider);
+    public J_BraceletOfSlaughter(Provider provider) {
+        super(FredsItemChargesConfig.bracelet_of_slaughter, ItemID.BRACELET_OF_SLAUGHTER, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.BRACELET_OF_SLAUGHTER).needsToBeEquipped(),
+            new TriggerItem(ItemID.BRACELET_OF_SLAUGHTER).needsToBeEquipped(),
         };
 
         this.triggers.addAll(List.of(

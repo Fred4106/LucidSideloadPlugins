@@ -1,20 +1,26 @@
 package com.fred4106.improvedCharges.items.weapons;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.item.triggers.OnAutoChargeMessage;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class W_WarpedSceptre extends ChargedItem {
-    public W_WarpedSceptre(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.WARPED_SCEPTRE, ItemId.WARPED_SCEPTRE, provider);
+    public W_WarpedSceptre(Provider provider) {
+        super(FredsItemChargesConfig.warped_sceptre, ItemID.WARPED_SCEPTRE, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.WARPED_SCEPTRE_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.WARPED_SCEPTRE)
+            new TriggerItem(ItemID.WARPED_SCEPTRE_UNCHARGED).fixedCharges(0),
+            new TriggerItem(ItemID.WARPED_SCEPTRE)
         };
 
         this.triggers.addAll(List.of(
@@ -37,10 +43,7 @@ public class W_WarpedSceptre extends ChargedItem {
             new OnChatMessage("Your warped sceptre has run out of charges!").setFixedCharges(0),
 
             // Auto-charge.
-            new OnChatMessage("The banker charges your Warped sceptre using (?<chaosrune>.+)x Chaos rune, and .+x Earth rune.*").matcherConsumer(m -> {
-                final int chaosRunes = Integer.parseInt(m.group("chaosrune"));
-                increaseCharges(chaosRunes / 2);
-            })
+            new OnAutoChargeMessage("Warped sceptre", "Chaos rune", 0.5, this)
         ));
     }
 }

@@ -4,19 +4,22 @@ import com.fred4106.improvedCharges.item.ChargedItemBase;
 import com.fred4106.improvedCharges.item.triggers.OnResetDaily;
 import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.store.Provider;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class ListenerOnResetDaily extends ListenerBase {
-    public ListenerOnResetDaily(final Provider provider, final ChargedItemBase chargedItem) {
-        super(provider, chargedItem);
+    public ListenerOnResetDaily(Provider provider) {
+        super(provider);
     }
 
-    public boolean trigger() {
-        for (final TriggerBase triggerBase : chargedItem.triggers) {
-            if (!isValidTrigger(triggerBase)) continue;
-            final OnResetDaily trigger = (OnResetDaily) triggerBase;
+    public boolean trigger(ChargedItemBase chargedItem) {
+        for (TriggerBase triggerBase : chargedItem.triggers) {
+            if (!isValidTrigger(chargedItem, triggerBase)) continue;
+            OnResetDaily trigger = (OnResetDaily) triggerBase;
             boolean triggerUsed = false;
 
-            if (super.trigger(trigger)) {
+            if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }
 
@@ -26,14 +29,14 @@ public class ListenerOnResetDaily extends ListenerBase {
         return false;
     }
 
-    public boolean isValidTrigger(final TriggerBase triggerBase) {
+    public boolean isValidTrigger(ChargedItemBase chargedItem, TriggerBase triggerBase) {
         if (!(triggerBase instanceof OnResetDaily)) return false;
-        final OnResetDaily trigger = (OnResetDaily) triggerBase;
+        OnResetDaily trigger = (OnResetDaily) triggerBase;
 
         if (trigger.resetSpecificItem.isPresent() && !provider.store.itemInPossession(trigger.resetSpecificItem.get())) {
             return false;
         }
 
-        return super.isValidTrigger(trigger);
+        return super.isValidTrigger(trigger, chargedItem);
     }
 }

@@ -1,24 +1,26 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_CelestialRing extends ChargedItem {
-    public J_CelestialRing(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.CELESTIAL_RING, ItemId.CELESTIAL_RING, provider);
+    public J_CelestialRing(Provider provider) {
+        super(FredsItemChargesConfig.celestial_ring, ItemID.CELESTIAL_RING_CHARGED, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.CELESTIAL_RING_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.CELESTIAL_SIGNET_UNCHARGED).fixedCharges(0),
-            new TriggerItem(ItemId.CELESTIAL_RING).needsToBeEquipped(),
-            new TriggerItem(ItemId.CELESTIAL_SIGNET).needsToBeEquipped()
+            new TriggerItem(ItemID.CELESTIAL_RING).fixedCharges(0),
+            new TriggerItem(ItemID.CELESTIAL_SIGNET).fixedCharges(0),
+            new TriggerItem(ItemID.CELESTIAL_RING_CHARGED).needsToBeEquipped(),
+            new TriggerItem(ItemID.CELESTIAL_SIGNET_CHARGED).needsToBeEquipped()
         };
 
         this.triggers.addAll(List.of(
@@ -37,7 +39,7 @@ public class J_CelestialRing extends ChargedItem {
 
             // Auto-charge.
             new OnChatMessage("The banker charges your Celestial (ring|signet) using (?<stardust>.+)x Stardust.").matcherConsumer(m -> {
-                final int stardust = Integer.parseInt(m.group("stardust"));
+                int stardust = Integer.parseInt(m.group("stardust"));
                 increaseCharges(stardust);
             })
         ));

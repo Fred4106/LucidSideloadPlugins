@@ -1,28 +1,29 @@
 package com.fred4106.improvedCharges.items.shields;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
 import com.fred4106.improvedCharges.item.triggers.OnResetDaily;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
-import java.util.List;
+import java.util.*;
 
 public class S_FaladorShield extends ChargedItem {
-    public S_FaladorShield(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.FALADOR_SHIELD, ItemId.FALADOR_SHIELD_1, provider);
+    public S_FaladorShield(Provider provider) {
+        super(FredsItemChargesConfig.falador_shield, ItemID.FALADOR_SHIELD_EASY, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.FALADOR_SHIELD_1),
-            new TriggerItem(ItemId.FALADOR_SHIELD_2),
-            new TriggerItem(ItemId.FALADOR_SHIELD_3),
-            new TriggerItem(ItemId.FALADOR_SHIELD_4),
+            new TriggerItem(ItemID.FALADOR_SHIELD_EASY),
+            new TriggerItem(ItemID.FALADOR_SHIELD_MEDIUM),
+            new TriggerItem(ItemID.FALADOR_SHIELD_HARD),
+            new TriggerItem(ItemID.FALADOR_SHIELD_ELITE),
         };
-        
+
         this.triggers.addAll(List.of(
             // Check.
             new OnChatMessage("You have one remaining charge for today.").onItemClick().setFixedCharges(1),
@@ -36,10 +37,10 @@ public class S_FaladorShield extends ChargedItem {
             new OnGraphicChanged(321).onItemClick().decreaseCharges(1),
 
             // Daily resets.
-            new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_1).setFixedCharges(1),
-            new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_2).setFixedCharges(1),
-            new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_3).setFixedCharges(1),
-            new OnResetDaily().specificItem(ItemId.FALADOR_SHIELD_4).setFixedCharges(2)
+            new OnResetDaily().specificItem(ItemID.FALADOR_SHIELD_EASY).setFixedCharges(1),
+            new OnResetDaily().specificItem(ItemID.FALADOR_SHIELD_MEDIUM).setFixedCharges(1),
+            new OnResetDaily().specificItem(ItemID.FALADOR_SHIELD_HARD).setFixedCharges(1),
+            new OnResetDaily().specificItem(ItemID.FALADOR_SHIELD_ELITE).setFixedCharges(2)
         ));
     }
 }

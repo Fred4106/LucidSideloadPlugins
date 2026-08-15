@@ -1,32 +1,21 @@
 package com.fred4106.improvedCharges.items.moons;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
-import com.fred4106.improvedCharges.item.triggers.OnCombat;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
-
-import java.util.List;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 public class BloodMoonTassets extends _MoonItem {
     public BloodMoonTassets(
-        final Provider provider
+        Provider provider
     ) {
-        super("blood_tassets", ItemId.BLOOD_MOON_TASSETS, provider);
+        super("Blood moon tassets", ItemID.BLOOD_MOON_TASSETS, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.BLOOD_MOON_TASSETS).fixedCharges(3000),
-            new TriggerItem(ItemId.BLOOD_MOON_TASSETS_DEGRADED),
-            new TriggerItem(ItemId.BLOOD_MOON_TASSETS_BROKEN).fixedCharges(0),
+            new TriggerItem(ItemID.BLOOD_MOON_TASSETS).fixedCharges(3000),
+            new TriggerItem(ItemID.BLOOD_MOON_TASSETS_DEGRADED),
+            new TriggerItem(ItemID.BLOOD_MOON_TASSETS_BROKEN).fixedCharges(0),
         };
-
-        this.triggers.addAll(List.of(
-            // Check.
-            new OnChatMessage("Your Blood moon tassets has (?<charges>.+) charges? remaining.").setDynamicallyCharges(),
-
-            // In combat.
-            new OnCombat(90).isEquipped().decreaseCharges(1)
-        ));
     }
 }

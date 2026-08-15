@@ -1,25 +1,31 @@
 package com.fred4106.improvedCharges.items.jewelry;
 
-import com.fred4106.improvedCharges.store.*;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
-import com.fred4106.improvedCharges.item.triggers.*;
-import com.fred4106.improvedCharges.store.enums.CombatStyle;
+import com.fred4106.improvedCharges.item.triggers.OnAnimationChanged;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnHitsplatApplied;
+import com.fred4106.improvedCharges.item.triggers.OnWidgetLoaded;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.enums.HitsplatGroup;
 import com.fred4106.improvedCharges.store.enums.HitsplatTarget;
-import com.fred4106.improvedCharges.store.ids.AnimationId;
-import com.fred4106.improvedCharges.store.ids.ItemId;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
+import com.fred4106.improvedCharges.store.enums.*;
 
-import java.util.List;
+import java.util.*;
 
 public class J_EfaritaysAid extends ChargedItem {
     private boolean attackedVampyre = false;
 
-    public J_EfaritaysAid(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.EFARITAYS_AID, ItemId.EFARITAYS_AID, provider);
+    public J_EfaritaysAid(Provider provider) {
+        super(FredsItemChargesConfig.efaritays_aid, ItemID.VAMPYRE_RING, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.EFARITAYS_AID).needsToBeEquipped()
+            new TriggerItem(ItemID.VAMPYRE_RING).needsToBeEquipped()
         };
 
         this.triggers.addAll(List.of(
@@ -59,7 +65,7 @@ public class J_EfaritaysAid extends ChargedItem {
             ).isEquipped().decreaseCharges(1).consumer(() -> {
                 attackedVampyre = true;
             }),
-            new OnAnimationChanged(AnimationId.THRALL_SKELETON, AnimationId.THRALL_GHOST, AnimationId.THRALL_ZOMBIE).actorName("null").isEquipped().consumer(() -> {
+            new OnAnimationChanged(AnimationID.SKELETON_UPDATE_CHAMPION_ATTACK, AnimationID.GHOST_UPDATE_TENDRILL_ATTACK, AnimationID.ZOMBIE_UPDATE_ATTACK_NORMAL).actorName("null").isEquipped().consumer(() -> {
                 if (attackedVampyre) {
                     increaseCharges(1);
                     attackedVampyre = false;

@@ -1,20 +1,26 @@
 package com.fred4106.improvedCharges.items.capes;
 
-import com.fred4106.improvedCharges.item.triggers.*;
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
+import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
+import com.fred4106.improvedCharges.item.triggers.OnResetDaily;
+import com.fred4106.improvedCharges.item.triggers.OnWidgetLoaded;
+import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
-import java.util.List;
+import java.util.*;
 
 public class C_MagicCape extends ChargedItem {
-    public C_MagicCape(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.MAGIC_CAPE, ItemId.MAGIC_CAPE, provider);
+    public C_MagicCape(Provider provider) {
+        super(FredsItemChargesConfig.magic_cape, ItemID.SKILLCAPE_MAGIC, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.MAGIC_CAPE),
-            new TriggerItem(ItemId.MAGIC_CAPE_TRIMMED)
+            new TriggerItem(ItemID.SKILLCAPE_MAGIC),
+            new TriggerItem(ItemID.SKILLCAPE_MAGIC_TRIMMED)
         };
 
         this.triggers.addAll(List.of(

@@ -1,23 +1,24 @@
 package com.fred4106.improvedCharges.items.shields;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
 import com.fred4106.improvedCharges.store.Provider;
 
-import java.util.List;
+import java.util.*;
 
 public class S_KharedstMemoirs extends ChargedItem {
-    public S_KharedstMemoirs(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.KHAREDSTS_MEMOIRS, ItemId.KHAREDSTS_MEMOIRS, provider);
+    public S_KharedstMemoirs(Provider provider) {
+        super(FredsItemChargesConfig.kharedsts_memoirs, ItemID.VEOS_KHAREDSTS_MEMOIRS, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.KHAREDSTS_MEMOIRS),
-            new TriggerItem(ItemId.BOOK_OF_THE_DEAD)
+            new TriggerItem(ItemID.VEOS_KHAREDSTS_MEMOIRS),
+            new TriggerItem(ItemID.BOOK_OF_THE_DEAD)
         };
 
         this.triggers.addAll(List.of(

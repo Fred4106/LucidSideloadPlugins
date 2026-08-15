@@ -1,10 +1,35 @@
 package com.fred4106.improvedCharges;
 
+import com.fred4106.improvedCharges.item.storage.StorageItem;
+import com.fred4106.improvedCharges.items.foods.F_Apples;
+import com.fred4106.improvedCharges.items.foods.F_Bananas;
+import com.fred4106.improvedCharges.items.foods.F_Cabbages;
+import com.fred4106.improvedCharges.items.foods.F_Onions;
+import com.fred4106.improvedCharges.items.foods.F_Oranges;
+import com.fred4106.improvedCharges.items.foods.F_Potatoes;
+import com.fred4106.improvedCharges.items.foods.F_Strawberries;
+import com.fred4106.improvedCharges.items.foods.F_Tomatoes;
+import com.fred4106.improvedCharges.items.weapons.blowpipes.W_BlazingBlowpipe;
+import com.fred4106.improvedCharges.items.weapons.blowpipes.W_CamphorBlowpipe;
+import com.fred4106.improvedCharges.items.weapons.blowpipes.W_IronwoodBlowpipe;
+import com.fred4106.improvedCharges.items.weapons.blowpipes.W_RosewoodBlowpipe;
+import com.fred4106.improvedCharges.items.weapons.blowpipes.W_ToxicBlowpipe;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSeas;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSeasE;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSeasEO;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSeasO;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSwamp;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSwampE;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSwampEO;
+import com.fred4106.improvedCharges.items.weapons.tridents.W_TridentOfTheSwampO;
+import com.fred4106.improvedCharges.items.weapons.venator.W_EchoVenatorBow;
+import com.fred4106.improvedCharges.items.weapons.venator.W_VenatorBow;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
@@ -44,7 +69,6 @@ import com.fred4106.improvedCharges.items.weapons.*;
 import com.fred4106.improvedCharges.store.Provider;
 import com.fred4106.improvedCharges.store.Store;
 import com.fred4106.improvedCharges.store.ids.ChargeId;
-import com.fred4106.improvedCharges.store.ids.VarbitId;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -55,6 +79,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @PluginDescriptor(
 	name = "<html><font color=\"#32C8CD\">Freds</font> Item Charges",
@@ -64,6 +89,14 @@ import java.util.*;
 )
 @Singleton
 public class FredsItemChargesPlugin extends Plugin implements KeyListener, MouseListener, MouseWheelListener {
+	public static String pluginVersion = "v0.6.16";
+	public static String pluginMessage =
+		"<colHIGHLIGHT>Item Charges Improved " + pluginVersion + ":<br>" +
+			"<colHIGHLIGHT>* Herb sack and gem pouches have in-game options to show individual charges.<br>" +
+			"<colHIGHLIGHT>* Gem containers support golem crafting.<br>" +
+			"<colHIGHLIGHT>* Option to disable updates messages."
+		;
+
 	@Inject
 	private Client client;
 
@@ -99,7 +132,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 
 	@Inject
 	private Notifier notifier;
-	
+
 	@Inject
 	private Gson gson;
 
@@ -107,7 +140,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 	private FredsItemChargesConfig config;
 
 	@Provides
-	FredsItemChargesConfig provideConfig(final ConfigManager configManager) {
+	FredsItemChargesConfig provideConfig(ConfigManager configManager) {
 		return configManager.getConfig(FredsItemChargesConfig.class);
 	}
 
@@ -117,21 +150,20 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 	private ChargedItemOverlay overlayChargedItems;
 
 	private ChargedItemBase[] chargedItems;
-	private final List<InfoBox> chargedItemsInfoboxes = new ArrayList<>();
+	private List<InfoBox> chargedItemsInfoboxes = new ArrayList<>();
 
-	private final ZoneId timezone = ZoneId.of("Europe/London");
-	public static final String INFINITE_SYMBOL = OSType.getOSType() == OSType.MacOS ? "inf" : "∞";
+
+	public static String INFINITE_SYMBOL = OSType.getOSType() == OSType.MacOS ? "inf" : "∞";
 
 	@Override
 	protected void startUp() {
-		configMigration();
 		keyManager.registerKeyListener(this);
 		mouseManager.registerMouseListener(this);
 		mouseManager.registerMouseWheelListener(this);
 
 		store = new Store(client, itemManager, configManager);
 		provider = new Provider(client, clientThread, pluginManager, configManager, itemManager, infoBoxManager, chatMessageManager, tooltipManager, notifier, this, config, store, gson);
-
+		store.addProvider(provider);
 
 		chargedItems = new ChargedItemBase[]{
 			// Crystal armor set
@@ -150,13 +182,28 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new C_LogBasket(provider),
 			new C_MagicCape(provider),
 
+			// Foods
+			new F_Apples(provider),
+			new F_Bananas(provider),
+			new F_Cabbages(provider),
+			new F_Onions(provider),
+			new F_Oranges(provider),
+			new F_Potatoes(provider),
+			new F_Strawberries(provider),
+			new F_Tomatoes(provider),
+
 			// Helms
 			new H_CircletOfWater(provider),
 			new H_KandarinHeadgear(provider),
+			new H_SerpentineHelm(provider),
+			new H_MagmaHelm(provider),
+			new H_TanzaniteHelm(provider),
 
 			// Jewelery
+			new J_AbyssalBracelet(provider),
 			new J_AlchemistsAmulet(provider),
 			new J_AmuletOfBloodFury(provider),
+			new J_AmuletOfBounty(provider),
 			new J_AmuletOfChemistry(provider),
 			new J_AmuletOfGlory(provider),
 			new J_BindingNecklace(provider),
@@ -178,6 +225,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new J_DodgyNecklace(provider),
 			new J_PendantOfAtes(provider),
 			new J_CombatBracelet(provider),
+			new J_CowbellAmulet(provider),
 			new J_CelestialRing(provider),
 			new J_RingOfDueling(provider),
 			new J_RingOfForging(provider),
@@ -243,6 +291,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new P_ForgottenBrew(provider),
 			new P_Goading(provider),
 			new P_GuthixBalance(provider),
+			new P_GuthixRest(provider),
 			new P_HaemostaticDressing(provider),
 			new P_Hunter(provider),
 			new P_HuntingMix(provider),
@@ -253,7 +302,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new P_MenaphiteRemedy(provider),
 			new P_Moonlight(provider),
 			new P_MoonlightMothMix(provider),
-			new P_Overload(provider),
+			new com.fred4106.improvedCharges.items.potions.P_Overload(provider),
 			new P_Prayer(provider),
 			new P_PrayerMix(provider),
 			new P_PrayerRegeneration(provider),
@@ -334,6 +383,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new S_CrystalShield(provider),
 			new S_DragonfireShield(provider),
 			new S_FaladorShield(provider),
+			new S_GhommalsHilt(provider),
 			new S_KharedstMemoirs(provider),
 			new S_TomeOfEarth(provider),
 			new S_TomeOfFire(provider),
@@ -344,6 +394,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new U_BloodEssence(provider),
 			new U_BoneCrusher(provider),
 			new U_BottomlessCompostBucket(provider),
+			new U_BottomlessMilkBucket(provider),
 			new U_BowStringSpool(provider),
 			new U_ChuggingBarrel(provider),
 			new U_CoalBag(provider),
@@ -355,8 +406,13 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new U_FungicideSpray(provider),
 			new U_FurPouch(provider),
 			new U_GemBag(provider),
+			new U_GemPouch(provider),
+			new U_GemSack(provider),
+			new U_GemSatchel(provider),
+			new U_GemTote(provider),
 			new U_GricollersCan(provider),
 			new U_HerbSack(provider),
+			new U_SilklinedHerbSack(provider),
 			new U_HuntsmansKit(provider),
 			new U_ImpInABox(provider),
 			new U_JarGenerator(provider),
@@ -373,6 +429,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new U_TackleBox(provider),
 			new U_TeleportCrystal(provider),
 			new U_EternalTeleportCrystal(provider),
+			new U_WateringCan(provider),
 			new U_Waterskin(provider),
 
 			// Weapons
@@ -381,14 +438,18 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new W_BlazingBlowpipe(provider),
 			new W_BowOfFaerdhinen(provider),
 			new W_BryophytasStaff(provider),
+			new W_CamphorBlowpipe(provider),
 			new W_CrawsBow(provider),
 			new W_CrystalBow(provider),
 			new W_CrystalHalberd(provider),
+			new W_EchoVenatorBow(provider),
 			new W_EnchantedLyre(provider),
 			new W_EyeOfAyak(provider),
 			new W_InfernalAxe(provider),
+			new W_IronwoodBlowpipe(provider),
 			new W_IbansStaff(provider),
 			new W_PharaohsSceptre(provider),
+			new W_RosewoodBlowpipe(provider),
 			new W_SanguinestiStaff(provider),
 			new W_ScytheOfVitur(provider),
 			new W_SkullSceptre(provider),
@@ -396,8 +457,12 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new W_ToxicBlowpipe(provider),
 			new W_TridentOfTheSeas(provider),
 			new W_TridentOfTheSeasE(provider),
+			new W_TridentOfTheSeasO(provider),
+			new W_TridentOfTheSeasEO(provider),
 			new W_TridentOfTheSwamp(provider),
 			new W_TridentOfTheSwampE(provider),
+			new W_TridentOfTheSwampO(provider),
+			new W_TridentOfTheSwampEO(provider),
 			new W_TumekensShadow(provider),
 			new W_VenatorBow(provider),
 			new W_WarpedSceptre(provider),
@@ -454,8 +519,8 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 		overlayManager.add(overlayChargedItems);
 
 		// Items infoboxes.
-		for (final ChargedItemBase chargedItem : chargedItems) {
-			final ChargedItemInfobox chargedItemInfobox = new ChargedItemInfobox(provider, chargedItem);
+		for (ChargedItemBase chargedItem : chargedItems) {
+			ChargedItemInfobox chargedItemInfobox = new ChargedItemInfobox(provider, chargedItem);
 			chargedItemsInfoboxes.add(chargedItemInfobox);
 			infoBoxManager.addInfoBox(chargedItemInfobox);
 		}
@@ -472,338 +537,233 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 	}
 
 	@Subscribe
-	public void onChatMessage(final ChatMessage event) {
-		final CustomChatMessage chatMessage = new CustomChatMessage(event);
-		store.onChatMessage(chatMessage);
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onChatMessage(chatMessage));
+	public void onChatMessage(ChatMessage event) {
+		store.onChatMessage(new CustomChatMessage(
+			event.getType(),
+			getCleanText(event.getMessage())
+		));
 	}
 
 	@Subscribe
-	public void onItemContainerChanged(final ItemContainerChanged event) {
-		final CustomItemContainerChanged itemContainerChanged = new CustomItemContainerChanged(event, itemManager);
+	public void onItemContainerChanged(ItemContainerChanged event) {
+		List<StorageItem> items = new ArrayList<>();
+
+		for (Item item : event.getItemContainer().getItems()) {
+			if (item == null || item.getId() == -1 || item.getId() == 6512) continue;
+
+			ItemComposition itemComposition = itemManager.getItemComposition(item.getId());
+			items.add(new StorageItem(
+				itemComposition.getId(),
+				itemComposition.getPlaceholderTemplateId() != -1 ? 0 : item.getQuantity()
+			));
+		}
+
+		CustomItemContainerChanged itemContainerChanged = new CustomItemContainerChanged(event.getContainerId(), items);
 		store.onItemContainerChanged(itemContainerChanged);
 	}
 
 	@Subscribe
-	public void onGraphicChanged(final GraphicChanged event) {
-		if (event.getActor() != client.getLocalPlayer()) return;
-		store.onGraphicChanged(event);
+	public void onGraphicChanged(GraphicChanged event) {
+		if (event == null || event.getActor() == null || event.getActor() != client.getLocalPlayer()) return;
 
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onGraphicChanged(event));
-
-		if (config.showDebugIds()) {
-			for (final ActorSpotAnim graphic : event.getActor().getSpotAnims()) {
-				chatMessageManager.queue(QueuedMessage.builder()
-					.type(ChatMessageType.CONSOLE)
-					.runeLiteFormattedMessage("[Item Charges Improved] Graphic ID: " + graphic.getId())
-					.build()
-				);
-			}
+		List<Integer> graphicIds = new ArrayList<>();
+		for (ActorSpotAnim spotAnim : event.getActor().getSpotAnims()) {
+			graphicIds.add(spotAnim.getId());
 		}
+		store.onGraphicChanged(new CustomGraphicChanged(event.getActor().getName(), graphicIds));
 	}
 
 	@Subscribe
-	public void onHitsplatApplied(final HitsplatApplied event) {
-		final CustomHitsplatApplied hitsplatApplied = new CustomHitsplatApplied(event, client);
-		store.onHitSplatApplied(hitsplatApplied);
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onHitsplatApplied(hitsplatApplied));
+	public void onHitsplatApplied(HitsplatApplied event) {
+		store.onHitSplatApplied(event);
 	}
 
 	@Subscribe
-	public void onAnimationChanged(final AnimationChanged event) {
-		if (event.getActor().getAnimation() == -1) return;
+	public void onAnimationChanged(AnimationChanged event) {
+		store.onAnimationChanged(event);
+	}
 
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onAnimationChanged(event));
+	@Subscribe
+	public void onWidgetLoaded(WidgetLoaded event) {
+		store.onWidgetLoaded(event);
+	}
 
-		if (config.showDebugIds()) {
-			chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage("[Item Charges Improved] Animation ID: " + event.getActor().getAnimation())
-				.build()
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event) {
+		// Widget menu option
+		if (event.getMenuAction() == MenuAction.WIDGET_CONTINUE) {
+			Optional<Widget> selectedWidget = Optional.ofNullable(event.getWidget());
+			if (selectedWidget.isEmpty()) return;
+
+			Optional<Widget> parentWidget = Optional.ofNullable(selectedWidget.get().getParent());
+			if (parentWidget.isEmpty()) return;
+
+			List<String> options = new ArrayList<>();
+			for (Widget subWidget : parentWidget.get().getDynamicChildren()) {
+				if (subWidget.getText().isBlank()) continue;
+				options.add(subWidget.getText());
+			}
+
+			CustomWidgetMenuOptionClicked widgetMenuOptionClicked = new CustomWidgetMenuOptionClicked(
+				selectedWidget.get().getId(),
+				options,
+				selectedWidget.get().getText()
 			);
-		}
-	}
 
-	@Subscribe
-	public void onWidgetLoaded(final WidgetLoaded event) {
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onWidgetLoaded(event));
+			store.onWidgetMenuOptionClicked(widgetMenuOptionClicked);
 
-//		System.out.println("WIDGET | " +
-//			"group: " + event.getGroupId()
-//		);
-	}
-
-	@Subscribe
-	public void onMenuOptionClicked(final MenuOptionClicked event) {
-		final CustomMenuOptionClicked customMenuOptionClicked = new CustomMenuOptionClicked(event, client);
-
-		if (
-			// Menu option not found.
-			customMenuOptionClicked.option.isEmpty() ||
-			// Not menu.
-			customMenuOptionClicked.target.isEmpty() && (
-				!customMenuOptionClicked.option.contains("Buy-") &&
-				!customMenuOptionClicked.option.equals("Continue") &&
-				!customMenuOptionClicked.option.equals("Yes") &&
-				customMenuOptionClicked.eventId != 65540 && // Special event check for log basket
-				customMenuOptionClicked.eventId != 65538 && // Special event check for forestry basket
-				customMenuOptionClicked.eventId != 131074 && // Special event check for forestry basket
-				customMenuOptionClicked.eventId != 131076 && // Special event check for forestry basket
-				customMenuOptionClicked.eventId != 327684 // Sailor's amulet - Deepfin Point
-			) ||
-			// Start use by clicking on item.
-			customMenuOptionClicked.option.equals("Use") && customMenuOptionClicked.action.equals("WIDGET_TARGET") ||
-			// Cancel option.
-			customMenuOptionClicked.action.equals("CANCEL") ||
-			// RuneLite specific action.
-			customMenuOptionClicked.action.equals("RUNELITE")
-		) return;
-
-		store.onMenuOptionClicked(customMenuOptionClicked);
-		store.addConsumerToNextTickQueue(() -> {
-			for (final ChargedItemBase chargedItem : chargedItems) {
-				chargedItem.onMenuOptionClicked(customMenuOptionClicked);
+			// Regular menu option
+		} else {
+			int impostorId;
+			try {
+				impostorId = client.getObjectDefinition(event.getMenuEntry().getIdentifier()).getImpostor().getId();
+			} catch (Exception ignored) {
+				impostorId = -1;
 			}
-		});
-	}
 
-	final List<Integer> scriptIdsToIgnore = Arrays.asList(
-		44, 85, 100, 839, 900, 1004, 1005, 1045, 1445, 1972, 2100, 2101,
-		2165, 2250, 2372, 2476, 2512, 2513, 3174, 3277, 3350, 3351, 4024,
-		4029, 4482, 4517, 4518, 4666, 4667, 4668, 4669, 4671, 4672, 4716,
-		4721, 4729, 4730, 4731, 4734, 5343, 5923, 5933, 5935, 5936, 5939,
-		5943, 5944, 6015, 6016, 6063, 6152
-	);
+			CustomMenuOptionClicked menuOptionClicked = new CustomMenuOptionClicked(
+				event.getId(),
+				event.getMenuTarget().replaceAll("</?col.*?>", ""),
+				event.getMenuOption().replaceAll("</?col.*?>", ""),
+				event.getMenuAction().getId(),
+				event.getMenuAction().name(),
+				event.getItemId(),
+				impostorId
+			);
 
-	@Subscribe
-	public void onScriptPreFired(final ScriptPreFired event) {
-		if (scriptIdsToIgnore.contains(event.getScriptId())) return;
-
-//		String scriptDebug = "script id: " + event.getScriptId();
-//		try {
-//			final Optional<Widget> widget = Optional.ofNullable(event.getScriptEvent().getSource());
-//			if (widget.isPresent()) {
-//				scriptDebug += ", widget id: " + widget.get().getId();
-//			}
-//		} catch (final Exception ignored) {}
-//		try {
-//			String arguments = ", arguments: [";
-//			for (final Object argument : event.getScriptEvent().getArguments()) {
-//				arguments += argument + ", ";
-//			}
-//			arguments += "]";
-//			scriptDebug += arguments.replaceAll(", ]", "]");
-//		} catch (final Exception ignored) {}
-//		System.out.println("SCRIPT FIRED | " + scriptDebug);
-
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onScriptPreFired(event));
-	}
-
-	@Subscribe
-	public void onGameStateChanged(final GameStateChanged event) {
-		if (event.getGameState() == GameState.LOGGING_IN) {
-			checkForChargesReset();
+			store.onMenuOptionClicked(menuOptionClicked);
 		}
-
-		if (event.getGameState() != GameState.LOGGED_IN) return;
 	}
 
 	@Subscribe
-	public void onStatChanged(final StatChanged event) {
-//		String statChanged =
-//			event.getSkill().getName() +
-//			", level: " + event.getLevel() +
-//			", total xp: " + event.getXp();
-//
-//		if (store.getSkillXp(event.getSkill()).isPresent()) {
-//			statChanged += ", xp drop: " + (event.getXp() - store.getSkillXp(event.getSkill()).get());
-//		}
-//		System.out.println("STAT CHANGED | " +
-//			statChanged
-//		);
+	public void onScriptPreFired(ScriptPreFired event) {
+		store.onScriptPreFired(event);
+	}
 
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onStatChanged(event));
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		store.onGameStateChanged(event);
+	}
+
+	@Subscribe
+	public void onStatChanged(StatChanged event) {
 		store.onStatChanged(event);
 	}
 
 	@Subscribe
-	public void onItemDespawned(final ItemDespawned event) {
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onItemDespawned(event));
+	public void onItemDespawned(ItemDespawned event) {
+		store.onItemDespawned(event);
 	}
 
 	@Subscribe
-	public void onVarbitChanged(final VarbitChanged event) {
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onVarbitChanged(event));
-
-		// If server minutes are 0, it's a new day!
-		if (event.getVarbitId() == VarbitId.MINUTES && client.getGameState() == GameState.LOGGED_IN && event.getValue() == 0) {
-			checkForChargesReset();
-		}
-
-//		System.out.println("VARBIT CHANGED | " +
-//			"id: " + event.getVarbitId() +
-//			", value: " + event.getValue()
-//		);
+	public void onVarbitChanged(VarbitChanged event) {
+		store.onVarbitChanged(event);
 	}
 
 	@Subscribe
-	public void onMenuEntryAdded(final MenuEntryAdded event) {
-		if (event.getOption().equals("Cancel")) return;
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onMenuEntryAdded(event));
-
-//		if (event.getMenuEntry().getItemId() != -1) {
-//			System.out.println("MENU ENTRY ADDED | " +
-//				"item id: " + event.getMenuEntry().getItemId() +
-//				", option: " + event.getOption() +
-//				", target: " + event.getTarget()
-//			);
-//		}
+	public void onMenuEntryAdded(MenuEntryAdded event) {
+		store.onMenuEntryAdded(event);
 	}
 
 	@Subscribe
-	public void onGameTick(final GameTick event) {
+	public void onMenuOpened(MenuOpened event) {
+		store.onMenuOpened(event);
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick event) {
 		store.onGameTick(event);
-		Arrays.stream(chargedItems).forEach(infobox -> infobox.onGameTick(event));
 	}
 
 	@Subscribe
-	public void onConfigChanged(final ConfigChanged event) {
-		if (event.getGroup().equals(Constants.GROUP) && event.getKey().equals(Constants.DEBUG_IDS)) {
-			chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage(config.showDebugIds()
-					? "<colHIGHLIGHT>[Item Charges Improved] Debug information is now enabled."
-					: "<colHIGHLIGHT>[Item Charges Improved] Debug information is now disabled."
-				).build()
-			);
-		}
-	}
-
-	private void onUserAction() {
-		Arrays.stream(chargedItems).forEach(chargedItem -> {
-			chargedItem.onUserAction();
-		});
-	}
-
-	private void checkForChargesReset() {
-		final String date = LocalDateTime.now(timezone).format(DateTimeFormatter.ISO_LOCAL_DATE);
-		if (date.equals(config.getResetDate())) return;
-
-		configManager.setConfiguration(Constants.GROUP, Constants.DATE, date);
-		Arrays.stream(chargedItems).forEach(ChargedItemBase::onResetDaily);
-
-		if (config.showDailyReset()) {
-			chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage("<colHIGHLIGHT>Daily item charges have been reset.")
-				.build()
-			);
-		}
-	}
-
-	private void configMigration() {
-		// v0.5.5 - Migrate old hidden infoboxes multi-select to checkboxes.
-		final Optional<String> necklaceOfPassageOverlay = Optional.ofNullable(configManager.getConfiguration(Constants.GROUP, "necklage_of_passage_overlay"));
-		final Optional<String> necklaceOfPassageInfobox = Optional.ofNullable(configManager.getConfiguration(Constants.GROUP, "necklage_of_passage_infobox"));
-		if (necklaceOfPassageOverlay.isPresent()) {
-			configManager.setConfiguration(Constants.GROUP, Constants.NECKLACE_OF_PASSAGE + Constants._OVERLAY, necklaceOfPassageOverlay.get().equals("true"));
-			configManager.unsetConfiguration(Constants.GROUP, "necklage_of_passage_overlay");
-		}
-		if (necklaceOfPassageInfobox.isPresent()) {
-			configManager.setConfiguration(Constants.GROUP, Constants.NECKLACE_OF_PASSAGE + Constants._INFOBOX, necklaceOfPassageInfobox.get().equals("true"));
-			configManager.unsetConfiguration(Constants.GROUP, "necklage_of_passage_infobox");
-		}
-
-		// v0.6.8 - remove outdated destroy entries config
-		if (Optional.ofNullable(configManager.getConfiguration(Constants.GROUP, "hide_destroy")).isPresent()) {
-			configManager.unsetConfiguration(Constants.GROUP, "hide_destroy");
-		}
+	public void onConfigChanged(ConfigChanged event) {
+		store.onConfigChanged(event);
 	}
 
 	@Override
-	public void keyPressed(final KeyEvent keyEvent) {
-		onUserAction();
+	public void keyPressed(KeyEvent keyEvent) {
+		store.onUserAction();
 	}
 
 	@Override
-	public void keyTyped(final KeyEvent keyEvent) {
+	public void keyTyped(KeyEvent keyEvent) {
 	}
 
 	@Override
-	public void keyReleased(final KeyEvent keyEvent) {
+	public void keyReleased(KeyEvent keyEvent) {
 	}
 
 	@Override
-	public MouseEvent mousePressed(final MouseEvent mouseEvent) {
-		onUserAction();
+	public MouseEvent mousePressed(MouseEvent mouseEvent) {
+		store.onUserAction();
 		return mouseEvent;
 	}
 
 	@Override
-	public MouseEvent mouseDragged(final MouseEvent mouseEvent) {
-		onUserAction();
+	public MouseEvent mouseDragged(MouseEvent mouseEvent) {
+		store.onUserAction();
 		return mouseEvent;
 	}
 
 	@Override
-	public MouseEvent mouseMoved(final MouseEvent mouseEvent) {
-		onUserAction();
+	public MouseEvent mouseMoved(MouseEvent mouseEvent) {
+		store.onUserAction();
 		return mouseEvent;
 	}
 
 	@Override
-	public MouseWheelEvent mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
-		onUserAction();
+	public MouseWheelEvent mouseWheelMoved(MouseWheelEvent mouseWheelEvent) {
+		store.onUserAction();
 		return mouseWheelEvent;
 	}
 
 	@Override
-	public MouseEvent mouseClicked(final MouseEvent mouseEvent) {
+	public MouseEvent mouseClicked(MouseEvent mouseEvent) {
 		return mouseEvent;
 	}
 
 	@Override
-	public MouseEvent mouseReleased(final MouseEvent mouseEvent) {
+	public MouseEvent mouseReleased(MouseEvent mouseEvent) {
 		return mouseEvent;
 	}
 
 	@Override
-	public MouseEvent mouseEntered(final MouseEvent mouseEvent) {
+	public MouseEvent mouseEntered(MouseEvent mouseEvent) {
 		return mouseEvent;
 	}
 
 	@Override
-	public MouseEvent mouseExited(final MouseEvent mouseEvent) {
+	public MouseEvent mouseExited(MouseEvent mouseEvent) {
 		return mouseEvent;
 	}
 
-	public static String getCleanText(final String text) {
-		return text.replaceAll("</?col.*?>", "").replaceAll("<br>", " ").replaceAll("\u00A0"," ");
+	public static String getCleanText(String text) {
+		return text.replaceAll("</?col.*?>", "").replace("<br>", " ").replace("\u00A0"," ");
 	}
 
-	public static String getCleanChatMessage(final ChatMessage event) {
-		return getCleanText(event.getMessage());
+	public static String menuOptionEmptyToBank = "Empty-to-bank";
+	public static String menuOptionFillFromBank = "Fill-from-bank";
+	public static String menuOptionEmptyToInventory = "Empty-to-inventory";
+	public static String menuOptionFillFromInventory = "Fill-from-inventory";
+
+	public static int getNumberFromCommaString(String charges) {
+		try {
+			return Integer.parseInt(charges.replaceAll(",", "").replaceAll("\\.", ""));
+		} catch (Exception ignored) {
+			return getNumberFromWordRepresentation(charges);
+		}
 	}
 
-	public static String menuOptionEmptyToBank = "Empty to bank";
-	public static String menuOptionFillFromBank = "Fill from bank";
-	public static String menuOptionEmptyToInventory = "Empty to inventory";
-	public static String menuOptionFillFromInventory = "Fill from inventory";
-
-	public static int getNumberFromCommaString(final String charges) {
-		return Integer.parseInt(charges.replaceAll(",", "").replaceAll("\\.", ""));
-	}
-
-	public static Optional<Widget> getWidget(final Client client, final int parent, final int child) {
+	public static Optional<Widget> getWidget(Client client, int parent, int child) {
 		return Optional.ofNullable(client.getWidget(parent, child));
 	}
 
-	public static Optional<Widget> getWidget(final Client client, final int parent, final int child, final int subChild) {
+	public static Optional<Widget> getWidget(Client client, int parent, int child, int subChild) {
 		return getWidget(client, parent, child, Optional.of(subChild));
 	}
 
-	public static Optional<Widget> getWidget(final Client client, final int parent, final int child, final Optional<Integer> subChild) {
-		final Optional<Widget> widget = getWidget(client, parent, child);
+	public static Optional<Widget> getWidget(Client client, int parent, int child, Optional<Integer> subChild) {
+		Optional<Widget> widget = getWidget(client, parent, child);
 		if (!widget.isPresent()) return Optional.empty();
 
 		if (subChild.isPresent()) {
@@ -812,22 +772,22 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			return widget;
 		}
 	}
-	
-	private static final ImmutableMap<String, Integer> TEXT_TO_NUMBER_MAP = ImmutableMap.<String, Integer>builder()
-		.put("zero", 0).put("one", 1).put("two", 2).put("three", 3).put("four", 4).put("five", 5)
+
+	private static ImmutableMap<String, Integer> TEXT_TO_NUMBER_MAP = ImmutableMap.<String, Integer>builder()
+		.put("zero", 0).put("one", 1).put("single", 1).put("two", 2).put("three", 3).put("four", 4).put("five", 5)
 		.put("six", 6).put("seven", 7).put("eight", 8).put("nine", 9).put("ten", 10)
 		.put("eleven", 11).put("twelve", 12).put("thirteen", 13).put("fourteen", 14).put("fifteen", 15)
 		.put("sixteen", 16).put("seventeen", 17).put("eighteen", 18).put("nineteen", 19).put("twenty", 20)
 		.put("thirty", 30).put("forty", 40).put("fifty", 50).put("sixty", 60).put("seventy", 70)
 		.put("eighty", 80).put("ninety", 90).put("hundred", 100).build();
 
-	public static int getNumberFromWordRepresentation(final String charges) {
+	public static int getNumberFromWordRepresentation(String charges) {
 		// Support strings like "twenty two" and "twenty-two"
-		final String[] words = charges.toLowerCase().split("[ -]");
+		String[] words = charges.toLowerCase().split("[ -]");
 		int result = 0;
 		int current = 0;
 
-		for (final String word : words) {
+		for (String word : words) {
 			if (TEXT_TO_NUMBER_MAP.containsKey(word)) {
 				current += TEXT_TO_NUMBER_MAP.get(word);
 			} else if (word.equals("hundred")) {
@@ -841,7 +801,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 		return result + current;
 	}
 
-	public static String getChargesMinified(final int charges) {
+	public static String getChargesMinified(int charges) {
 		// Unlimited.
 		if (charges == ChargeId.UNLIMITED) return INFINITE_SYMBOL;
 
@@ -856,13 +816,38 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 
 		// Minify to use thousands with hundreds (_._K)
 		if (charges >= 1000) {
-			final int thousands = charges / 1000;
-			final int hundreds = Math.min((charges % 1000 + 50) / 100, 9);
+			int thousands = charges / 1000;
+			int hundreds = Math.min((charges % 1000 + 50) / 100, 9);
 			return thousands + (hundreds > 0 ? "." + hundreds : "") + "K";
 		}
 
 		// As is.
 		return String.valueOf(charges);
+	}
+
+	public static boolean guessIfRangedAmmoRetrievalWasSuccessful(Provider provider) {
+		int recoveryRate;
+
+		if (provider.store.equipmentContainsItem(net.runelite.api.gameval.ItemID.ANMA_30_REWARD)) {
+			recoveryRate = 60;
+		} else if (provider.store.equipmentContainsItem(net.runelite.api.gameval.ItemID.ANMA_50_REWARD)) {
+			recoveryRate = 72;
+		} else if (provider.store.equipmentContainsItem(
+			net.runelite.api.gameval.ItemID.AVAS_ASSEMBLER,
+			net.runelite.api.gameval.ItemID.AVAS_ASSEMBLER_TROUVER,
+			net.runelite.api.gameval.ItemID.AVAS_ASSEMBLER_MASORI,
+			net.runelite.api.gameval.ItemID.AVAS_ASSEMBLER_MASORI_TROUVER,
+			net.runelite.api.gameval.ItemID.SKILLCAPE_MAX_ASSEMBLER,
+			net.runelite.api.gameval.ItemID.SKILLCAPE_MAX_ASSEMBLER_TROUVER,
+			net.runelite.api.gameval.ItemID.SKILLCAPE_MAX_ASSEMBLER_MASORI,
+			ItemID.SKILLCAPE_MAX_ASSEMBLER_MASORI_TROUVER
+		)) {
+			recoveryRate = 80;
+		} else {
+			recoveryRate = 0;
+		}
+
+		return ThreadLocalRandom.current().nextInt(1, 101) > recoveryRate;
 	}
 }
 

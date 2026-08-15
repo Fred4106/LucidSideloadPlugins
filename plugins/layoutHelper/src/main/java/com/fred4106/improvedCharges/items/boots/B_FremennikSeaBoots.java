@@ -1,27 +1,28 @@
 package com.fred4106.improvedCharges.items.boots;
 
-import com.fred4106.improvedCharges.store.ids.ItemId;
-import com.fred4106.improvedCharges.Constants;
 import com.fred4106.improvedCharges.item.ChargedItem;
 import com.fred4106.improvedCharges.item.triggers.OnChatMessage;
 import com.fred4106.improvedCharges.item.triggers.OnGraphicChanged;
 import com.fred4106.improvedCharges.item.triggers.OnResetDaily;
-import com.fred4106.improvedCharges.item.triggers.TriggerBase;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
-import com.fred4106.improvedCharges.store.ids.ChargeId;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.gameval.*;
+import com.fred4106.improvedCharges.*;
+import com.fred4106.improvedCharges.item.*;
+import com.fred4106.improvedCharges.item.triggers.*;
+import com.fred4106.improvedCharges.store.*;
 
 import java.util.List;
 
 public class B_FremennikSeaBoots extends ChargedItem {
-    public B_FremennikSeaBoots(final Provider provider) {
-        super(com.fred4106.improvedCharges.Constants.FREMENNIK_SEA_BOOTS, ItemId.FREMENNIK_SEA_BOOTS_1, provider);
+    public B_FremennikSeaBoots(Provider provider) {
+        super(FredsItemChargesConfig.fremennik_sea_boots, ItemID.FREMENNIK_BOOTS_EASY, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemId.FREMENNIK_SEA_BOOTS_1),
-            new TriggerItem(ItemId.FREMENNIK_SEA_BOOTS_2),
-            new TriggerItem(ItemId.FREMENNIK_SEA_BOOTS_3),
-            new TriggerItem(ItemId.FREMENNIK_SEA_BOOTS_4).fixedCharges(ChargeId.UNLIMITED),
+            new TriggerItem(ItemID.FREMENNIK_BOOTS_EASY),
+            new TriggerItem(ItemID.FREMENNIK_BOOTS_MEDIUM),
+            new TriggerItem(ItemID.FREMENNIK_BOOTS_HARD),
+            new TriggerItem(ItemID.FREMENNIK_BOOTS_ELITE).unlimitedCharges(),
         };
 
         this.triggers.addAll(List.of(
@@ -32,9 +33,9 @@ public class B_FremennikSeaBoots extends ChargedItem {
             new OnGraphicChanged(111).onItemClick().decreaseCharges(1),
 
             // Daily reset.
-            new OnResetDaily().specificItem(ItemId.FREMENNIK_SEA_BOOTS_1).setFixedCharges(1),
-            new OnResetDaily().specificItem(ItemId.FREMENNIK_SEA_BOOTS_2).setFixedCharges(3), // Updated from 1 to 3 charges https://oldschool.runescape.wiki/w/Update:Poll_85_-_Bridges,_Boots,_Ropes_%26_Roots#Fremennik_Sea_Boots
-            new OnResetDaily().specificItem(ItemId.FREMENNIK_SEA_BOOTS_3).setFixedCharges(5) // Updated from 1 to 5 charges https://oldschool.runescape.wiki/w/Update:Poll_85_-_Bridges,_Boots,_Ropes_%26_Roots#Fremennik_Sea_Boots
-		));
+            new OnResetDaily().specificItem(ItemID.FREMENNIK_BOOTS_EASY).setFixedCharges(1),
+            new OnResetDaily().specificItem(ItemID.FREMENNIK_BOOTS_MEDIUM).setFixedCharges(3),
+            new OnResetDaily().specificItem(ItemID.FREMENNIK_BOOTS_HARD).setFixedCharges(5)
+        ));
     }
 }

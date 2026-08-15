@@ -1,24 +1,20 @@
 package com.fred4106.improvedCharges.item.storage;
 
 public class StorageItem {
-    private final int id;
+    public int itemId;
     private int quantity;
 
-    public StorageItem(final int id) {
-        this.id = id;
+    public StorageItem(int itemId) {
+        this.itemId = itemId;
         this.quantity = 0;
     }
 
-    public StorageItem(final int id, final int quantity) {
-        this.id = id;
+    public StorageItem(int itemId, int quantity) {
+        this.itemId = itemId;
         this.quantity = quantity;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setQuantity(final int quantity) {
+    public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
 
@@ -26,11 +22,11 @@ public class StorageItem {
         return quantity;
     }
 
-    public void decreaseQuantity(final int quantity) {
+    public void decreaseQuantity(int quantity) {
         this.quantity = Math.max(this.quantity - quantity, 0);
     }
 
-    public void increaseQuantity(final int quantity) {
+    public void increaseQuantity(int quantity) {
         this.quantity += quantity;
     }
 }
