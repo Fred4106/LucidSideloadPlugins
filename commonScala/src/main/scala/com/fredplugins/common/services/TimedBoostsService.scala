@@ -44,6 +44,7 @@ object TimedBoostsService {
 	extension (mb: STimedPotion) {
 		def getCachedValue: Int = State.cachedPotionTimes.getOrElse(mb, 0)
 		def isActive: Boolean = mb.getCachedValue > 0
+		def niceName: String = mb.entryName.split('_').map(_.capitalize).mkString(" ")
 	}
 }
 

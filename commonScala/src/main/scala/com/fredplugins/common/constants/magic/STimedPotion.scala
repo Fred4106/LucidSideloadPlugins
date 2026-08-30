@@ -3,7 +3,7 @@ package com.fredplugins.common.constants.magic
 import net.runelite.api.Client
 import net.runelite.api.gameval.VarbitID.{ARCEUUS_DEATH_CHARGE_ACTIVE, ARCEUUS_DEATH_CHARGE_COOLDOWN}
 import net.runelite.api.gameval.VarbitID.{ARCEUUS_SHADOW_VEIL_ACTIVE, ARCEUUS_SHADOW_VEIL_COOLDOWN}
-import net.runelite.api.gameval.VarbitID.{DIVINEATTACK_POTION_TIME, DIVINEBASTION_POTION_TIME, DIVINEBATTLEMAGE_POTION_TIME, DIVINECOMBAT_POTION_TIME, DIVINEDEFENCE_POTION_TIME, DIVINEMAGIC_POTION_TIME, DIVINERANGE_POTION_TIME, DIVINESTRENGTH_POTION_TIME, GOADING_POTION_TIMER, MOONLIGHT_POTION_TIME, PRAYER_REGENERATION_POTION_TIMER, STATRENEWAL_POTION_TIMER, SURGE_POTION_TIMER}
+import net.runelite.api.gameval.VarbitID.{DIVINEATTACK_POTION_TIME, DIVINEBASTION_POTION_TIME, DIVINEBATTLEMAGE_POTION_TIME, DIVINECOMBAT_POTION_TIME, DIVINEDEFENCE_POTION_TIME, DIVINEMAGIC_POTION_TIME, DIVINERANGE_POTION_TIME, DIVINESTRENGTH_POTION_TIME, GOADING_POTION_TIMER, MOONLIGHT_POTION_TIME, PRAYER_REGENERATION_POTION_TIMER, STATRENEWAL_POTION_TIMER, SURGE_POTION_TIMER, STAMINA_DURATION}
 import net.runelite.client.RuneLite
 import net.runelite.client.callback.ClientThread
 
@@ -33,6 +33,7 @@ object STimedPotion extends enumeratum.Enum[STimedPotion] {
 	case object Divine_battlemage extends STimedPotion(DIVINEBATTLEMAGE_POTION_TIME)
 	case object Goading extends STimedPotion(GOADING_POTION_TIMER)
 	case object Prayer_regeneration extends STimedPotion(PRAYER_REGENERATION_POTION_TIMER)
+	case object Stamina extends STimedPotion(STAMINA_DURATION)
 	override def values: IndexedSeq[STimedPotion] = findValues
 
 	private lazy val lookupMap: Map[Int, STimedPotion] = values.map(v => v.varbit -> v).toMap
