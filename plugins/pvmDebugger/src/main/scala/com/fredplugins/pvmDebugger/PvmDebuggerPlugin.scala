@@ -26,6 +26,7 @@ import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneConfig
 import com.fredplugins.pvmDebugger.shellsbane.FredsShellsbaneHelper
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiConfig
 import com.fredplugins.pvmDebugger.hespori.FredsHesporiHelper
+import com.fredplugins.pvmDebugger.mole.{FredsMoleConfig, FredsMoleHelper}
 import com.fredplugins.pvmDebugger.sire.{FredsSireConfig, FredsSireHelper}
 import com.fredplugins.pvmDebugger.thermy.{FredsThermyConfig, FredsThermyHelper}
 import com.fredplugins.pvmDebugger.titans.FredsTitanConfig
@@ -114,6 +115,7 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Inject private val titansHelper: FredsTitanHelper = null
 	@Inject private val yamaHelper: FredsYamaHelper = null
 	@Inject private val shellsbaneHelper: FredsShellsbaneHelper = null
+	@Inject private val moleHelper: FredsMoleHelper = null
 	@Inject private val hesporiHelper: FredsHesporiHelper = null
 	@Inject private val vardorvisHelper: FredsVardorvisHelper = null
 	@Inject private val thermyHelper: FredsThermyHelper = null
@@ -209,7 +211,7 @@ class PvmDebuggerPlugin() extends Plugin {
 
 	}
 
-	lazy val helperModules: Seq[HelperModule] = List(sireHelper, vardorvisHelper, thermyHelper, hesporiHelper, shellsbaneHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
+	lazy val helperModules: Seq[HelperModule] = List(sireHelper, vardorvisHelper, thermyHelper, hesporiHelper, shellsbaneHelper, moleHelper, cerbHelper, dksHelper, krakenHelper, moonHelper, tormentedDemonsHelper, muspahHelper, amoxliatlHelper, hueycoatlHelper, infernoHelper, vorkathHelper, titansHelper, yamaHelper)
 
 	@Subscribe
 	def onConfigChanged(event: ConfigChanged): Unit = {
@@ -414,7 +416,8 @@ class PvmDebuggerPlugin() extends Plugin {
 	@Provides def provideInfernoConfig(configManager: ConfigManager): FredsInfernoConfig = configManager.getConfig(classOf[FredsInfernoConfig])
 	@Provides def provideYamaConfig(configManager: ConfigManager): FredsYamaConfig = configManager.getConfig(classOf[FredsYamaConfig])
 	@Provides def provideDksConfig(configManager: ConfigManager): DksConfig = configManager.getConfig(classOf[DksConfig])
-	@Provides def provideShellsBane(configManager: ConfigManager): FredsShellsbaneConfig = configManager.getConfig(classOf[FredsShellsbaneConfig])
+	@Provides def provideShellsBaneConfig(configManager: ConfigManager): FredsShellsbaneConfig = configManager.getConfig(classOf[FredsShellsbaneConfig])
+	@Provides def provideMoleConfig(configManager: ConfigManager): FredsMoleConfig = configManager.getConfig(classOf[FredsMoleConfig])
 	@Provides def provideCerbConfig(configManager: ConfigManager): CerberusConfig = configManager.getConfig(classOf[CerberusConfig])
 	@Provides def provideVardorvisConfig(configManager: ConfigManager): FredsVardorvisConfig = configManager.getConfig(classOf[FredsVardorvisConfig])
 

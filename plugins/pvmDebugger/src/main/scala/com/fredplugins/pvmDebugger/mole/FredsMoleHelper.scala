@@ -10,21 +10,21 @@ import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
 import com.fredplugins.common.services.TimedBoostsService
 import com.fredplugins.common.services.TimedBoostsService.{PotionEffectChanged, getCachedValue, isActive, isLocked, niceName}
-import com.fredplugins.common.utils.{ReflectionUtils, SInteractionUtils}
+import com.fredplugins.common.utils.{ReflectionUtils, SInteractionUtils, WorldAreaExtended, WorldAreaExtended$}
 import com.fredplugins.common.{ProjectileID, overlays}
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.{HelperModule, PvmDebuggerPlugin, WithOverlay, WithPanel}
 import com.google.inject.{Inject, Singleton}
 import ethanApiPlugin.collections.{Equipment, Inventory, TileObjects}
 import ethanApiPlugin.interactionApi.InventoryInteraction
-import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InteractionUtils, InventoryUtils}
+import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, InteractionUtils, InventoryUtils, Reachable}
 import ethanApiPlugin.services.localPlayer.events.{LocalDestinationChanged, LocalPositionChanged, LocalRegionChanged}
 import net.runelite.api.coords.{Direction, LocalPoint, WorldArea, WorldPoint}
 import net.runelite.api.events.{ActorDeath, AnimationChanged, GameObjectDespawned, GameObjectSpawned, GameStateChanged, GameTick, GraphicsObjectCreated, NpcDespawned, NpcSpawned, ProjectileMoved}
 import net.runelite.api.gameval.AnimationID.{MOLE_ATTACK, MOLE_BURROW_DOWN, MOLE_BURROW_UP, MOLE_DEATH, MOLE_DEFEND, MOLE_MUD_CLOUD, MOLE_MUD_HOLE, MOLE_MUD_HOLE_UP, MOLE_MUD_SPLAT, MOLE_MUD_SPLAT_INTERFACE, MOLE_READY, MOLE_WALK}
 import net.runelite.api.gameval.ItemID.{_1DOSEDIVINERANGE, _1DOSESTAMINA, _2DOSEDIVINERANGE, _2DOSESTAMINA, _3DOSEDIVINERANGE, _3DOSESTAMINA, _4DOSEDIVINERANGE, _4DOSESTAMINA}
 import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID, ObjectID}
-import net.runelite.api.{Actor, Client, EquipmentInventorySlot, GameObject, GameState, GraphicsObject, NPC, NPCComposition, Perspective, Player, Point, Prayer, Projectile, WorldView}
+import net.runelite.api.{Actor, Client, EquipmentInventorySlot, GameObject, GameState, GraphicsObject, NPC, NPCComposition, Perspective, Player, Point, Prayer, Projectile, Skill, WorldView}
 import net.runelite.client.eventbus.Subscribe
 import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, ProgressPieComponent, TitleComponent}
@@ -58,8 +58,25 @@ class Mole(val wrapped: NPC) {
 		}.getOrElse(-1)
 	}
 
-	def inMeleeRange: Boolean = {
-		InteractionUtils. isNpcInMeleeDistanceToPlayer(wrapped)
+	def fightingUs(using client: Client): Boolean = {
+		Option(client.getLocalPlayer).zip(Option(wrapped.getInteracting)).exists((a, b) => b == a)
+	}
+
+	def getNextTicksArea(using client: Client): WorldArea = {
+		val lpa = client.getLocalPlayer.getWorldArea
+		val curArea= wrapped.getWorldArea
+		WorldAreaExtended.calculateNextTravellingPoint(client, curArea, lpa, true)
+	}
+
+	def isStuck(using client: Client): Boolean = {
+		val curArea = wrapped.getWorldArea
+		val nextArea = getNextTicksArea
+		curArea == nextArea
+	}
+
+	def inMeleeRange(using client: Client): Boolean = {
+		val lpa = client.getLocalPlayer.getWorldArea
+		wrapped.getWorldArea.isInMeleeDistance(lpa) || getNextTicksArea.isInMeleeDistance(lpa)
 	}
 }
 object Mole {
@@ -103,38 +120,45 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	def onGameTick(gameTick: GameTick): Unit = {
 		if(boss == null) return
 
-		if(config.divineRangeEnabled() && (client.getTickCount - drinkPotionAt) > 5 && Divine_range.getCachedValue < 15) {
+		val prayerPotWidget = Inventory.search()
+			.withId(ItemID._4DOSEPRAYERRESTORE, ItemID._3DOSEPRAYERRESTORE, ItemID._2DOSEPRAYERRESTORE, ItemID._1DOSEPRAYERRESTORE)
+			.result().asScala.toList.maxByOption(w => w.getItemId).orNull
+		if (prayerPotWidget != null && config.prayerPotEnabled() && (client.getTickCount - drinkPotionAt) > 5 && CombatUtils.getRestoreAmount(prayerPotWidget) < CombatUtils.getPrayerPointsMissing + 10) {
+			InteractionUtils.widgetInteract(prayerPotWidget, "drink")
+			drinkPotionAt = client.getTickCount
+		}
+
+
+		if (config.divineRangeEnabled() && (client.getTickCount - drinkPotionAt) > 5 && Divine_range.getCachedValue < 15) {
 			Inventory.search()
 				.withId(_4DOSEDIVINERANGE, _3DOSEDIVINERANGE, _2DOSEDIVINERANGE, _1DOSEDIVINERANGE)
 				.result().asScala.toList.maxByOption(w => w.getItemId)
-				.foreach{divinePotionWidget =>
+				.foreach { divinePotionWidget =>
 					InteractionUtils.widgetInteract(divinePotionWidget, "drink")
 					drinkPotionAt = client.getTickCount
 				}
 		}
 
-
-		if(config.staminaEnabled() && (client.getTickCount - drinkPotionAt) > 5 && Stamina.getCachedValue < 2 && InteractionUtils.getRunEnergy < 60) {
+		if (config.staminaEnabled() && (client.getTickCount - drinkPotionAt) > 5 && Stamina.getCachedValue < 2 && InteractionUtils.getRunEnergy < 60) {
 			Inventory.search()
 				.withId(_4DOSESTAMINA, _3DOSESTAMINA, _2DOSESTAMINA, _1DOSESTAMINA)
 				.result().asScala.toList.maxByOption(w => w.getItemId)
-				.foreach{staminaWidget =>
+				.foreach { staminaWidget =>
 					InteractionUtils.widgetInteract(staminaWidget, "drink")
 					drinkPotionAt = client.getTickCount
 				}
 		}
 
-		if(config.deadeyeEnabled()) {
-			if(config.deadeyeFlick() && prayerOnTick == client.getTickCount && boss.inBowfaRange) {
-				CombatUtils.activatePrayer(Prayer.DEADEYE)
+		if (config.deadeyeEnabled()) {
+			if (boss.inBowfaRange) {
+				if (!config.deadeyeFlick() || client.getTickCount >= prayerOnTick) CombatUtils.activatePrayer(Prayer.DEADEYE)
 			} else {
-				if (boss.inBowfaRange && !config.deadeyeFlick) CombatUtils.activatePrayer(Prayer.DEADEYE)
-				else CombatUtils.deactivatePrayer(Prayer.DEADEYE)
+				CombatUtils.deactivatePrayer(Prayer.DEADEYE)
 			}
 		}
 
-		if(config.protectFromMeleeEnabled()) {
-			(if(boss.inMeleeRange) CombatUtils.activatePrayer else CombatUtils.deactivatePrayer)(Prayer.PROTECT_FROM_MELEE)
+		if (config.protectFromMeleeEnabled()) {
+			(if (boss.inMeleeRange) CombatUtils.activatePrayer else CombatUtils.deactivatePrayer)(Prayer.PROTECT_FROM_MELEE)
 		}
 	}
 
@@ -162,7 +186,12 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		e.getActor.getAsNpc().foreach{npc =>
 			if (MoleRegion.contains(npc.templateRegion)) {
 				if (Option(boss).map(_.wrapped).contains(npc)) {
-					CombatUtils.deactivatePrayers(false)
+					CombatUtils.deactivatePrayers(List(
+							Option.when(config.deadeyeEnabled)(Prayer.DEADEYE),
+							Option.when(config.protectFromMeleeEnabled)(Prayer.PROTECT_FROM_MELEE))
+						.flatMap(_.toList)
+						.filter(CombatUtils.isActive) *
+					)
 					clearState()
 				}
 			}

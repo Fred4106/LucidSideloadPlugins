@@ -52,14 +52,6 @@ class FredsMuspahHelper @Inject()(override val parent: PvmDebuggerPlugin, overri
 		}.apply()
 	}
 
-	def getActivePrayers: List[Prayer] = {
-		clientThread.runOnClientThread(() => {
-			Prayer.values().toList.filterNot(p => {
-				client.getVarbitValue(p.getVarbit) == 0
-			})
-		})
-	}
-
 	private def deactivatePrayer(prayer: Prayer): Unit = {
 			if (client.getBoostedSkillLevel(Skill.PRAYER) <= 0) return
 			for {

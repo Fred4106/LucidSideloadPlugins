@@ -31,7 +31,7 @@ public interface FredsMoleConfig extends Config {
 	String baseSection = "General";
 
 	@ConfigItem(
-		name = "Dead eye",
+		name = "Auto Prayer Deadeye",
 		description = "Auto enable deadeye when in range of mole.",
 		position = 10,
 		keyName = "deadeyeEnabled",
@@ -43,7 +43,7 @@ public interface FredsMoleConfig extends Config {
 	}
 
 	@ConfigItem(
-		name = "Dead eye",
+		name = "Flick Deadeye",
 		description = "Auto flick deadeye when in range of mole.",
 		position = 11,
 		keyName = "deadeyeFLick",
@@ -65,9 +65,20 @@ public interface FredsMoleConfig extends Config {
 	{
 		return false;
 	}
+	@ConfigItem(
+		name = "Auto Prayer Potion",
+		description = "Auto drink prayer potions as needed.",
+		position = 14,
+		keyName = "prayerPotEnabled",
+		section = baseSection
+	)
+	default boolean prayerPotEnabled()
+	{
+		return false;
+	}
 
 	@ConfigItem(
-		name = "Divine Range Enabled",
+		name = "Auto Divine Range Potion",
 		description = "Auto drink divine ranged potion as needed.",
 		position = 15,
 		keyName = "divineRangeEnabled",
@@ -79,7 +90,7 @@ public interface FredsMoleConfig extends Config {
 	}
 
 	@ConfigItem(
-		name = "Stamina Enabled",
+		name = "Auto Stamina Potion",
 		description = "Auto drink stamina potion as needed.",
 		position = 16,
 		keyName = "staminaEnabled",

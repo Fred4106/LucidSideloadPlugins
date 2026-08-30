@@ -1,13 +1,27 @@
 package ethanApiPlugin.lucidplugins.api.utils;
 
+import ethanApiPlugin.collections.Equipment;
+import ethanApiPlugin.collections.Inventory;
 import ethanApiPlugin.interactionApi.PrayerInteraction;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
+import net.runelite.api.Client;
+import net.runelite.api.Prayer;
+import net.runelite.api.Skill;
+import net.runelite.api.VarPlayer;
+import net.runelite.api.Varbits;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
+import net.runelite.client.callback.ClientThread;
 import packetUtils.WidgetInfoExtended;
 import packets.MousePackets;
 import packets.WidgetPackets;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class CombatUtils
 {
@@ -16,6 +30,7 @@ public class CombatUtils
     public static final int AUGURY_UNLOCKED = 5452;
     public static final int CAMELOT_TRAINING_ROOM_STATUS = 3909;
     static Client client = RuneLite.getInjector().getInstance(Client.class);
+    static ClientThread clientThread = RuneLite.getInjector().getInstance(ClientThread.class);
 
     public static Prayer prayerForName(String name)
     {
@@ -41,6 +56,41 @@ public class CombatUtils
         }
         return null;
     }
+
+    public static int getPrayerPoints() {
+        final int prayerLevel = client.getRealSkillLevel(Skill.PRAYER);
+        return client.getBoostedSkillLevel(Skill.PRAYER);
+    }
+    public static int getPrayerPointsMissing() {
+        int currentPrayer = client.getBoostedSkillLevel(Skill.PRAYER);
+        int maxPrayer = client.getRealSkillLevel(Skill.PRAYER);
+        return maxPrayer - currentPrayer;
+    }
+    public static int getRestoreAmount(Widget w) {
+        return Optional.ofNullable(w).map(Widget::getItemId).map(CombatUtils::getRestoreAmount).orElse(0);
+    }
+    public static int getRestoreAmount(int itemId) {
+        if(itemId == -1) return 0;
+        final int prayerLevel = client.getRealSkillLevel(Skill.PRAYER);
+        boolean hasWrench = !Inventory.search().withId(ItemID.SKILLCAPE_PRAYER, ItemID.SKILLCAPE_PRAYER_TRIMMED, ItemID.SKILLCAPE_MAX, ItemID.SKILLCAPE_MAX_WORN, ItemID.DEAL_WRENCH_BLESSED, ItemID.NZONE_ROTG).result().isEmpty() || !Equipment.search().withId(ItemID.SKILLCAPE_PRAYER, ItemID.SKILLCAPE_PRAYER_TRIMMED, ItemID.SKILLCAPE_MAX, ItemID.SKILLCAPE_MAX_WORN, ItemID.DEAL_WRENCH_BLESSED, ItemID.NZONE_ROTG).result().isEmpty();
+
+        if(List.of(ItemID.SANFEW_SALVE_4_DOSE, ItemID.SANFEW_SALVE_3_DOSE, ItemID.SANFEW_SALVE_2_DOSE, ItemID.SANFEW_SALVE_1_DOSE).contains(itemId)) {
+            return 4 + (int) Math.floor(prayerLevel *  (hasWrench ? .32 : .30));
+        } else if(List.of(
+            ItemID._4DOSE2RESTORE, ItemID._3DOSE2RESTORE, ItemID._2DOSE2RESTORE, ItemID._1DOSE2RESTORE,
+            ItemID.BLIGHTED_4DOSE2RESTORE, ItemID.BLIGHTED_3DOSE2RESTORE, ItemID.BLIGHTED_2DOSE2RESTORE,
+            ItemID.BLIGHTED_1DOSE2RESTORE)
+            .contains(itemId)) {
+            return 8 + (int) Math.floor(prayerLevel *  (hasWrench ? .27 : .25));
+        } else if (List.of(
+            ItemID._4DOSEPRAYERRESTORE, ItemID._3DOSEPRAYERRESTORE, ItemID._2DOSEPRAYERRESTORE, ItemID._1DOSEPRAYERRESTORE, ItemID.GAUNTLET_POTION_4, ItemID.GAUNTLET_POTION_3, ItemID.GAUNTLET_POTION_2, ItemID.GAUNTLET_POTION_1)
+            .contains(itemId)) {
+            return 7 + (int) Math.floor(prayerLevel *  (hasWrench ? .27 : .25));
+        } else {
+            return 0;
+        }
+    }
+
     public static void activatePrayer(Prayer prayer)
     {
         if (client.getBoostedSkillLevel(Skill.HITPOINTS) == 0)
@@ -87,6 +137,11 @@ public class CombatUtils
         }
 
         PrayerInteraction.togglePrayer(checkPrayer(prayer));
+    }
+
+    public static List<Prayer> getActivePrayers() {
+        return clientThread.runOnClientThread(() ->
+            Arrays.stream(Prayer.values()).filter(p -> client.getVarbitValue(p.getVarbit()) == 1).collect(Collectors.toList()));
     }
 
     public static void deactivatePrayers(boolean protectionOnly)
