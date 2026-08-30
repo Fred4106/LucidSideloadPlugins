@@ -44,40 +44,6 @@ class Mole(val wrapped: NPC) {
 	assert(wrapped != null && wrapped.getId == NpcID.MOLE_GIANT)
 	var lastAttack: Int = -1
 	var spawnTick: Int = -1
-
-	def inBowfaRange(using client: Client): Boolean = {
-		Option(client.getLocalPlayer).exists { lp =>
-			val wa = lp.getWorldArea
-			wa.hasLineOfSightTo(lp.getWorldView, wrapped.getWorldArea) && wa.distanceTo(wrapped.getWorldArea) <= 10
-		}
-	}
-
-	def distanceToMe(using client: Client): Int = {
-		Option(client.getLocalPlayer).map { lp =>
-			lp.getWorldArea.distanceTo(wrapped.getWorldArea)
-		}.getOrElse(-1)
-	}
-
-	def fightingUs(using client: Client): Boolean = {
-		Option(client.getLocalPlayer).zip(Option(wrapped.getInteracting)).exists((a, b) => b == a)
-	}
-
-	def getNextTicksArea(using client: Client): WorldArea = {
-		val lpa = client.getLocalPlayer.getWorldArea
-		val curArea= wrapped.getWorldArea
-		WorldAreaExtended.calculateNextTravellingPoint(client, curArea, lpa, true)
-	}
-
-	def isStuck(using client: Client): Boolean = {
-		val curArea = wrapped.getWorldArea
-		val nextArea = getNextTicksArea
-		curArea == nextArea
-	}
-
-	def inMeleeRange(using client: Client): Boolean = {
-		val lpa = client.getLocalPlayer.getWorldArea
-		wrapped.getWorldArea.isInMeleeDistance(lpa) || getNextTicksArea.isInMeleeDistance(lpa)
-	}
 }
 object Mole {
 	def tryBuild(arg: Actor): Option[Mole] = {
@@ -91,16 +57,19 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	override val moduleName: String = FredsMoleConfig.GROUP
 	private def clientThread  = parent.getClientThread
 	given Client = client
-
+	val PrayerPotIds = List(ItemID._4DOSEPRAYERRESTORE, ItemID._3DOSEPRAYERRESTORE, ItemID._2DOSEPRAYERRESTORE, ItemID._1DOSEPRAYERRESTORE)
+	def prayerPotDose(id: Int): Int = PrayerPotIds.indexOf(id)
 	val MoleRegion: Set[Int] = Set(6992, 6993)
 	private var curRegion = -1;
 
 	var boss: Mole = uninitialized
+	var oldBoss: Mole = uninitialized
 	var drinkPotionAt: Int = 0
 	private var prayerOnTick = -1
 
 	private def clearState(): Unit = {
 		boss = null
+		oldBoss = null
 		prayerOnTick = -1
 	}
 
@@ -115,14 +84,31 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		curRegion = -1
 		clearState()
 	}
+	def inBowfaRange(using client: Client): Boolean = {
+		if(boss == null) return false
+		if(oldBoss != null) return false
+		Option(client.getLocalPlayer).exists { lp =>
+			val wa = lp.getWorldArea
+			wa.hasLineOfSightTo(lp.getWorldView, boss.wrapped.getWorldArea) && wa.distanceTo(boss.wrapped.getWorldArea) <= 10
+		}
+	}
+
+	def inMeleeRange: Boolean = {
+		if (boss == null) return false
+		if (oldBoss != null) return false
+		val lpa = client.getLocalPlayer.getWorldArea
+		val curArea = boss.wrapped.getWorldArea
+		val nextArea = WorldAreaExtended.calculateNextTravellingPoint(client, curArea, lpa, true)
+		List(boss.wrapped.getWorldArea, nextArea).exists(_.isInMeleeDistance(lpa))
+	}
 
 	@Subscribe
 	def onGameTick(gameTick: GameTick): Unit = {
 		if(boss == null) return
 
 		val prayerPotWidget = Inventory.search()
-			.withId(ItemID._4DOSEPRAYERRESTORE, ItemID._3DOSEPRAYERRESTORE, ItemID._2DOSEPRAYERRESTORE, ItemID._1DOSEPRAYERRESTORE)
-			.result().asScala.toList.maxByOption(w => w.getItemId).orNull
+			.withId(PrayerPotIds *)
+			.result().asScala.toList.maxByOption(w => prayerPotDose(w.getItemId)).orNull
 		if (prayerPotWidget != null && config.prayerPotEnabled() && (client.getTickCount - drinkPotionAt) > 5 && CombatUtils.getRestoreAmount(prayerPotWidget) < CombatUtils.getPrayerPointsMissing + 10) {
 			InteractionUtils.widgetInteract(prayerPotWidget, "drink")
 			drinkPotionAt = client.getTickCount
@@ -150,7 +136,7 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		}
 
 		if (config.deadeyeEnabled()) {
-			if (boss.inBowfaRange) {
+			if (inBowfaRange) {
 				if (!config.deadeyeFlick() || client.getTickCount >= prayerOnTick) CombatUtils.activatePrayer(Prayer.DEADEYE)
 			} else {
 				CombatUtils.deactivatePrayer(Prayer.DEADEYE)
@@ -158,7 +144,7 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 		}
 
 		if (config.protectFromMeleeEnabled()) {
-			(if (boss.inMeleeRange) CombatUtils.activatePrayer else CombatUtils.deactivatePrayer)(Prayer.PROTECT_FROM_MELEE)
+			(if (inMeleeRange) CombatUtils.activatePrayer else CombatUtils.deactivatePrayer)(Prayer.PROTECT_FROM_MELEE)
 		}
 	}
 
@@ -174,10 +160,16 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 	@Subscribe
 	def onNpcSpawned(e: NpcSpawned): Unit = {
 		if(MoleRegion.contains(e.getNpc.templateRegion)) {
-			Mole.tryBuild(e.getActor)
-				.foreach{sb =>
-					boss = sb.tap(_.spawnTick = client.getTickCount)
-				}
+			Mole.tryBuild(e.getActor).tapEach(_.spawnTick = if(oldBoss != null) oldBoss.spawnTick else client.getTickCount)
+				.foreach{ boss = _ }
+			oldBoss = null
+		}
+	}
+
+	@Subscribe
+	def onNpcDespawned(e: NpcSpawned): Unit = {
+		if(boss != null && e.getNpc == boss.wrapped) {
+			val oldBoss = boss
 		}
 	}
 
@@ -268,7 +260,7 @@ class FredsMoleHelper @Inject()(override val parent: PvmDebuggerPlugin, override
 				case (color, str, color1, i) =>
 					LineComponent.builder()
 						.leftColor(color).left(str)
-						.right(str).rightColor(color1)
+						.right(s"${i}").rightColor(color1)
 						.build
 			}
 
