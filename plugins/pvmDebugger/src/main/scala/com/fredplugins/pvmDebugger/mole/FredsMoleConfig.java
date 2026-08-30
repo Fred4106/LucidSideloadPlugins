@@ -1,4 +1,4 @@
-package com.fredplugins.pvmDebugger.mole.shellsbane;
+package com.fredplugins.pvmDebugger.mole;
 
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;

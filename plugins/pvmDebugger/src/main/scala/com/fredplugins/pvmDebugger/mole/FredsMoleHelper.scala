@@ -1,4 +1,4 @@
-package com.fredplugins.pvmDebugger.mole.shellsbane
+package com.fredplugins.pvmDebugger.mole
 
 import com.fredplugins.attacktimer.LocalPlayerAttacked
 import com.fredplugins.common.api.WorldRegion
@@ -7,12 +7,11 @@ import com.fredplugins.common.constants.magic.STimedPotion.{Divine_range, Stamin
 import com.fredplugins.common.extensions.ActorExtensions
 import com.fredplugins.common.extensions.ActorExtensions.*
 import com.fredplugins.common.extensions.LocationExtensions.*
-import com.fredplugins.common.extensions.LocationExtensions.*
 import com.fredplugins.common.extensions.ProjectileExtensions.*
-import com.fredplugins.common.{ProjectileID, overlays}
 import com.fredplugins.common.services.TimedBoostsService
 import com.fredplugins.common.services.TimedBoostsService.{PotionEffectChanged, getCachedValue, isActive, isLocked, niceName}
 import com.fredplugins.common.utils.{ReflectionUtils, SInteractionUtils}
+import com.fredplugins.common.{ProjectileID, overlays}
 import com.fredplugins.pvmDebugger
 import com.fredplugins.pvmDebugger.{HelperModule, PvmDebuggerPlugin, WithOverlay, WithPanel}
 import com.google.inject.{Inject, Singleton}
@@ -22,6 +21,8 @@ import ethanApiPlugin.lucidplugins.api.utils.{CombatUtils, EquipmentUtils, Inter
 import ethanApiPlugin.services.localPlayer.events.{LocalDestinationChanged, LocalPositionChanged, LocalRegionChanged}
 import net.runelite.api.coords.{Direction, LocalPoint, WorldArea, WorldPoint}
 import net.runelite.api.events.{ActorDeath, AnimationChanged, GameObjectDespawned, GameObjectSpawned, GameStateChanged, GameTick, GraphicsObjectCreated, NpcDespawned, NpcSpawned, ProjectileMoved}
+import net.runelite.api.gameval.AnimationID.{MOLE_ATTACK, MOLE_BURROW_DOWN, MOLE_BURROW_UP, MOLE_DEATH, MOLE_DEFEND, MOLE_MUD_CLOUD, MOLE_MUD_HOLE, MOLE_MUD_HOLE_UP, MOLE_MUD_SPLAT, MOLE_MUD_SPLAT_INTERFACE, MOLE_READY, MOLE_WALK}
+import net.runelite.api.gameval.ItemID.{_1DOSEDIVINERANGE, _1DOSESTAMINA, _2DOSEDIVINERANGE, _2DOSESTAMINA, _3DOSEDIVINERANGE, _3DOSESTAMINA, _4DOSEDIVINERANGE, _4DOSESTAMINA}
 import net.runelite.api.gameval.{AnimationID, InterfaceID, ItemID, NpcID, ObjectID}
 import net.runelite.api.{Actor, Client, EquipmentInventorySlot, GameObject, GameState, GraphicsObject, NPC, NPCComposition, Perspective, Player, Point, Prayer, Projectile, WorldView}
 import net.runelite.client.eventbus.Subscribe
@@ -29,9 +30,6 @@ import net.runelite.client.ui.overlay.OverlayUtil
 import net.runelite.client.ui.overlay.components.{LayoutableRenderableEntity, LineComponent, ProgressPieComponent, TitleComponent}
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer
 import net.runelite.client.util.ColorUtil
-import net.runelite.api.gameval.ItemID.{_1DOSEDIVINERANGE, _2DOSEDIVINERANGE, _3DOSEDIVINERANGE, _4DOSEDIVINERANGE}
-import net.runelite.api.gameval.ItemID.{_1DOSESTAMINA, _2DOSESTAMINA, _3DOSESTAMINA, _4DOSESTAMINA}
-import net.runelite.api.gameval.AnimationID.{MOLE_ATTACK, MOLE_BURROW_DOWN, MOLE_BURROW_UP, MOLE_DEATH, MOLE_DEFEND, MOLE_MUD_CLOUD, MOLE_MUD_HOLE, MOLE_MUD_HOLE_UP, MOLE_MUD_SPLAT, MOLE_MUD_SPLAT_INTERFACE, MOLE_READY, MOLE_WALK}
 
 import java.awt.{Color, Dimension, Graphics2D, Polygon, Shape}
 import java.util.concurrent.Callable
