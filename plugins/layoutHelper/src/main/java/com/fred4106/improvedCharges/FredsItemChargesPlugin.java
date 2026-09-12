@@ -9,6 +9,7 @@ import com.fred4106.improvedCharges.items.foods.F_Oranges;
 import com.fred4106.improvedCharges.items.foods.F_Potatoes;
 import com.fred4106.improvedCharges.items.foods.F_Strawberries;
 import com.fred4106.improvedCharges.items.foods.F_Tomatoes;
+import com.fred4106.improvedCharges.items.legs.L_MorytaniaLegs;
 import com.fred4106.improvedCharges.items.weapons.blowpipes.W_BlazingBlowpipe;
 import com.fred4106.improvedCharges.items.weapons.blowpipes.W_CamphorBlowpipe;
 import com.fred4106.improvedCharges.items.weapons.blowpipes.W_IronwoodBlowpipe;
@@ -89,12 +90,13 @@ import java.util.concurrent.ThreadLocalRandom;
 )
 @Singleton
 public class FredsItemChargesPlugin extends Plugin implements KeyListener, MouseListener, MouseWheelListener {
-	public static String pluginVersion = "v0.6.16";
+	public static String pluginVersion = "v0.6.17";
 	public static String pluginMessage =
 		"<colHIGHLIGHT>Item Charges Improved " + pluginVersion + ":<br>" +
-			"<colHIGHLIGHT>* Herb sack and gem pouches have in-game options to show individual charges.<br>" +
-			"<colHIGHLIGHT>* Gem containers support golem crafting.<br>" +
-			"<colHIGHLIGHT>* Option to disable updates messages."
+			"<colHIGHLIGHT>* Rosewood blowpipe rune darts tracking fixed.<br>" +
+			"<colHIGHLIGHT>* Celestial ring charges tracking for new ores added.<br>" +
+			"<colHIGHLIGHT>* Various item fixes that names got updated.<br>" +
+			"<colHIGHLIGHT>* Morytania legs and inoculation bracelet added."
 		;
 
 	@Inject
@@ -220,6 +222,7 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new J_FlamtaerBracelet(provider),
 			new J_GamesNecklace(provider),
 			new J_GiantsoulAmulet(provider),
+			new J_InoculationBracelet(provider),
 			new J_NecklaceOfPassage(provider),
 			new J_PhoenixNecklace(provider),
 			new J_DodgyNecklace(provider),
@@ -242,6 +245,10 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new J_SkillsNecklace(provider),
 			new J_XericsTalisman(provider),
 			new J_SailorsAmulet(provider),
+
+			// Legs
+			new L_MorytaniaLegs(provider),
+
 			// Potions
 			new P_Absorption(provider),
 			new P_Agility(provider),

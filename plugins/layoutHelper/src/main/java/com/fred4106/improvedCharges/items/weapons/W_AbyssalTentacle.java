@@ -18,7 +18,8 @@ public class W_AbyssalTentacle extends ChargedItem {
         super(FredsItemChargesConfig.abyssal_tentacle, ItemID.ABYSSAL_TENTACLE, provider);
 
         this.items = new TriggerItem[]{
-            new TriggerItem(ItemID.ABYSSAL_TENTACLE)
+            new TriggerItem(ItemID.ABYSSAL_TENTACLE),
+            new TriggerItem(ItemID.LEAGUE_3_WHIP_TENTACLE),
         };
 
         this.triggers.addAll(List.of(
@@ -26,7 +27,7 @@ public class W_AbyssalTentacle extends ChargedItem {
             new OnChatMessage("Your abyssal tentacle can perform (?<charges>.+) more attacks?.").setDynamicallyCharges(),
 
             // Attack.
-            new OnAnimationChanged(1658).itemEquipped().decreaseCharges(1),
+            new OnAnimationChanged(1658).isEquipped().decreaseCharges(1),
 
             // Degrade
             new OnChatMessage("Your abyssal tentacle has degraded.").setFixedCharges(0)

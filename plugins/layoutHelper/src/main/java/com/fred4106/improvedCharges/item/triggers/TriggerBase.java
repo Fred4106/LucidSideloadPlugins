@@ -125,11 +125,6 @@ public abstract class TriggerBase {
         return this;
     }
 
-    public TriggerBase onMenuImpostor(int ...impostorIds) {
-        this.onMenuImpostor = Optional.of(impostorIds);
-        return this;
-    }
-
     public TriggerBase onItemClick() {
         this.onItemClick = Optional.of(true);
         return this;
@@ -233,11 +228,6 @@ public abstract class TriggerBase {
 
     public TriggerBase isWidgetVisible(int[] ...widgetIds) {
         this.isWidgetVisible = Optional.of(widgetIds);
-        return this;
-    }
-
-    public TriggerBase itemEquipped(int ...itemId) {
-        this.itemEquipped = Optional.of(itemId);
         return this;
     }
 }

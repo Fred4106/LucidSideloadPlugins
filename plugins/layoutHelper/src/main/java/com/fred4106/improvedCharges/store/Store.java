@@ -369,7 +369,7 @@ public class Store {
         }
     }
 
-    public void onGameTick(GameTick ignored) {
+    public void onGameTick(GameTick event) {
         runNextGameTickQueue();
         gametick++;
 
@@ -386,6 +386,10 @@ public class Store {
 
         inCombatTicksRemainingDamageDoneToOthers = Math.max(0, inCombatTicksRemainingDamageDoneToOthers - 1);
         inCombatTicksRemainingDamageDoneToMe = Math.max(0, inCombatTicksRemainingDamageDoneToMe - 1);
+
+        getInventoryAndEquipmentChargedItems().forEach(chargedItem -> {
+            listenerOnGameTick.trigger(event, chargedItem);
+        });
     }
 
     public boolean inMenuTargets(int ...itemIds) {
@@ -556,7 +560,10 @@ public class Store {
         List<StorageItem> allItems = new ArrayList<>();
         allItems.addAll(inventory.getItems());
         allItems.addAll(equipment.getItems());
-        allItems.addAll(bank.getItems());
+        String[] storageBank = provider.config.getStorageBank().split(",");
+        for (String bankItemId : storageBank) {
+            allItems.add(new StorageItem(Integer.parseInt(bankItemId)));
+        }
         return allItems;
     }
 
