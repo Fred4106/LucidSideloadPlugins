@@ -1,12 +1,16 @@
 package com.fredplugins.alchblocker;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -39,6 +43,7 @@ import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.util.matching.Regex;
 
 import static net.runelite.api.gameval.InterfaceID.LUMBRIDGE_ALCHEMY;
 import static net.runelite.api.gameval.InterfaceID.MagicSpellbook;
@@ -71,6 +76,7 @@ public class FredsAlchBlockerPlugin extends Plugin {
 
 	Set<String> exactMatches = new HashSet<>();
 	List<String> wildcardPatterns = new ArrayList<>();
+	List<Pattern> regexPatterns = new ArrayList<>();
 	Map<Integer, Boolean> blockedItemCache = new HashMap<>();
 	Set<Integer> hiddenItems = new HashSet<>();
 
@@ -194,7 +200,9 @@ public class FredsAlchBlockerPlugin extends Plugin {
 						.setType(MenuAction.RUNELITE)
 						.onClick(e ->
 						{
-							configManager.setConfiguration(FredsAlchBlockerConfig.GROUP, "itemList", config.itemList().concat("\n" + Text.removeTags(itemName)));
+							String x = config.itemList().concat("\n" + Text.removeTags(itemName));
+							String newValue = x.lines().distinct().sorted().collect(Collectors.joining("\n"));
+							configManager.setConfiguration(FredsAlchBlockerConfig.GROUP, "itemList", newValue);
 							showBlockedItems();
 						});
 				}
@@ -259,6 +267,12 @@ public class FredsAlchBlockerPlugin extends Plugin {
 				return true;
 			}
 		}
+		for (Pattern pattern : regexPatterns) {
+			boolean result = pattern.asPredicate().test(itemName);
+			log.debug("testing pattern \"{}\" against \"{}\" with result {}", pattern.pattern(), itemName, result);
+			if(!result) continue;
+			return result;
+		}
 		return false;
 	}
 
@@ -289,29 +303,42 @@ public class FredsAlchBlockerPlugin extends Plugin {
 	private void parseItemList() {
 		exactMatches.clear();
 		wildcardPatterns.clear();
+		regexPatterns.clear();
 
-		for (String listItem : config.itemList().split("\n")) {
-			if (listItem.trim().isEmpty()) continue;
+		List<String> exactItemList = Arrays.stream(config.itemList().split("\n")).map(String::trim)
+			.filter(s -> !(s.isEmpty() || s.startsWith("//")))
+			.collect(Collectors.toList());
+		List<String> wildcardItemList = Arrays.stream(config.wildcardItemList().split("\n")).map(String::trim)
+			.filter(s -> !(s.isEmpty() || s.startsWith("//")))
+			.collect(Collectors.toList());
+		List<String> regexItemList = Arrays.stream(config.regexItemList().split("\n")).map(String::trim)
+			.filter(s -> !(s.isEmpty() || s.startsWith("//")))
+			.collect(Collectors.toList());
 
-			if (listItem.contains(",")) {
-				// For backwards compatibility, supports csv and line separated
-				Set<String> csvSet = Text.fromCSV(listItem).stream()
-					.map(String::toLowerCase)
-					.collect(Collectors.toSet());
-				for (String item : csvSet) {
-					addToAppropriateCollection(item);
-				}
-			} else {
-				addToAppropriateCollection(listItem.toLowerCase().trim());
+
+		for (String listItem : exactItemList) {
+			if (listItem.contains("*")) {
+				log.warn("exact item list contained a wildcard token\"{}\"", listItem);
+				continue;
 			}
+			exactMatches.add(listItem.toLowerCase().trim());
 		}
-	}
 
-	private void addToAppropriateCollection(String item) {
-		if (item.contains("*")) {
-			wildcardPatterns.add(item);
-		} else {
-			exactMatches.add(item);
+		for (String listItem : wildcardItemList) {
+			if (!listItem.contains("*")) {
+				log.warn("wildcard item list contained a non-wildcard match \"{}\"", listItem);
+				continue;
+			}
+			wildcardPatterns.add(listItem.toLowerCase().trim());
+		}
+
+		for (String listItem : regexItemList) {
+			try{
+			 Pattern p = Pattern.compile("(?i)" + listItem);
+			 regexPatterns.add(p);
+			} catch (PatternSyntaxException e) {
+				log.warn("regex item list contained an invalid regex pattern \"{}\"", listItem, e);
+			}
 		}
 	}
 }

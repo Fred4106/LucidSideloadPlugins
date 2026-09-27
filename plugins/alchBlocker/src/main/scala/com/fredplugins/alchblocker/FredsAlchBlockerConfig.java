@@ -46,12 +46,34 @@ public interface FredsAlchBlockerConfig extends Config
 	@ConfigItem(
 		keyName = "itemList",
 		name = "Item list",
-		description = "Configures the list of items to block or unblock from being alched. Format: (item), (item). Example: fire rune, prayer potion*",
-		position = 3
+		description = "Configures the list of items to block or unblock from being alched.\nNo wildcards allowed!\nExample: fire rune\nchaos rune",
+		position = 5
 	)
 	default String itemList()
 	{
+		return "Toadflax\n";
+	}
+
+	@ConfigItem(
+		keyName = "wildcardItemList",
+		name = "Wildcard Item list",
+		description = "Configures the list of items to block or unblock from being alched using wildcard matcher.\nExample: *Rune pouch",
+		position = 3
+	)
+	default String wildcardItemList()
+	{
 		return "*Rune Pouch\n*(1)\n*(2)\n*(3)\n*(4)\n";
+	}
+
+	@ConfigItem(
+		keyName = "regexItemList",
+		name = "Regex Item list",
+		description = "Configures the list of items to block or unblock from being alched. Each line is its own regex to match with.\nExample: \n(fire|water|earth|air) rune\n.*(?=\\([0-8]\\))",
+		position = 4
+	)
+	default String regexItemList()
+	{
+		return ".*(?=\\([0-8]\\))";
 	}
 
 	enum DisplayType {
