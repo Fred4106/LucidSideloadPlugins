@@ -4,12 +4,15 @@ import ch.qos.logback.classic.Level;
 import com.fredplugins.common.PrayerExtended;
 import com.fredplugins.common.services.CastSuppliesTrackerService;
 import com.fredplugins.common.services.TimedBoostsService;
+import com.google.inject.Module;
+import com.google.inject.util.Providers;
 import ethanApiPlugin.lucidplugins.api.utils.InteractionUtils;
 import com.google.inject.Singleton;
 import ethanApiPlugin.collections.*;
 import ethanApiPlugin.services.localPlayer.LocalPlayerService;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.client.plugins.party.PartyPluginService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import packetUtils.ObfuscatedNames;
@@ -1360,5 +1363,13 @@ public class EthanApiPlugin extends Plugin {
 		eventBus.unregister(localPlayerService);
 		castSuppliesTrackerService.stop();
 		timedBoostsService.stop();
+	}
+
+	@Override
+	public Module getPublicModule()
+	{
+		return b -> {
+			b.bind(EthanApiPlugin.class).toInstance(this);
+		};
 	}
 }

@@ -13,7 +13,7 @@ import java.time.Instant;
 public class PluginTileItem {
     private final TileItem item;
     @Getter private final String name;
-    private final int gePrice;
+    private final long gePrice;
     @Getter private final int haPrice;
     @Getter private final WorldPoint worldPoint;
     @Getter private final int spawnTime;
@@ -52,7 +52,7 @@ public class PluginTileItem {
             case ItemID.PLATINUM:
                 return 1000;
             default:
-                return gePrice;
+                return (int) gePrice;
         }
     }
 

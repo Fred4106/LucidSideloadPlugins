@@ -35,7 +35,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteArrayDataOutput;
+import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.util.Providers;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
@@ -84,6 +86,14 @@ public class AttackTimerMetronomePlugin extends Plugin {
 
 	public static Logger getLogger(Class<?> clazz) {
 		return LogUtils.checkLevel(LogUtils.createChild(log, clazz), log);
+	}
+	@Override
+	public Module getPublicModule()
+	{
+		return b -> {
+			b.bind(AttackTimerMetronomePlugin.class).toInstance(this);
+			b.bind(AttackTimerMetronomeConfig.class).toInstance(config);
+		};
 	}
 
 	public enum AttackState {
