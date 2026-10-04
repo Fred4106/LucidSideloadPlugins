@@ -272,8 +272,10 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		final String niceMenuClickedString =  MenuExtensions$.MODULE$.niceString(menuEntry);
 		final Widget widget = menuEntry.getWidget();
 		final String targStr = Text.standardize(menuEntry.getTarget());
-		final String tOptStr = Text.standardize(menuEntry.getOption());
+		final String tOptStrTemp = Text.standardize(menuEntry.getOption());
+		final String tOptStr = (targStr.isBlank() && tOptStrTemp.startsWith("contact "))? tOptStrTemp.substring(8):tOptStrTemp;
 		final String wOptStr;
+
 		if(widget!= null) {
 			int wg = (widget.getId() >>> 16);
 			int wc = (widget.getId() & 0xFFFF);
@@ -422,7 +424,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		if (dConfig == null)
 			return;
 
-//		log.debug("Dialog for {} has config {}", lastInteractionId, dConfig);
+		log.debug("Dialog for {} has config {}", lastInteractionId, dConfig);
 
 		clientThread.invokeAtTickEnd(() ->
 		{
