@@ -285,9 +285,12 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		}
 
 		log.trace("targ={}, option={}, widget={}", targStr, tOptStr, wOptStr);
-		if ((widget != null && widget.getId() >>> 16 == InterfaceID.LUNAR_CONTACT_NPC) || targStr.equalsIgnoreCase("NPC Contact")) {
+		if ((widget != null && widget.getId() >>> 16 == InterfaceID.LUNAR_CONTACT_NPC) || targStr.equalsIgnoreCase("Astral Contact")) {
 			lastInteractionId=-1;
 			switch(tOptStr) {
+				case "dark mage":
+					lastInteractionId=NpcID.RCU_ZAMMY_MAGE2;
+					break;
 				case "aya":
 					lastInteractionId=NpcID.SLAYER_MASTER_1_AYA;
 					break;
@@ -353,7 +356,7 @@ public class FredsDialogueAssistantPlugin extends Plugin
 		final int maxSearch = 5;
 		Widget widget = menuEntry.getWidget();
 
-		if (menuEntry.getTarget().contains("NPC Contact"))
+		if (menuEntry.getTarget().contains("Astral Contact"))
 			return true;
 
 		if (viewportBoxId == -1)

@@ -186,7 +186,7 @@ public class SpellIds {
         Spells.add(new SpellInfo("Geomancy", SpriteID.SPELL_GEOMANCY, new SpellCost(new int[] {ItemID.ASTRAL_RUNE, ItemID.NATURE_RUNE, ItemID.EARTH_RUNE}, new int[] {3, 3, 8})));
         Spells.add(new SpellInfo("Cure Plant", SpriteID.SPELL_CURE_PLANT, new SpellCost(new int[] {ItemID.ASTRAL_RUNE, ItemID.EARTH_RUNE}, new int[] {1, 8})));
         Spells.add(new SpellInfo("Monster Examine", SpriteID.SPELL_MONSTER_EXAMINE, new SpellCost(new int[] {ItemID.ASTRAL_RUNE, ItemID.COSMIC_RUNE, ItemID.MIND_RUNE}, new int[] {1, 1, 1})));
-        Spells.add(new SpellInfo("NPC Contact", SpriteID.SPELL_NPC_CONTACT, new SpellCost(new int[] {ItemID.ASTRAL_RUNE, ItemID.COSMIC_RUNE, ItemID.AIR_RUNE}, new int[] {1, 1, 2})));
+        Spells.add(new SpellInfo("Astral Contact", SpriteID.SPELL_NPC_CONTACT, new SpellCost(new int[] {ItemID.ASTRAL_RUNE, ItemID.COSMIC_RUNE, ItemID.AIR_RUNE}, new int[] {1, 1, 2})));
         Spells.add(new SpellInfo("Cure Other", SpriteID.SPELL_CURE_OTHER, new SpellCost(new int[] {ItemID.ASTRAL_RUNE, ItemID.LAW_RUNE, ItemID.EARTH_RUNE}, new int[] {1, 1, 10})));
         Spells.add(new SpellInfo("Humidify", SpriteID.SPELL_HUMIDIFY, new SpellCost(new int[] {ItemID.ASTRAL_RUNE, ItemID.WATER_RUNE, ItemID.FIRE_RUNE}, new int[] {1, 3, 1})));
         Spells.add(new SpellInfo("Moonclan Teleport", SpriteID.SPELL_MOONCLAN_TELEPORT, new SpellCost(new int[] {ItemID.LAW_RUNE, ItemID.ASTRAL_RUNE, ItemID.EARTH_RUNE}, new int[] {1, 2, 2})));
