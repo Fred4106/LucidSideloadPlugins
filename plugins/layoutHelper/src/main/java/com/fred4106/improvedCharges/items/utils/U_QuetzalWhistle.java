@@ -8,6 +8,7 @@ import com.fred4106.improvedCharges.item.triggers.OnItemContainerChanged;
 import com.fred4106.improvedCharges.item.triggers.OnMenuEntryAdded;
 import com.fred4106.improvedCharges.item.triggers.TriggerItem;
 import com.fred4106.improvedCharges.store.Provider;
+import net.runelite.api.Client;
 import net.runelite.api.gameval.*;
 import com.fred4106.improvedCharges.*;
 import com.fred4106.improvedCharges.item.*;
@@ -67,7 +68,30 @@ public class U_QuetzalWhistle extends ChargedItem {
                             break;
                     }
                 }
+            }),
+
+            // Dynamic teleport menu option
+            new OnMenuEntryAdded("Last-destination").replaceOptionConsumer(() -> {
+                String last = getLastDestinationString(provider.client);
+                if (!last.isBlank())
+                    return "Last-destination (" + last + ")";
+                return "Last-destination";
             })
         ));
+    }
+
+    private String getLastDestinationString(Client client) {
+        List<Integer> quetzalRows = client.getDBRowsByValue(
+            DBTableID.Quetzal.ID,
+            DBTableID.Quetzal.COL_ID,
+            0,
+            client.getVarbitValue(VarbitID.QUETZAL_LAST_DESTINATION));
+        String last = "";
+        if (!quetzalRows.isEmpty())
+        {
+            last = (String) client.getDBTableField(quetzalRows.get(0), DBTableID.Quetzal.COL_NAME, 0)[0];
+        }
+
+        return last;
     }
 }

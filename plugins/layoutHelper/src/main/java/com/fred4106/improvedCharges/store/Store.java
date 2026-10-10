@@ -813,12 +813,8 @@ public class Store {
     }
 
     public void onGameStateChanged(GameStateChanged event) {
-        if (event.getGameState() == GameState.LOGGING_IN) {
-            checkForChargesReset();
-        }
-
         if (event.getGameState() != GameState.LOGGED_IN) return;
-
+        checkForChargesReset();
         // Update config version to latest
         if (!provider.config.getVersion().equals(FredsItemChargesPlugin.pluginVersion)) {
             configManager.setConfiguration(FredsItemChargesConfig.group, FredsItemChargesConfig.version, FredsItemChargesPlugin.pluginVersion);

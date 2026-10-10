@@ -2752,11 +2752,67 @@ public interface FredsItemChargesConfig extends Config {
 	) default int getIbansStaffCharges() { return ChargeId.UNKNOWN; }
 
 	@ConfigItem(
-		keyName = moons_gear + "_eclipse_chestplate",
-		name = moons_gear + "_eclipse_chestplate",
-		description = moons_gear + "_eclipse_chestplate",
+		keyName = moons_gear + "_eclipse_moon_helm",
+		name = moons_gear + "_eclipse_moon_helm",
+		description = moons_gear + "_eclipse_moon_helm",
+		section = debug
+	) default int getEclipseMoonHelmCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_eclipse_moon_chestplate",
+		name = moons_gear + "_eclipse_moon_chestplate",
+		description = moons_gear + "_eclipse_moon_chestplate",
 		section = debug
 	) default int getEclipseMoonChestplateCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_eclipse_moon_tassets",
+		name = moons_gear + "_eclipse_moon_tassets",
+		description = moons_gear + "_eclipse_moon_tassets",
+		section = debug
+	) default int getEclipseMoonTassetsCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_blood_moon_helm",
+		name = moons_gear + "_blood_moon_helm",
+		description = moons_gear + "_blood_moon_helm",
+		section = debug
+	) default int getBloodMoonHelmCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_blood_moon_chestplate",
+		name = moons_gear + "_blood_moon_chestplate",
+		description = moons_gear + "_blood_moon_chestplate",
+		section = debug
+	) default int getBloodMoonChestplateCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_blood_moon_tassets",
+		name = moons_gear + "_blood_moon_tassets",
+		description = moons_gear + "_blood_moon_tassets",
+		section = debug
+	) default int getBloodMoonTassetsCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_blue_moon_helm",
+		name = moons_gear + "_blue_moon_helm",
+		description = moons_gear + "_blue_moon_helm",
+		section = debug
+	) default int getBlueMoonHelmCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_blue_moon_chestplate",
+		name = moons_gear + "_blue_moon_chestplate",
+		description = moons_gear + "_blue_moon_chestplate",
+		section = debug
+	) default int getBlueMoonChestplateCharges() { return ChargeId.UNKNOWN; }
+
+	@ConfigItem(
+		keyName = moons_gear + "_blue_moon_tassets",
+		name = moons_gear + "_blue_moon_tassets",
+		description = moons_gear + "_blue_moon_tassets",
+		section = debug
+	) default int getBlueMoonTassetsCharges() { return ChargeId.UNKNOWN; }
 
 	@ConfigItem(
 		keyName = pharaohs_sceptre,

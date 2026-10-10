@@ -47,11 +47,6 @@ public class ListenerOnWidgetLoaded extends ListenerBase {
                 }
             }
 
-            if (trigger.widgetConsumer.isPresent()) {
-                trigger.widgetConsumer.get().accept(widget.get());
-                triggerUsed = true;
-            }
-
             if (super.trigger(trigger, chargedItem)) {
                 triggerUsed = true;
             }

@@ -85,18 +85,19 @@ import java.util.concurrent.ThreadLocalRandom;
 @PluginDescriptor(
 	name = "<html><font color=\"#32C8CD\">Freds</font> Item Charges",
 	description = "Show charges of various items",
-	tags = {"charges", "barrows", "crystal", "ardougne", "coffing", "magic", "cape", "circlet", "bracelet", "clay", "expeditious", "flamtaer", "slaughter", "camulet", "celestial", "ring", "escape", "recoil", "shadow", "suffering", "slayer", "xeric", "talisman", "chronicle", "dragonfire", "falador", "kharedst", "memoirs", "ash", "sanctifier", "bone", "crusher", "bottomless", "compost", "bucket", "coal", "bag", "fish", "barrel", "fungicide", "spray", "gem", "gricoller", "can", "herb", "sack", "log", "basket", "ogre", "bellows", "seed", "box", "soul", "bearer", "teleport", "waterskin", "arclight", "bryophyta", "staff", "bow", "halberd", "iban", "pharaoh", "sceptre", "sanguinesti", "skull", "trident", "sea", "toxic", "jar", "tome", "fur", "meat", "pouch", "pursuit", "book", "scroll", "potion"},
+	tags = {"charges", "barrows", "crystal", "ardougne", "coffin", "magic", "cape", "circlet", "bracelet", "clay", "expeditious", "flamtaer", "slaughter", "camulet", "celestial", "ring", "escape", "recoil", "shadow", "suffering", "slayer", "xeric", "talisman", "chronicle", "dragonfire", "falador", "kharedst", "memoirs", "ash", "sanctifier", "bone", "crusher", "bottomless", "compost", "bucket", "coal", "bag", "fish", "barrel", "fungicide", "spray", "gem", "gricoller", "can", "herb", "sack", "log", "basket", "ogre", "bellows", "seed", "box", "soul", "bearer", "teleport", "waterskin", "arclight", "bryophyta", "staff", "bow", "halberd", "iban", "pharaoh", "sceptre", "sanguinesti", "skull", "trident", "sea", "toxic", "jar", "tome", "fur", "meat", "pouch", "pursuit", "book", "scroll", "potion"},
 	conflicts = {"Item Charges Improved"}
 )
 @Singleton
 public class FredsItemChargesPlugin extends Plugin implements KeyListener, MouseListener, MouseWheelListener {
-	public static String pluginVersion = "v0.6.17";
+	public static String pluginVersion = "v0.6.18";
 	public static String pluginMessage =
 		"<colHIGHLIGHT>Item Charges Improved " + pluginVersion + ":<br>" +
-			"<colHIGHLIGHT>* Rosewood blowpipe rune darts tracking fixed.<br>" +
-			"<colHIGHLIGHT>* Celestial ring charges tracking for new ores added.<br>" +
-			"<colHIGHLIGHT>* Various item fixes that names got updated.<br>" +
-			"<colHIGHLIGHT>* Morytania legs and inoculation bracelet added."
+			"<colHIGHLIGHT>* Multiple item fixes caused by item renamings.<br>" +
+			"<colHIGHLIGHT>* Eternal slayer ring added.<br>" +
+			"<colHIGHLIGHT>* Daily reset logic improved.<br>" +
+			"<colHIGHLIGHT>* Quetzal and master scroll book dynamic last destination menu entries.<br>" +
+			"<colHIGHLIGHT>* Echo Ahrims set support added."
 		;
 
 	@Inject
@@ -481,6 +482,11 @@ public class FredsItemChargesPlugin extends Plugin implements KeyListener, Mouse
 			new AhrimsRobetop(provider),
 			new AhrimsRobeskirt(provider),
 			new AhrimsStaff(provider),
+
+			new EchoAhrimsHood(provider),
+			new EchoAhrimsRobetop(provider),
+			new EchoAhrimsRobeskirt(provider),
+			new EchoAhrimsStaff(provider),
 
 			new DharoksHelm(provider),
 			new DharoksPlatebody(provider),
