@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.util.Providers;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
@@ -91,8 +92,7 @@ public class AttackTimerMetronomePlugin extends Plugin {
 	public Module getPublicModule()
 	{
 		return b -> {
-			b.bind(AttackTimerMetronomePlugin.class).toInstance(this);
-			b.bind(AttackTimerMetronomeConfig.class).toInstance(config);
+			b.bind(AttackTimerMetronomePlugin.class).toProvider(Providers.of(this));
 		};
 	}
 

@@ -176,6 +176,7 @@ public class FredGauntletPlugin extends Plugin {
 
 	@Inject
 	private AttackTimerMetronomePlugin attackTimerMetronomePlugin;
+
 	@Inject
 	private Client client;
 
